@@ -2,7 +2,7 @@
 @tailwind components;
 @tailwind utilities;
 
-/* LIGHT MODE */
+/* LIGHT MODE - Institutional Fintech Theme */
 :root {
   --button-outline: rgba(0,0,0, .10);
   --badge-outline: rgba(0,0,0, .05);
@@ -14,80 +14,80 @@
   --elevate-1: rgba(0,0,0, .03);
   --elevate-2: rgba(0,0,0, .08);
 
-  --background: red; /*replace with H S L */
+  --background: 210 20% 98%;
 
-  --foreground: red; /*replace with H S L */
+  --foreground: 215 25% 15%;
 
-  --border: red; /*replace with H S L */
+  --border: 210 15% 88%;
 
-  --card: red; /*replace with H S L */
+  --card: 0 0% 100%;
 
-  --card-foreground: red; /*replace with H S L */
+  --card-foreground: 215 25% 15%;
 
-  --card-border: red; /*replace with H S L */
+  --card-border: 210 15% 92%;
 
-  --sidebar: red; /*replace with H S L */
+  --sidebar: 160 65% 10%;
 
-  --sidebar-foreground: red; /*replace with H S L */
+  --sidebar-foreground: 150 10% 92%;
 
-  --sidebar-border: red; /*replace with H S L */
+  --sidebar-border: 160 40% 18%;
 
-  --sidebar-primary: red; /*replace with H S L */
+  --sidebar-primary: 142 71% 45%;
 
-  --sidebar-primary-foreground: red; /*replace with H S L */
+  --sidebar-primary-foreground: 160 65% 6%;
 
-  --sidebar-accent: red; /*replace with H S L */
+  --sidebar-accent: 160 40% 16%;
 
-  --sidebar-accent-foreground: red; /*replace with H S L */
+  --sidebar-accent-foreground: 150 10% 95%;
 
-  --sidebar-ring: red; /*replace with H S L */
+  --sidebar-ring: 142 71% 45%;
 
-  --popover: red; /*replace with H S L */
+  --popover: 0 0% 100%;
 
-  --popover-foreground: red; /*replace with H S L */
+  --popover-foreground: 215 25% 15%;
 
-  --popover-border: red; /*replace with H S L */
+  --popover-border: 210 15% 88%;
 
-  --primary: red; /*replace with H S L */
+  --primary: 142 71% 45%;
 
-  --primary-foreground: red; /*replace with H S L */
+  --primary-foreground: 160 65% 6%;
 
-  --secondary: red; /*replace with H S L */
+  --secondary: 210 15% 94%;
 
-  --secondary-foreground: red; /*replace with H S L */
+  --secondary-foreground: 215 25% 25%;
 
-  --muted: red; /*replace with H S L */
+  --muted: 210 15% 94%;
 
-  --muted-foreground: red; /*replace with H S L */
+  --muted-foreground: 215 15% 50%;
 
-  --accent: red; /*replace with H S L */
+  --accent: 80 80% 55%;
 
-  --accent-foreground: red; /*replace with H S L */
+  --accent-foreground: 160 65% 6%;
 
-  --destructive: red; /*replace with H S L */
+  --destructive: 0 72% 51%;
 
-  --destructive-foreground: red; /*replace with H S L */
+  --destructive-foreground: 0 0% 100%;
 
-  --input: red; /*replace with H S L */
-  --ring: red; /*replace with H S L */
-  --chart-1: red; /*replace with H S L */
-  --chart-2: red; /*replace with H S L */
-  --chart-3: red; /*replace with H S L */
-  --chart-4: red; /*replace with H S L */
-  --chart-5: red; /*replace with H S L */
+  --input: 210 15% 88%;
+  --ring: 142 71% 45%;
+  --chart-1: 142 71% 45%;
+  --chart-2: 80 80% 55%;
+  --chart-3: 190 70% 50%;
+  --chart-4: 160 65% 25%;
+  --chart-5: 45 90% 55%;
 
   --font-sans: 'Inter', sans-serif;
   --font-serif: Georgia, serif;
-  --font-mono: Menlo, monospace;
+  --font-mono: 'JetBrains Mono', monospace;
   --radius: .5rem; /* 8px */
-  --shadow-2xs: 0px 2px 0px 0px hsl(202.8169 89.1213% 53.1373% / 0.00); /*replace with H S L */
-  --shadow-xs: 0px 2px 0px 0px hsl(202.8169 89.1213% 53.1373% / 0.00); /*replace with H S L */
-  --shadow-sm: 0px 2px 0px 0px hsl(202.8169 89.1213% 53.1373% / 0.00), 0px 1px 2px -1px hsl(202.8169 89.1213% 53.1373% / 0.00);
-  --shadow: 0px 2px 0px 0px hsl(202.8169 89.1213% 53.1373% / 0.00), 0px 1px 2px -1px hsl(202.8169 89.1213% 53.1373% / 0.00);
-  --shadow-md: 0px 2px 0px 0px hsl(202.8169 89.1213% 53.1373% / 0.00), 0px 2px 4px -1px hsl(202.8169 89.1213% 53.1373% / 0.00);
-  --shadow-lg: 0px 2px 0px 0px hsl(202.8169 89.1213% 53.1373% / 0.00), 0px 4px 6px -1px hsl(202.8169 89.1213% 53.1373% / 0.00);
-  --shadow-xl: 0px 2px 0px 0px hsl(202.8169 89.1213% 53.1373% / 0.00), 0px 8px 10px -1px hsl(202.8169 89.1213% 53.1373% / 0.00);
-  --shadow-2xl: 0px 2px 0px 0px hsl(202.8169 89.1213% 53.1373% / 0.00);
+  --shadow-2xs: 0px 1px 2px 0px rgba(0, 0, 0, 0.05);
+  --shadow-xs: 0px 1px 3px 0px rgba(0, 0, 0, 0.08);
+  --shadow-sm: 0px 2px 4px -1px rgba(0, 0, 0, 0.08), 0px 1px 2px -1px rgba(0, 0, 0, 0.04);
+  --shadow: 0px 4px 6px -1px rgba(0, 0, 0, 0.1), 0px 2px 4px -1px rgba(0, 0, 0, 0.06);
+  --shadow-md: 0px 6px 8px -2px rgba(0, 0, 0, 0.1), 0px 4px 6px -1px rgba(0, 0, 0, 0.06);
+  --shadow-lg: 0px 10px 15px -3px rgba(0, 0, 0, 0.1), 0px 4px 6px -2px rgba(0, 0, 0, 0.05);
+  --shadow-xl: 0px 20px 25px -5px rgba(0, 0, 0, 0.1), 0px 10px 10px -5px rgba(0, 0, 0, 0.04);
+  --shadow-2xl: 0px 25px 50px -12px rgba(0, 0, 0, 0.25);
   --tracking-normal: 0em;
   --spacing: 0.25rem;
 
@@ -132,78 +132,77 @@
   --elevate-1: rgba(255,255,255, .04);
   --elevate-2: rgba(255,255,255, .09);
 
-  --background: red; /*replace with H S L */
+  --background: 220 25% 8%;
 
-  --foreground: red; /*replace with H S L */
+  --foreground: 210 20% 92%;
 
-  --border: red; /*replace with H S L */
+  --border: 220 20% 18%;
 
-  --card: red; /*replace with H S L */
+  --card: 220 22% 11%;
 
-  --card-foreground: red; /*replace with H S L */
+  --card-foreground: 210 20% 92%;
 
-  --card-border: red; /*replace with H S L */
+  --card-border: 220 20% 16%;
 
-  --sidebar: red; /*replace with H S L */
+  --sidebar: 160 65% 10%;
 
-  --sidebar-foreground: red; /*replace with H S L */
+  --sidebar-foreground: 150 10% 92%;
 
-  --sidebar-border: red; /*replace with H S L */
+  --sidebar-border: 160 40% 18%;
 
-  --sidebar-primary: red; /*replace with H S L */
+  --sidebar-primary: 142 71% 45%;
 
-  --sidebar-primary-foreground: red; /*replace with H S L */
+  --sidebar-primary-foreground: 160 65% 6%;
 
-  --sidebar-accent: red; /*replace with H S L */
+  --sidebar-accent: 160 40% 16%;
 
-  --sidebar-accent-foreground: red; /*replace with H S L */
+  --sidebar-accent-foreground: 150 10% 95%;
 
-  --sidebar-ring: red; /*replace with H S L */
+  --sidebar-ring: 142 71% 45%;
 
-  --popover: red; /*replace with H S L */
+  --popover: 220 22% 11%;
 
-  --popover-foreground: red; /*replace with H S L */
+  --popover-foreground: 210 20% 92%;
 
-  --popover-border: red; /*replace with H S L */
+  --popover-border: 220 20% 18%;
 
-  --primary: red; /*replace with H S L */
+  --primary: 142 71% 45%;
 
-  --primary-foreground: red; /*replace with H S L */
+  --primary-foreground: 160 65% 6%;
 
-  --secondary: red; /*replace with H S L */
+  --secondary: 220 20% 18%;
 
-  --secondary-foreground: red; /*replace with H S L */
+  --secondary-foreground: 210 20% 92%;
 
-  --muted: red; /*replace with H S L */
+  --muted: 220 20% 16%;
 
-  --muted-foreground: red; /*replace with H S L */
+  --muted-foreground: 210 15% 60%;
 
-  --accent: red; /*replace with H S L */
+  --accent: 80 80% 55%;
 
-  --accent-foreground: red; /*replace with H S L */
+  --accent-foreground: 160 65% 6%;
 
-  --destructive: red; /*replace with H S L */
+  --destructive: 0 72% 51%;
 
-  --destructive-foreground: red; /*replace with H S L */
+  --destructive-foreground: 0 0% 100%;
 
   /* Used as the border around inputs. Dark mode: Should be a border that is light enough to have high contrast when rendered on a --card background. More contrast than standard --border */
-  --input: red; /*replace with H S L */
-  --ring: red; /*replace with H S L */
-  --chart-1: red; /*replace with H S L */
-  --chart-2: red; /*replace with H S L */
-  --chart-3: red; /*replace with H S L */
-  --chart-4: red; /*replace with H S L */
-  --chart-5: red; /*replace with H S L */
+  --input: 220 20% 25%;
+  --ring: 142 71% 45%;
+  --chart-1: 142 71% 45%;
+  --chart-2: 80 80% 55%;
+  --chart-3: 190 70% 50%;
+  --chart-4: 160 65% 30%;
+  --chart-5: 45 90% 55%;
 
-  --shadow-2xs: 0px 2px 0px 0px hsl(202.8169 89.1213% 53.1373% / 0.00);
-  --shadow-xs: 0px 2px 0px 0px hsl(202.8169 89.1213% 53.1373% / 0.00);
-  --shadow-sm: 0px 2px 0px 0px hsl(202.8169 89.1213% 53.1373% / 0.00), 0px 1px 2px -1px hsl(202.8169 89.1213% 53.1373% / 0.00);
-  --shadow: 0px 2px 0px 0px hsl(202.8169 89.1213% 53.1373% / 0.00), 0px 1px 2px -1px hsl(202.8169 89.1213% 53.1373% / 0.00);
-  --shadow-md: 0px 2px 0px 0px hsl(202.8169 89.1213% 53.1373% / 0.00), 0px 2px 4px -1px hsl(202.8169 89.1213% 53.1373% / 0.00);
-  --shadow-lg: 0px 2px 0px 0px hsl(202.8169 89.1213% 53.1373% / 0.00), 0px 4px 6px -1px hsl(202.8169 89.1213% 53.1373% / 0.00);
-  --shadow-xl: 0px 2px 0px 0px hsl(202.8169 89.1213% 53.1373% / 0.00), 0px 8px 10px -1px hsl(202.8169 89.1213% 53.1373% / 0.00);
-  --shadow-2xl: 0px 2px 0px 0px hsl(202.8169 89.1213% 53.1373% / 0.00);
-
+  --shadow-2xs: 0px 1px 2px 0px rgba(0, 0, 0, 0.3);
+  --shadow-xs: 0px 1px 3px 0px rgba(0, 0, 0, 0.4);
+  --shadow-sm: 0px 2px 4px -1px rgba(0, 0, 0, 0.4), 0px 1px 2px -1px rgba(0, 0, 0, 0.2);
+  --shadow: 0px 4px 6px -1px rgba(0, 0, 0, 0.5), 0px 2px 4px -1px rgba(0, 0, 0, 0.3);
+  --shadow-md: 0px 6px 8px -2px rgba(0, 0, 0, 0.5), 0px 4px 6px -1px rgba(0, 0, 0, 0.3);
+  --shadow-lg: 0px 10px 15px -3px rgba(0, 0, 0, 0.5), 0px 4px 6px -2px rgba(0, 0, 0, 0.25);
+  --shadow-xl: 0px 20px 25px -5px rgba(0, 0, 0, 0.5), 0px 10px 10px -5px rgba(0, 0, 0, 0.2);
+  --shadow-2xl: 0px 25px 50px -12px rgba(0, 0, 0, 0.7);
 }
 
 @layer base {
@@ -325,5 +324,22 @@
   .border.active-elevate-2:not(.no-active-interaction-elevate)::after,
   .border.hover-elevate:not(.no-hover-interaction-elevate)::after {
     inset: -1px;
+  }
+
+  /* Custom gradient backgrounds for the fintech theme */
+  .bg-gradient-dark {
+    background: linear-gradient(180deg, #0B1220 0%, #111827 100%);
+  }
+
+  .bg-gradient-dark-green {
+    background: linear-gradient(180deg, #0B1220 0%, rgba(11, 61, 46, 0.2) 50%, #111827 100%);
+  }
+
+  .glow-green {
+    box-shadow: 0 0 30px rgba(22, 163, 74, 0.15);
+  }
+
+  .glow-lime {
+    box-shadow: 0 0 20px rgba(163, 230, 53, 0.2);
   }
 }
