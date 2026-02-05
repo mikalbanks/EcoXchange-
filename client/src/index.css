@@ -2,7 +2,7 @@
 @tailwind components;
 @tailwind utilities;
 
-/* LIGHT MODE - Institutional Fintech Theme */
+/* LIGHT MODE - EcoXchange Brand Theme */
 :root {
   --button-outline: rgba(0,0,0, .10);
   --badge-outline: rgba(0,0,0, .05);
@@ -14,67 +14,72 @@
   --elevate-1: rgba(0,0,0, .03);
   --elevate-2: rgba(0,0,0, .08);
 
-  --background: 210 20% 98%;
+  --background: 140 20% 98%;
 
-  --foreground: 215 25% 15%;
+  --foreground: 140 25% 15%;
 
-  --border: 210 15% 88%;
+  --border: 140 15% 88%;
 
   --card: 0 0% 100%;
 
-  --card-foreground: 215 25% 15%;
+  --card-foreground: 140 25% 15%;
 
-  --card-border: 210 15% 92%;
+  --card-border: 140 15% 92%;
 
-  --sidebar: 160 65% 10%;
+  /* Sidebar - Deep green for both modes */
+  --sidebar: 146 68% 10%;
 
-  --sidebar-foreground: 150 10% 92%;
+  --sidebar-foreground: 140 33% 94%;
 
-  --sidebar-border: 160 40% 18%;
+  --sidebar-border: 146 50% 16%;
 
-  --sidebar-primary: 142 71% 45%;
+  /* Brand primary - Eco Green #73AC20 */
+  --sidebar-primary: 79 69% 40%;
 
-  --sidebar-primary-foreground: 160 65% 6%;
+  --sidebar-primary-foreground: 140 33% 94%;
 
-  --sidebar-accent: 160 40% 16%;
+  --sidebar-accent: 146 50% 14%;
 
-  --sidebar-accent-foreground: 150 10% 95%;
+  --sidebar-accent-foreground: 140 33% 94%;
 
-  --sidebar-ring: 142 71% 45%;
+  --sidebar-ring: 79 69% 40%;
 
   --popover: 0 0% 100%;
 
-  --popover-foreground: 215 25% 15%;
+  --popover-foreground: 140 25% 15%;
 
-  --popover-border: 210 15% 88%;
+  --popover-border: 140 15% 88%;
 
-  --primary: 142 71% 45%;
+  /* Primary - Eco Green #73AC20 */
+  --primary: 79 69% 40%;
 
-  --primary-foreground: 160 65% 6%;
+  --primary-foreground: 0 0% 100%;
 
-  --secondary: 210 15% 94%;
+  /* Secondary - Deep Green #135F2D */
+  --secondary: 146 68% 22%;
 
-  --secondary-foreground: 215 25% 25%;
+  --secondary-foreground: 0 0% 100%;
 
-  --muted: 210 15% 94%;
+  --muted: 140 15% 94%;
 
-  --muted-foreground: 215 15% 50%;
+  --muted-foreground: 140 15% 40%;
 
-  --accent: 80 80% 55%;
+  /* Accent - Primary Strong #90C11B */
+  --accent: 76 76% 43%;
 
-  --accent-foreground: 160 65% 6%;
+  --accent-foreground: 0 0% 100%;
 
   --destructive: 0 72% 51%;
 
   --destructive-foreground: 0 0% 100%;
 
-  --input: 210 15% 88%;
-  --ring: 142 71% 45%;
-  --chart-1: 142 71% 45%;
-  --chart-2: 80 80% 55%;
-  --chart-3: 190 70% 50%;
-  --chart-4: 160 65% 25%;
-  --chart-5: 45 90% 55%;
+  --input: 140 15% 88%;
+  --ring: 79 69% 40%;
+  --chart-1: 79 69% 40%;
+  --chart-2: 76 76% 43%;
+  --chart-3: 146 68% 22%;
+  --chart-4: 131 53% 31%;
+  --chart-5: 91 67% 38%;
 
   --font-sans: 'Inter', sans-serif;
   --font-serif: Georgia, serif;
@@ -132,68 +137,75 @@
   --elevate-1: rgba(255,255,255, .04);
   --elevate-2: rgba(255,255,255, .09);
 
-  --background: 220 25% 8%;
+  /* EcoXchange Brand Colors - Near-black background */
+  --background: 144 17% 5%;
 
-  --foreground: 210 20% 92%;
+  --foreground: 140 33% 94%;
 
-  --border: 220 20% 18%;
+  --border: 140 17% 14%;
 
-  --card: 220 22% 11%;
+  /* Surface/Card colors */
+  --card: 140 14% 7%;
 
-  --card-foreground: 210 20% 92%;
+  --card-foreground: 140 33% 94%;
 
-  --card-border: 220 20% 16%;
+  --card-border: 140 17% 12%;
 
-  --sidebar: 160 65% 10%;
+  /* Sidebar - Deep green */
+  --sidebar: 146 68% 10%;
 
-  --sidebar-foreground: 150 10% 92%;
+  --sidebar-foreground: 140 33% 94%;
 
-  --sidebar-border: 160 40% 18%;
+  --sidebar-border: 146 50% 16%;
 
-  --sidebar-primary: 142 71% 45%;
+  /* Brand primary - Eco Green #73AC20 */
+  --sidebar-primary: 79 69% 40%;
 
-  --sidebar-primary-foreground: 160 65% 6%;
+  --sidebar-primary-foreground: 140 33% 94%;
 
-  --sidebar-accent: 160 40% 16%;
+  --sidebar-accent: 146 50% 14%;
 
-  --sidebar-accent-foreground: 150 10% 95%;
+  --sidebar-accent-foreground: 140 33% 94%;
 
-  --sidebar-ring: 142 71% 45%;
+  --sidebar-ring: 79 69% 40%;
 
-  --popover: 220 22% 11%;
+  --popover: 140 14% 7%;
 
-  --popover-foreground: 210 20% 92%;
+  --popover-foreground: 140 33% 94%;
 
-  --popover-border: 220 20% 18%;
+  --popover-border: 140 17% 14%;
 
-  --primary: 142 71% 45%;
+  /* Primary - Eco Green #73AC20 */
+  --primary: 79 69% 40%;
 
-  --primary-foreground: 160 65% 6%;
+  --primary-foreground: 140 33% 94%;
 
-  --secondary: 220 20% 18%;
+  /* Secondary - Deep Green #135F2D */
+  --secondary: 146 68% 22%;
 
-  --secondary-foreground: 210 20% 92%;
+  --secondary-foreground: 140 33% 94%;
 
-  --muted: 220 20% 16%;
+  --muted: 140 14% 12%;
 
-  --muted-foreground: 210 15% 60%;
+  --muted-foreground: 140 11% 69%;
 
-  --accent: 80 80% 55%;
+  /* Accent - Primary Strong #90C11B */
+  --accent: 76 76% 43%;
 
-  --accent-foreground: 160 65% 6%;
+  --accent-foreground: 140 14% 7%;
 
   --destructive: 0 72% 51%;
 
   --destructive-foreground: 0 0% 100%;
 
-  /* Used as the border around inputs. Dark mode: Should be a border that is light enough to have high contrast when rendered on a --card background. More contrast than standard --border */
-  --input: 220 20% 25%;
-  --ring: 142 71% 45%;
-  --chart-1: 142 71% 45%;
-  --chart-2: 80 80% 55%;
-  --chart-3: 190 70% 50%;
-  --chart-4: 160 65% 30%;
-  --chart-5: 45 90% 55%;
+  /* Input border */
+  --input: 140 17% 20%;
+  --ring: 79 69% 40%;
+  --chart-1: 79 69% 40%;
+  --chart-2: 76 76% 43%;
+  --chart-3: 146 68% 22%;
+  --chart-4: 131 53% 31%;
+  --chart-5: 91 67% 38%;
 
   --shadow-2xs: 0px 1px 2px 0px rgba(0, 0, 0, 0.3);
   --shadow-xs: 0px 1px 3px 0px rgba(0, 0, 0, 0.4);
@@ -326,20 +338,26 @@
     inset: -1px;
   }
 
-  /* Custom gradient backgrounds for the fintech theme */
+  /* EcoXchange brand gradient backgrounds */
   .bg-gradient-dark {
-    background: linear-gradient(180deg, #0B1220 0%, #111827 100%);
+    background: linear-gradient(180deg, #0B0F0C 0%, #101712 100%);
   }
 
   .bg-gradient-dark-green {
-    background: linear-gradient(180deg, #0B1220 0%, rgba(11, 61, 46, 0.2) 50%, #111827 100%);
+    background: linear-gradient(180deg, #0B0F0C 0%, rgba(19, 95, 45, 0.15) 50%, #101712 100%);
   }
 
+  /* Brand glow effects using #73AC20 */
   .glow-green {
-    box-shadow: 0 0 30px rgba(22, 163, 74, 0.15);
+    box-shadow: 0 0 30px rgba(115, 172, 32, 0.2);
   }
 
   .glow-lime {
-    box-shadow: 0 0 20px rgba(163, 230, 53, 0.2);
+    box-shadow: 0 0 20px rgba(144, 193, 27, 0.25);
+  }
+
+  /* Brand accent glow */
+  .glow-brand {
+    box-shadow: 0 0 40px rgba(115, 172, 32, 0.15);
   }
 }

@@ -3,7 +3,6 @@ import { Header } from "@/components/header";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { 
-  Leaf, 
   Sun, 
   Wind, 
   Zap, 
@@ -11,7 +10,6 @@ import {
   TrendingUp, 
   Users, 
   ArrowRight,
-  CheckCircle2,
   Building2,
   Wallet
 } from "lucide-react";
@@ -23,11 +21,11 @@ export default function LandingPage() {
       
       {/* Hero Section */}
       <section className="relative overflow-hidden">
-        <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top,rgba(22,163,74,0.15),transparent_50%)]" />
+        <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top,rgba(115,172,32,0.15),transparent_50%)]" />
         <div className="container mx-auto px-4 py-20 md:py-32 relative">
           <div className="max-w-4xl mx-auto text-center">
             <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-primary/10 border border-primary/20 mb-6">
-              <Leaf className="h-4 w-4 text-primary" />
+              <img src="/brand/ecoxchange-logo.png" alt="" className="h-4 w-auto" />
               <span className="text-sm font-medium text-primary">Compliant Digital Securities</span>
             </div>
             
@@ -149,9 +147,11 @@ export default function LandingPage() {
               <Card className="relative">
                 <CardContent className="p-8">
                   <div className="flex items-center gap-3 mb-6">
-                    <div className="flex items-center justify-center w-12 h-12 rounded-xl bg-primary glow-green">
-                      <Leaf className="h-6 w-6 text-primary-foreground" />
-                    </div>
+                    <img 
+                      src="/brand/ecoxchange-logo.png" 
+                      alt="EcoXchange" 
+                      className="h-10 w-auto"
+                    />
                     <div>
                       <p className="font-semibold">Sample Offering</p>
                       <p className="text-sm text-muted-foreground">Solar Project Alpha</p>
@@ -281,11 +281,13 @@ export default function LandingPage() {
       <footer className="border-t border-border/40 py-12">
         <div className="container mx-auto px-4">
           <div className="flex flex-col md:flex-row items-center justify-between gap-4">
-            <div className="flex items-center gap-2">
-              <div className="flex items-center justify-center w-8 h-8 rounded-md bg-primary">
-                <Leaf className="h-4 w-4 text-primary-foreground" />
-              </div>
-              <span className="font-semibold">EcoXchange</span>
+            <div className="flex items-center gap-3">
+              <img 
+                src="/brand/ecoxchange-logo.png" 
+                alt="EcoXchange" 
+                className="h-8 w-auto"
+              />
+              <span className="text-sm text-muted-foreground">Clean Energy Market</span>
             </div>
             <div className="flex items-center gap-6 text-sm text-muted-foreground">
               <Link href="/about" className="hover:text-foreground transition-colors">About</Link>

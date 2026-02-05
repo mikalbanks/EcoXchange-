@@ -1,0 +1,112 @@
+Replit Agent Prompt (Branding + Theme)
+
+You are working on the EcoXchange app. Your task is to apply the product’s branding across the UI by implementing a consistent color system and placing the EcoXchange logo where appropriate.
+
+1) Source of truth (logo)
+
+Use this logo file as the brand reference:
+
+/mnt/data/23C0B869-1724-4F33-8E96-ADC3DF8B0BEB.PNG
+
+Add it to the web app assets (e.g., public/brand/ecoxchange-logo.png) and also generate a small favicon version if the stack supports it.
+
+2) Brand color palette (derived from logo)
+
+Implement a modern “clean energy” palette based on the logo. Use these HEX values:
+
+Primary (Eco Green): #73AC20
+Primary Hover / Strong: #90C11B
+Secondary (Deep Green): #135F2D
+Secondary Alt: #287931
+Support Green: #55A020
+Background Dark: #0B0F0C (use a near-black, not pure black)
+Surface/Card: #101712
+Border: #1E2A22
+Text Primary: #EAF5EE
+Text Muted: #A9B8AE
+
+3) Create a single theme system (no hardcoded colors)
+
+Refactor the UI so colors come from theme tokens (CSS variables) instead of scattered hex codes.
+
+Add CSS variables in a global stylesheet (e.g., globals.css, index.css, or equivalent):
+
+--brand-primary, --brand-primary-strong, --brand-secondary, --bg, --surface, --border, --text, --muted, etc.
+
+Update components to use these tokens.
+
+Ensure buttons, links, badges, chips, alerts, and table highlights use the brand palette consistently.
+
+4) Tailwind / component library integration (if applicable)
+
+If Tailwind is used:
+
+Map theme tokens into Tailwind via tailwind.config or use bg-[var(--bg)] style utilities.
+
+Ensure primary buttons use brand primary with proper hover/focus states.
+
+Focus rings should use a translucent brand primary (visible on dark backgrounds).
+
+If a component library is used:
+
+Update its theme provider / design tokens to match the palette above.
+
+5) Apply branding across key UI areas
+
+Place the logo and brand elements in the following locations:
+
+Global
+
+Navbar left: logo + “EcoXchange”
+
+Favicon: EcoXchange mark
+
+Footer: smaller logo + “Clean Energy Market”
+
+Auth
+
+Login/Register: centered logo above the form
+
+Use brand primary for the main CTA button
+
+Dashboard
+
+Top-left header: logo mark (small) + page title
+
+Cards: dark surface with subtle border; highlights use brand green
+
+Marketplace / Listings
+
+Badges: “Verified”, “Open”, “Funded”, etc. should use brand greens (not random colors)
+
+Links and CTAs: brand primary
+
+6) Accessibility + polish requirements
+
+Maintain AA contrast for text on dark backgrounds.
+
+Buttons must have clear hover + focus + disabled states.
+
+Keep the UI “cool/modern”: subtle shadows, rounded corners, soft borders, not overly bright greens.
+
+7) Output expectation
+
+Make the change end-to-end:
+
+Add the logo asset(s)
+
+Implement theme tokens
+
+Replace hardcoded colors
+
+Update core layouts (navbar, footer, auth pages, primary buttons, cards)
+
+Ensure the app looks consistent across pages without breaking functionality
+
+When done, provide a short summary of:
+
+Files changed
+
+Where theme tokens live
+
+How to update colors in one place going forward

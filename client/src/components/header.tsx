@@ -8,7 +8,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger 
 } from "@/components/ui/dropdown-menu";
-import { User, LogOut, LayoutDashboard, Leaf } from "lucide-react";
+import { User, LogOut, LayoutDashboard } from "lucide-react";
 
 export function Header() {
   const { user, logout, isLoading } = useAuth();
@@ -19,14 +19,13 @@ export function Header() {
   return (
     <header className="sticky top-0 z-50 w-full border-b border-border/40 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
       <div className="container mx-auto flex h-16 items-center justify-between px-4 gap-4">
-        <Link href="/" className="flex items-center gap-2">
-          <div className="flex items-center justify-center w-9 h-9 rounded-md bg-primary glow-green">
-            <Leaf className="h-5 w-5 text-primary-foreground" />
-          </div>
-          <div className="flex flex-col">
-            <span className="font-semibold text-lg leading-tight" data-testid="text-brand-name">EcoXchange</span>
-            <span className="text-[10px] uppercase tracking-widest text-muted-foreground leading-tight">Clean Energy Market</span>
-          </div>
+        <Link href="/" className="flex items-center gap-3">
+          <img 
+            src="/brand/ecoxchange-logo.png" 
+            alt="EcoXchange" 
+            className="h-10 w-auto"
+            data-testid="img-brand-logo"
+          />
         </Link>
 
         {isPublicPage && (

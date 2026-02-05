@@ -10,7 +10,7 @@ import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { useToast } from "@/hooks/use-toast";
-import { Leaf, Loader2 } from "lucide-react";
+import { Loader2 } from "lucide-react";
 import { loginSchema } from "@shared/schema";
 
 type LoginFormValues = z.infer<typeof loginSchema>;
@@ -54,9 +54,12 @@ export default function LoginPage() {
       <div className="container mx-auto px-4 py-16">
         <div className="max-w-md mx-auto">
           <div className="text-center mb-8">
-            <div className="flex items-center justify-center w-14 h-14 rounded-xl bg-primary mx-auto mb-4 glow-green">
-              <Leaf className="h-7 w-7 text-primary-foreground" />
-            </div>
+            <img 
+              src="/brand/ecoxchange-logo.png" 
+              alt="EcoXchange" 
+              className="h-14 w-auto mx-auto mb-4"
+              data-testid="img-login-logo"
+            />
             <h1 className="text-2xl font-bold" data-testid="text-login-title">Sign in to EcoXchange</h1>
             <p className="text-muted-foreground mt-2">
               Access your dashboard and portfolio

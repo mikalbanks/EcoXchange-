@@ -26,7 +26,6 @@ import {
   Users,
   Settings,
   LogOut,
-  Leaf,
   Shield,
   ChevronRight,
 } from "lucide-react";
@@ -84,14 +83,13 @@ export function DashboardLayout({
       <div className="flex min-h-screen w-full bg-gradient-dark">
         <Sidebar className="border-r border-sidebar-border">
           <SidebarHeader className="p-4 border-b border-sidebar-border">
-            <Link href="/" className="flex items-center gap-2">
-              <div className="flex items-center justify-center w-8 h-8 rounded-md bg-primary glow-green">
-                <Leaf className="h-4 w-4 text-primary-foreground" />
-              </div>
-              <div className="flex flex-col">
-                <span className="font-semibold text-sm leading-tight text-sidebar-foreground">EcoXchange</span>
-                <span className="text-[9px] uppercase tracking-widest text-sidebar-foreground/60 leading-tight">Clean Energy Market</span>
-              </div>
+            <Link href="/" className="flex items-center">
+              <img 
+                src="/brand/ecoxchange-logo.png" 
+                alt="EcoXchange" 
+                className="h-8 w-auto"
+                data-testid="img-sidebar-logo"
+              />
             </Link>
           </SidebarHeader>
           <SidebarContent>
