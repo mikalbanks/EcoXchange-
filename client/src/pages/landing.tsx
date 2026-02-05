@@ -25,7 +25,7 @@ export default function LandingPage() {
         <div className="container mx-auto px-4 py-20 md:py-32 relative">
           <div className="max-w-4xl mx-auto text-center">
             <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-primary/10 border border-primary/20 mb-6">
-              <img src="/brand/ecoxchange-logo.png" alt="" className="h-4 w-auto" />
+              <img src="/brand/ecoxchange-logo.png" alt="" className="h-4 w-auto" data-testid="img-hero-badge-logo" />
               <span className="text-sm font-medium text-primary">Compliant Digital Securities</span>
             </div>
             
@@ -73,8 +73,8 @@ export default function LandingPage() {
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6 max-w-4xl mx-auto">
             <Card className="group hover-elevate relative overflow-visible">
               <CardContent className="pt-6 text-center">
-                <div className="flex items-center justify-center w-14 h-14 rounded-full bg-yellow-500/10 mx-auto mb-4 group-hover:glow-lime transition-all">
-                  <Sun className="h-7 w-7 text-yellow-500" />
+                <div className="flex items-center justify-center w-14 h-14 rounded-full bg-accent/10 mx-auto mb-4 group-hover:glow-lime transition-all">
+                  <Sun className="h-7 w-7 text-accent" />
                 </div>
                 <h3 className="font-semibold text-lg mb-2">Solar</h3>
                 <p className="text-sm text-muted-foreground">
@@ -85,8 +85,8 @@ export default function LandingPage() {
             
             <Card className="group hover-elevate relative overflow-visible">
               <CardContent className="pt-6 text-center">
-                <div className="flex items-center justify-center w-14 h-14 rounded-full bg-cyan-500/10 mx-auto mb-4 group-hover:glow-lime transition-all">
-                  <Wind className="h-7 w-7 text-cyan-500" />
+                <div className="flex items-center justify-center w-14 h-14 rounded-full bg-primary/10 mx-auto mb-4 group-hover:glow-lime transition-all">
+                  <Wind className="h-7 w-7 text-primary" />
                 </div>
                 <h3 className="font-semibold text-lg mb-2">Wind</h3>
                 <p className="text-sm text-muted-foreground">
@@ -97,8 +97,8 @@ export default function LandingPage() {
             
             <Card className="group hover-elevate relative overflow-visible">
               <CardContent className="pt-6 text-center">
-                <div className="flex items-center justify-center w-14 h-14 rounded-full bg-emerald-500/10 mx-auto mb-4 group-hover:glow-lime transition-all">
-                  <Zap className="h-7 w-7 text-emerald-500" />
+                <div className="flex items-center justify-center w-14 h-14 rounded-full bg-secondary/20 mx-auto mb-4 group-hover:glow-lime transition-all">
+                  <Zap className="h-7 w-7 text-primary" />
                 </div>
                 <h3 className="font-semibold text-lg mb-2">Hydrogen</h3>
                 <p className="text-sm text-muted-foreground">
@@ -286,12 +286,13 @@ export default function LandingPage() {
                 src="/brand/ecoxchange-logo.png" 
                 alt="EcoXchange" 
                 className="h-8 w-auto"
+                data-testid="img-footer-logo"
               />
               <span className="text-sm text-muted-foreground">Clean Energy Market</span>
             </div>
-            <div className="flex items-center gap-6 text-sm text-muted-foreground">
-              <Link href="/about" className="hover:text-foreground transition-colors">About</Link>
-              <Link href="/compliance" className="hover:text-foreground transition-colors">Compliance</Link>
+            <div className="flex flex-wrap items-center gap-6 text-sm text-muted-foreground">
+              <Link href="/about" className="hover:text-foreground transition-colors" data-testid="link-footer-about">About</Link>
+              <Link href="/compliance" className="hover:text-foreground transition-colors" data-testid="link-footer-compliance">Compliance</Link>
               <span>© 2024 EcoXchange Demo</span>
             </div>
           </div>

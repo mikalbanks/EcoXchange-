@@ -80,12 +80,32 @@ EcoXchange is a compliant renewable infrastructure digital securities issuance p
 11. **LedgerAccount** - USDC demo wallet
 12. **LedgerEntry** - Transaction history
 
-## Design Theme
-- Institutional fintech aesthetic (not crypto neon)
-- Primary: Emerald green (#16A34A)
-- Accent: Lime (#A3E635)
-- Dark mode by default with gradient backgrounds
-- Deep green sidebar (#0B3D2E)
+## Design Theme & Branding
+
+### Brand Assets
+- Logo: `/client/public/brand/ecoxchange-logo.png`
+- Favicon: `/client/public/favicon.png`
+
+### Brand Color Palette (CSS Variables in `client/src/index.css`)
+| Token | HSL | HEX | Usage |
+|-------|-----|-----|-------|
+| --primary | 79 69% 40% | #73AC20 | Eco Green - buttons, links, highlights |
+| --accent | 76 76% 43% | #90C11B | Primary Strong - gradients, hover states |
+| --secondary | 146 68% 22% | #135F2D | Deep Green - badges, secondary elements |
+| --background | 144 17% 5% | #0B0F0C | Near-black background |
+| --card | 140 14% 7% | #101712 | Surface/card background |
+| --sidebar | 146 68% 10% | Deep green | Sidebar background |
+
+### How to Update Colors
+All brand colors are defined as CSS variables in `:root` and `.dark` blocks in `client/src/index.css`. To change colors:
+1. Update the HSL values in the CSS variables
+2. Changes will apply globally across all components
+
+### Logo Placement
+- Header: h-10, linked to home
+- Sidebar: h-8, linked to home  
+- Login/Signup: h-14, centered above form
+- Footer: h-8 with "Clean Energy Market" tagline
 
 ## API Endpoints
 
