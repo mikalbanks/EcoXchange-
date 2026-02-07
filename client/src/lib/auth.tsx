@@ -4,14 +4,16 @@ import { useLocation } from "wouter";
 export interface AuthUser {
   id: string;
   email: string;
-  role: "INVESTOR" | "ISSUER" | "ADMIN";
+  role: "INVESTOR" | "DEVELOPER" | "ADMIN";
+  name: string;
+  orgName: string | null;
 }
 
 interface AuthContextType {
   user: AuthUser | null;
   isLoading: boolean;
   login: (email: string, password: string) => Promise<void>;
-  signup: (email: string, password: string, role: "INVESTOR" | "ISSUER") => Promise<void>;
+  signup: (email: string, password: string, role: "INVESTOR" | "DEVELOPER") => Promise<void>;
   logout: () => Promise<void>;
 }
 
@@ -56,17 +58,16 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     const data = await res.json();
     setUser(data.user);
 
-    // Redirect based on role
     if (data.user.role === "ADMIN") {
       setLocation("/admin");
-    } else if (data.user.role === "ISSUER") {
-      setLocation("/issuer");
+    } else if (data.user.role === "DEVELOPER") {
+      setLocation("/developer");
     } else {
       setLocation("/investor");
     }
   }
 
-  async function signup(email: string, password: string, role: "INVESTOR" | "ISSUER") {
+  async function signup(email: string, password: string, role: "INVESTOR" | "DEVELOPER") {
     const res = await fetch("/api/auth/signup", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
@@ -82,9 +83,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     const data = await res.json();
     setUser(data.user);
 
-    // Redirect based on role
-    if (role === "ISSUER") {
-      setLocation("/issuer");
+    if (role === "DEVELOPER") {
+      setLocation("/developer");
     } else {
       setLocation("/investor");
     }

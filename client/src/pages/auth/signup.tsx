@@ -29,13 +29,13 @@ export default function SignupPage() {
     defaultValues: {
       email: "",
       password: "",
-      role: (roleFromUrl === "issuer" ? "ISSUER" : "INVESTOR") as "INVESTOR" | "ISSUER",
+      role: (roleFromUrl === "developer" ? "DEVELOPER" : "INVESTOR") as "INVESTOR" | "DEVELOPER",
     },
   });
 
   useEffect(() => {
-    if (roleFromUrl === "issuer") {
-      form.setValue("role", "ISSUER");
+    if (roleFromUrl === "developer") {
+      form.setValue("role", "DEVELOPER");
     } else if (roleFromUrl === "investor") {
       form.setValue("role", "INVESTOR");
     }
@@ -118,18 +118,18 @@ export default function SignupPage() {
                             </label>
                             
                             <label
-                              htmlFor="issuer"
+                              htmlFor="developer"
                               className={`flex flex-col items-center gap-2 p-4 rounded-lg border-2 cursor-pointer transition-all ${
-                                field.value === "ISSUER"
+                                field.value === "DEVELOPER"
                                   ? "border-primary bg-primary/10"
                                   : "border-border hover:border-primary/50"
                               }`}
                             >
-                              <RadioGroupItem value="ISSUER" id="issuer" className="sr-only" />
+                              <RadioGroupItem value="DEVELOPER" id="developer" className="sr-only" />
                               <Building2 className="h-6 w-6 text-primary" />
-                              <span className="font-medium text-sm">Issuer</span>
+                              <span className="font-medium text-sm">Developer</span>
                               <span className="text-xs text-muted-foreground text-center">
-                                List projects
+                                Submit projects
                               </span>
                             </label>
                           </RadioGroup>

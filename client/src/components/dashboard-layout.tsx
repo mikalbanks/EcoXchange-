@@ -1,7 +1,6 @@
 import { type ReactNode } from "react";
 import { Link, useLocation } from "wouter";
 import { useAuth } from "@/lib/auth";
-import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import {
   Sidebar,
@@ -19,34 +18,30 @@ import {
 import {
   LayoutDashboard,
   FolderKanban,
-  FileStack,
-  Wallet,
-  Store,
-  Briefcase,
+  FileSearch,
   Users,
-  Settings,
   LogOut,
   Shield,
   ChevronRight,
+  Search,
+  ClipboardCheck,
 } from "lucide-react";
 
-const issuerNavItems = [
-  { title: "Overview", url: "/issuer", icon: LayoutDashboard },
-  { title: "Projects", url: "/issuer/projects", icon: FolderKanban },
-  { title: "Offerings", url: "/issuer/offerings", icon: FileStack },
+const developerNavItems = [
+  { title: "Overview", url: "/developer", icon: LayoutDashboard },
+  { title: "Projects", url: "/developer/projects", icon: FolderKanban },
 ];
 
 const investorNavItems = [
   { title: "Overview", url: "/investor", icon: LayoutDashboard },
-  { title: "Marketplace", url: "/investor/marketplace", icon: Store },
-  { title: "Portfolio", url: "/investor/portfolio", icon: Briefcase },
-  { title: "Wallet", url: "/investor/wallet", icon: Wallet },
+  { title: "Browse Deals", url: "/investor/deals", icon: Search },
+  { title: "My Interests", url: "/investor/interests", icon: FileSearch },
 ];
 
 const adminNavItems = [
   { title: "Overview", url: "/admin", icon: LayoutDashboard },
+  { title: "Review Queue", url: "/admin/projects", icon: ClipboardCheck },
   { title: "Users", url: "/admin/users", icon: Users },
-  { title: "Offerings", url: "/admin/offerings", icon: FileStack },
 ];
 
 interface DashboardLayoutProps {
@@ -69,8 +64,8 @@ export function DashboardLayout({
 
   const navItems = user?.role === "ADMIN" 
     ? adminNavItems 
-    : user?.role === "ISSUER" 
-    ? issuerNavItems 
+    : user?.role === "DEVELOPER" 
+    ? developerNavItems 
     : investorNavItems;
 
   const style = {
@@ -83,25 +78,25 @@ export function DashboardLayout({
       <div className="flex min-h-screen w-full bg-gradient-dark">
         <Sidebar className="border-r border-sidebar-border">
           <SidebarHeader className="p-4 border-b border-sidebar-border">
-            <Link href="/" className="flex items-center">
-              <img 
-                src="/brand/ecoxchange-logo.png" 
-                alt="EcoXchange" 
-                className="h-8 w-auto"
-                data-testid="img-sidebar-logo"
-              />
+            <Link href="/" className="flex items-center gap-2">
+              <div className="flex items-center gap-2">
+                <div className="w-7 h-7 rounded-md bg-primary flex items-center justify-center">
+                  <span className="text-primary-foreground font-bold text-sm">E</span>
+                </div>
+                <span className="font-semibold text-sidebar-foreground text-sm" data-testid="text-sidebar-brand">EcoXchange</span>
+              </div>
             </Link>
           </SidebarHeader>
           <SidebarContent>
             <SidebarGroup>
               <SidebarGroupLabel className="text-sidebar-foreground/50 text-xs uppercase tracking-wider">
-                {user?.role === "ADMIN" ? "Administration" : user?.role === "ISSUER" ? "Issuer Portal" : "Investor Portal"}
+                {user?.role === "ADMIN" ? "Administration" : user?.role === "DEVELOPER" ? "Developer Portal" : "Investor Portal"}
               </SidebarGroupLabel>
               <SidebarGroupContent>
                 <SidebarMenu>
                   {navItems.map((item) => {
                     const isActive = location === item.url || 
-                      (item.url !== "/" && item.url !== "/issuer" && item.url !== "/investor" && item.url !== "/admin" && location.startsWith(item.url));
+                      (item.url !== "/" && item.url !== "/developer" && item.url !== "/investor" && item.url !== "/admin" && location.startsWith(item.url));
                     return (
                       <SidebarMenuItem key={item.title}>
                         <SidebarMenuButton 
@@ -112,7 +107,7 @@ export function DashboardLayout({
                             isActive && "bg-sidebar-accent text-sidebar-accent-foreground"
                           )}
                         >
-                          <Link href={item.url} data-testid={`nav-${item.title.toLowerCase()}`}>
+                          <Link href={item.url} data-testid={`nav-${item.title.toLowerCase().replace(/\s/g, "-")}`}>
                             <item.icon className="h-4 w-4" />
                             <span>{item.title}</span>
                           </Link>
@@ -172,7 +167,7 @@ export function DashboardLayout({
                     <span className="text-xs font-medium text-muted-foreground">{user.role}</span>
                   </div>
                   <span className="text-sm text-muted-foreground hidden sm:inline" data-testid="text-header-email">
-                    {user.email}
+                    {user.name || user.email}
                   </span>
                 </div>
               )}

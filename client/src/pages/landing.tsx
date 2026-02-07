@@ -26,19 +26,19 @@ export default function LandingPage() {
           <div className="max-w-4xl mx-auto text-center">
             <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-primary/10 border border-primary/20 mb-6">
               <img src="/brand/ecoxchange-logo.png" alt="" className="h-4 w-auto" data-testid="img-hero-badge-logo" />
-              <span className="text-sm font-medium text-primary">Compliant Digital Securities</span>
+              <span className="text-sm font-medium text-primary">Deal Packaging for Renewable Energy</span>
             </div>
             
             <h1 className="text-4xl md:text-6xl font-bold tracking-tight mb-6" data-testid="text-hero-title">
-              Invest in the Future of
+              Package and Invest in
               <span className="block text-transparent bg-clip-text bg-gradient-to-r from-primary to-accent mt-2">
-                Clean Energy Infrastructure
+                Renewable Energy Projects
               </span>
             </h1>
             
             <p className="text-lg md:text-xl text-muted-foreground max-w-2xl mx-auto mb-10">
-              EcoXchange is a compliant platform for renewable infrastructure digital securities. 
-              Connect with institutional-grade solar, wind, and hydrogen projects.
+              EcoXchange packages renewable energy projects for investment readiness. 
+              Developers submit projects, get scored for readiness, and connect with capital providers.
             </p>
             
             <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
@@ -49,10 +49,10 @@ export default function LandingPage() {
                   <ArrowRight className="h-4 w-4" />
                 </Button>
               </Link>
-              <Link href="/auth/signup?role=issuer">
-                <Button size="lg" variant="outline" className="min-w-[180px] gap-2" data-testid="button-cta-issuer">
+              <Link href="/auth/signup?role=developer">
+                <Button size="lg" variant="outline" className="min-w-[180px] gap-2" data-testid="button-cta-developer">
                   <Building2 className="h-5 w-5" />
-                  For Issuers
+                  For Developers
                 </Button>
               </Link>
             </div>
@@ -100,9 +100,9 @@ export default function LandingPage() {
                 <div className="flex items-center justify-center w-14 h-14 rounded-full bg-secondary/20 mx-auto mb-4 group-hover:glow-lime transition-all">
                   <Zap className="h-7 w-7 text-primary" />
                 </div>
-                <h3 className="font-semibold text-lg mb-2">Hydrogen</h3>
+                <h3 className="font-semibold text-lg mb-2">Storage</h3>
                 <p className="text-sm text-muted-foreground">
-                  Green hydrogen production facilities and infrastructure
+                  Battery storage paired with solar for firm capacity
                 </p>
               </CardContent>
             </Card>
@@ -125,9 +125,9 @@ export default function LandingPage() {
               
               <div className="space-y-4">
                 {[
-                  { icon: Shield, title: "Reg D Compliant", desc: "SEC-compliant private placement framework" },
-                  { icon: Users, title: "KYC/AML Verified", desc: "Full investor verification and accreditation" },
-                  { icon: TrendingUp, title: "Transparent Reporting", desc: "Real-time portfolio tracking and distributions" },
+                  { icon: Shield, title: "Readiness Scoring", desc: "Automated 0-100 scoring engine with actionable feedback" },
+                  { icon: Users, title: "Capital Matching", desc: "Connect developers with aligned capital providers" },
+                  { icon: TrendingUp, title: "Deal Packaging", desc: "Data room checklists and export-ready investor packets" },
                 ].map((feature) => (
                   <div key={feature.title} className="flex gap-4">
                     <div className="flex items-center justify-center w-10 h-10 rounded-lg bg-primary/10 shrink-0">
@@ -202,15 +202,15 @@ export default function LandingPage() {
               <CardContent className="p-6">
                 <div className="flex items-center gap-3 mb-6">
                   <Building2 className="h-6 w-6 text-primary" />
-                  <h3 className="text-xl font-semibold">For Issuers</h3>
+                  <h3 className="text-xl font-semibold">For Developers</h3>
                 </div>
                 <ol className="space-y-4">
                   {[
-                    "Register and complete issuer verification",
-                    "Create project profile with asset details",
-                    "Structure offering with Reg D parameters",
-                    "Receive commitments from verified investors",
-                    "Issue digital securities upon closing",
+                    "Register and complete developer profile",
+                    "Submit project through guided wizard",
+                    "Get automated readiness score and data room checklist",
+                    "Upload documents and improve project readiness",
+                    "Receive investor interest expressions",
                   ].map((step, i) => (
                     <li key={i} className="flex gap-3">
                       <span className="flex items-center justify-center w-6 h-6 rounded-full bg-primary/10 text-primary text-sm font-medium shrink-0">
@@ -231,11 +231,11 @@ export default function LandingPage() {
                 </div>
                 <ol className="space-y-4">
                   {[
-                    "Register and complete KYC verification",
-                    "Verify accredited investor status",
-                    "Browse marketplace for open offerings",
-                    "Submit investment commitment",
-                    "Receive tokens and quarterly distributions",
+                    "Register and create investor profile",
+                    "Browse approved deals with readiness ratings",
+                    "Review data rooms and capital stacks",
+                    "Submit non-binding interest expressions",
+                    "Connect with developers for deal terms",
                   ].map((step, i) => (
                     <li key={i} className="flex gap-3">
                       <span className="flex items-center justify-center w-6 h-6 rounded-full bg-primary/10 text-primary text-sm font-medium shrink-0">
@@ -267,9 +267,9 @@ export default function LandingPage() {
                   Create Account
                 </Button>
               </Link>
-              <Link href="/about">
+              <Link href="/auth/login">
                 <Button size="lg" variant="outline" className="min-w-[180px]">
-                  Learn More
+                  Sign In
                 </Button>
               </Link>
             </div>
@@ -291,9 +291,8 @@ export default function LandingPage() {
               <span className="text-sm text-muted-foreground">Clean Energy Market</span>
             </div>
             <div className="flex flex-wrap items-center gap-6 text-sm text-muted-foreground">
-              <Link href="/about" className="hover:text-foreground transition-colors" data-testid="link-footer-about">About</Link>
-              <Link href="/compliance" className="hover:text-foreground transition-colors" data-testid="link-footer-compliance">Compliance</Link>
-              <span>© 2024 EcoXchange Demo</span>
+              <Link href="/auth/login" className="hover:text-foreground transition-colors" data-testid="link-footer-login">Sign In</Link>
+              <span>© 2025 EcoXchange Demo</span>
             </div>
           </div>
         </div>

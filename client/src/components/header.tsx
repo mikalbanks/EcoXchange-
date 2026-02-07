@@ -30,11 +30,11 @@ export function Header() {
 
         {isPublicPage && (
           <nav className="hidden md:flex items-center gap-6">
-            <Link href="/about" className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors" data-testid="link-about">
-              About
+            <Link href="/auth/login" className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors" data-testid="link-signin">
+              Sign In
             </Link>
-            <Link href="/compliance" className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors" data-testid="link-compliance">
-              Compliance
+            <Link href="/auth/signup" className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors" data-testid="link-signup">
+              Get Started
             </Link>
           </nav>
         )}
@@ -57,7 +57,7 @@ export function Header() {
                 <DropdownMenuSeparator />
                 <DropdownMenuItem asChild>
                   <Link 
-                    href={user.role === "ADMIN" ? "/admin" : user.role === "ISSUER" ? "/issuer" : "/investor"} 
+                    href={user.role === "ADMIN" ? "/admin" : user.role === "DEVELOPER" ? "/developer" : "/investor"} 
                     className="flex items-center gap-2 cursor-pointer"
                     data-testid="link-dashboard"
                   >

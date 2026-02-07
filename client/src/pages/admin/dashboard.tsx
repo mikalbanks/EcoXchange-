@@ -1,36 +1,57 @@
 import { useQuery } from "@tanstack/react-query";
-import { Link } from "wouter";
 import { DashboardLayout } from "@/components/dashboard-layout";
 import { StatsCard } from "@/components/stats-card";
-import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
-import { 
-  Users, 
-  FileStack, 
-  DollarSign, 
-  ShieldCheck,
-  ArrowRight
+import {
+  FolderKanban,
+  Send,
+  CheckCircle,
+  XCircle,
+  BarChart3,
+  DollarSign,
+  Clock,
 } from "lucide-react";
 
 interface AdminStats {
-  totalUsers: number;
-  totalOfferings: number;
-  totalRaised: number;
-  pendingKyc: number;
+  totalProjects: number;
+  submitted: number;
+  inReview: number;
+  approved: number;
+  rejected: number;
+  avgReadinessScore: number;
+  totalIntentAmount: number;
+  totalInterests: number;
 }
 
 export default function AdminDashboard() {
-  const { data: stats, isLoading } = useQuery<AdminStats>({
+  const { data: stats, isLoading, error } = useQuery<AdminStats>({
     queryKey: ["/api/admin/stats"],
   });
+
+  if (error) {
+    return (
+      <DashboardLayout
+        title="Admin Dashboard"
+        description="Platform overview and project review management"
+      >
+        <Card>
+          <CardContent className="p-6">
+            <p className="text-destructive" data-testid="text-error">
+              Failed to load dashboard stats. Please try again later.
+            </p>
+          </CardContent>
+        </Card>
+      </DashboardLayout>
+    );
+  }
 
   return (
     <DashboardLayout
       title="Admin Dashboard"
-      description="Platform overview and management"
+      description="Platform overview and project review management"
     >
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
         {isLoading ? (
           <>
             {[...Array(4)].map((_, i) => (
@@ -45,89 +66,64 @@ export default function AdminDashboard() {
         ) : (
           <>
             <StatsCard
-              title="Total Users"
-              value={stats?.totalUsers ?? 0}
-              icon={Users}
+              title="Total Projects"
+              value={stats?.totalProjects ?? 0}
+              icon={FolderKanban}
+              data-testid="stat-total-projects"
             />
             <StatsCard
-              title="Total Offerings"
-              value={stats?.totalOfferings ?? 0}
-              icon={FileStack}
+              title="Submitted"
+              value={stats?.submitted ?? 0}
+              description="Pending review"
+              icon={Send}
             />
             <StatsCard
-              title="Total Raised"
-              value={`$${((stats?.totalRaised ?? 0) / 1000000).toFixed(1)}M`}
-              icon={DollarSign}
+              title="In Review"
+              value={stats?.inReview ?? 0}
+              icon={Clock}
             />
             <StatsCard
-              title="Pending KYC"
-              value={stats?.pendingKyc ?? 0}
-              description="Awaiting review"
-              icon={ShieldCheck}
+              title="Approved"
+              value={stats?.approved ?? 0}
+              icon={CheckCircle}
             />
           </>
         )}
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between gap-2">
-            <CardTitle className="text-lg">Quick Actions</CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-3">
-            <Link href="/admin/users" className="block">
-              <div className="flex items-center justify-between p-3 rounded-lg hover-elevate cursor-pointer">
-                <div className="flex items-center gap-3">
-                  <div className="flex items-center justify-center w-10 h-10 rounded-lg bg-primary/10">
-                    <Users className="h-5 w-5 text-primary" />
-                  </div>
-                  <div>
-                    <p className="font-medium">Manage Users</p>
-                    <p className="text-sm text-muted-foreground">KYC approvals and accreditation</p>
-                  </div>
-                </div>
-                <ArrowRight className="h-5 w-5 text-muted-foreground" />
-              </div>
-            </Link>
-            
-            <Link href="/admin/offerings" className="block">
-              <div className="flex items-center justify-between p-3 rounded-lg hover-elevate cursor-pointer">
-                <div className="flex items-center gap-3">
-                  <div className="flex items-center justify-center w-10 h-10 rounded-lg bg-primary/10">
-                    <FileStack className="h-5 w-5 text-primary" />
-                  </div>
-                  <div>
-                    <p className="font-medium">View Offerings</p>
-                    <p className="text-sm text-muted-foreground">All platform offerings</p>
-                  </div>
-                </div>
-                <ArrowRight className="h-5 w-5 text-muted-foreground" />
-              </div>
-            </Link>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader>
-            <CardTitle className="text-lg">Platform Status</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-4">
-              <div className="flex items-center justify-between p-3 rounded-lg bg-muted/50">
-                <span className="text-sm text-muted-foreground">Demo Mode</span>
-                <span className="font-medium text-primary">USDC Simulation Active</span>
-              </div>
-              <div className="flex items-center justify-between p-3 rounded-lg bg-muted/50">
-                <span className="text-sm text-muted-foreground">Compliance</span>
-                <span className="font-medium">Reg D (Stubbed)</span>
-              </div>
-              <div className="flex items-center justify-between p-3 rounded-lg bg-muted/50">
-                <span className="text-sm text-muted-foreground">Token Standard</span>
-                <span className="font-medium">ERC-3643 (Simulated)</span>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+        {isLoading ? (
+          <>
+            {[...Array(3)].map((_, i) => (
+              <Card key={i}>
+                <CardContent className="pt-6">
+                  <Skeleton className="h-4 w-24 mb-2" />
+                  <Skeleton className="h-8 w-16" />
+                </CardContent>
+              </Card>
+            ))}
+          </>
+        ) : (
+          <>
+            <StatsCard
+              title="Rejected"
+              value={stats?.rejected ?? 0}
+              icon={XCircle}
+            />
+            <StatsCard
+              title="Avg Readiness Score"
+              value={stats?.avgReadinessScore != null ? `${Math.round(stats.avgReadinessScore)}` : "N/A"}
+              description="Out of 100"
+              icon={BarChart3}
+            />
+            <StatsCard
+              title="Total Interest"
+              value={`$${(stats?.totalIntentAmount ?? 0).toLocaleString()}`}
+              description={`${stats?.totalInterests ?? 0} expressions of interest`}
+              icon={DollarSign}
+            />
+          </>
+        )}
       </div>
     </DashboardLayout>
   );

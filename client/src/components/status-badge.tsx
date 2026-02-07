@@ -3,78 +3,67 @@ import { cn } from "@/lib/utils";
 
 interface StatusBadgeProps {
   status: string;
-  type?: "kyc" | "offering" | "project" | "commitment" | "distribution";
+  type?: "readiness" | "project" | "interest" | "checklist";
   className?: string;
 }
 
-export function StatusBadge({ status, type = "offering", className }: StatusBadgeProps) {
+export function StatusBadge({ status, type = "project", className }: StatusBadgeProps) {
   const getVariant = () => {
     const upperStatus = status.toUpperCase();
     
-    // KYC statuses
-    if (type === "kyc") {
+    if (type === "readiness") {
       switch (upperStatus) {
-        case "APPROVED":
+        case "GREEN":
           return "bg-emerald-500/20 text-emerald-400 border-emerald-500/30";
-        case "PENDING":
+        case "YELLOW":
           return "bg-yellow-500/20 text-yellow-400 border-yellow-500/30";
-        case "REJECTED":
+        case "RED":
           return "bg-red-500/20 text-red-400 border-red-500/30";
-        case "NOT_STARTED":
         default:
           return "bg-muted text-muted-foreground";
       }
     }
 
-    // Offering statuses
-    if (type === "offering") {
-      switch (upperStatus) {
-        case "OPEN":
-          return "bg-emerald-500/20 text-emerald-400 border-emerald-500/30";
-        case "DRAFT":
-          return "bg-muted text-muted-foreground";
-        case "CLOSED":
-          return "bg-blue-500/20 text-blue-400 border-blue-500/30";
-        default:
-          return "bg-muted text-muted-foreground";
-      }
-    }
-
-    // Project statuses
     if (type === "project") {
       switch (upperStatus) {
         case "APPROVED":
           return "bg-emerald-500/20 text-emerald-400 border-emerald-500/30";
-        case "UNDER_REVIEW":
+        case "SUBMITTED":
+        case "IN_REVIEW":
           return "bg-yellow-500/20 text-yellow-400 border-yellow-500/30";
-        case "INTAKE":
+        case "REJECTED":
+          return "bg-red-500/20 text-red-400 border-red-500/30";
+        case "DRAFT":
         default:
           return "bg-muted text-muted-foreground";
       }
     }
 
-    // Commitment statuses
-    if (type === "commitment") {
+    if (type === "interest") {
       switch (upperStatus) {
-        case "CONFIRMED":
+        case "ACCEPTED_BY_DEV":
           return "bg-emerald-500/20 text-emerald-400 border-emerald-500/30";
         case "SUBMITTED":
           return "bg-yellow-500/20 text-yellow-400 border-yellow-500/30";
-        case "CANCELED":
+        case "DECLINED_BY_DEV":
           return "bg-red-500/20 text-red-400 border-red-500/30";
+        case "WITHDRAWN":
+          return "bg-muted text-muted-foreground";
         default:
           return "bg-muted text-muted-foreground";
       }
     }
 
-    // Distribution statuses
-    if (type === "distribution") {
+    if (type === "checklist") {
       switch (upperStatus) {
-        case "PAID":
+        case "VERIFIED":
           return "bg-emerald-500/20 text-emerald-400 border-emerald-500/30";
-        case "PENDING":
+        case "UPLOADED":
+          return "bg-blue-500/20 text-blue-400 border-blue-500/30";
+        case "MISSING":
+          return "bg-red-500/20 text-red-400 border-red-500/30";
         default:
-          return "bg-yellow-500/20 text-yellow-400 border-yellow-500/30";
+          return "bg-muted text-muted-foreground";
       }
     }
 

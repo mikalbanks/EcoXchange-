@@ -2,10 +2,9 @@ import type { Express } from "express";
 import { createServer, type Server } from "http";
 import session from "express-session";
 import MemoryStore from "memorystore";
-import { storage, verifyPassword } from "./storage";
+import { storage, verifyPassword, computeReadiness, generateChecklist, computeCapitalStack } from "./storage";
+import { loginSchema, signupSchema, projectWizardStep1Schema, projectWizardStep2Schema, projectWizardStep3Schema, investorInterestFormSchema } from "@shared/schema";
 import { z } from "zod";
-import { loginSchema, signupSchema, projectFormSchema, offeringFormSchema, investmentFormSchema } from "@shared/schema";
-import { randomUUID } from "crypto";
 
 const SessionStore = MemoryStore(session);
 
@@ -13,58 +12,39 @@ export async function registerRoutes(
   httpServer: Server,
   app: Express
 ): Promise<Server> {
-  // Session middleware
+  // Session middleware (same as existing)
   app.use(
     session({
       secret: process.env.SESSION_SECRET || "ecoxchange-demo-secret",
       resave: false,
       saveUninitialized: false,
-      store: new SessionStore({
-        checkPeriod: 86400000,
-      }),
-      cookie: {
-        secure: false,
-        httpOnly: true,
-        maxAge: 24 * 60 * 60 * 1000,
-      },
+      store: new SessionStore({ checkPeriod: 86400000 }),
+      cookie: { secure: false, httpOnly: true, maxAge: 24 * 60 * 60 * 1000 },
     })
   );
 
-  // Middleware to get current user
   const requireAuth = (req: any, res: any, next: any) => {
-    if (!req.session.userId) {
-      return res.status(401).json({ message: "Unauthorized" });
-    }
+    if (!req.session.userId) return res.status(401).json({ message: "Unauthorized" });
     next();
   };
 
   const requireRole = (...roles: string[]) => {
     return async (req: any, res: any, next: any) => {
-      if (!req.session.userId) {
-        return res.status(401).json({ message: "Unauthorized" });
-      }
+      if (!req.session.userId) return res.status(401).json({ message: "Unauthorized" });
       const user = await storage.getUser(req.session.userId);
-      if (!user || !roles.includes(user.role)) {
-        return res.status(403).json({ message: "Forbidden" });
-      }
+      if (!user || !roles.includes(user.role)) return res.status(403).json({ message: "Forbidden" });
       req.user = user;
       next();
     };
   };
 
-  // ===================
-  // Auth Routes
-  // ===================
+  // ═══ Auth Routes ═══
 
   app.get("/api/auth/me", async (req: any, res) => {
-    if (!req.session.userId) {
-      return res.status(401).json({ message: "Not authenticated" });
-    }
+    if (!req.session.userId) return res.status(401).json({ message: "Not authenticated" });
     const user = await storage.getUser(req.session.userId);
-    if (!user) {
-      return res.status(401).json({ message: "User not found" });
-    }
-    res.json({ user: { id: user.id, email: user.email, role: user.role } });
+    if (!user) return res.status(401).json({ message: "User not found" });
+    res.json({ user: { id: user.id, email: user.email, role: user.role, name: user.name, orgName: user.orgName } });
   });
 
   app.post("/api/auth/login", async (req: any, res) => {
@@ -75,7 +55,7 @@ export async function registerRoutes(
         return res.status(401).json({ message: "Invalid email or password" });
       }
       req.session.userId = user.id;
-      res.json({ user: { id: user.id, email: user.email, role: user.role } });
+      res.json({ user: { id: user.id, email: user.email, role: user.role, name: user.name, orgName: user.orgName } });
     } catch (error: any) {
       res.status(400).json({ message: error.message });
     }
@@ -85,608 +65,531 @@ export async function registerRoutes(
     try {
       const data = signupSchema.parse(req.body);
       const existing = await storage.getUserByEmail(data.email);
-      if (existing) {
-        return res.status(400).json({ message: "Email already registered" });
-      }
-
+      if (existing) return res.status(400).json({ message: "Email already registered" });
       const user = await storage.createUser({
         email: data.email,
         passwordHash: data.password,
         role: data.role,
+        name: data.email.split("@")[0],
+        orgName: null,
       });
-
-      // Create profile
-      if (data.role === "INVESTOR") {
-        await storage.createInvestorProfile({
-          userId: user.id,
-          kycStatus: "PENDING",
-          accredited: false,
-          accreditedAt: null,
-          fullName: null,
-          entityName: null,
-        });
-        // Create demo ledger account
-        const account = await storage.createLedgerAccount({
-          userId: user.id,
-          label: "USDC Demo Wallet",
-          currency: "USDC_DEMO",
-        });
-        // Seed with demo balance
-        await storage.createLedgerEntry({
-          accountId: account.id,
-          type: "DEPOSIT",
-          amount: "100000",
-          referenceType: null,
-          referenceId: null,
-          memo: "Initial demo balance",
-        });
-      } else if (data.role === "ISSUER") {
-        await storage.createIssuerProfile({
-          userId: user.id,
-          companyName: data.email.split("@")[0] + " Company",
-          website: null,
-        });
-      }
-
       req.session.userId = user.id;
-      res.json({ user: { id: user.id, email: user.email, role: user.role } });
+      res.json({ user: { id: user.id, email: user.email, role: user.role, name: user.name, orgName: user.orgName } });
     } catch (error: any) {
       res.status(400).json({ message: error.message });
     }
   });
 
   app.post("/api/auth/logout", (req: any, res) => {
-    req.session.destroy(() => {
-      res.json({ message: "Logged out" });
-    });
+    req.session.destroy(() => { res.json({ message: "Logged out" }); });
   });
 
-  // ===================
-  // Issuer Routes
-  // ===================
+  // ═══ Developer Routes ═══
 
-  app.get("/api/issuer/stats", requireRole("ISSUER"), async (req: any, res) => {
-    const issuerId = req.user.id;
-    const projects = await storage.getProjectsByIssuer(issuerId);
-    const offerings = await storage.getOfferingsByIssuer(issuerId);
-    
-    let totalRaised = 0;
-    let totalInvestors = new Set<string>();
-    
-    for (const offering of offerings) {
-      const commitments = await storage.getCommitmentsByOffering(offering.id);
-      for (const c of commitments) {
-        if (c.status === "CONFIRMED") {
-          totalRaised += Number(c.amount);
-          totalInvestors.add(c.investorId);
-        }
-      }
+  // Developer stats
+  app.get("/api/developer/stats", requireRole("DEVELOPER"), async (req: any, res) => {
+    const projects = await storage.getProjectsByDeveloper(req.user.id);
+    let totalInterestAmount = 0;
+    let totalInterests = 0;
+    let missingItems = 0;
+    for (const p of projects) {
+      const interests = await storage.getInterestsByProject(p.id);
+      totalInterests += interests.length;
+      totalInterestAmount += interests.reduce((sum, i) => sum + (Number(i.amountIntent) || 0), 0);
+      const checklist = await storage.getChecklistByProject(p.id);
+      missingItems += checklist.filter(c => c.required && c.status === "MISSING").length;
     }
-
     res.json({
       totalProjects: projects.length,
-      totalOfferings: offerings.length,
-      totalRaised,
-      totalInvestors: totalInvestors.size,
+      submitted: projects.filter(p => p.status === "SUBMITTED" || p.status === "IN_REVIEW").length,
+      approved: projects.filter(p => p.status === "APPROVED").length,
+      totalInterestAmount,
+      totalInterests,
+      missingItems,
     });
   });
 
-  app.get("/api/issuer/projects", requireRole("ISSUER"), async (req: any, res) => {
-    const projects = await storage.getProjectsByIssuer(req.user.id);
-    res.json(projects);
+  // Developer project list
+  app.get("/api/developer/projects", requireRole("DEVELOPER"), async (req: any, res) => {
+    const projects = await storage.getProjectsByDeveloper(req.user.id);
+    const result = await Promise.all(
+      projects.map(async (p) => {
+        const score = await storage.getReadinessScore(p.id);
+        const checklist = await storage.getChecklistByProject(p.id);
+        const interests = await storage.getInterestsByProject(p.id);
+        const missingCount = checklist.filter(c => c.required && c.status === "MISSING").length;
+        return {
+          ...p,
+          readinessScore: score ? { score: score.score, rating: score.rating } : null,
+          missingCount,
+          interestCount: interests.length,
+        };
+      })
+    );
+    res.json(result);
   });
 
-  app.get("/api/issuer/projects/:id", requireRole("ISSUER"), async (req: any, res) => {
-    const project = await storage.getProject(req.params.id);
-    if (!project || project.issuerId !== req.user.id) {
-      return res.status(404).json({ message: "Project not found" });
-    }
-    res.json(project);
-  });
-
-  app.get("/api/issuer/projects/:id/offerings", requireRole("ISSUER"), async (req: any, res) => {
-    const offerings = await storage.getOfferingsByProject(req.params.id);
-    res.json(offerings);
-  });
-
-  app.post("/api/issuer/projects", requireRole("ISSUER"), async (req: any, res) => {
+  // Create project (full wizard submit)
+  app.post("/api/developer/projects", requireRole("DEVELOPER"), async (req: any, res) => {
     try {
-      const data = projectFormSchema.parse(req.body);
+      const { step1, step2, step3 } = req.body;
+      const s1 = projectWizardStep1Schema.parse(step1);
+      const s2 = projectWizardStep2Schema.parse(step2);
+      const s3 = projectWizardStep3Schema.parse(step3);
+
       const project = await storage.createProject({
-        issuerId: req.user.id,
-        name: data.name,
-        assetType: data.assetType,
-        location: data.location,
-        capacityMW: data.capacityMW || null,
-        status: "INTAKE",
-        ppaCounterparty: data.ppaCounterparty || null,
-        ppaTenorYears: data.ppaTenorYears || null,
-        ppaPrice: data.ppaPrice || null,
-        description: data.description || null,
+        developerId: req.user.id,
+        name: s1.name,
+        technology: s1.technology,
+        stage: s1.stage,
+        country: "US",
+        state: s1.state,
+        county: s1.county,
+        capacityMW: s1.capacityMW,
+        status: "SUBMITTED",
+        summary: null,
+        offtakerType: s2.offtakerType,
+        interconnectionStatus: s2.interconnectionStatus,
+        permittingStatus: s2.permittingStatus,
+        siteControlStatus: s2.siteControlStatus,
+        feocAttested: s2.feocAttested,
+        latitude: null,
+        longitude: null,
       });
+
+      // Create capital stack
+      const totalCapex = Number(s3.totalCapex) || 0;
+      const taxCreditEstimated = Number(s3.taxCreditEstimated) || 0;
+      const computed = computeCapitalStack(totalCapex, taxCreditEstimated);
+      await storage.createCapitalStack({
+        projectId: project.id,
+        totalCapex: s3.totalCapex,
+        taxCreditType: s3.taxCreditType,
+        taxCreditEstimated: s3.taxCreditEstimated,
+        taxCreditTransferabilityReady: s3.taxCreditTransferabilityReady,
+        equityNeeded: computed.equityNeeded.toString(),
+        debtPlaceholder: "0",
+        notes: null,
+      });
+
+      // Generate checklist
+      const checklistDefs = generateChecklist(project);
+      for (const item of checklistDefs) {
+        await storage.createChecklistItem({
+          projectId: project.id,
+          key: item.key,
+          label: item.label,
+          required: item.required,
+          status: "MISSING",
+          notes: null,
+        });
+      }
+
+      // Compute readiness score
+      const documents = await storage.getDocumentsByProject(project.id);
+      const checklist = await storage.getChecklistByProject(project.id);
+      const capitalStack = await storage.getCapitalStack(project.id);
+      const scoreResult = computeReadiness(project, documents, checklist, capitalStack);
+      await storage.createReadinessScore({
+        projectId: project.id,
+        score: scoreResult.score,
+        rating: scoreResult.rating,
+        reasons: JSON.stringify(scoreResult.reasons),
+        flags: JSON.stringify(scoreResult.flags),
+        overriddenByAdmin: false,
+        overrideNotes: null,
+      });
+
       res.json(project);
     } catch (error: any) {
       res.status(400).json({ message: error.message });
     }
   });
 
-  app.get("/api/issuer/offerings", requireRole("ISSUER"), async (req: any, res) => {
-    const offerings = await storage.getOfferingsByIssuer(req.user.id);
-    const result = await Promise.all(
-      offerings.map(async (o) => {
-        const project = await storage.getProject(o.projectId);
-        return { ...o, projectName: project?.name || "Unknown" };
-      })
-    );
-    res.json(result);
-  });
-
-  app.get("/api/issuer/offerings/recent", requireRole("ISSUER"), async (req: any, res) => {
-    const offerings = await storage.getOfferingsByIssuer(req.user.id);
-    const result = await Promise.all(
-      offerings.slice(0, 5).map(async (o) => {
-        const project = await storage.getProject(o.projectId);
-        return { 
-          id: o.id,
-          name: o.name,
-          status: o.status,
-          targetRaise: o.targetRaise,
-          projectName: project?.name || "Unknown"
-        };
-      })
-    );
-    res.json(result);
-  });
-
-  app.get("/api/issuer/offerings/:id", requireRole("ISSUER"), async (req: any, res) => {
-    const offering = await storage.getOffering(req.params.id);
-    if (!offering || offering.issuerId !== req.user.id) {
-      return res.status(404).json({ message: "Offering not found" });
+  // Get project detail
+  app.get("/api/developer/projects/:id", requireRole("DEVELOPER"), async (req: any, res) => {
+    const project = await storage.getProject(req.params.id);
+    if (!project || project.developerId !== req.user.id) {
+      return res.status(404).json({ message: "Project not found" });
     }
-    const project = await storage.getProject(offering.projectId);
-    res.json({ ...offering, projectName: project?.name || "Unknown" });
-  });
+    const score = await storage.getReadinessScore(project.id);
+    const capitalStack = await storage.getCapitalStack(project.id);
+    const checklist = await storage.getChecklistByProject(project.id);
+    const documents = await storage.getDocumentsByProject(project.id);
+    const interests = await storage.getInterestsByProject(project.id);
 
-  app.get("/api/issuer/offerings/:id/commitments", requireRole("ISSUER"), async (req: any, res) => {
-    const commitments = await storage.getCommitmentsByOffering(req.params.id);
-    const result = await Promise.all(
-      commitments.map(async (c) => {
-        const user = await storage.getUser(c.investorId);
-        return { ...c, investorEmail: user?.email || "Unknown" };
+    // Enrich interests with investor info
+    const enrichedInterests = await Promise.all(
+      interests.map(async (i) => {
+        const investor = await storage.getUser(i.investorId);
+        return { ...i, investorName: investor?.name || "Unknown", investorOrg: investor?.orgName || "" };
       })
     );
-    res.json(result);
+
+    res.json({
+      project,
+      readinessScore: score ? {
+        ...score,
+        reasons: score.reasons ? JSON.parse(score.reasons) : [],
+        flags: score.flags ? JSON.parse(score.flags) : {},
+      } : null,
+      capitalStack,
+      checklist,
+      documents,
+      interests: enrichedInterests,
+    });
   });
 
-  app.get("/api/issuer/offerings/:id/tokenization", requireRole("ISSUER"), async (req: any, res) => {
-    const tokenization = await storage.getTokenization(req.params.id);
-    res.json(tokenization || null);
-  });
+  // Upload document (simulated - store metadata only)
+  app.post("/api/developer/projects/:id/documents", requireRole("DEVELOPER"), async (req: any, res) => {
+    const project = await storage.getProject(req.params.id);
+    if (!project || project.developerId !== req.user.id) {
+      return res.status(404).json({ message: "Project not found" });
+    }
+    const { type, filename } = req.body;
+    if (!type || !filename) return res.status(400).json({ message: "type and filename required" });
 
-  app.get("/api/issuer/offerings/:id/distributions", requireRole("ISSUER"), async (req: any, res) => {
-    const distributions = await storage.getDistributionsByOffering(req.params.id);
-    res.json(distributions);
-  });
+    const doc = await storage.createDocument({
+      projectId: project.id,
+      type,
+      filename,
+      filePath: `/uploads/${project.id}/${filename}`,
+      uploadedBy: req.user.id,
+    });
 
-  app.post("/api/issuer/offerings", requireRole("ISSUER"), async (req: any, res) => {
-    try {
-      const data = offeringFormSchema.parse(req.body);
-      const project = await storage.getProject(data.projectId);
-      if (!project || project.issuerId !== req.user.id) {
-        return res.status(404).json({ message: "Project not found" });
+    // Update checklist items based on doc type
+    const keyMap: Record<string, string> = {
+      SITE_CONTROL: "site_control",
+      INTERCONNECTION: "interconnection",
+      PERMITS: "permitting",
+      FINANCIAL_MODEL: "financial_model",
+      FEOC_ATTESTATION: "feoc_attestation",
+      EPC: "epc_contract",
+      INSURANCE: "insurance",
+    };
+    const checklistKey = keyMap[type];
+    if (checklistKey) {
+      const checklist = await storage.getChecklistByProject(project.id);
+      const item = checklist.find(c => c.key === checklistKey);
+      if (item) {
+        await storage.updateChecklistItem(item.id, { status: "UPLOADED" });
       }
-
-      const offering = await storage.createOffering({
-        projectId: data.projectId,
-        issuerId: req.user.id,
-        name: data.name,
-        status: "DRAFT",
-        targetRaise: data.targetRaise,
-        minInvestment: data.minInvestment,
-        securityType: data.securityType,
-        distributionFrequency: data.distributionFrequency,
-        expectedIrr: data.expectedIrr || null,
-        openDate: data.openDate ? new Date(data.openDate) : null,
-        closeDate: data.closeDate ? new Date(data.closeDate) : null,
-        jurisdiction: data.jurisdiction,
-      });
-      res.json(offering);
-    } catch (error: any) {
-      res.status(400).json({ message: error.message });
-    }
-  });
-
-  app.post("/api/issuer/offerings/:id/publish", requireRole("ISSUER"), async (req: any, res) => {
-    const offering = await storage.getOffering(req.params.id);
-    if (!offering || offering.issuerId !== req.user.id) {
-      return res.status(404).json({ message: "Offering not found" });
-    }
-    if (offering.status !== "DRAFT") {
-      return res.status(400).json({ message: "Only draft offerings can be published" });
-    }
-    const updated = await storage.updateOffering(req.params.id, { status: "OPEN", openDate: new Date() });
-    res.json(updated);
-  });
-
-  app.post("/api/issuer/offerings/:id/close", requireRole("ISSUER"), async (req: any, res) => {
-    const offering = await storage.getOffering(req.params.id);
-    if (!offering || offering.issuerId !== req.user.id) {
-      return res.status(404).json({ message: "Offering not found" });
-    }
-    if (offering.status !== "OPEN") {
-      return res.status(400).json({ message: "Only open offerings can be closed" });
-    }
-    const updated = await storage.updateOffering(req.params.id, { status: "CLOSED", closeDate: new Date() });
-    res.json(updated);
-  });
-
-  app.post("/api/issuer/offerings/:id/mint", requireRole("ISSUER"), async (req: any, res) => {
-    const offering = await storage.getOffering(req.params.id);
-    if (!offering || offering.issuerId !== req.user.id) {
-      return res.status(404).json({ message: "Offering not found" });
-    }
-    if (offering.status !== "CLOSED") {
-      return res.status(400).json({ message: "Offering must be closed before minting" });
     }
 
-    const existingToken = await storage.getTokenization(req.params.id);
-    if (existingToken) {
-      return res.status(400).json({ message: "Tokens already minted" });
-    }
-
-    // Create tokenization
-    const symbol = offering.name.replace(/[^A-Z]/gi, "").toUpperCase().slice(0, 6);
-    const tokenization = await storage.createTokenization({
-      offeringId: offering.id,
-      tokenStandard: "ERC3643_SIM",
-      tokenSymbol: symbol,
-      tokenName: `${offering.name} Token`,
-      tokenContractAddress: null,
-    });
-
-    // Get confirmed commitments and allocate tokens proportionally
-    const commitments = await storage.getCommitmentsByOffering(offering.id);
-    const confirmedCommitments = commitments.filter(c => c.status === "CONFIRMED");
-    const totalCommitted = confirmedCommitments.reduce((sum, c) => sum + Number(c.amount), 0);
-
-    for (const commitment of confirmedCommitments) {
-      const proportion = Number(commitment.amount) / totalCommitted;
-      const tokens = proportion * 1000000; // 1M total tokens
-      await storage.createTokenAllocation({
-        tokenizationId: tokenization.id,
-        investorId: commitment.investorId,
-        tokens: tokens.toFixed(8),
+    // Recompute readiness
+    const documents = await storage.getDocumentsByProject(project.id);
+    const checklist = await storage.getChecklistByProject(project.id);
+    const capitalStack = await storage.getCapitalStack(project.id);
+    const updatedProject = await storage.getProject(project.id);
+    if (updatedProject) {
+      const scoreResult = computeReadiness(updatedProject, documents, checklist, capitalStack);
+      await storage.updateReadinessScore(project.id, {
+        score: scoreResult.score,
+        rating: scoreResult.rating,
+        reasons: JSON.stringify(scoreResult.reasons),
+        flags: JSON.stringify(scoreResult.flags),
       });
     }
 
-    res.json(tokenization);
+    res.json(doc);
   });
 
-  // ===================
-  // Investor Routes
-  // ===================
-
-  app.get("/api/investor/stats", requireRole("INVESTOR"), async (req: any, res) => {
-    const profile = await storage.getInvestorProfile(req.user.id);
-    const balance = await storage.getLedgerBalance(req.user.id);
-    const commitments = await storage.getCommitmentsByInvestor(req.user.id);
-    const tokens = await storage.getTokenAllocationsByInvestor(req.user.id);
-    const payouts = await storage.getPayoutsByInvestor(req.user.id);
-
-    const totalInvested = commitments
-      .filter(c => c.status === "CONFIRMED")
-      .reduce((sum, c) => sum + Number(c.amount), 0);
-    const totalTokens = tokens.reduce((sum, t) => sum + Number(t.tokens), 0);
-    const totalDistributions = payouts
-      .filter(p => p.status === "PAID")
-      .reduce((sum, p) => sum + Number(p.amount), 0);
-
-    res.json({
-      balance,
-      totalInvested,
-      totalTokens,
-      totalDistributions,
-      kycStatus: profile?.kycStatus || "NOT_STARTED",
-      accredited: profile?.accredited || false,
-    });
+  // Update interest status (accept/decline)
+  app.patch("/api/developer/interests/:id", requireRole("DEVELOPER"), async (req: any, res) => {
+    const { status } = req.body;
+    if (!["ACCEPTED_BY_DEV", "DECLINED_BY_DEV"].includes(status)) {
+      return res.status(400).json({ message: "Invalid status" });
+    }
+    const updated = await storage.updateInterest(req.params.id, { status });
+    if (!updated) return res.status(404).json({ message: "Interest not found" });
+    res.json(updated);
   });
 
-  app.get("/api/investor/status", requireRole("INVESTOR"), async (req: any, res) => {
-    const profile = await storage.getInvestorProfile(req.user.id);
-    const balance = await storage.getLedgerBalance(req.user.id);
-    res.json({
-      kycStatus: profile?.kycStatus || "NOT_STARTED",
-      accredited: profile?.accredited || false,
-      balance,
-    });
-  });
+  // ═══ Investor Routes ═══
 
-  app.get("/api/investor/commitments", requireRole("INVESTOR"), async (req: any, res) => {
-    const commitments = await storage.getCommitmentsByInvestor(req.user.id);
+  // Browse approved projects (deal list)
+  app.get("/api/investor/deals", requireRole("INVESTOR"), async (req: any, res) => {
+    const projects = await storage.getProjectsByStatus("APPROVED");
     const result = await Promise.all(
-      commitments.map(async (c) => {
-        const offering = await storage.getOffering(c.offeringId);
-        const project = offering ? await storage.getProject(offering.projectId) : null;
-        return {
-          ...c,
-          offeringName: offering?.name || "Unknown",
-          projectName: project?.name || "Unknown",
-        };
-      })
-    );
-    res.json(result);
-  });
-
-  app.get("/api/investor/commitments/recent", requireRole("INVESTOR"), async (req: any, res) => {
-    const commitments = await storage.getCommitmentsByInvestor(req.user.id);
-    const result = await Promise.all(
-      commitments.slice(0, 5).map(async (c) => {
-        const offering = await storage.getOffering(c.offeringId);
-        return {
-          id: c.id,
-          offeringName: offering?.name || "Unknown",
-          amount: c.amount,
-          status: c.status,
-        };
-      })
-    );
-    res.json(result);
-  });
-
-  app.get("/api/investor/tokens", requireRole("INVESTOR"), async (req: any, res) => {
-    const tokens = await storage.getTokenAllocationsByInvestor(req.user.id);
-    const result = await Promise.all(
-      tokens.map(async (t) => {
-        const allocations = await storage.getTokenAllocationsByTokenization(t.tokenizationId);
-        // Find tokenization info - we need to iterate through offerings
-        const offerings = await storage.getAllOfferings();
-        let tokenInfo = null;
-        for (const o of offerings) {
-          const tok = await storage.getTokenization(o.id);
-          if (tok && tok.id === t.tokenizationId) {
-            tokenInfo = { ...tok, offeringName: o.name };
-            break;
-          }
-        }
-        return {
-          ...t,
-          tokenSymbol: tokenInfo?.tokenSymbol || "UNK",
-          tokenName: tokenInfo?.tokenName || "Unknown",
-          offeringName: tokenInfo?.offeringName || "Unknown",
-        };
-      })
-    );
-    res.json(result);
-  });
-
-  app.get("/api/investor/payouts", requireRole("INVESTOR"), async (req: any, res) => {
-    const payouts = await storage.getPayoutsByInvestor(req.user.id);
-    const result = await Promise.all(
-      payouts.map(async (p) => {
-        // Find distribution and offering info
-        const offerings = await storage.getAllOfferings();
-        let distInfo = null;
-        for (const o of offerings) {
-          const dists = await storage.getDistributionsByOffering(o.id);
-          const dist = dists.find(d => d.id === p.distributionId);
-          if (dist) {
-            distInfo = { ...dist, offeringName: o.name };
-            break;
-          }
-        }
+      projects.map(async (p) => {
+        const score = await storage.getReadinessScore(p.id);
+        const capitalStack = await storage.getCapitalStack(p.id);
+        const interests = await storage.getInterestsByProject(p.id);
+        const totalInterest = interests.reduce((sum, i) => sum + (Number(i.amountIntent) || 0), 0);
         return {
           ...p,
-          offeringName: distInfo?.offeringName || "Unknown",
-          periodStart: distInfo?.periodStart || "",
-          periodEnd: distInfo?.periodEnd || "",
+          readinessScore: score ? { score: score.score, rating: score.rating } : null,
+          capitalStack: capitalStack ? {
+            totalCapex: capitalStack.totalCapex,
+            equityNeeded: capitalStack.equityNeeded,
+            taxCreditEstimated: capitalStack.taxCreditEstimated,
+            taxCreditType: capitalStack.taxCreditType,
+          } : null,
+          totalInterest,
+          interestCount: interests.length,
         };
       })
     );
     res.json(result);
   });
 
-  app.get("/api/investor/wallet/stats", requireRole("INVESTOR"), async (req: any, res) => {
-    const account = await storage.getLedgerAccount(req.user.id);
-    if (!account) {
-      return res.json({ balance: 0, totalDeposits: 0, totalReserved: 0, totalPayouts: 0 });
+  // Deal room detail
+  app.get("/api/investor/deals/:id", requireRole("INVESTOR"), async (req: any, res) => {
+    const project = await storage.getProject(req.params.id);
+    if (!project || project.status !== "APPROVED") {
+      return res.status(404).json({ message: "Deal not found" });
     }
+    const score = await storage.getReadinessScore(project.id);
+    const capitalStack = await storage.getCapitalStack(project.id);
+    const documents = await storage.getDocumentsByProject(project.id);
+    const checklist = await storage.getChecklistByProject(project.id);
+    const developer = await storage.getUser(project.developerId);
 
-    const entries = await storage.getLedgerEntries(account.id);
-    let totalDeposits = 0;
-    let totalReserved = 0;
-    let totalPayouts = 0;
-
-    for (const entry of entries) {
-      const amount = Number(entry.amount);
-      if (entry.type === "DEPOSIT") totalDeposits += amount;
-      if (entry.type === "RESERVE") totalReserved += amount;
-      if (entry.type === "PAYOUT") totalPayouts += amount;
-    }
-
-    const balance = await storage.getLedgerBalance(req.user.id);
+    const myInterests = await storage.getInterestsByInvestor(req.user.id);
+    const myInterest = myInterests.find(i => i.projectId === project.id);
 
     res.json({
-      balance,
-      totalDeposits,
-      totalReserved,
-      totalPayouts,
+      project,
+      readinessScore: score ? {
+        ...score,
+        reasons: score.reasons ? JSON.parse(score.reasons) : [],
+        flags: score.flags ? JSON.parse(score.flags) : {},
+      } : null,
+      capitalStack,
+      documents,
+      checklist,
+      developer: developer ? { name: developer.name, orgName: developer.orgName } : null,
+      myInterest: myInterest || null,
     });
   });
 
-  app.get("/api/investor/wallet/entries", requireRole("INVESTOR"), async (req: any, res) => {
-    const account = await storage.getLedgerAccount(req.user.id);
-    if (!account) {
-      return res.json([]);
-    }
-    const entries = await storage.getLedgerEntries(account.id);
-    res.json(entries);
-  });
-
-  app.post("/api/investor/offerings/:id/invest", requireRole("INVESTOR"), async (req: any, res) => {
+  // Submit interest
+  app.post("/api/investor/deals/:id/interest", requireRole("INVESTOR"), async (req: any, res) => {
     try {
-      const data = investmentFormSchema.parse(req.body);
-      const offering = await storage.getOffering(req.params.id);
-      if (!offering || offering.status !== "OPEN") {
-        return res.status(404).json({ message: "Offering not available" });
+      const data = investorInterestFormSchema.parse(req.body);
+      const project = await storage.getProject(req.params.id);
+      if (!project || project.status !== "APPROVED") {
+        return res.status(404).json({ message: "Deal not found" });
       }
 
-      const profile = await storage.getInvestorProfile(req.user.id);
-      if (!profile || profile.kycStatus !== "APPROVED" || !profile.accredited) {
-        return res.status(403).json({ message: "KYC and accreditation required" });
+      // Check if already submitted
+      const existing = await storage.getInterestsByInvestor(req.user.id);
+      const alreadySubmitted = existing.find(i => i.projectId === project.id && i.status === "SUBMITTED");
+      if (alreadySubmitted) {
+        return res.status(400).json({ message: "You already have an active interest submission for this project" });
       }
 
-      const amount = Number(data.amount);
-      if (amount < Number(offering.minInvestment)) {
-        return res.status(400).json({ message: `Minimum investment is $${offering.minInvestment}` });
-      }
-
-      const balance = await storage.getLedgerBalance(req.user.id);
-      if (balance < amount) {
-        return res.status(400).json({ message: "Insufficient balance" });
-      }
-
-      // Create commitment
-      const commitment = await storage.createCommitment({
-        offeringId: offering.id,
+      const interest = await storage.createInterest({
+        projectId: project.id,
         investorId: req.user.id,
-        amount: data.amount,
-        status: "CONFIRMED",
+        amountIntent: data.amountIntent,
+        structurePreference: data.structurePreference,
+        timeline: data.timeline,
+        message: data.message || null,
+        status: "SUBMITTED",
       });
 
-      // Create reserve ledger entry
-      const account = await storage.getLedgerAccount(req.user.id);
-      if (account) {
-        await storage.createLedgerEntry({
-          accountId: account.id,
-          type: "RESERVE",
-          amount: data.amount,
-          referenceType: "COMMITMENT",
-          referenceId: commitment.id,
-          memo: `Reserved for ${offering.name}`,
-        });
-      }
-
-      res.json(commitment);
+      res.json(interest);
     } catch (error: any) {
       res.status(400).json({ message: error.message });
     }
   });
 
-  // ===================
-  // Public/Marketplace Routes
-  // ===================
-
-  app.get("/api/offerings/marketplace", async (req, res) => {
-    const offerings = await storage.getOpenOfferings();
+  // My interests
+  app.get("/api/investor/interests", requireRole("INVESTOR"), async (req: any, res) => {
+    const interests = await storage.getInterestsByInvestor(req.user.id);
     const result = await Promise.all(
-      offerings.map(async (o) => {
-        const project = await storage.getProject(o.projectId);
-        return {
-          ...o,
-          projectName: project?.name || "Unknown",
-          assetType: project?.assetType || "OTHER",
-        };
+      interests.map(async (i) => {
+        const project = await storage.getProject(i.projectId);
+        return { ...i, projectName: project?.name || "Unknown", projectState: project?.state || "" };
       })
     );
     res.json(result);
   });
 
-  app.get("/api/offerings/:id", async (req, res) => {
-    const offering = await storage.getOffering(req.params.id);
-    if (!offering) {
-      return res.status(404).json({ message: "Offering not found" });
-    }
-    const project = await storage.getProject(offering.projectId);
-    res.json({
-      ...offering,
-      projectName: project?.name || "Unknown",
-      assetType: project?.assetType || "OTHER",
-      location: project?.location || "",
-      capacityMW: project?.capacityMW || null,
-    });
-  });
+  // ═══ Admin Routes ═══
 
-  // ===================
-  // Admin Routes
-  // ===================
-
+  // Admin stats
   app.get("/api/admin/stats", requireRole("ADMIN"), async (req: any, res) => {
-    const users = await storage.getAllUsers();
-    const offerings = await storage.getAllOfferings();
-    const profiles = await storage.getAllInvestorProfiles();
+    const allProjects = await storage.getAllProjects();
+    const allInterests = await storage.getAllInterests();
+    const totalIntentAmount = allInterests.reduce((sum, i) => sum + (Number(i.amountIntent) || 0), 0);
 
-    let totalRaised = 0;
-    for (const offering of offerings) {
-      const commitments = await storage.getCommitmentsByOffering(offering.id);
-      for (const c of commitments) {
-        if (c.status === "CONFIRMED") {
-          totalRaised += Number(c.amount);
-        }
-      }
-    }
-
-    const pendingKyc = profiles.filter(p => p.profile.kycStatus === "PENDING").length;
+    const scores = await Promise.all(allProjects.map(p => storage.getReadinessScore(p.id)));
+    const validScores = scores.filter(Boolean) as any[];
+    const avgScore = validScores.length > 0 ? Math.round(validScores.reduce((sum, s) => sum + s.score, 0) / validScores.length) : 0;
 
     res.json({
-      totalUsers: users.length,
-      totalOfferings: offerings.length,
-      totalRaised,
-      pendingKyc,
+      totalProjects: allProjects.length,
+      submitted: allProjects.filter(p => p.status === "SUBMITTED").length,
+      inReview: allProjects.filter(p => p.status === "IN_REVIEW").length,
+      approved: allProjects.filter(p => p.status === "APPROVED").length,
+      rejected: allProjects.filter(p => p.status === "REJECTED").length,
+      avgReadinessScore: avgScore,
+      totalIntentAmount,
+      totalInterests: allInterests.length,
     });
   });
 
-  app.get("/api/admin/investors", requireRole("ADMIN"), async (req: any, res) => {
-    const profiles = await storage.getAllInvestorProfiles();
-    res.json(profiles);
-  });
-
-  app.get("/api/admin/offerings", requireRole("ADMIN"), async (req: any, res) => {
-    const offerings = await storage.getAllOfferings();
+  // Admin project list (review queue)
+  app.get("/api/admin/projects", requireRole("ADMIN"), async (req: any, res) => {
+    const allProjects = await storage.getAllProjects();
     const result = await Promise.all(
-      offerings.map(async (o) => {
-        const project = await storage.getProject(o.projectId);
-        const issuer = await storage.getUser(o.issuerId);
-        const commitments = await storage.getCommitmentsByOffering(o.id);
+      allProjects.map(async (p) => {
+        const score = await storage.getReadinessScore(p.id);
+        const developer = await storage.getUser(p.developerId);
         return {
-          ...o,
-          projectName: project?.name || "Unknown",
-          issuerEmail: issuer?.email || "Unknown",
-          totalCommitments: commitments.length,
+          ...p,
+          readinessScore: score ? { score: score.score, rating: score.rating } : null,
+          developerName: developer?.name || "Unknown",
+          developerOrg: developer?.orgName || "",
         };
       })
     );
     res.json(result);
   });
 
-  app.post("/api/admin/users/:userId/approve-kyc", requireRole("ADMIN"), async (req: any, res) => {
-    const profile = await storage.getInvestorProfile(req.params.userId);
-    if (!profile) {
-      return res.status(404).json({ message: "Profile not found" });
-    }
-    const updated = await storage.updateInvestorProfile(req.params.userId, { kycStatus: "APPROVED" });
-    res.json(updated);
-  });
+  // Admin project detail (full data room view)
+  app.get("/api/admin/projects/:id", requireRole("ADMIN"), async (req: any, res) => {
+    const project = await storage.getProject(req.params.id);
+    if (!project) return res.status(404).json({ message: "Project not found" });
 
-  app.post("/api/admin/users/:userId/reject-kyc", requireRole("ADMIN"), async (req: any, res) => {
-    const profile = await storage.getInvestorProfile(req.params.userId);
-    if (!profile) {
-      return res.status(404).json({ message: "Profile not found" });
-    }
-    const updated = await storage.updateInvestorProfile(req.params.userId, { kycStatus: "REJECTED" });
-    res.json(updated);
-  });
+    const score = await storage.getReadinessScore(project.id);
+    const capitalStack = await storage.getCapitalStack(project.id);
+    const checklist = await storage.getChecklistByProject(project.id);
+    const documents = await storage.getDocumentsByProject(project.id);
+    const interests = await storage.getInterestsByProject(project.id);
+    const logs = await storage.getApprovalLogs(project.id);
+    const developer = await storage.getUser(project.developerId);
 
-  app.post("/api/admin/users/:userId/set-accredited", requireRole("ADMIN"), async (req: any, res) => {
-    const { accredited } = req.body;
-    const profile = await storage.getInvestorProfile(req.params.userId);
-    if (!profile) {
-      return res.status(404).json({ message: "Profile not found" });
-    }
-    const updated = await storage.updateInvestorProfile(req.params.userId, {
-      accredited,
-      accreditedAt: accredited ? new Date() : null,
+    const enrichedInterests = await Promise.all(
+      interests.map(async (i) => {
+        const investor = await storage.getUser(i.investorId);
+        return { ...i, investorName: investor?.name || "Unknown", investorOrg: investor?.orgName || "" };
+      })
+    );
+
+    const enrichedLogs = await Promise.all(
+      logs.map(async (l) => {
+        const admin = await storage.getUser(l.adminId);
+        return { ...l, adminName: admin?.name || "Unknown" };
+      })
+    );
+
+    res.json({
+      project,
+      readinessScore: score ? {
+        ...score,
+        reasons: score.reasons ? JSON.parse(score.reasons) : [],
+        flags: score.flags ? JSON.parse(score.flags) : {},
+      } : null,
+      capitalStack,
+      checklist,
+      documents,
+      interests: enrichedInterests,
+      logs: enrichedLogs,
+      developer: developer ? { name: developer.name, orgName: developer.orgName, email: developer.email } : null,
     });
+  });
+
+  // Admin actions: approve/reject/request-changes
+  app.post("/api/admin/projects/:id/action", requireRole("ADMIN"), async (req: any, res) => {
+    const { action, notes } = req.body;
+    if (!["APPROVE", "REJECT", "REQUEST_CHANGES"].includes(action)) {
+      return res.status(400).json({ message: "Invalid action" });
+    }
+    const project = await storage.getProject(req.params.id);
+    if (!project) return res.status(404).json({ message: "Project not found" });
+
+    const statusMap: Record<string, string> = {
+      APPROVE: "APPROVED",
+      REJECT: "REJECTED",
+      REQUEST_CHANGES: "DRAFT",
+    };
+
+    await storage.updateProject(project.id, { status: statusMap[action] });
+    await storage.createApprovalLog({
+      projectId: project.id,
+      adminId: req.user.id,
+      action,
+      notes: notes || null,
+    });
+
+    const updated = await storage.getProject(project.id);
     res.json(updated);
+  });
+
+  // Admin score override
+  app.post("/api/admin/projects/:id/override-score", requireRole("ADMIN"), async (req: any, res) => {
+    const { score, notes } = req.body;
+    if (typeof score !== "number" || score < 0 || score > 100) {
+      return res.status(400).json({ message: "Score must be between 0 and 100" });
+    }
+    const project = await storage.getProject(req.params.id);
+    if (!project) return res.status(404).json({ message: "Project not found" });
+
+    let rating = "YELLOW";
+    if (score >= 75) rating = "GREEN";
+    else if (score < 50) rating = "RED";
+
+    await storage.updateReadinessScore(project.id, {
+      score,
+      rating,
+      overriddenByAdmin: true,
+      overrideNotes: notes || null,
+    });
+
+    await storage.createApprovalLog({
+      projectId: project.id,
+      adminId: req.user.id,
+      action: "OVERRIDE_SCORE",
+      notes: `Score overridden to ${score} (${rating}). ${notes || ""}`,
+    });
+
+    const updatedScore = await storage.getReadinessScore(project.id);
+    res.json(updatedScore);
+  });
+
+  // Admin users list
+  app.get("/api/admin/users", requireRole("ADMIN"), async (req: any, res) => {
+    const users = await storage.getAllUsers();
+    res.json(users.map(u => ({
+      id: u.id,
+      email: u.email,
+      role: u.role,
+      name: u.name,
+      orgName: u.orgName,
+      createdAt: u.createdAt,
+    })));
+  });
+
+  // Export packet data (JSON for the frontend to render as printable HTML)
+  app.get("/api/admin/projects/:id/export", requireRole("ADMIN"), async (req: any, res) => {
+    const project = await storage.getProject(req.params.id);
+    if (!project) return res.status(404).json({ message: "Project not found" });
+
+    const score = await storage.getReadinessScore(project.id);
+    const capitalStack = await storage.getCapitalStack(project.id);
+    const checklist = await storage.getChecklistByProject(project.id);
+    const documents = await storage.getDocumentsByProject(project.id);
+    const developer = await storage.getUser(project.developerId);
+    const interests = await storage.getInterestsByProject(project.id);
+
+    res.json({
+      project,
+      readinessScore: score ? {
+        ...score,
+        reasons: score.reasons ? JSON.parse(score.reasons) : [],
+        flags: score.flags ? JSON.parse(score.flags) : {},
+      } : null,
+      capitalStack,
+      checklist,
+      documents,
+      developer: developer ? { name: developer.name, orgName: developer.orgName } : null,
+      totalInterest: interests.reduce((sum, i) => sum + (Number(i.amountIntent) || 0), 0),
+      interestCount: interests.length,
+      generatedAt: new Date().toISOString(),
+    });
   });
 
   return httpServer;

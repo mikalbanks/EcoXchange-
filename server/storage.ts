@@ -1,21 +1,15 @@
 import { randomUUID } from "crypto";
+import { createHash } from "crypto";
 import {
   type User, type InsertUser,
-  type InvestorProfile, type InsertInvestorProfile,
-  type IssuerProfile, type InsertIssuerProfile,
   type Project, type InsertProject,
-  type Offering, type InsertOffering,
-  type Commitment, type InsertCommitment,
-  type Tokenization, type InsertTokenization,
-  type TokenAllocation, type InsertTokenAllocation,
-  type Distribution, type InsertDistribution,
-  type DistributionPayout, type InsertDistributionPayout,
-  type LedgerAccount, type InsertLedgerAccount,
-  type LedgerEntry, type InsertLedgerEntry,
+  type CapitalStack, type InsertCapitalStack,
+  type ReadinessScore, type InsertReadinessScore,
+  type Document, type InsertDocument,
+  type DataRoomChecklistItem, type InsertDataRoomChecklistItem,
+  type InvestorInterest, type InsertInvestorInterest,
+  type ProjectApprovalLog, type InsertProjectApprovalLog,
 } from "@shared/schema";
-
-// Utility for password hashing (simple for demo)
-import { createHash } from "crypto";
 
 function hashPassword(password: string): string {
   return createHash("sha256").update(password).digest("hex");
@@ -26,237 +20,433 @@ export function verifyPassword(password: string, hash: string): boolean {
 }
 
 export interface IStorage {
-  // Users
   getUser(id: string): Promise<User | undefined>;
   getUserByEmail(email: string): Promise<User | undefined>;
   createUser(user: InsertUser): Promise<User>;
   getAllUsers(): Promise<User[]>;
 
-  // Investor Profiles
-  getInvestorProfile(userId: string): Promise<InvestorProfile | undefined>;
-  createInvestorProfile(profile: InsertInvestorProfile): Promise<InvestorProfile>;
-  updateInvestorProfile(userId: string, updates: Partial<InvestorProfile>): Promise<InvestorProfile | undefined>;
-  getAllInvestorProfiles(): Promise<Array<{ user: User; profile: InvestorProfile }>>;
-
-  // Issuer Profiles
-  getIssuerProfile(userId: string): Promise<IssuerProfile | undefined>;
-  createIssuerProfile(profile: InsertIssuerProfile): Promise<IssuerProfile>;
-
-  // Projects
   getProject(id: string): Promise<Project | undefined>;
-  getProjectsByIssuer(issuerId: string): Promise<Project[]>;
+  getProjectsByDeveloper(developerId: string): Promise<Project[]>;
   createProject(project: InsertProject): Promise<Project>;
+  updateProject(id: string, updates: Partial<Project>): Promise<Project | undefined>;
   getAllProjects(): Promise<Project[]>;
+  getProjectsByStatus(...statuses: string[]): Promise<Project[]>;
 
-  // Offerings
-  getOffering(id: string): Promise<Offering | undefined>;
-  getOfferingsByIssuer(issuerId: string): Promise<Offering[]>;
-  getOfferingsByProject(projectId: string): Promise<Offering[]>;
-  getOpenOfferings(): Promise<Offering[]>;
-  createOffering(offering: InsertOffering): Promise<Offering>;
-  updateOffering(id: string, updates: Partial<Offering>): Promise<Offering | undefined>;
-  getAllOfferings(): Promise<Offering[]>;
+  getCapitalStack(projectId: string): Promise<CapitalStack | undefined>;
+  createCapitalStack(cs: InsertCapitalStack): Promise<CapitalStack>;
+  updateCapitalStack(projectId: string, updates: Partial<CapitalStack>): Promise<CapitalStack | undefined>;
 
-  // Commitments
-  getCommitment(id: string): Promise<Commitment | undefined>;
-  getCommitmentsByOffering(offeringId: string): Promise<Commitment[]>;
-  getCommitmentsByInvestor(investorId: string): Promise<Commitment[]>;
-  createCommitment(commitment: InsertCommitment): Promise<Commitment>;
-  updateCommitment(id: string, updates: Partial<Commitment>): Promise<Commitment | undefined>;
+  getReadinessScore(projectId: string): Promise<ReadinessScore | undefined>;
+  createReadinessScore(score: InsertReadinessScore): Promise<ReadinessScore>;
+  updateReadinessScore(projectId: string, updates: Partial<ReadinessScore>): Promise<ReadinessScore | undefined>;
 
-  // Tokenization
-  getTokenization(offeringId: string): Promise<Tokenization | undefined>;
-  createTokenization(tokenization: InsertTokenization): Promise<Tokenization>;
+  getDocumentsByProject(projectId: string): Promise<Document[]>;
+  createDocument(doc: InsertDocument): Promise<Document>;
+  deleteDocument(id: string): Promise<void>;
 
-  // Token Allocations
-  getTokenAllocationsByInvestor(investorId: string): Promise<TokenAllocation[]>;
-  getTokenAllocationsByTokenization(tokenizationId: string): Promise<TokenAllocation[]>;
-  createTokenAllocation(allocation: InsertTokenAllocation): Promise<TokenAllocation>;
+  getChecklistByProject(projectId: string): Promise<DataRoomChecklistItem[]>;
+  createChecklistItem(item: InsertDataRoomChecklistItem): Promise<DataRoomChecklistItem>;
+  updateChecklistItem(id: string, updates: Partial<DataRoomChecklistItem>): Promise<DataRoomChecklistItem | undefined>;
 
-  // Distributions
-  getDistributionsByOffering(offeringId: string): Promise<Distribution[]>;
-  createDistribution(distribution: InsertDistribution): Promise<Distribution>;
-  updateDistribution(id: string, updates: Partial<Distribution>): Promise<Distribution | undefined>;
+  getInterestsByProject(projectId: string): Promise<InvestorInterest[]>;
+  getInterestsByInvestor(investorId: string): Promise<InvestorInterest[]>;
+  createInterest(interest: InsertInvestorInterest): Promise<InvestorInterest>;
+  updateInterest(id: string, updates: Partial<InvestorInterest>): Promise<InvestorInterest | undefined>;
+  getAllInterests(): Promise<InvestorInterest[]>;
 
-  // Distribution Payouts
-  getPayoutsByDistribution(distributionId: string): Promise<DistributionPayout[]>;
-  getPayoutsByInvestor(investorId: string): Promise<DistributionPayout[]>;
-  createDistributionPayout(payout: InsertDistributionPayout): Promise<DistributionPayout>;
-  updateDistributionPayout(id: string, updates: Partial<DistributionPayout>): Promise<DistributionPayout | undefined>;
-
-  // Ledger
-  getLedgerAccount(userId: string): Promise<LedgerAccount | undefined>;
-  createLedgerAccount(account: InsertLedgerAccount): Promise<LedgerAccount>;
-  getLedgerEntries(accountId: string): Promise<LedgerEntry[]>;
-  createLedgerEntry(entry: InsertLedgerEntry): Promise<LedgerEntry>;
-  getLedgerBalance(userId: string): Promise<number>;
+  getApprovalLogs(projectId: string): Promise<ProjectApprovalLog[]>;
+  createApprovalLog(log: InsertProjectApprovalLog): Promise<ProjectApprovalLog>;
 }
+
+// ─── Readiness Scoring Engine ────────────────────────────────────────────────
+
+export function computeReadiness(
+  project: Project,
+  documents: Document[],
+  checklist: DataRoomChecklistItem[],
+  capitalStack: CapitalStack | undefined
+): { score: number; rating: string; reasons: string[]; flags: Record<string, boolean> } {
+  let score = 100;
+  const reasons: string[] = [];
+  const flags: Record<string, boolean> = {
+    feocRisk: false,
+    missingDocs: false,
+    interconnectionRisk: false,
+    permittingRisk: false,
+    siteControlRisk: false,
+    offtakerRisk: false,
+  };
+
+  // Site control deductions
+  switch (project.siteControlStatus) {
+    case "NONE": score -= 25; reasons.push("No site control (-25): Obtain at minimum a LOI or Option agreement"); flags.siteControlRisk = true; break;
+    case "LOI": score -= 15; reasons.push("Site control is LOI only (-15): Upgrade to Option or Lease"); break;
+    case "OPTION": score -= 8; reasons.push("Site control is Option (-8): Consider upgrading to Lease"); break;
+  }
+
+  // Interconnection deductions
+  switch (project.interconnectionStatus) {
+    case "UNKNOWN": score -= 20; reasons.push("Interconnection status unknown (-20): Submit interconnection application"); flags.interconnectionRisk = true; break;
+    case "APPLIED": score -= 15; reasons.push("Interconnection application submitted (-15): Await study results"); break;
+    case "STUDY": score -= 10; reasons.push("Interconnection in study phase (-10): Work toward IA execution"); break;
+    case "IA_EXECUTED": score -= 3; reasons.push("IA executed (-3): Proceed to construction readiness"); break;
+  }
+
+  // Permitting deductions
+  switch (project.permittingStatus) {
+    case "UNKNOWN": score -= 15; reasons.push("Permitting status unknown (-15): Begin permitting process"); flags.permittingRisk = true; break;
+    case "IN_PROGRESS": score -= 10; reasons.push("Permitting in progress (-10): Complete and submit permit applications"); break;
+    case "SUBMITTED": score -= 5; reasons.push("Permits submitted (-5): Await approval"); break;
+  }
+
+  // Offtaker deductions
+  switch (project.offtakerType) {
+    case "MERCHANT": score -= 12; reasons.push("Merchant offtaker (-12): Higher revenue risk without contracted buyer"); flags.offtakerRisk = true; break;
+    case "COMMUNITY_SOLAR": score -= 6; reasons.push("Community solar offtaker (-6): Moderate subscriber acquisition risk"); break;
+    case "C_AND_I": score -= 4; reasons.push("C&I offtaker (-4): Verify creditworthiness of counterparty"); break;
+    case "UTILITY": score -= 2; reasons.push("Utility offtaker (-2): Strong counterparty, minimal risk"); break;
+  }
+
+  // Document completeness
+  const missingRequired = checklist.filter(item => item.required && item.status === "MISSING");
+  const docDeduction = Math.min(missingRequired.length * 3, 24);
+  if (docDeduction > 0) {
+    score -= docDeduction;
+    reasons.push(`${missingRequired.length} required documents missing (-${docDeduction}): Upload outstanding items`);
+    flags.missingDocs = true;
+  }
+
+  // Tax credit readiness
+  if (capitalStack) {
+    const taxCreditEst = Number(capitalStack.taxCreditEstimated) || 0;
+    if (taxCreditEst <= 0) {
+      score -= 8;
+      reasons.push("Tax credit estimate missing (-8): Provide estimated tax credit value");
+    }
+    if (!capitalStack.taxCreditTransferabilityReady) {
+      score -= 6;
+      reasons.push("Tax credit transferability not ready (-6): Confirm transferability eligibility");
+    }
+  } else {
+    score -= 14;
+    reasons.push("No capital stack defined (-14): Complete financial information");
+  }
+
+  // FEOC risk
+  if (!project.feocAttested) {
+    score -= 8;
+    reasons.push("FEOC attestation not provided (-8): Complete FEOC compliance attestation");
+    flags.feocRisk = true;
+  }
+
+  score = Math.max(0, score);
+
+  // Determine rating
+  const hasFatalFlag = project.siteControlStatus === "NONE" ||
+    (project.interconnectionStatus === "UNKNOWN" && (project.stage === "NTP" || project.stage === "CONSTRUCTION"));
+
+  let rating: string;
+  if (score >= 75 && !hasFatalFlag) {
+    rating = "GREEN";
+  } else if (score < 50 || hasFatalFlag) {
+    rating = "RED";
+  } else {
+    rating = "YELLOW";
+  }
+
+  // Sort reasons by deduction size (largest first) and take top 5
+  const topReasons = reasons.slice(0, 5);
+
+  return { score, rating, reasons: topReasons, flags };
+}
+
+// ─── Checklist Generation ────────────────────────────────────────────────────
+
+export function generateChecklist(project: Project): Array<{ key: string; label: string; required: boolean }> {
+  const items: Array<{ key: string; label: string; required: boolean }> = [
+    { key: "site_control", label: "Site Control Documentation (LOI/Option/Lease)", required: true },
+    { key: "interconnection", label: "Interconnection Application / Status Evidence", required: true },
+    { key: "permitting", label: "Permitting Evidence", required: true },
+    { key: "financial_model", label: "Basic Financial Model", required: true },
+    { key: "feoc_attestation", label: "FEOC Compliance Attestation", required: true },
+  ];
+
+  const stage = project.stage;
+  if (stage === "NTP" || stage === "CONSTRUCTION" || stage === "COD") {
+    items.push({ key: "epc_contract", label: "EPC Contract or Term Sheet", required: true });
+    items.push({ key: "insurance", label: "Insurance Evidence", required: false });
+  }
+
+  return items;
+}
+
+// ─── Capital Stack Engine ────────────────────────────────────────────────────
+
+export function computeCapitalStack(totalCapex: number, taxCreditEstimated: number): { equityNeeded: number; debtPlaceholder: number } {
+  return {
+    equityNeeded: Math.max(totalCapex - taxCreditEstimated, 0),
+    debtPlaceholder: 0,
+  };
+}
+
+// ─── MemStorage ──────────────────────────────────────────────────────────────
 
 export class MemStorage implements IStorage {
   private users: Map<string, User> = new Map();
-  private investorProfiles: Map<string, InvestorProfile> = new Map();
-  private issuerProfiles: Map<string, IssuerProfile> = new Map();
   private projects: Map<string, Project> = new Map();
-  private offerings: Map<string, Offering> = new Map();
-  private commitments: Map<string, Commitment> = new Map();
-  private tokenizations: Map<string, Tokenization> = new Map();
-  private tokenAllocations: Map<string, TokenAllocation> = new Map();
-  private distributions: Map<string, Distribution> = new Map();
-  private distributionPayouts: Map<string, DistributionPayout> = new Map();
-  private ledgerAccounts: Map<string, LedgerAccount> = new Map();
-  private ledgerEntries: Map<string, LedgerEntry> = new Map();
+  private capitalStacks: Map<string, CapitalStack> = new Map();
+  private readinessScores: Map<string, ReadinessScore> = new Map();
+  private documents: Map<string, Document> = new Map();
+  private checklistItems: Map<string, DataRoomChecklistItem> = new Map();
+  private interests: Map<string, InvestorInterest> = new Map();
+  private approvalLogs: Map<string, ProjectApprovalLog> = new Map();
 
   constructor() {
     this.seedData();
   }
 
   private seedData() {
-    // Create admin user
     const adminId = randomUUID();
     this.users.set(adminId, {
       id: adminId,
       email: "admin@ecoxchange.demo",
       passwordHash: hashPassword("Admin123!"),
       role: "ADMIN",
+      name: "Platform Admin",
+      orgName: "EcoXchange",
       createdAt: new Date(),
     });
 
-    // Create issuer user
-    const issuerId = randomUUID();
-    this.users.set(issuerId, {
-      id: issuerId,
-      email: "issuer@ecoxchange.demo",
-      passwordHash: hashPassword("Issuer123!"),
-      role: "ISSUER",
+    const devId = randomUUID();
+    this.users.set(devId, {
+      id: devId,
+      email: "developer@ecoxchange.demo",
+      passwordHash: hashPassword("Developer123!"),
+      role: "DEVELOPER",
+      name: "Sarah Chen",
+      orgName: "Sunfield Energy LLC",
       createdAt: new Date(),
     });
-    this.issuerProfiles.set(issuerId, {
-      id: randomUUID(),
-      userId: issuerId,
-      companyName: "Green Energy Partners",
-      website: "https://greenenergypartners.demo",
-    });
 
-    // Create investor user
     const investorId = randomUUID();
     this.users.set(investorId, {
       id: investorId,
       email: "investor@ecoxchange.demo",
       passwordHash: hashPassword("Investor123!"),
       role: "INVESTOR",
-      createdAt: new Date(),
-    });
-    const investorProfileId = randomUUID();
-    this.investorProfiles.set(investorId, {
-      id: investorProfileId,
-      userId: investorId,
-      kycStatus: "APPROVED",
-      accredited: true,
-      accreditedAt: new Date(),
-      fullName: "Jane Doe",
-      entityName: null,
-    });
-
-    // Create ledger account for investor with 250,000 USDC Demo
-    const ledgerAccountId = randomUUID();
-    this.ledgerAccounts.set(investorId, {
-      id: ledgerAccountId,
-      userId: investorId,
-      label: "USDC Demo Wallet",
-      currency: "USDC_DEMO",
-      createdAt: new Date(),
-    });
-    const depositEntryId = randomUUID();
-    this.ledgerEntries.set(depositEntryId, {
-      id: depositEntryId,
-      accountId: ledgerAccountId,
-      type: "DEPOSIT",
-      amount: "250000",
-      referenceType: null,
-      referenceId: null,
-      memo: "Initial demo balance",
+      name: "James Morrison",
+      orgName: "GreenVest Capital",
       createdAt: new Date(),
     });
 
-    // Create sample project
-    const projectId = randomUUID();
-    this.projects.set(projectId, {
-      id: projectId,
-      issuerId: issuerId,
-      name: "Solar Farm Alpha",
-      assetType: "SOLAR",
-      location: "Texas, USA",
-      capacityMW: "50.00",
+    // GREEN project
+    const proj1Id = randomUUID();
+    this.projects.set(proj1Id, {
+      id: proj1Id,
+      developerId: devId,
+      name: "Sunfield Solar I",
+      technology: "SOLAR",
+      stage: "NTP",
+      country: "US",
+      state: "Texas",
+      county: "Travis",
+      latitude: "30.2672",
+      longitude: "-97.7431",
+      capacityMW: "25.00",
       status: "APPROVED",
-      ppaCounterparty: "Texas Utilities Corp",
-      ppaTenorYears: 20,
-      ppaPrice: "35.00",
-      description: "A 50MW utility-scale solar project with a 20-year PPA",
-      createdAt: new Date(),
+      summary: "A 25MW utility-scale solar project in Central Texas with executed IA and approved permits. Ready for construction financing.",
+      offtakerType: "UTILITY",
+      interconnectionStatus: "IA_EXECUTED",
+      permittingStatus: "APPROVED",
+      siteControlStatus: "LEASE",
+      feocAttested: true,
+      createdAt: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000),
+      updatedAt: new Date(),
     });
 
-    // Create second project
-    const project2Id = randomUUID();
-    this.projects.set(project2Id, {
-      id: project2Id,
-      issuerId: issuerId,
-      name: "Wind Farm Beta",
-      assetType: "WIND",
-      location: "Oklahoma, USA",
-      capacityMW: "100.00",
-      status: "APPROVED",
-      ppaCounterparty: "Midwest Power Co",
-      ppaTenorYears: 15,
-      ppaPrice: "28.50",
-      description: "A 100MW onshore wind farm with stable cash flows",
-      createdAt: new Date(),
+    const cs1Id = randomUUID();
+    this.capitalStacks.set(proj1Id, {
+      id: cs1Id,
+      projectId: proj1Id,
+      totalCapex: "28500000",
+      taxCreditType: "ITC",
+      taxCreditEstimated: "8550000",
+      taxCreditTransferabilityReady: true,
+      equityNeeded: "19950000",
+      debtPlaceholder: "0",
+      notes: "30% ITC eligible. Transferability confirmed.",
     });
 
-    // Create open offering
-    const offeringId = randomUUID();
-    this.offerings.set(offeringId, {
-      id: offeringId,
-      projectId: projectId,
-      issuerId: issuerId,
-      name: "Solar Alpha Series A",
-      status: "OPEN",
-      targetRaise: "5000000",
-      minInvestment: "25000",
-      securityType: "EQUITY",
-      distributionFrequency: "QUARTERLY",
-      expectedIrr: "8.5",
-      openDate: new Date(),
-      closeDate: new Date(Date.now() + 90 * 24 * 60 * 60 * 1000),
-      jurisdiction: "US",
-      createdAt: new Date(),
+    const score1 = computeReadiness(
+      this.projects.get(proj1Id)!,
+      [],
+      [],
+      this.capitalStacks.get(proj1Id)
+    );
+    const rs1Id = randomUUID();
+    this.readinessScores.set(proj1Id, {
+      id: rs1Id,
+      projectId: proj1Id,
+      score: score1.score,
+      rating: score1.rating,
+      reasons: JSON.stringify(score1.reasons),
+      flags: JSON.stringify(score1.flags),
+      overriddenByAdmin: false,
+      overrideNotes: null,
     });
 
-    // Create a sample commitment
-    const commitmentId = randomUUID();
-    this.commitments.set(commitmentId, {
-      id: commitmentId,
-      offeringId: offeringId,
+    // Generate checklist for project 1
+    const checklist1 = generateChecklist(this.projects.get(proj1Id)!);
+    for (const item of checklist1) {
+      const itemId = randomUUID();
+      this.checklistItems.set(itemId, {
+        id: itemId,
+        projectId: proj1Id,
+        key: item.key,
+        label: item.label,
+        required: item.required,
+        status: "UPLOADED",
+        notes: null,
+      });
+    }
+
+    // Sample documents for project 1
+    const docTypes = ["SITE_CONTROL", "INTERCONNECTION", "PERMITS", "FINANCIAL_MODEL", "FEOC_ATTESTATION", "EPC"];
+    const docNames = ["lease_agreement.pdf", "ia_execution_notice.pdf", "county_permit_approval.pdf", "financial_model_v3.xlsx", "feoc_attestation_signed.pdf", "epc_term_sheet.pdf"];
+    for (let i = 0; i < docTypes.length; i++) {
+      const docId = randomUUID();
+      this.documents.set(docId, {
+        id: docId,
+        projectId: proj1Id,
+        type: docTypes[i],
+        filename: docNames[i],
+        filePath: `/uploads/${proj1Id}/${docNames[i]}`,
+        uploadedBy: devId,
+        createdAt: new Date(Date.now() - 20 * 24 * 60 * 60 * 1000),
+      });
+    }
+
+    // Sample investor interest on project 1
+    const int1Id = randomUUID();
+    this.interests.set(int1Id, {
+      id: int1Id,
+      projectId: proj1Id,
       investorId: investorId,
-      amount: "50000",
-      status: "CONFIRMED",
-      createdAt: new Date(),
+      amountIntent: "5000000",
+      structurePreference: "EQUITY",
+      timeline: "IMMEDIATE",
+      message: "Interested in the full equity tranche. Our fund has deployed $200M+ in US solar. Would like to discuss tax credit transfer terms.",
+      status: "SUBMITTED",
+      createdAt: new Date(Date.now() - 5 * 24 * 60 * 60 * 1000),
     });
 
-    // Create reserve ledger entry for the commitment
-    const reserveEntryId = randomUUID();
-    this.ledgerEntries.set(reserveEntryId, {
-      id: reserveEntryId,
-      accountId: ledgerAccountId,
-      type: "RESERVE",
-      amount: "50000",
-      referenceType: "COMMITMENT",
-      referenceId: commitmentId,
-      memo: "Reserved for Solar Alpha Series A",
-      createdAt: new Date(),
+    // RED project
+    const proj2Id = randomUUID();
+    this.projects.set(proj2Id, {
+      id: proj2Id,
+      developerId: devId,
+      name: "Desert Sun Community Solar",
+      technology: "SOLAR_STORAGE",
+      stage: "PRE_NTP",
+      country: "US",
+      state: "Arizona",
+      county: "Maricopa",
+      latitude: "33.4484",
+      longitude: "-112.0740",
+      capacityMW: "8.50",
+      status: "SUBMITTED",
+      summary: "An 8.5MW community solar + storage project in suburban Phoenix. Early stage, seeking development partners.",
+      offtakerType: "COMMUNITY_SOLAR",
+      interconnectionStatus: "APPLIED",
+      permittingStatus: "IN_PROGRESS",
+      siteControlStatus: "LOI",
+      feocAttested: false,
+      createdAt: new Date(Date.now() - 14 * 24 * 60 * 60 * 1000),
+      updatedAt: new Date(),
+    });
+
+    const cs2Id = randomUUID();
+    this.capitalStacks.set(proj2Id, {
+      id: cs2Id,
+      projectId: proj2Id,
+      totalCapex: "12000000",
+      taxCreditType: "ITC",
+      taxCreditEstimated: "3600000",
+      taxCreditTransferabilityReady: false,
+      equityNeeded: "8400000",
+      debtPlaceholder: "0",
+      notes: null,
+    });
+
+    const checklist2 = generateChecklist(this.projects.get(proj2Id)!);
+    const uploadedKeys2 = ["interconnection", "financial_model"];
+    for (const item of checklist2) {
+      const itemId = randomUUID();
+      this.checklistItems.set(itemId, {
+        id: itemId,
+        projectId: proj2Id,
+        key: item.key,
+        label: item.label,
+        required: item.required,
+        status: uploadedKeys2.includes(item.key) ? "UPLOADED" : "MISSING",
+        notes: null,
+      });
+    }
+
+    // Some docs for project 2
+    const doc2aId = randomUUID();
+    this.documents.set(doc2aId, {
+      id: doc2aId,
+      projectId: proj2Id,
+      type: "INTERCONNECTION",
+      filename: "interconnection_app_receipt.pdf",
+      filePath: `/uploads/${proj2Id}/interconnection_app_receipt.pdf`,
+      uploadedBy: devId,
+      createdAt: new Date(Date.now() - 10 * 24 * 60 * 60 * 1000),
+    });
+    const doc2bId = randomUUID();
+    this.documents.set(doc2bId, {
+      id: doc2bId,
+      projectId: proj2Id,
+      type: "FINANCIAL_MODEL",
+      filename: "desert_sun_proforma.xlsx",
+      filePath: `/uploads/${proj2Id}/desert_sun_proforma.xlsx`,
+      uploadedBy: devId,
+      createdAt: new Date(Date.now() - 10 * 24 * 60 * 60 * 1000),
+    });
+
+    const score2 = computeReadiness(
+      this.projects.get(proj2Id)!,
+      Array.from(this.documents.values()).filter(d => d.projectId === proj2Id),
+      Array.from(this.checklistItems.values()).filter(c => c.projectId === proj2Id),
+      this.capitalStacks.get(proj2Id)
+    );
+    const rs2Id = randomUUID();
+    this.readinessScores.set(proj2Id, {
+      id: rs2Id,
+      projectId: proj2Id,
+      score: score2.score,
+      rating: score2.rating,
+      reasons: JSON.stringify(score2.reasons),
+      flags: JSON.stringify(score2.flags),
+      overriddenByAdmin: false,
+      overrideNotes: null,
+    });
+
+    // Approval log for project 1
+    const log1Id = randomUUID();
+    this.approvalLogs.set(log1Id, {
+      id: log1Id,
+      projectId: proj1Id,
+      adminId: adminId,
+      action: "APPROVE",
+      notes: "Project meets all requirements for investor visibility.",
+      createdAt: new Date(Date.now() - 15 * 24 * 60 * 60 * 1000),
     });
   }
 
-  // Users
+  // ─── Users ──────────────────────────────────────────────────────
+
   async getUser(id: string): Promise<User | undefined> {
     return this.users.get(id);
   }
@@ -271,7 +461,9 @@ export class MemStorage implements IStorage {
       id,
       email: insertUser.email,
       passwordHash: hashPassword(insertUser.passwordHash),
-      role: insertUser.role || "INVESTOR",
+      role: insertUser.role || "DEVELOPER",
+      name: insertUser.name,
+      orgName: insertUser.orgName || null,
       createdAt: new Date(),
     };
     this.users.set(id, user);
@@ -282,337 +474,234 @@ export class MemStorage implements IStorage {
     return Array.from(this.users.values());
   }
 
-  // Investor Profiles
-  async getInvestorProfile(userId: string): Promise<InvestorProfile | undefined> {
-    return this.investorProfiles.get(userId);
-  }
+  // ─── Projects ───────────────────────────────────────────────────
 
-  async createInvestorProfile(profile: InsertInvestorProfile): Promise<InvestorProfile> {
-    const id = randomUUID();
-    const newProfile: InvestorProfile = {
-      id,
-      userId: profile.userId,
-      kycStatus: profile.kycStatus || "NOT_STARTED",
-      accredited: profile.accredited || false,
-      accreditedAt: profile.accreditedAt || null,
-      fullName: profile.fullName || null,
-      entityName: profile.entityName || null,
-    };
-    this.investorProfiles.set(profile.userId, newProfile);
-    return newProfile;
-  }
-
-  async updateInvestorProfile(userId: string, updates: Partial<InvestorProfile>): Promise<InvestorProfile | undefined> {
-    const profile = this.investorProfiles.get(userId);
-    if (!profile) return undefined;
-    const updated = { ...profile, ...updates };
-    this.investorProfiles.set(userId, updated);
-    return updated;
-  }
-
-  async getAllInvestorProfiles(): Promise<Array<{ user: User; profile: InvestorProfile }>> {
-    const result: Array<{ user: User; profile: InvestorProfile }> = [];
-    for (const [userId, profile] of this.investorProfiles) {
-      const user = this.users.get(userId);
-      if (user) {
-        result.push({ user, profile });
-      }
-    }
-    return result;
-  }
-
-  // Issuer Profiles
-  async getIssuerProfile(userId: string): Promise<IssuerProfile | undefined> {
-    return this.issuerProfiles.get(userId);
-  }
-
-  async createIssuerProfile(profile: InsertIssuerProfile): Promise<IssuerProfile> {
-    const id = randomUUID();
-    const newProfile: IssuerProfile = {
-      id,
-      userId: profile.userId,
-      companyName: profile.companyName,
-      website: profile.website || null,
-    };
-    this.issuerProfiles.set(profile.userId, newProfile);
-    return newProfile;
-  }
-
-  // Projects
   async getProject(id: string): Promise<Project | undefined> {
     return this.projects.get(id);
   }
 
-  async getProjectsByIssuer(issuerId: string): Promise<Project[]> {
-    return Array.from(this.projects.values()).filter(p => p.issuerId === issuerId);
+  async getProjectsByDeveloper(developerId: string): Promise<Project[]> {
+    return Array.from(this.projects.values()).filter(p => p.developerId === developerId);
   }
 
   async createProject(project: InsertProject): Promise<Project> {
     const id = randomUUID();
     const newProject: Project = {
       id,
-      issuerId: project.issuerId,
+      developerId: project.developerId,
       name: project.name,
-      assetType: project.assetType,
-      location: project.location,
+      technology: project.technology || "SOLAR",
+      stage: project.stage || "PRE_NTP",
+      country: project.country || "US",
+      state: project.state,
+      county: project.county,
+      latitude: project.latitude || null,
+      longitude: project.longitude || null,
       capacityMW: project.capacityMW || null,
-      status: project.status || "INTAKE",
-      ppaCounterparty: project.ppaCounterparty || null,
-      ppaTenorYears: project.ppaTenorYears || null,
-      ppaPrice: project.ppaPrice || null,
-      description: project.description || null,
+      status: project.status || "DRAFT",
+      summary: project.summary || null,
+      offtakerType: project.offtakerType || "C_AND_I",
+      interconnectionStatus: project.interconnectionStatus || "UNKNOWN",
+      permittingStatus: project.permittingStatus || "UNKNOWN",
+      siteControlStatus: project.siteControlStatus || "NONE",
+      feocAttested: project.feocAttested || false,
       createdAt: new Date(),
+      updatedAt: new Date(),
     };
     this.projects.set(id, newProject);
     return newProject;
+  }
+
+  async updateProject(id: string, updates: Partial<Project>): Promise<Project | undefined> {
+    const project = this.projects.get(id);
+    if (!project) return undefined;
+    const updated = { ...project, ...updates, updatedAt: new Date() };
+    this.projects.set(id, updated);
+    return updated;
   }
 
   async getAllProjects(): Promise<Project[]> {
     return Array.from(this.projects.values());
   }
 
-  // Offerings
-  async getOffering(id: string): Promise<Offering | undefined> {
-    return this.offerings.get(id);
+  async getProjectsByStatus(...statuses: string[]): Promise<Project[]> {
+    return Array.from(this.projects.values()).filter(p => statuses.includes(p.status));
   }
 
-  async getOfferingsByIssuer(issuerId: string): Promise<Offering[]> {
-    return Array.from(this.offerings.values()).filter(o => o.issuerId === issuerId);
+  // ─── Capital Stack ──────────────────────────────────────────────
+
+  async getCapitalStack(projectId: string): Promise<CapitalStack | undefined> {
+    return this.capitalStacks.get(projectId);
   }
 
-  async getOfferingsByProject(projectId: string): Promise<Offering[]> {
-    return Array.from(this.offerings.values()).filter(o => o.projectId === projectId);
-  }
-
-  async getOpenOfferings(): Promise<Offering[]> {
-    return Array.from(this.offerings.values()).filter(o => o.status === "OPEN");
-  }
-
-  async createOffering(offering: InsertOffering): Promise<Offering> {
+  async createCapitalStack(cs: InsertCapitalStack): Promise<CapitalStack> {
     const id = randomUUID();
-    const newOffering: Offering = {
+    const newCS: CapitalStack = {
       id,
-      projectId: offering.projectId,
-      issuerId: offering.issuerId,
-      name: offering.name,
-      status: offering.status || "DRAFT",
-      targetRaise: offering.targetRaise,
-      minInvestment: offering.minInvestment,
-      securityType: offering.securityType,
-      distributionFrequency: offering.distributionFrequency || "QUARTERLY",
-      expectedIrr: offering.expectedIrr || null,
-      openDate: offering.openDate || null,
-      closeDate: offering.closeDate || null,
-      jurisdiction: offering.jurisdiction || "US",
-      createdAt: new Date(),
+      projectId: cs.projectId,
+      totalCapex: cs.totalCapex || null,
+      taxCreditType: cs.taxCreditType || "UNKNOWN",
+      taxCreditEstimated: cs.taxCreditEstimated || null,
+      taxCreditTransferabilityReady: cs.taxCreditTransferabilityReady || false,
+      equityNeeded: cs.equityNeeded || null,
+      debtPlaceholder: cs.debtPlaceholder || "0",
+      notes: cs.notes || null,
     };
-    this.offerings.set(id, newOffering);
-    return newOffering;
+    this.capitalStacks.set(cs.projectId, newCS);
+    return newCS;
   }
 
-  async updateOffering(id: string, updates: Partial<Offering>): Promise<Offering | undefined> {
-    const offering = this.offerings.get(id);
-    if (!offering) return undefined;
-    const updated = { ...offering, ...updates };
-    this.offerings.set(id, updated);
+  async updateCapitalStack(projectId: string, updates: Partial<CapitalStack>): Promise<CapitalStack | undefined> {
+    const cs = this.capitalStacks.get(projectId);
+    if (!cs) return undefined;
+    const updated = { ...cs, ...updates };
+    this.capitalStacks.set(projectId, updated);
     return updated;
   }
 
-  async getAllOfferings(): Promise<Offering[]> {
-    return Array.from(this.offerings.values());
+  // ─── Readiness Score ────────────────────────────────────────────
+
+  async getReadinessScore(projectId: string): Promise<ReadinessScore | undefined> {
+    return this.readinessScores.get(projectId);
   }
 
-  // Commitments
-  async getCommitment(id: string): Promise<Commitment | undefined> {
-    return this.commitments.get(id);
-  }
-
-  async getCommitmentsByOffering(offeringId: string): Promise<Commitment[]> {
-    return Array.from(this.commitments.values()).filter(c => c.offeringId === offeringId);
-  }
-
-  async getCommitmentsByInvestor(investorId: string): Promise<Commitment[]> {
-    return Array.from(this.commitments.values()).filter(c => c.investorId === investorId);
-  }
-
-  async createCommitment(commitment: InsertCommitment): Promise<Commitment> {
+  async createReadinessScore(score: InsertReadinessScore): Promise<ReadinessScore> {
     const id = randomUUID();
-    const newCommitment: Commitment = {
+    const newScore: ReadinessScore = {
       id,
-      offeringId: commitment.offeringId,
-      investorId: commitment.investorId,
-      amount: commitment.amount,
-      status: commitment.status || "SUBMITTED",
-      createdAt: new Date(),
+      projectId: score.projectId,
+      score: score.score || 0,
+      rating: score.rating || "RED",
+      reasons: score.reasons || null,
+      flags: score.flags || null,
+      overriddenByAdmin: score.overriddenByAdmin || false,
+      overrideNotes: score.overrideNotes || null,
     };
-    this.commitments.set(id, newCommitment);
-    return newCommitment;
+    this.readinessScores.set(score.projectId, newScore);
+    return newScore;
   }
 
-  async updateCommitment(id: string, updates: Partial<Commitment>): Promise<Commitment | undefined> {
-    const commitment = this.commitments.get(id);
-    if (!commitment) return undefined;
-    const updated = { ...commitment, ...updates };
-    this.commitments.set(id, updated);
+  async updateReadinessScore(projectId: string, updates: Partial<ReadinessScore>): Promise<ReadinessScore | undefined> {
+    const score = this.readinessScores.get(projectId);
+    if (!score) return undefined;
+    const updated = { ...score, ...updates };
+    this.readinessScores.set(projectId, updated);
     return updated;
   }
 
-  // Tokenization
-  async getTokenization(offeringId: string): Promise<Tokenization | undefined> {
-    return Array.from(this.tokenizations.values()).find(t => t.offeringId === offeringId);
+  // ─── Documents ──────────────────────────────────────────────────
+
+  async getDocumentsByProject(projectId: string): Promise<Document[]> {
+    return Array.from(this.documents.values()).filter(d => d.projectId === projectId);
   }
 
-  async createTokenization(tokenization: InsertTokenization): Promise<Tokenization> {
+  async createDocument(doc: InsertDocument): Promise<Document> {
     const id = randomUUID();
-    const newTokenization: Tokenization = {
+    const newDoc: Document = {
       id,
-      offeringId: tokenization.offeringId,
-      tokenStandard: tokenization.tokenStandard || "ERC3643_SIM",
-      tokenSymbol: tokenization.tokenSymbol,
-      tokenName: tokenization.tokenName,
-      tokenContractAddress: tokenization.tokenContractAddress || `0x${randomUUID().replace(/-/g, "").slice(0, 40)}`,
-      mintedAt: new Date(),
-    };
-    this.tokenizations.set(id, newTokenization);
-    return newTokenization;
-  }
-
-  // Token Allocations
-  async getTokenAllocationsByInvestor(investorId: string): Promise<TokenAllocation[]> {
-    return Array.from(this.tokenAllocations.values()).filter(a => a.investorId === investorId);
-  }
-
-  async getTokenAllocationsByTokenization(tokenizationId: string): Promise<TokenAllocation[]> {
-    return Array.from(this.tokenAllocations.values()).filter(a => a.tokenizationId === tokenizationId);
-  }
-
-  async createTokenAllocation(allocation: InsertTokenAllocation): Promise<TokenAllocation> {
-    const id = randomUUID();
-    const newAllocation: TokenAllocation = {
-      id,
-      tokenizationId: allocation.tokenizationId,
-      investorId: allocation.investorId,
-      tokens: allocation.tokens,
+      projectId: doc.projectId,
+      type: doc.type,
+      filename: doc.filename,
+      filePath: doc.filePath,
+      uploadedBy: doc.uploadedBy,
       createdAt: new Date(),
     };
-    this.tokenAllocations.set(id, newAllocation);
-    return newAllocation;
+    this.documents.set(id, newDoc);
+    return newDoc;
   }
 
-  // Distributions
-  async getDistributionsByOffering(offeringId: string): Promise<Distribution[]> {
-    return Array.from(this.distributions.values()).filter(d => d.offeringId === offeringId);
+  async deleteDocument(id: string): Promise<void> {
+    this.documents.delete(id);
   }
 
-  async createDistribution(distribution: InsertDistribution): Promise<Distribution> {
+  // ─── Checklist ──────────────────────────────────────────────────
+
+  async getChecklistByProject(projectId: string): Promise<DataRoomChecklistItem[]> {
+    return Array.from(this.checklistItems.values()).filter(c => c.projectId === projectId);
+  }
+
+  async createChecklistItem(item: InsertDataRoomChecklistItem): Promise<DataRoomChecklistItem> {
     const id = randomUUID();
-    const newDistribution: Distribution = {
+    const newItem: DataRoomChecklistItem = {
       id,
-      offeringId: distribution.offeringId,
-      periodStart: distribution.periodStart,
-      periodEnd: distribution.periodEnd,
-      totalAmount: distribution.totalAmount,
-      status: distribution.status || "PENDING",
-      paidAt: null,
+      projectId: item.projectId,
+      key: item.key,
+      label: item.label,
+      required: item.required !== undefined ? item.required : true,
+      status: item.status || "MISSING",
+      notes: item.notes || null,
     };
-    this.distributions.set(id, newDistribution);
-    return newDistribution;
+    this.checklistItems.set(id, newItem);
+    return newItem;
   }
 
-  async updateDistribution(id: string, updates: Partial<Distribution>): Promise<Distribution | undefined> {
-    const distribution = this.distributions.get(id);
-    if (!distribution) return undefined;
-    const updated = { ...distribution, ...updates };
-    this.distributions.set(id, updated);
+  async updateChecklistItem(id: string, updates: Partial<DataRoomChecklistItem>): Promise<DataRoomChecklistItem | undefined> {
+    const item = this.checklistItems.get(id);
+    if (!item) return undefined;
+    const updated = { ...item, ...updates };
+    this.checklistItems.set(id, updated);
     return updated;
   }
 
-  // Distribution Payouts
-  async getPayoutsByDistribution(distributionId: string): Promise<DistributionPayout[]> {
-    return Array.from(this.distributionPayouts.values()).filter(p => p.distributionId === distributionId);
+  // ─── Investor Interest ──────────────────────────────────────────
+
+  async getInterestsByProject(projectId: string): Promise<InvestorInterest[]> {
+    return Array.from(this.interests.values()).filter(i => i.projectId === projectId);
   }
 
-  async getPayoutsByInvestor(investorId: string): Promise<DistributionPayout[]> {
-    return Array.from(this.distributionPayouts.values()).filter(p => p.investorId === investorId);
+  async getInterestsByInvestor(investorId: string): Promise<InvestorInterest[]> {
+    return Array.from(this.interests.values()).filter(i => i.investorId === investorId);
   }
 
-  async createDistributionPayout(payout: InsertDistributionPayout): Promise<DistributionPayout> {
+  async createInterest(interest: InsertInvestorInterest): Promise<InvestorInterest> {
     const id = randomUUID();
-    const newPayout: DistributionPayout = {
+    const newInterest: InvestorInterest = {
       id,
-      distributionId: payout.distributionId,
-      investorId: payout.investorId,
-      amount: payout.amount,
-      status: payout.status || "PENDING",
-      paidAt: null,
+      projectId: interest.projectId,
+      investorId: interest.investorId,
+      amountIntent: interest.amountIntent || null,
+      structurePreference: interest.structurePreference || "UNKNOWN",
+      timeline: interest.timeline || "UNKNOWN",
+      message: interest.message || null,
+      status: interest.status || "SUBMITTED",
+      createdAt: new Date(),
     };
-    this.distributionPayouts.set(id, newPayout);
-    return newPayout;
+    this.interests.set(id, newInterest);
+    return newInterest;
   }
 
-  async updateDistributionPayout(id: string, updates: Partial<DistributionPayout>): Promise<DistributionPayout | undefined> {
-    const payout = this.distributionPayouts.get(id);
-    if (!payout) return undefined;
-    const updated = { ...payout, ...updates };
-    this.distributionPayouts.set(id, updated);
+  async updateInterest(id: string, updates: Partial<InvestorInterest>): Promise<InvestorInterest | undefined> {
+    const interest = this.interests.get(id);
+    if (!interest) return undefined;
+    const updated = { ...interest, ...updates };
+    this.interests.set(id, updated);
     return updated;
   }
 
-  // Ledger
-  async getLedgerAccount(userId: string): Promise<LedgerAccount | undefined> {
-    return this.ledgerAccounts.get(userId);
+  async getAllInterests(): Promise<InvestorInterest[]> {
+    return Array.from(this.interests.values());
   }
 
-  async createLedgerAccount(account: InsertLedgerAccount): Promise<LedgerAccount> {
-    const id = randomUUID();
-    const newAccount: LedgerAccount = {
-      id,
-      userId: account.userId,
-      label: account.label,
-      currency: account.currency,
-      createdAt: new Date(),
-    };
-    this.ledgerAccounts.set(account.userId, newAccount);
-    return newAccount;
-  }
+  // ─── Approval Logs ─────────────────────────────────────────────
 
-  async getLedgerEntries(accountId: string): Promise<LedgerEntry[]> {
-    return Array.from(this.ledgerEntries.values())
-      .filter(e => e.accountId === accountId)
+  async getApprovalLogs(projectId: string): Promise<ProjectApprovalLog[]> {
+    return Array.from(this.approvalLogs.values())
+      .filter(l => l.projectId === projectId)
       .sort((a, b) => new Date(b.createdAt!).getTime() - new Date(a.createdAt!).getTime());
   }
 
-  async createLedgerEntry(entry: InsertLedgerEntry): Promise<LedgerEntry> {
+  async createApprovalLog(log: InsertProjectApprovalLog): Promise<ProjectApprovalLog> {
     const id = randomUUID();
-    const newEntry: LedgerEntry = {
+    const newLog: ProjectApprovalLog = {
       id,
-      accountId: entry.accountId,
-      type: entry.type,
-      amount: entry.amount,
-      referenceType: entry.referenceType || null,
-      referenceId: entry.referenceId || null,
-      memo: entry.memo || null,
+      projectId: log.projectId,
+      adminId: log.adminId,
+      action: log.action,
+      notes: log.notes || null,
       createdAt: new Date(),
     };
-    this.ledgerEntries.set(id, newEntry);
-    return newEntry;
-  }
-
-  async getLedgerBalance(userId: string): Promise<number> {
-    const account = await this.getLedgerAccount(userId);
-    if (!account) return 0;
-
-    const entries = await this.getLedgerEntries(account.id);
-    let balance = 0;
-    for (const entry of entries) {
-      const amount = Number(entry.amount);
-      if (entry.type === "DEPOSIT" || entry.type === "RELEASE" || entry.type === "PAYOUT") {
-        balance += amount;
-      } else if (entry.type === "WITHDRAWAL" || entry.type === "RESERVE") {
-        balance -= amount;
-      }
-    }
-    return balance;
+    this.approvalLogs.set(id, newLog);
+    return newLog;
   }
 }
 

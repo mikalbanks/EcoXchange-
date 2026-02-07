@@ -3,80 +3,128 @@ import { pgTable, text, varchar, boolean, decimal, timestamp, integer } from "dr
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod";
 
-// Enums as string literals for TypeScript
 export const UserRole = {
-  INVESTOR: "INVESTOR",
-  ISSUER: "ISSUER",
   ADMIN: "ADMIN",
+  DEVELOPER: "DEVELOPER",
+  INVESTOR: "INVESTOR",
 } as const;
 
-export const KycStatus = {
-  NOT_STARTED: "NOT_STARTED",
-  PENDING: "PENDING",
+export const Technology = {
+  SOLAR: "SOLAR",
+  SOLAR_STORAGE: "SOLAR_STORAGE",
+} as const;
+
+export const ProjectStage = {
+  PRE_NTP: "PRE_NTP",
+  NTP: "NTP",
+  CONSTRUCTION: "CONSTRUCTION",
+  COD: "COD",
+} as const;
+
+export const ProjectStatus = {
+  DRAFT: "DRAFT",
+  SUBMITTED: "SUBMITTED",
+  IN_REVIEW: "IN_REVIEW",
   APPROVED: "APPROVED",
   REJECTED: "REJECTED",
 } as const;
 
-export const ProjectStatus = {
-  INTAKE: "INTAKE",
-  UNDER_REVIEW: "UNDER_REVIEW",
+export const OfftakerType = {
+  C_AND_I: "C_AND_I",
+  COMMUNITY_SOLAR: "COMMUNITY_SOLAR",
+  UTILITY: "UTILITY",
+  MERCHANT: "MERCHANT",
+} as const;
+
+export const InterconnectionStatus = {
+  UNKNOWN: "UNKNOWN",
+  APPLIED: "APPLIED",
+  STUDY: "STUDY",
+  IA_EXECUTED: "IA_EXECUTED",
+  READY_TO_BUILD: "READY_TO_BUILD",
+} as const;
+
+export const PermittingStatus = {
+  UNKNOWN: "UNKNOWN",
+  IN_PROGRESS: "IN_PROGRESS",
+  SUBMITTED: "SUBMITTED",
   APPROVED: "APPROVED",
 } as const;
 
-export const AssetType = {
-  SOLAR: "SOLAR",
-  WIND: "WIND",
-  HYDROGEN: "HYDROGEN",
+export const SiteControlStatus = {
+  NONE: "NONE",
+  LOI: "LOI",
+  OPTION: "OPTION",
+  LEASE: "LEASE",
+  OWNED: "OWNED",
+} as const;
+
+export const TaxCreditType = {
+  ITC: "ITC",
+  PTC: "PTC",
+  UNKNOWN: "UNKNOWN",
+} as const;
+
+export const ReadinessRating = {
+  GREEN: "GREEN",
+  YELLOW: "YELLOW",
+  RED: "RED",
+} as const;
+
+export const DocumentType = {
+  SITE_CONTROL: "SITE_CONTROL",
+  INTERCONNECTION: "INTERCONNECTION",
+  PERMITS: "PERMITS",
+  EPC: "EPC",
+  FINANCIAL_MODEL: "FINANCIAL_MODEL",
+  INSURANCE: "INSURANCE",
+  FEOC_ATTESTATION: "FEOC_ATTESTATION",
   OTHER: "OTHER",
 } as const;
 
-export const OfferingStatus = {
-  DRAFT: "DRAFT",
-  OPEN: "OPEN",
-  CLOSED: "CLOSED",
+export const ChecklistStatus = {
+  MISSING: "MISSING",
+  UPLOADED: "UPLOADED",
+  VERIFIED: "VERIFIED",
 } as const;
 
-export const CommitmentStatus = {
-  SUBMITTED: "SUBMITTED",
-  CONFIRMED: "CONFIRMED",
-  CANCELED: "CANCELED",
-} as const;
-
-export const DistributionStatus = {
-  PENDING: "PENDING",
-  PAID: "PAID",
-} as const;
-
-export const SecurityType = {
+export const StructurePreference = {
   EQUITY: "EQUITY",
   PREFERRED: "PREFERRED",
+  UNKNOWN: "UNKNOWN",
 } as const;
 
-export const DistributionFrequency = {
-  MONTHLY: "MONTHLY",
-  QUARTERLY: "QUARTERLY",
-  ANNUALLY: "ANNUALLY",
+export const InvestorTimeline = {
+  IMMEDIATE: "IMMEDIATE",
+  DAYS_30_60: "DAYS_30_60",
+  DAYS_60_90: "DAYS_60_90",
+  UNKNOWN: "UNKNOWN",
 } as const;
 
-export const LedgerEntryType = {
-  DEPOSIT: "DEPOSIT",
-  WITHDRAWAL: "WITHDRAWAL",
-  RESERVE: "RESERVE",
-  RELEASE: "RELEASE",
-  PAYOUT: "PAYOUT",
+export const InterestStatus = {
+  SUBMITTED: "SUBMITTED",
+  WITHDRAWN: "WITHDRAWN",
+  ACCEPTED_BY_DEV: "ACCEPTED_BY_DEV",
+  DECLINED_BY_DEV: "DECLINED_BY_DEV",
 } as const;
 
-export const LedgerCurrency = {
-  USDC_DEMO: "USDC_DEMO",
-  USD_LEDGER: "USD_LEDGER",
+export const ApprovalAction = {
+  SUBMIT: "SUBMIT",
+  APPROVE: "APPROVE",
+  REJECT: "REJECT",
+  REQUEST_CHANGES: "REQUEST_CHANGES",
+  OVERRIDE_SCORE: "OVERRIDE_SCORE",
 } as const;
 
-// Users table
+// ─── Users ───────────────────────────────────────────────────────────────────
+
 export const users = pgTable("users", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
   email: text("email").notNull().unique(),
   passwordHash: text("password_hash").notNull(),
-  role: text("role").notNull().default("INVESTOR"),
+  role: text("role").notNull().default("DEVELOPER"),
+  name: text("name").notNull(),
+  orgName: text("org_name"),
   createdAt: timestamp("created_at").defaultNow(),
 });
 
@@ -88,218 +136,163 @@ export const insertUserSchema = createInsertSchema(users).omit({
 export type InsertUser = z.infer<typeof insertUserSchema>;
 export type User = typeof users.$inferSelect;
 
-// Investor Profile
-export const investorProfiles = pgTable("investor_profiles", {
-  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
-  userId: varchar("user_id").notNull(),
-  kycStatus: text("kyc_status").notNull().default("NOT_STARTED"),
-  accredited: boolean("accredited").default(false),
-  accreditedAt: timestamp("accredited_at"),
-  fullName: text("full_name"),
-  entityName: text("entity_name"),
-});
+// ─── Projects ────────────────────────────────────────────────────────────────
 
-export const insertInvestorProfileSchema = createInsertSchema(investorProfiles).omit({
-  id: true,
-});
-
-export type InsertInvestorProfile = z.infer<typeof insertInvestorProfileSchema>;
-export type InvestorProfile = typeof investorProfiles.$inferSelect;
-
-// Issuer Profile
-export const issuerProfiles = pgTable("issuer_profiles", {
-  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
-  userId: varchar("user_id").notNull(),
-  companyName: text("company_name").notNull(),
-  website: text("website"),
-});
-
-export const insertIssuerProfileSchema = createInsertSchema(issuerProfiles).omit({
-  id: true,
-});
-
-export type InsertIssuerProfile = z.infer<typeof insertIssuerProfileSchema>;
-export type IssuerProfile = typeof issuerProfiles.$inferSelect;
-
-// Projects
 export const projects = pgTable("projects", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
-  issuerId: varchar("issuer_id").notNull(),
+  developerId: varchar("developer_id").notNull(),
   name: text("name").notNull(),
-  assetType: text("asset_type").notNull(),
-  location: text("location").notNull(),
+  technology: text("technology").notNull().default("SOLAR"),
+  stage: text("stage").notNull().default("PRE_NTP"),
+  country: text("country").notNull().default("US"),
+  state: text("state").notNull(),
+  county: text("county").notNull(),
+  latitude: decimal("latitude", { precision: 10, scale: 6 }),
+  longitude: decimal("longitude", { precision: 10, scale: 6 }),
   capacityMW: decimal("capacity_mw", { precision: 10, scale: 2 }),
-  status: text("status").notNull().default("INTAKE"),
-  ppaCounterparty: text("ppa_counterparty"),
-  ppaTenorYears: integer("ppa_tenor_years"),
-  ppaPrice: decimal("ppa_price", { precision: 10, scale: 4 }),
-  description: text("description"),
+  status: text("status").notNull().default("DRAFT"),
+  summary: text("summary"),
+  offtakerType: text("offtaker_type").notNull().default("C_AND_I"),
+  interconnectionStatus: text("interconnection_status").notNull().default("UNKNOWN"),
+  permittingStatus: text("permitting_status").notNull().default("UNKNOWN"),
+  siteControlStatus: text("site_control_status").notNull().default("NONE"),
+  feocAttested: boolean("feoc_attested").default(false),
   createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
 });
 
 export const insertProjectSchema = createInsertSchema(projects).omit({
   id: true,
   createdAt: true,
+  updatedAt: true,
 });
 
 export type InsertProject = z.infer<typeof insertProjectSchema>;
 export type Project = typeof projects.$inferSelect;
 
-// Offerings
-export const offerings = pgTable("offerings", {
+// ─── Capital Stack ───────────────────────────────────────────────────────────
+
+export const capitalStacks = pgTable("capital_stacks", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
   projectId: varchar("project_id").notNull(),
-  issuerId: varchar("issuer_id").notNull(),
-  name: text("name").notNull(),
-  status: text("status").notNull().default("DRAFT"),
-  targetRaise: decimal("target_raise", { precision: 15, scale: 2 }).notNull(),
-  minInvestment: decimal("min_investment", { precision: 15, scale: 2 }).notNull(),
-  securityType: text("security_type").notNull(),
-  distributionFrequency: text("distribution_frequency").notNull().default("QUARTERLY"),
-  expectedIrr: decimal("expected_irr", { precision: 5, scale: 2 }),
-  openDate: timestamp("open_date"),
-  closeDate: timestamp("close_date"),
-  jurisdiction: text("jurisdiction").notNull().default("US"),
+  totalCapex: decimal("total_capex", { precision: 15, scale: 2 }),
+  taxCreditType: text("tax_credit_type").notNull().default("UNKNOWN"),
+  taxCreditEstimated: decimal("tax_credit_estimated", { precision: 15, scale: 2 }),
+  taxCreditTransferabilityReady: boolean("tax_credit_transferability_ready").default(false),
+  equityNeeded: decimal("equity_needed", { precision: 15, scale: 2 }),
+  debtPlaceholder: decimal("debt_placeholder", { precision: 15, scale: 2 }).default("0"),
+  notes: text("notes"),
+});
+
+export const insertCapitalStackSchema = createInsertSchema(capitalStacks).omit({
+  id: true,
+});
+
+export type InsertCapitalStack = z.infer<typeof insertCapitalStackSchema>;
+export type CapitalStack = typeof capitalStacks.$inferSelect;
+
+// ─── Readiness Score ─────────────────────────────────────────────────────────
+
+export const readinessScores = pgTable("readiness_scores", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  projectId: varchar("project_id").notNull(),
+  score: integer("score").notNull().default(0),
+  rating: text("rating").notNull().default("RED"),
+  reasons: text("reasons"),
+  flags: text("flags"),
+  overriddenByAdmin: boolean("overridden_by_admin").default(false),
+  overrideNotes: text("override_notes"),
+});
+
+export const insertReadinessScoreSchema = createInsertSchema(readinessScores).omit({
+  id: true,
+});
+
+export type InsertReadinessScore = z.infer<typeof insertReadinessScoreSchema>;
+export type ReadinessScore = typeof readinessScores.$inferSelect;
+
+// ─── Documents ───────────────────────────────────────────────────────────────
+
+export const documents = pgTable("documents", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  projectId: varchar("project_id").notNull(),
+  type: text("type").notNull(),
+  filename: text("filename").notNull(),
+  filePath: text("file_path").notNull(),
+  uploadedBy: varchar("uploaded_by").notNull(),
   createdAt: timestamp("created_at").defaultNow(),
 });
 
-export const insertOfferingSchema = createInsertSchema(offerings).omit({
+export const insertDocumentSchema = createInsertSchema(documents).omit({
   id: true,
   createdAt: true,
 });
 
-export type InsertOffering = z.infer<typeof insertOfferingSchema>;
-export type Offering = typeof offerings.$inferSelect;
+export type InsertDocument = z.infer<typeof insertDocumentSchema>;
+export type Document = typeof documents.$inferSelect;
 
-// Commitments
-export const commitments = pgTable("commitments", {
+// ─── Data Room Checklist Items ───────────────────────────────────────────────
+
+export const dataRoomChecklistItems = pgTable("data_room_checklist_items", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
-  offeringId: varchar("offering_id").notNull(),
+  projectId: varchar("project_id").notNull(),
+  key: text("key").notNull(),
+  label: text("label").notNull(),
+  required: boolean("required").default(true),
+  status: text("status").notNull().default("MISSING"),
+  notes: text("notes"),
+});
+
+export const insertDataRoomChecklistItemSchema = createInsertSchema(dataRoomChecklistItems).omit({
+  id: true,
+});
+
+export type InsertDataRoomChecklistItem = z.infer<typeof insertDataRoomChecklistItemSchema>;
+export type DataRoomChecklistItem = typeof dataRoomChecklistItems.$inferSelect;
+
+// ─── Investor Interest ───────────────────────────────────────────────────────
+
+export const investorInterests = pgTable("investor_interests", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  projectId: varchar("project_id").notNull(),
   investorId: varchar("investor_id").notNull(),
-  amount: decimal("amount", { precision: 15, scale: 2 }).notNull(),
+  amountIntent: decimal("amount_intent", { precision: 15, scale: 2 }),
+  structurePreference: text("structure_preference").notNull().default("UNKNOWN"),
+  timeline: text("timeline").notNull().default("UNKNOWN"),
+  message: text("message"),
   status: text("status").notNull().default("SUBMITTED"),
   createdAt: timestamp("created_at").defaultNow(),
 });
 
-export const insertCommitmentSchema = createInsertSchema(commitments).omit({
+export const insertInvestorInterestSchema = createInsertSchema(investorInterests).omit({
   id: true,
   createdAt: true,
 });
 
-export type InsertCommitment = z.infer<typeof insertCommitmentSchema>;
-export type Commitment = typeof commitments.$inferSelect;
+export type InsertInvestorInterest = z.infer<typeof insertInvestorInterestSchema>;
+export type InvestorInterest = typeof investorInterests.$inferSelect;
 
-// Tokenization
-export const tokenizations = pgTable("tokenizations", {
+// ─── Project Approval Log ────────────────────────────────────────────────────
+
+export const projectApprovalLogs = pgTable("project_approval_logs", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
-  offeringId: varchar("offering_id").notNull(),
-  tokenStandard: text("token_standard").notNull().default("ERC3643_SIM"),
-  tokenSymbol: text("token_symbol").notNull(),
-  tokenName: text("token_name").notNull(),
-  tokenContractAddress: text("token_contract_address"),
-  mintedAt: timestamp("minted_at"),
-});
-
-export const insertTokenizationSchema = createInsertSchema(tokenizations).omit({
-  id: true,
-  mintedAt: true,
-});
-
-export type InsertTokenization = z.infer<typeof insertTokenizationSchema>;
-export type Tokenization = typeof tokenizations.$inferSelect;
-
-// Token Allocations
-export const tokenAllocations = pgTable("token_allocations", {
-  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
-  tokenizationId: varchar("tokenization_id").notNull(),
-  investorId: varchar("investor_id").notNull(),
-  tokens: decimal("tokens", { precision: 18, scale: 8 }).notNull(),
+  projectId: varchar("project_id").notNull(),
+  adminId: varchar("admin_id").notNull(),
+  action: text("action").notNull(),
+  notes: text("notes"),
   createdAt: timestamp("created_at").defaultNow(),
 });
 
-export const insertTokenAllocationSchema = createInsertSchema(tokenAllocations).omit({
+export const insertProjectApprovalLogSchema = createInsertSchema(projectApprovalLogs).omit({
   id: true,
   createdAt: true,
 });
 
-export type InsertTokenAllocation = z.infer<typeof insertTokenAllocationSchema>;
-export type TokenAllocation = typeof tokenAllocations.$inferSelect;
+export type InsertProjectApprovalLog = z.infer<typeof insertProjectApprovalLogSchema>;
+export type ProjectApprovalLog = typeof projectApprovalLogs.$inferSelect;
 
-// Distributions
-export const distributions = pgTable("distributions", {
-  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
-  offeringId: varchar("offering_id").notNull(),
-  periodStart: timestamp("period_start").notNull(),
-  periodEnd: timestamp("period_end").notNull(),
-  totalAmount: decimal("total_amount", { precision: 15, scale: 2 }).notNull(),
-  status: text("status").notNull().default("PENDING"),
-  paidAt: timestamp("paid_at"),
-});
+// ─── Zod Validation Schemas ─────────────────────────────────────────────────
 
-export const insertDistributionSchema = createInsertSchema(distributions).omit({
-  id: true,
-  paidAt: true,
-});
-
-export type InsertDistribution = z.infer<typeof insertDistributionSchema>;
-export type Distribution = typeof distributions.$inferSelect;
-
-// Distribution Payouts
-export const distributionPayouts = pgTable("distribution_payouts", {
-  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
-  distributionId: varchar("distribution_id").notNull(),
-  investorId: varchar("investor_id").notNull(),
-  amount: decimal("amount", { precision: 15, scale: 2 }).notNull(),
-  status: text("status").notNull().default("PENDING"),
-  paidAt: timestamp("paid_at"),
-});
-
-export const insertDistributionPayoutSchema = createInsertSchema(distributionPayouts).omit({
-  id: true,
-  paidAt: true,
-});
-
-export type InsertDistributionPayout = z.infer<typeof insertDistributionPayoutSchema>;
-export type DistributionPayout = typeof distributionPayouts.$inferSelect;
-
-// Ledger Account
-export const ledgerAccounts = pgTable("ledger_accounts", {
-  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
-  userId: varchar("user_id").notNull(),
-  label: text("label").notNull(),
-  currency: text("currency").notNull(),
-  createdAt: timestamp("created_at").defaultNow(),
-});
-
-export const insertLedgerAccountSchema = createInsertSchema(ledgerAccounts).omit({
-  id: true,
-  createdAt: true,
-});
-
-export type InsertLedgerAccount = z.infer<typeof insertLedgerAccountSchema>;
-export type LedgerAccount = typeof ledgerAccounts.$inferSelect;
-
-// Ledger Entry
-export const ledgerEntries = pgTable("ledger_entries", {
-  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
-  accountId: varchar("account_id").notNull(),
-  type: text("type").notNull(),
-  amount: decimal("amount", { precision: 15, scale: 2 }).notNull(),
-  referenceType: text("reference_type"),
-  referenceId: varchar("reference_id"),
-  memo: text("memo"),
-  createdAt: timestamp("created_at").defaultNow(),
-});
-
-export const insertLedgerEntrySchema = createInsertSchema(ledgerEntries).omit({
-  id: true,
-  createdAt: true,
-});
-
-export type InsertLedgerEntry = z.infer<typeof insertLedgerEntrySchema>;
-export type LedgerEntry = typeof ledgerEntries.$inferSelect;
-
-// Zod schemas for form validation
 export const loginSchema = z.object({
   email: z.string().email("Invalid email address"),
   password: z.string().min(6, "Password must be at least 6 characters"),
@@ -308,39 +301,37 @@ export const loginSchema = z.object({
 export const signupSchema = z.object({
   email: z.string().email("Invalid email address"),
   password: z.string().min(6, "Password must be at least 6 characters"),
-  role: z.enum(["INVESTOR", "ISSUER"]),
+  role: z.enum(["DEVELOPER", "INVESTOR"]),
 });
 
-export const projectFormSchema = z.object({
+export const projectWizardStep1Schema = z.object({
   name: z.string().min(1, "Project name is required"),
-  assetType: z.enum(["SOLAR", "WIND", "HYDROGEN", "OTHER"]),
-  location: z.string().min(1, "Location is required"),
-  capacityMW: z.string().optional(),
-  ppaCounterparty: z.string().optional(),
-  ppaTenorYears: z.number().optional(),
-  ppaPrice: z.string().optional(),
-  description: z.string().optional(),
+  technology: z.enum(["SOLAR", "SOLAR_STORAGE"]),
+  stage: z.enum(["PRE_NTP", "NTP", "CONSTRUCTION", "COD"]),
+  state: z.string().min(1, "State is required"),
+  county: z.string().min(1, "County is required"),
+  capacityMW: z.string().min(1, "Capacity is required"),
 });
 
-export const offeringFormSchema = z.object({
-  name: z.string().min(1, "Offering name is required"),
-  projectId: z.string().min(1, "Project is required"),
-  targetRaise: z.string().min(1, "Target raise is required"),
-  minInvestment: z.string().min(1, "Minimum investment is required"),
-  securityType: z.enum(["EQUITY", "PREFERRED"]),
-  distributionFrequency: z.enum(["MONTHLY", "QUARTERLY", "ANNUALLY"]),
-  expectedIrr: z.string().optional(),
-  openDate: z.string().optional(),
-  closeDate: z.string().optional(),
-  jurisdiction: z.string().default("US"),
+export const projectWizardStep2Schema = z.object({
+  siteControlStatus: z.enum(["NONE", "LOI", "OPTION", "LEASE", "OWNED"]),
+  interconnectionStatus: z.enum(["UNKNOWN", "APPLIED", "STUDY", "IA_EXECUTED", "READY_TO_BUILD"]),
+  permittingStatus: z.enum(["UNKNOWN", "IN_PROGRESS", "SUBMITTED", "APPROVED"]),
+  offtakerType: z.enum(["C_AND_I", "COMMUNITY_SOLAR", "UTILITY", "MERCHANT"]),
+  feocAttested: z.boolean(),
 });
 
-export const investmentFormSchema = z.object({
-  amount: z.string().min(1, "Investment amount is required"),
+export const projectWizardStep3Schema = z.object({
+  totalCapex: z.string().min(1, "Total capex is required"),
+  taxCreditType: z.enum(["ITC", "PTC", "UNKNOWN"]),
+  taxCreditEstimated: z.string().min(1, "Tax credit estimate is required"),
+  taxCreditTransferabilityReady: z.boolean(),
+  equityTarget: z.string().min(1, "Equity target is required"),
 });
 
-export const distributionFormSchema = z.object({
-  periodStart: z.string().min(1, "Period start is required"),
-  periodEnd: z.string().min(1, "Period end is required"),
-  totalAmount: z.string().min(1, "Total amount is required"),
+export const investorInterestFormSchema = z.object({
+  amountIntent: z.string().min(1, "Amount is required"),
+  structurePreference: z.enum(["EQUITY", "PREFERRED", "UNKNOWN"]),
+  timeline: z.enum(["IMMEDIATE", "DAYS_30_60", "DAYS_60_90", "UNKNOWN"]),
+  message: z.string().optional(),
 });

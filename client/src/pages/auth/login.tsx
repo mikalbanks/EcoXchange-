@@ -144,8 +144,8 @@ export default function LoginPage() {
                   <span className="font-mono">admin@ecoxchange.demo / Admin123!</span>
                 </div>
                 <div className="flex justify-between">
-                  <span className="text-muted-foreground">Issuer:</span>
-                  <span className="font-mono">issuer@ecoxchange.demo / Issuer123!</span>
+                  <span className="text-muted-foreground">Developer:</span>
+                  <span className="font-mono">developer@ecoxchange.demo / Developer123!</span>
                 </div>
                 <div className="flex justify-between">
                   <span className="text-muted-foreground">Investor:</span>
