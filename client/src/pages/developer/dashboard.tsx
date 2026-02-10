@@ -3,6 +3,7 @@ import { Link } from "wouter";
 import { DashboardLayout } from "@/components/dashboard-layout";
 import { StatsCard } from "@/components/stats-card";
 import { StatusBadge } from "@/components/status-badge";
+import { IdentityVerificationCard } from "@/components/identity-verification-card";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -71,6 +72,10 @@ export default function DeveloperDashboard() {
           </p>
         </CardContent>
       </Card>
+
+      <div className="mb-6">
+        <IdentityVerificationCard />
+      </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4 mb-8">
         {statsLoading ? (

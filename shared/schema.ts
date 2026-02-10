@@ -116,6 +116,13 @@ export const ApprovalAction = {
   OVERRIDE_SCORE: "OVERRIDE_SCORE",
 } as const;
 
+export const PersonaStatus = {
+  NOT_STARTED: "not_started",
+  PENDING: "pending",
+  COMPLETED: "completed",
+  FAILED: "failed",
+} as const;
+
 // ─── Users ───────────────────────────────────────────────────────────────────
 
 export const users = pgTable("users", {
@@ -125,6 +132,11 @@ export const users = pgTable("users", {
   role: text("role").notNull().default("DEVELOPER"),
   name: text("name").notNull(),
   orgName: text("org_name"),
+  personaInquiryId: text("persona_inquiry_id"),
+  personaStatus: text("persona_status").notNull().default("not_started"),
+  personaVerifiedAt: timestamp("persona_verified_at"),
+  personaLastEventAt: timestamp("persona_last_event_at"),
+  personaPayload: text("persona_payload"),
   createdAt: timestamp("created_at").defaultNow(),
 });
 

@@ -2,6 +2,7 @@ import type { Express } from "express";
 import { createServer, type Server } from "http";
 import session from "express-session";
 import MemoryStore from "memorystore";
+import crypto from "crypto";
 import { storage, verifyPassword, computeReadiness, generateChecklist, computeCapitalStack } from "./storage";
 import { loginSchema, signupSchema, projectWizardStep1Schema, projectWizardStep2Schema, projectWizardStep3Schema, investorInterestFormSchema } from "@shared/schema";
 import { z } from "zod";
@@ -44,7 +45,7 @@ export async function registerRoutes(
     if (!req.session.userId) return res.status(401).json({ message: "Not authenticated" });
     const user = await storage.getUser(req.session.userId);
     if (!user) return res.status(401).json({ message: "User not found" });
-    res.json({ user: { id: user.id, email: user.email, role: user.role, name: user.name, orgName: user.orgName } });
+    res.json({ user: { id: user.id, email: user.email, role: user.role, name: user.name, orgName: user.orgName, personaStatus: user.personaStatus } });
   });
 
   app.post("/api/auth/login", async (req: any, res) => {
@@ -55,7 +56,7 @@ export async function registerRoutes(
         return res.status(401).json({ message: "Invalid email or password" });
       }
       req.session.userId = user.id;
-      res.json({ user: { id: user.id, email: user.email, role: user.role, name: user.name, orgName: user.orgName } });
+      res.json({ user: { id: user.id, email: user.email, role: user.role, name: user.name, orgName: user.orgName, personaStatus: user.personaStatus } });
     } catch (error: any) {
       res.status(400).json({ message: error.message });
     }
@@ -74,7 +75,7 @@ export async function registerRoutes(
         orgName: null,
       });
       req.session.userId = user.id;
-      res.json({ user: { id: user.id, email: user.email, role: user.role, name: user.name, orgName: user.orgName } });
+      res.json({ user: { id: user.id, email: user.email, role: user.role, name: user.name, orgName: user.orgName, personaStatus: user.personaStatus } });
     } catch (error: any) {
       res.status(400).json({ message: error.message });
     }
@@ -82,6 +83,157 @@ export async function registerRoutes(
 
   app.post("/api/auth/logout", (req: any, res) => {
     req.session.destroy(() => { res.json({ message: "Logged out" }); });
+  });
+
+  // ═══ Persona Verification Routes ═══
+
+  app.post("/api/persona/inquiry", requireAuth, async (req: any, res) => {
+    try {
+      const user = await storage.getUser(req.session.userId);
+      if (!user) return res.status(401).json({ message: "User not found" });
+
+      if (user.role === "ADMIN") {
+        return res.status(403).json({ message: "Admin users do not require verification" });
+      }
+
+      if (user.personaStatus === "completed") {
+        return res.json({ status: "completed", message: "Already verified" });
+      }
+
+      const PERSONA_API_KEY = process.env.PERSONA_API_KEY;
+      const PERSONA_TEMPLATE_ID = process.env.PERSONA_TEMPLATE_ID;
+
+      if (!PERSONA_API_KEY || !PERSONA_TEMPLATE_ID) {
+        return res.status(500).json({ message: "Persona integration is not configured. Contact administrator." });
+      }
+
+      const personaRes = await fetch("https://withpersona.com/api/v1/inquiries", {
+        method: "POST",
+        headers: {
+          "Authorization": `Bearer ${PERSONA_API_KEY}`,
+          "Content-Type": "application/json",
+          "Persona-Version": "2023-01-05",
+          "Key-Inflection": "camel",
+        },
+        body: JSON.stringify({
+          data: {
+            attributes: {
+              inquiryTemplateId: PERSONA_TEMPLATE_ID,
+              referenceId: user.id,
+              fields: {
+                nameFirst: { type: "string", value: user.name.split(" ")[0] || "" },
+                nameLast: { type: "string", value: user.name.split(" ").slice(1).join(" ") || "" },
+                emailAddress: { type: "string", value: user.email },
+              },
+            },
+          },
+        }),
+      });
+
+      if (!personaRes.ok) {
+        const errorText = await personaRes.text();
+        console.error("Persona API error:", errorText);
+        return res.status(500).json({ message: "Failed to create verification inquiry" });
+      }
+
+      const personaData = await personaRes.json();
+      const inquiryId = personaData.data?.id;
+      const sessionToken = personaData.data?.attributes?.sessionToken || personaData.meta?.sessionToken;
+
+      if (!inquiryId) {
+        return res.status(500).json({ message: "Invalid response from verification provider" });
+      }
+
+      await storage.updateUser(user.id, {
+        personaInquiryId: inquiryId,
+        personaStatus: "pending",
+      });
+
+      res.json({ inquiryId, sessionToken });
+    } catch (error: any) {
+      console.error("Persona inquiry error:", error);
+      res.status(500).json({ message: "Failed to create verification inquiry" });
+    }
+  });
+
+  app.get("/api/persona/status", requireAuth, async (req: any, res) => {
+    const user = await storage.getUser(req.session.userId);
+    if (!user) return res.status(401).json({ message: "User not found" });
+
+    res.json({
+      personaStatus: user.personaStatus,
+      personaVerifiedAt: user.personaVerifiedAt,
+      personaInquiryId: user.personaInquiryId,
+    });
+  });
+
+  app.post("/api/persona/webhook", async (req: any, res) => {
+    try {
+      const PERSONA_WEBHOOK_SECRET = process.env.PERSONA_WEBHOOK_SECRET;
+
+      if (PERSONA_WEBHOOK_SECRET) {
+        const signature = req.headers["persona-signature"] || "";
+        const rawBody = JSON.stringify(req.body);
+
+        const expectedSig = crypto
+          .createHmac("sha256", PERSONA_WEBHOOK_SECRET)
+          .update(rawBody)
+          .digest("hex");
+
+        const sigParts = signature.split(",");
+        const receivedSig = sigParts.find((p: string) => p.startsWith("v1="))?.replace("v1=", "") || "";
+
+        if (receivedSig && receivedSig !== expectedSig) {
+          console.warn("Persona webhook: invalid signature");
+          return res.status(401).json({ message: "Invalid signature" });
+        }
+      }
+
+      const event = req.body;
+      const eventType = event?.data?.attributes?.name || event?.data?.attributes?.status || "";
+      const inquiryId = event?.data?.relationships?.inquiry?.data?.id || event?.data?.id;
+      const referenceId = event?.data?.attributes?.referenceId || event?.data?.attributes?.payload?.data?.attributes?.referenceId;
+
+      console.log(`Persona webhook received: event=${eventType}, inquiryId=${inquiryId}, referenceId=${referenceId}`);
+
+      let user;
+      if (referenceId) {
+        user = await storage.getUser(referenceId);
+      }
+      if (!user && inquiryId) {
+        user = await storage.getUserByPersonaInquiryId(inquiryId);
+      }
+
+      if (!user) {
+        console.warn("Persona webhook: no user found for inquiry", inquiryId);
+        return res.status(200).json({ received: true });
+      }
+
+      const status = event?.data?.attributes?.status;
+      const now = new Date();
+
+      const updates: Record<string, any> = {
+        personaLastEventAt: now,
+        personaPayload: JSON.stringify({ eventType, status, inquiryId, receivedAt: now.toISOString() }),
+      };
+
+      if (status === "completed" || status === "approved") {
+        updates.personaStatus = "completed";
+        updates.personaVerifiedAt = now;
+      } else if (status === "failed" || status === "declined") {
+        updates.personaStatus = "failed";
+      } else if (status === "pending" || status === "created") {
+        updates.personaStatus = "pending";
+      }
+
+      await storage.updateUser(user.id, updates);
+      console.log(`Persona webhook: updated user ${user.id} status to ${updates.personaStatus || "unchanged"}`);
+
+      res.status(200).json({ received: true });
+    } catch (error: any) {
+      console.error("Persona webhook error:", error);
+      res.status(200).json({ received: true });
+    }
   });
 
   // ═══ Developer Routes ═══
@@ -132,6 +284,10 @@ export async function registerRoutes(
   // Create project (full wizard submit)
   app.post("/api/developer/projects", requireRole("DEVELOPER"), async (req: any, res) => {
     try {
+      if (req.user.personaStatus !== "completed") {
+        return res.status(403).json({ message: "Identity verification required before submitting projects" });
+      }
+
       const { step1, step2, step3 } = req.body;
       const s1 = projectWizardStep1Schema.parse(step1);
       const s2 = projectWizardStep2Schema.parse(step2);
@@ -366,6 +522,10 @@ export async function registerRoutes(
   // Submit interest
   app.post("/api/investor/deals/:id/interest", requireRole("INVESTOR"), async (req: any, res) => {
     try {
+      if (req.user.personaStatus !== "completed") {
+        return res.status(403).json({ message: "Identity verification required before submitting interest" });
+      }
+
       const data = investorInterestFormSchema.parse(req.body);
       const project = await storage.getProject(req.params.id);
       if (!project || project.status !== "APPROVED") {
@@ -559,6 +719,9 @@ export async function registerRoutes(
       role: u.role,
       name: u.name,
       orgName: u.orgName,
+      personaStatus: u.personaStatus,
+      personaInquiryId: u.personaInquiryId,
+      personaVerifiedAt: u.personaVerifiedAt,
       createdAt: u.createdAt,
     })));
   });

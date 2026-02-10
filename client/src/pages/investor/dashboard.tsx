@@ -3,6 +3,7 @@ import { Link } from "wouter";
 import { useAuth } from "@/lib/auth";
 import { DashboardLayout } from "@/components/dashboard-layout";
 import { StatusBadge } from "@/components/status-badge";
+import { IdentityVerificationCard } from "@/components/identity-verification-card";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -80,6 +81,10 @@ export default function InvestorDashboard() {
           </p>
         </CardContent>
       </Card>
+
+      <div className="mb-6">
+        <IdentityVerificationCard />
+      </div>
 
       <Card>
         <CardHeader className="flex flex-row items-center justify-between gap-2">

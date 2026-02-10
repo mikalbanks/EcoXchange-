@@ -7,6 +7,7 @@ export interface AuthUser {
   role: "INVESTOR" | "DEVELOPER" | "ADMIN";
   name: string;
   orgName: string | null;
+  personaStatus: "not_started" | "pending" | "completed" | "failed";
 }
 
 interface AuthContextType {
@@ -15,6 +16,7 @@ interface AuthContextType {
   login: (email: string, password: string) => Promise<void>;
   signup: (email: string, password: string, role: "INVESTOR" | "DEVELOPER") => Promise<void>;
   logout: () => Promise<void>;
+  refreshUser: () => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -99,8 +101,20 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setLocation("/");
   }
 
+  async function refreshUser() {
+    try {
+      const res = await fetch("/api/auth/me", { credentials: "include" });
+      if (res.ok) {
+        const data = await res.json();
+        setUser(data.user);
+      }
+    } catch (error) {
+      console.error("User refresh failed:", error);
+    }
+  }
+
   return (
-    <AuthContext.Provider value={{ user, isLoading, login, signup, logout }}>
+    <AuthContext.Provider value={{ user, isLoading, login, signup, logout, refreshUser }}>
       {children}
     </AuthContext.Provider>
   );

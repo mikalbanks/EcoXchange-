@@ -8,6 +8,7 @@ import { DashboardLayout } from "@/components/dashboard-layout";
 import { StatusBadge } from "@/components/status-badge";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { investorInterestFormSchema } from "@shared/schema";
+import { useAuth } from "@/lib/auth";
 import { useToast } from "@/hooks/use-toast";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -139,7 +140,9 @@ function CapitalBar({ label, value, total, colorClass }: { label: string; value:
 export default function InvestorDealRoom() {
   const { id } = useParams<{ id: string }>();
   const { toast } = useToast();
+  const { user } = useAuth();
   const [termsAccepted, setTermsAccepted] = useState(false);
+  const isVerified = user?.personaStatus === "completed";
 
   const { data, isLoading, error } = useQuery<DealRoomData>({
     queryKey: ["/api/investor/deals", id],
@@ -483,7 +486,15 @@ export default function InvestorDealRoom() {
             </CardTitle>
           </CardHeader>
           <CardContent>
-            {myInterest ? (
+            {!isVerified && !myInterest ? (
+              <div className="flex items-center gap-3 p-3 rounded-md bg-amber-500/10 border border-amber-500/30" data-testid="banner-verify-to-invest">
+                <Shield className="h-5 w-5 text-amber-400 shrink-0" />
+                <div className="flex-1">
+                  <p className="text-sm font-medium text-amber-400">Identity Verification Required</p>
+                  <p className="text-xs text-muted-foreground mt-0.5">Complete identity verification from your dashboard before submitting interest.</p>
+                </div>
+              </div>
+            ) : myInterest ? (
               <div className="space-y-4">
                 <div className="flex flex-wrap items-center gap-3 mb-2">
                   <StatusBadge status={myInterest.status} type="interest" />

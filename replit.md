@@ -42,7 +42,18 @@ EcoXchange is a deal packaging platform for renewable energy projects. Developer
 - Full project review with score override capability
 - Approve/Reject/Request Changes actions with notes
 - Export packet generation for printing
-- User management table
+- User management table with KYC status column
+
+### Identity Verification (Persona KYC)
+- Persona-powered identity verification for developers and investors
+- Admins are exempt from verification requirements
+- Developers must verify before submitting projects (wizard allows filling but blocks submit)
+- Investors must verify before committing interest in deals
+- Backend gating returns 403 if personaStatus !== "completed"
+- Frontend shows IdentityVerificationCard component on developer/investor dashboards
+- Verification status polling every 10s when pending
+- Webhook endpoint (POST /api/persona/webhook) for async status updates with HMAC validation
+- Environment variables: PERSONA_API_KEY, PERSONA_TEMPLATE_ID, PERSONA_WEBHOOK_SECRET
 
 ### Readiness Scoring Engine
 Score starts at 100, deductions applied:

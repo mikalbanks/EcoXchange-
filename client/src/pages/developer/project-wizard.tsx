@@ -5,7 +5,9 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { useMutation } from "@tanstack/react-query";
 import { apiRequest, queryClient } from "@/lib/queryClient";
+import { useAuth } from "@/lib/auth";
 import { DashboardLayout } from "@/components/dashboard-layout";
+import { IdentityVerificationCard } from "@/components/identity-verification-card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
@@ -66,6 +68,8 @@ type Step3Values = z.infer<typeof projectWizardStep3Schema>;
 export default function ProjectWizard() {
   const [, setLocation] = useLocation();
   const { toast } = useToast();
+  const { user } = useAuth();
+  const isVerified = user?.personaStatus === "completed";
   const [currentStep, setCurrentStep] = useState(1);
   const [pendingDocs, setPendingDocs] = useState<PendingDocument[]>([]);
   const [docType, setDocType] = useState("");
@@ -186,6 +190,14 @@ export default function ProjectWizard() {
       ]}
     >
       <div className="max-w-3xl mx-auto">
+        {!isVerified && (
+          <div className="mb-6">
+            <IdentityVerificationCard />
+            <p className="text-sm text-amber-400 mt-2" data-testid="text-verify-to-submit">
+              You can fill out the wizard, but identity verification is required before submission.
+            </p>
+          </div>
+        )}
         <div className="flex items-center justify-center mb-8" data-testid="step-indicator">
           {STEPS.map((step, index) => (
             <div key={step.number} className="flex items-center">
@@ -865,13 +877,13 @@ export default function ProjectWizard() {
           ) : (
             <Button
               onClick={handleSubmit}
-              disabled={createProjectMutation.isPending}
+              disabled={createProjectMutation.isPending || !isVerified}
               data-testid="button-submit-project"
             >
               {createProjectMutation.isPending && (
                 <Loader2 className="mr-2 h-4 w-4 animate-spin" />
               )}
-              Submit Project
+              {isVerified ? "Submit Project" : "Verify Identity to Submit"}
             </Button>
           )}
         </div>

@@ -22,7 +22,9 @@ export function verifyPassword(password: string, hash: string): boolean {
 export interface IStorage {
   getUser(id: string): Promise<User | undefined>;
   getUserByEmail(email: string): Promise<User | undefined>;
+  getUserByPersonaInquiryId(inquiryId: string): Promise<User | undefined>;
   createUser(user: InsertUser): Promise<User>;
+  updateUser(id: string, updates: Partial<User>): Promise<User | undefined>;
   getAllUsers(): Promise<User[]>;
 
   getProject(id: string): Promise<Project | undefined>;
@@ -214,6 +216,11 @@ export class MemStorage implements IStorage {
       role: "ADMIN",
       name: "Platform Admin",
       orgName: "EcoXchange",
+      personaInquiryId: null,
+      personaStatus: "not_started",
+      personaVerifiedAt: null,
+      personaLastEventAt: null,
+      personaPayload: null,
       createdAt: new Date(),
     });
 
@@ -225,6 +232,11 @@ export class MemStorage implements IStorage {
       role: "DEVELOPER",
       name: "Sarah Chen",
       orgName: "Sunfield Energy LLC",
+      personaInquiryId: null,
+      personaStatus: "not_started",
+      personaVerifiedAt: null,
+      personaLastEventAt: null,
+      personaPayload: null,
       createdAt: new Date(),
     });
 
@@ -236,6 +248,11 @@ export class MemStorage implements IStorage {
       role: "INVESTOR",
       name: "James Morrison",
       orgName: "GreenVest Capital",
+      personaInquiryId: null,
+      personaStatus: "not_started",
+      personaVerifiedAt: null,
+      personaLastEventAt: null,
+      personaPayload: null,
       createdAt: new Date(),
     });
 
@@ -455,6 +472,10 @@ export class MemStorage implements IStorage {
     return Array.from(this.users.values()).find(u => u.email === email);
   }
 
+  async getUserByPersonaInquiryId(inquiryId: string): Promise<User | undefined> {
+    return Array.from(this.users.values()).find(u => u.personaInquiryId === inquiryId);
+  }
+
   async createUser(insertUser: InsertUser): Promise<User> {
     const id = randomUUID();
     const user: User = {
@@ -464,10 +485,23 @@ export class MemStorage implements IStorage {
       role: insertUser.role || "DEVELOPER",
       name: insertUser.name,
       orgName: insertUser.orgName || null,
+      personaInquiryId: null,
+      personaStatus: "not_started",
+      personaVerifiedAt: null,
+      personaLastEventAt: null,
+      personaPayload: null,
       createdAt: new Date(),
     };
     this.users.set(id, user);
     return user;
+  }
+
+  async updateUser(id: string, updates: Partial<User>): Promise<User | undefined> {
+    const user = this.users.get(id);
+    if (!user) return undefined;
+    const updated = { ...user, ...updates };
+    this.users.set(id, updated);
+    return updated;
   }
 
   async getAllUsers(): Promise<User[]> {

@@ -19,6 +19,9 @@ interface UserRecord {
   role: string;
   name: string;
   orgName: string | null;
+  personaStatus: string;
+  personaInquiryId: string | null;
+  personaVerifiedAt: string | null;
   createdAt: string;
 }
 
@@ -37,6 +40,28 @@ export default function AdminUsers() {
         return "bg-emerald-500/20 text-emerald-400 border-emerald-500/30";
       default:
         return "bg-muted text-muted-foreground";
+    }
+  };
+
+  const getPersonaBadgeClass = (status: string) => {
+    switch (status) {
+      case "completed":
+        return "bg-emerald-500/20 text-emerald-400 border-emerald-500/30";
+      case "pending":
+        return "bg-amber-500/20 text-amber-400 border-amber-500/30";
+      case "failed":
+        return "bg-red-500/20 text-red-400 border-red-500/30";
+      default:
+        return "bg-muted text-muted-foreground";
+    }
+  };
+
+  const formatPersonaStatus = (status: string) => {
+    switch (status) {
+      case "completed": return "Verified";
+      case "pending": return "Pending";
+      case "failed": return "Failed";
+      default: return "Not Started";
     }
   };
 
@@ -81,6 +106,7 @@ export default function AdminUsers() {
                   <TableHead>Name</TableHead>
                   <TableHead>Email</TableHead>
                   <TableHead>Role</TableHead>
+                  <TableHead>KYC Status</TableHead>
                   <TableHead>Organization</TableHead>
                   <TableHead>Joined</TableHead>
                 </TableRow>
@@ -101,6 +127,15 @@ export default function AdminUsers() {
                         data-testid={`badge-user-role-${user.id}`}
                       >
                         {user.role}
+                      </Badge>
+                    </TableCell>
+                    <TableCell>
+                      <Badge 
+                        variant="outline" 
+                        className={getPersonaBadgeClass(user.personaStatus)}
+                        data-testid={`badge-persona-status-${user.id}`}
+                      >
+                        {formatPersonaStatus(user.personaStatus)}
                       </Badge>
                     </TableCell>
                     <TableCell className="text-muted-foreground">

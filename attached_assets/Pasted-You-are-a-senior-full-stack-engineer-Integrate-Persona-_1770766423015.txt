@@ -1,0 +1,110 @@
+You are a senior full-stack engineer. Integrate Persona identity verification into the existing EcoXchange web app.
+
+GOALS
+1) Add an in-app “Verify Identity” embedded Persona flow for Investors and Issuer reps.
+2) Persist verification status in the database and gate access to sensitive actions (e.g., “Invest”, “Create Offering”) until verified.
+3) Support Persona webhooks to update status automatically.
+4) Keep it demo-safe: read-only KYC, no payments, no custody.
+
+ASSUMPTIONS
+- EcoXchange already has authentication and role-based users: Admin, Issuer, Investor.
+- EcoXchange has a backend API and a database (use existing ORM/models if present).
+- The app runs on Replit with environment variables available.
+
+ENV VARS (add to Replit Secrets)
+PERSONA_API_KEY="<<YOUR_PERSONA_API_KEY>>"
+PERSONA_WEBHOOK_SECRET="<<YOUR_PERSONA_WEBHOOK_SECRET>>"
+PERSONA_TEMPLATE_ID="<<YOUR_PERSONA_INQUIRY_TEMPLATE_ID>>"
+APP_BASE_URL="https://EcoDemo.replit.app"  (or current base URL)
+
+IMPLEMENTATION REQUIREMENTS
+A) DATABASE / MODEL CHANGES
+- Add fields to the existing User model/table (or create a PersonaProfile table linked to User):
+  - persona_inquiry_id (string, nullable)
+  - persona_status (string enum: 'not_started' | 'pending' | 'completed' | 'failed' )
+  - persona_verified_at (datetime, nullable)
+  - persona_last_event_at (datetime, nullable)
+  - persona_payload (json, nullable)  // store minimal webhook payload for debugging (no sensitive images)
+Default persona_status = 'not_started'
+
+B) BACKEND ENDPOINTS
+1) POST /api/persona/inquiry
+- Auth required
+- Creates a Persona Inquiry for the logged-in user using Persona REST API:
+  - template_id = PERSONA_TEMPLATE_ID
+  - reference_id = user.id
+  - optional fields: name/email if available
+- Save persona_inquiry_id + set persona_status='pending'
+- Return: { inquiryId, sessionToken OR client configuration needed for embedded flow }
+NOTE: Prefer embedded flow approach supported by Persona (use their recommended server call to create inquiry and return a one-time token/config needed by the client). If Persona requires a different object (e.g., "inquiry session"), follow their docs.
+
+2) GET /api/persona/status
+- Auth required
+- Returns current persona_status and persona_verified_at for the logged-in user.
+
+3) POST /api/persona/webhook
+- Public endpoint
+- Verify webhook signature using PERSONA_WEBHOOK_SECRET (reject if invalid)
+- Parse event type and update the correct user using reference_id or inquiry_id mapping
+- Update:
+  - persona_status = 'completed' if inquiry approved/complete
+  - persona_status = 'failed' if declined/failed
+  - persona_last_event_at
+  - persona_verified_at when completed
+- Respond 200 quickly
+
+C) FRONTEND UI
+1) Add a “Identity Verification” card to user dashboard/profile:
+- Shows status badge:
+  - Not started: “Not verified”
+  - Pending: “Verification pending”
+  - Completed: “Verified”
+  - Failed: “Verification failed — retry”
+- Button behavior:
+  - Not started/Failed: “Verify Identity” (opens embedded Persona flow)
+  - Pending: “Continue verification” (re-open flow)
+  - Completed: disable button + show verified timestamp
+
+2) Embedded Flow integration:
+- Use Persona’s embedded client snippet/component.
+- On clicking “Verify Identity”, call POST /api/persona/inquiry to create/get inquiry details.
+- Mount Persona embedded flow in a modal or dedicated route (/verify).
+- Listen for completion callback from Persona client and then refresh status from GET /api/persona/status.
+
+D) GATING / AUTHZ
+- For Investor:
+  - Disable “Invest” / “Commit” buttons if persona_status != 'completed'
+  - Show tooltip/banner: “Verify identity to proceed.”
+- For Issuer:
+  - Disable “Create Offering” / “Submit Project” if not completed
+- Admin should always have access (or optionally require verification too, but default: admin bypass)
+
+E) SECURITY / PRIVACY
+- Do NOT store ID images or selfies.
+- Only store inquiry_id, status, timestamps, and minimal event payload for debugging.
+- Add server-side checks for all gated actions (not just UI).
+- Ensure webhook route is rate-limited if the project already has middleware; otherwise keep lightweight.
+
+F) TESTING / DEMO
+- Add a simple admin-only page to view:
+  - list of users with persona_status
+  - inquiry_id
+- Add clear logs when webhooks arrive (without printing sensitive data).
+
+DELIVERABLES
+- Updated backend code with endpoints + webhook verification
+- Updated database migration or schema updates
+- Updated frontend with embedded Persona flow + status UI
+- Updated gated action checks server-side
+- A short README section:
+  - Required env vars
+  - How to run locally
+  - How to test webhooks (use Persona webhook testing or CLI if available)
+  - Where in the UI to verify identity
+
+IMPORTANT
+- Do not break existing login/roles.
+- Keep UI consistent with EcoXchange branding.
+- Keep changes minimal but production-clean.
+
+Proceed to implement now.
