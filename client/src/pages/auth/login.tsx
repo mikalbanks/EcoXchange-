@@ -62,7 +62,7 @@ export default function LoginPage() {
             />
             <h1 className="text-2xl font-bold" data-testid="text-login-title">Sign in to EcoXchange</h1>
             <p className="text-muted-foreground mt-2">
-              Access your dashboard and portfolio
+              Access the digital securities marketplace
             </p>
           </div>
 

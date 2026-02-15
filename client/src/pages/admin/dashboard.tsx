@@ -49,7 +49,7 @@ export default function AdminDashboard() {
   return (
     <DashboardLayout
       title="Admin Dashboard"
-      description="Platform overview and project review management"
+      description="Digital securities marketplace oversight and compliance review"
     >
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
         {isLoading ? (
@@ -117,9 +117,9 @@ export default function AdminDashboard() {
               icon={BarChart3}
             />
             <StatsCard
-              title="Total Interest"
+              title="Total Commitments"
               value={`$${(stats?.totalIntentAmount ?? 0).toLocaleString()}`}
-              description={`${stats?.totalInterests ?? 0} expressions of interest`}
+              description={`${stats?.totalInterests ?? 0} investment commitments`}
               icon={DollarSign}
             />
           </>

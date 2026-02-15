@@ -53,8 +53,8 @@ export default function DeveloperDashboard() {
 
   return (
     <DashboardLayout
-      title="Developer Dashboard"
-      description="Manage your renewable energy projects"
+      title="Issuer Dashboard"
+      description="Manage your renewable energy project securities"
       actions={
         <Link href="/developer/projects/new">
           <Button className="gap-2" data-testid="button-new-project">
@@ -68,7 +68,7 @@ export default function DeveloperDashboard() {
         <CardContent className="p-4 flex items-center gap-4">
           <AlertTriangle className="h-5 w-5 text-yellow-500 shrink-0" />
           <p className="text-sm text-yellow-500" data-testid="text-disclaimer-banner">
-            EcoXchange Pilot: informational platform; not a broker-dealer; commitments are non-binding.
+            EcoXchange is a regulated digital securities marketplace. All offerings must pass compliance checks and KYC/AML verification before listing.
           </p>
         </CardContent>
       </Card>
@@ -107,9 +107,9 @@ export default function DeveloperDashboard() {
               icon={CheckCircle}
             />
             <StatsCard
-              title="Total Interest"
+              title="Total Commitments"
               value={`$${(stats?.totalInterestAmount ?? 0).toLocaleString()}`}
-              description={`${stats?.totalInterests ?? 0} expressions`}
+              description={`${stats?.totalInterests ?? 0} investment commitments`}
               icon={DollarSign}
             />
             <StatsCard

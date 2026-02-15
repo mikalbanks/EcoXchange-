@@ -68,7 +68,7 @@ export default function AdminUsers() {
   return (
     <DashboardLayout
       title="User Management"
-      description="All platform users"
+      description="KYC/AML verification and user compliance oversight"
       breadcrumbs={[
         { label: "Admin", href: "/admin" },
         { label: "Users" },
@@ -81,7 +81,7 @@ export default function AdminUsers() {
             Platform Users
           </CardTitle>
           <CardDescription>
-            All registered accounts on the platform
+            All registered accounts with KYC/AML verification status
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -126,7 +126,7 @@ export default function AdminUsers() {
                         className={getRoleBadgeClass(user.role)}
                         data-testid={`badge-user-role-${user.id}`}
                       >
-                        {user.role}
+                        {user.role === "DEVELOPER" ? "ISSUER" : user.role}
                       </Badge>
                     </TableCell>
                     <TableCell>

@@ -25,6 +25,7 @@ import {
   ChevronRight,
   Search,
   ClipboardCheck,
+  TrendingUp,
 } from "lucide-react";
 
 const developerNavItems = [
@@ -34,8 +35,8 @@ const developerNavItems = [
 
 const investorNavItems = [
   { title: "Overview", url: "/investor", icon: LayoutDashboard },
-  { title: "Browse Deals", url: "/investor/deals", icon: Search },
-  { title: "My Interests", url: "/investor/interests", icon: FileSearch },
+  { title: "Offerings", url: "/investor/deals", icon: Search },
+  { title: "My Investments", url: "/investor/interests", icon: TrendingUp },
 ];
 
 const adminNavItems = [
@@ -90,7 +91,7 @@ export function DashboardLayout({
           <SidebarContent>
             <SidebarGroup>
               <SidebarGroupLabel className="text-sidebar-foreground/50 text-xs uppercase tracking-wider">
-                {user?.role === "ADMIN" ? "Administration" : user?.role === "DEVELOPER" ? "Developer Portal" : "Investor Portal"}
+                {user?.role === "ADMIN" ? "Administration" : user?.role === "DEVELOPER" ? "Issuer Portal" : "Investor Portal"}
               </SidebarGroupLabel>
               <SidebarGroupContent>
                 <SidebarMenu>
@@ -164,7 +165,7 @@ export function DashboardLayout({
                 <div className="flex items-center gap-2">
                   <div className="flex items-center gap-1.5 px-2 py-1 rounded-md bg-muted/50">
                     <Shield className="h-3.5 w-3.5 text-muted-foreground" />
-                    <span className="text-xs font-medium text-muted-foreground">{user.role}</span>
+                    <span className="text-xs font-medium text-muted-foreground">{user.role === "DEVELOPER" ? "ISSUER" : user.role}</span>
                   </div>
                   <span className="text-sm text-muted-foreground hidden sm:inline" data-testid="text-header-email">
                     {user.name || user.email}

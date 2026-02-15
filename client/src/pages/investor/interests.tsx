@@ -49,11 +49,11 @@ export default function InvestorInterests() {
 
   return (
     <DashboardLayout
-      title="My Interests"
-      description="Track your submitted interest expressions"
+      title="My Investments"
+      description="Track your submitted investment commitments"
       breadcrumbs={[
         { label: "Investor", href: "/investor" },
-        { label: "My Interests" },
+        { label: "My Investments" },
       ]}
     >
       {isLoading ? (
@@ -67,13 +67,13 @@ export default function InvestorInterests() {
           <CardContent className="py-12">
             <EmptyState
               icon={FileSearch}
-              title="No interests submitted"
-              description="Browse approved deals to express your interest in renewable energy projects."
+              title="No investments yet"
+              description="Browse approved offerings to invest in renewable energy project securities."
               action={
                 <Link href="/investor/deals">
                   <Button className="gap-2 mt-2" data-testid="button-browse-deals">
                     <Search className="h-4 w-4" />
-                    Browse Deals
+                    Browse Offerings
                   </Button>
                 </Link>
               }
@@ -115,7 +115,7 @@ export default function InvestorInterests() {
                   </div>
                   <Link href={`/investor/deals/${interest.projectId}`}>
                     <Button variant="outline" size="sm" className="gap-1" data-testid={`button-view-deal-${interest.id}`}>
-                      View Deal
+                      View Offering
                       <ArrowRight className="h-3.5 w-3.5" />
                     </Button>
                   </Link>

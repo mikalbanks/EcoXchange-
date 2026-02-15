@@ -186,22 +186,22 @@ export default function InvestorDealRoom() {
   if (!termsAccepted) {
     return (
       <DashboardLayout
-        title="Deal Room"
+        title="Offering Detail"
         breadcrumbs={[
           { label: "Overview", href: "/investor" },
-          { label: "Browse Deals", href: "/investor/deals" },
-          { label: "Deal Room" },
+          { label: "Offerings", href: "/investor/deals" },
+          { label: "Offering Detail" },
         ]}
       >
         <div className="flex items-center justify-center min-h-[60vh]">
           <Card className="max-w-lg w-full">
             <CardHeader className="text-center">
               <Shield className="h-12 w-12 text-primary mx-auto mb-3" />
-              <CardTitle className="text-xl" data-testid="text-terms-gate-title">Terms of Access</CardTitle>
+              <CardTitle className="text-xl" data-testid="text-terms-gate-title">Offering Terms of Access</CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
               <p className="text-sm text-muted-foreground" data-testid="text-terms-content">
-                By accessing this deal room, you acknowledge and agree that EcoXchange is an informational platform only. All information provided herein is for informational purposes. Commitments made through this platform are non-binding expressions of interest, not offers to sell or buy securities. EcoXchange is not a broker-dealer or investment advisor.
+                By accessing this offering, you acknowledge that EcoXchange is a digital securities marketplace for renewable energy assets. Securities are asset-backed and yield-generating. All participants must complete KYC/AML verification. Secondary trading is currently simulated and will become compliant live trading in later phases. Investment involves risk, including possible loss of principal.
               </p>
               <div className="flex justify-center gap-3">
                 <Button
@@ -221,10 +221,10 @@ export default function InvestorDealRoom() {
   if (isLoading) {
     return (
       <DashboardLayout
-        title="Deal Room"
+        title="Offering Detail"
         breadcrumbs={[
           { label: "Overview", href: "/investor" },
-          { label: "Browse Deals", href: "/investor/deals" },
+          { label: "Offerings", href: "/investor/deals" },
           { label: "Loading..." },
         ]}
       >
@@ -240,10 +240,10 @@ export default function InvestorDealRoom() {
   if (error || !data) {
     return (
       <DashboardLayout
-        title="Deal Room"
+        title="Offering Detail"
         breadcrumbs={[
           { label: "Overview", href: "/investor" },
-          { label: "Browse Deals", href: "/investor/deals" },
+          { label: "Offerings", href: "/investor/deals" },
           { label: "Error" },
         ]}
       >
@@ -276,10 +276,10 @@ export default function InvestorDealRoom() {
   return (
     <DashboardLayout
       title={project.name}
-      description="Deal Room"
+      description="Offering Detail"
       breadcrumbs={[
         { label: "Overview", href: "/investor" },
-        { label: "Browse Deals", href: "/investor/deals" },
+        { label: "Offerings", href: "/investor/deals" },
         { label: project.name },
       ]}
     >
@@ -482,7 +482,7 @@ export default function InvestorDealRoom() {
           <CardHeader>
             <CardTitle className="text-lg flex items-center gap-2">
               <Send className="h-4 w-4" />
-              {myInterest ? "Your Submitted Interest" : "Commit Interest"}
+              {myInterest ? "Your Investment" : "Invest in This Offering"}
             </CardTitle>
           </CardHeader>
           <CardContent>
@@ -490,8 +490,8 @@ export default function InvestorDealRoom() {
               <div className="flex items-center gap-3 p-3 rounded-md bg-amber-500/10 border border-amber-500/30" data-testid="banner-verify-to-invest">
                 <Shield className="h-5 w-5 text-amber-400 shrink-0" />
                 <div className="flex-1">
-                  <p className="text-sm font-medium text-amber-400">Identity Verification Required</p>
-                  <p className="text-xs text-muted-foreground mt-0.5">Complete identity verification from your dashboard before submitting interest.</p>
+                  <p className="text-sm font-medium text-amber-400">KYC/AML Verification Required</p>
+                  <p className="text-xs text-muted-foreground mt-0.5">Complete KYC/AML verification from your dashboard before investing in digital securities.</p>
                 </div>
               </div>
             ) : myInterest ? (

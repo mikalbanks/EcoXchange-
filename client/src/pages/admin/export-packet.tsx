@@ -132,7 +132,7 @@ export default function AdminExportPacket() {
             <h2 className="text-xl font-semibold mb-4">Project Overview</h2>
             <div className="grid grid-cols-2 gap-4">
               <div>
-                <span className="text-xs text-muted-foreground">Developer</span>
+                <span className="text-xs text-muted-foreground">Issuer</span>
                 <p className="text-sm font-medium" data-testid="text-packet-developer">
                   {developer.name}
                   {developer.orgName && ` (${developer.orgName})`}
@@ -312,7 +312,7 @@ export default function AdminExportPacket() {
 
           <div className="print-section text-center py-6 border-t border-border">
             <p className="text-xs text-muted-foreground">
-              EcoXchange Pilot -- Informational platform; not a broker-dealer; commitments are non-binding.
+              EcoXchange -- Regulated digital securities marketplace. Securities offered under applicable exemptions. Not FDIC insured.
             </p>
             <p className="text-xs text-muted-foreground mt-1">
               Generated on {new Date().toLocaleDateString()}

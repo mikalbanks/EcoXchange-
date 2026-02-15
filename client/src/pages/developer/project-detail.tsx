@@ -154,7 +154,7 @@ export default function ProjectDetail() {
     return (
       <DashboardLayout
         breadcrumbs={[
-          { label: "Developer", href: "/developer" },
+          { label: "Issuer", href: "/developer" },
           { label: "Loading..." },
         ]}
       >
@@ -174,7 +174,7 @@ export default function ProjectDetail() {
     return (
       <DashboardLayout
         breadcrumbs={[
-          { label: "Developer", href: "/developer" },
+          { label: "Issuer", href: "/developer" },
           { label: "Not Found" },
         ]}
       >
@@ -214,7 +214,7 @@ export default function ProjectDetail() {
   return (
     <DashboardLayout
       breadcrumbs={[
-        { label: "Developer", href: "/developer" },
+        { label: "Issuer", href: "/developer" },
         { label: project.name },
       ]}
     >
@@ -460,11 +460,11 @@ export default function ProjectDetail() {
           <CardHeader className="flex flex-row items-center justify-between gap-2">
             <CardTitle className="text-lg flex items-center gap-2">
               <Users className="h-5 w-5" />
-              Investor Interest
+              Investment Commitments
             </CardTitle>
             {interests.length > 0 && (
               <span className="text-sm text-muted-foreground" data-testid="text-interest-count">
-                {interests.length} expression{interests.length !== 1 ? "s" : ""}
+                {interests.length} commitment{interests.length !== 1 ? "s" : ""}
               </span>
             )}
           </CardHeader>
@@ -547,7 +547,7 @@ export default function ProjectDetail() {
             ) : (
               <div className="text-center py-8">
                 <Users className="h-12 w-12 text-muted-foreground mx-auto mb-3 opacity-50" />
-                <p className="text-muted-foreground">No investor interest yet</p>
+                <p className="text-muted-foreground">No investment commitments yet</p>
               </div>
             )}
           </CardContent>

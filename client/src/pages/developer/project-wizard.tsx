@@ -182,11 +182,11 @@ export default function ProjectWizard() {
 
   return (
     <DashboardLayout
-      title="New Project"
-      description="Create a new renewable energy project"
+      title="Tokenize Project"
+      description="Create and tokenize a new renewable energy project offering"
       breadcrumbs={[
-        { label: "Developer", href: "/developer" },
-        { label: "New Project" },
+        { label: "Issuer", href: "/developer" },
+        { label: "Tokenize Project" },
       ]}
     >
       <div className="max-w-3xl mx-auto">
@@ -194,7 +194,7 @@ export default function ProjectWizard() {
           <div className="mb-6">
             <IdentityVerificationCard />
             <p className="text-sm text-amber-400 mt-2" data-testid="text-verify-to-submit">
-              You can fill out the wizard, but identity verification is required before submission.
+              You can fill out the wizard, but KYC/AML verification is required before submitting the offering.
             </p>
           </div>
         )}

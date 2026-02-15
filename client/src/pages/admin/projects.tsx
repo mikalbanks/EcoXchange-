@@ -61,7 +61,7 @@ export default function AdminProjects() {
     return (
       <DashboardLayout
         title="Review Queue"
-        description="Review and manage project submissions"
+        description="Review and manage offering submissions for compliance"
         breadcrumbs={[
           { label: "Admin", href: "/admin" },
           { label: "Review Queue" },
@@ -81,7 +81,7 @@ export default function AdminProjects() {
   return (
     <DashboardLayout
       title="Review Queue"
-      description="Review and manage project submissions"
+      description="Review and manage offering submissions for compliance"
       breadcrumbs={[
         { label: "Admin", href: "/admin" },
         { label: "Review Queue" },
@@ -133,7 +133,7 @@ export default function AdminProjects() {
               <TableHeader>
                 <TableRow>
                   <TableHead>Project Name</TableHead>
-                  <TableHead>Developer</TableHead>
+                  <TableHead>Issuer</TableHead>
                   <TableHead>State</TableHead>
                   <TableHead>MW</TableHead>
                   <TableHead>Stage</TableHead>

@@ -11,7 +11,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { useToast } from "@/hooks/use-toast";
-import { Loader2, Building2, Wallet } from "lucide-react";
+import { Loader2, Building2, Wallet, Shield, Info } from "lucide-react";
 import { signupSchema } from "@shared/schema";
 
 type SignupFormValues = z.infer<typeof signupSchema>;
@@ -20,6 +20,7 @@ export default function SignupPage() {
   const { signup } = useAuth();
   const { toast } = useToast();
   const [isLoading, setIsLoading] = useState(false);
+  const [isAccredited, setIsAccredited] = useState<boolean | null>(null);
   const search = useSearch();
   const searchParams = new URLSearchParams(search);
   const roleFromUrl = searchParams.get("role");
@@ -32,6 +33,8 @@ export default function SignupPage() {
       role: (roleFromUrl === "developer" ? "DEVELOPER" : "INVESTOR") as "INVESTOR" | "DEVELOPER",
     },
   });
+
+  const selectedRole = form.watch("role");
 
   useEffect(() => {
     if (roleFromUrl === "developer") {
@@ -75,7 +78,7 @@ export default function SignupPage() {
             />
             <h1 className="text-2xl font-bold" data-testid="text-signup-title">Create your account</h1>
             <p className="text-muted-foreground mt-2">
-              Join the clean energy investment platform
+              Join the digital securities marketplace for renewable energy
             </p>
           </div>
 
@@ -97,7 +100,10 @@ export default function SignupPage() {
                         <FormLabel>Account Type</FormLabel>
                         <FormControl>
                           <RadioGroup
-                            onValueChange={field.onChange}
+                            onValueChange={(v) => {
+                              field.onChange(v);
+                              setIsAccredited(null);
+                            }}
                             value={field.value}
                             className="grid grid-cols-2 gap-4"
                           >
@@ -113,7 +119,7 @@ export default function SignupPage() {
                               <Wallet className="h-6 w-6 text-primary" />
                               <span className="font-medium text-sm">Investor</span>
                               <span className="text-xs text-muted-foreground text-center">
-                                Browse and invest
+                                Invest in digital securities
                               </span>
                             </label>
                             
@@ -127,9 +133,9 @@ export default function SignupPage() {
                             >
                               <RadioGroupItem value="DEVELOPER" id="developer" className="sr-only" />
                               <Building2 className="h-6 w-6 text-primary" />
-                              <span className="font-medium text-sm">Developer</span>
+                              <span className="font-medium text-sm">Issuer</span>
                               <span className="text-xs text-muted-foreground text-center">
-                                Submit projects
+                                Tokenize projects
                               </span>
                             </label>
                           </RadioGroup>
@@ -138,6 +144,47 @@ export default function SignupPage() {
                       </FormItem>
                     )}
                   />
+
+                  {selectedRole === "INVESTOR" && (
+                    <div className="space-y-3">
+                      <FormLabel>Accreditation Status</FormLabel>
+                      <div className="grid grid-cols-2 gap-3">
+                        <button
+                          type="button"
+                          onClick={() => setIsAccredited(true)}
+                          className={`flex flex-col items-center gap-2 p-3 rounded-lg border-2 cursor-pointer transition-all ${
+                            isAccredited === true
+                              ? "border-primary bg-primary/10"
+                              : "border-border hover:border-primary/50"
+                          }`}
+                          data-testid="button-accredited-yes"
+                        >
+                          <Shield className="h-5 w-5 text-primary" />
+                          <span className="text-sm font-medium">Accredited</span>
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => setIsAccredited(false)}
+                          className={`flex flex-col items-center gap-2 p-3 rounded-lg border-2 cursor-pointer transition-all ${
+                            isAccredited === false
+                              ? "border-primary bg-primary/10"
+                              : "border-border hover:border-primary/50"
+                          }`}
+                          data-testid="button-accredited-no"
+                        >
+                          <Info className="h-5 w-5 text-muted-foreground" />
+                          <span className="text-sm font-medium">Non-Accredited</span>
+                        </button>
+                      </div>
+                      {isAccredited === false && (
+                        <div className="p-3 rounded-lg bg-muted/30 border border-border" data-testid="text-non-accredited-notice">
+                          <p className="text-sm text-muted-foreground">
+                            EcoXchange currently serves accredited investors under Reg D. Non-accredited investor access is planned for Phase 2/3 under Reg CF and Reg A+ frameworks. You can still create an account to stay informed about upcoming opportunities.
+                          </p>
+                        </div>
+                      )}
+                    </div>
+                  )}
 
                   <FormField
                     control={form.control}
@@ -180,12 +227,16 @@ export default function SignupPage() {
                   <Button 
                     type="submit" 
                     className="w-full" 
-                    disabled={isLoading}
+                    disabled={isLoading || (selectedRole === "INVESTOR" && isAccredited === null)}
                     data-testid="button-submit-signup"
                   >
                     {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
                     Create Account
                   </Button>
+
+                  <p className="text-xs text-muted-foreground text-center">
+                    All participants must complete KYC/AML verification after registration. Offerings comply with applicable securities exemptions.
+                  </p>
                 </form>
               </Form>
 

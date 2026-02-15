@@ -68,7 +68,7 @@ export default function InvestorDashboard() {
         <Link href="/investor/deals">
           <Button className="gap-2" data-testid="button-browse-deals">
             <Search className="h-4 w-4" />
-            Browse Deals
+            Browse Offerings
           </Button>
         </Link>
       }
@@ -77,7 +77,7 @@ export default function InvestorDashboard() {
         <CardContent className="p-4 flex items-center gap-4">
           <AlertTriangle className="h-5 w-5 text-yellow-500 shrink-0" />
           <p className="text-sm text-yellow-500" data-testid="text-disclaimer-banner">
-            EcoXchange Pilot: informational platform only. This is not a broker-dealer. All commitments are non-binding expressions of interest, not offers to sell or buy securities.
+            EcoXchange is a digital securities marketplace. Securities are asset-backed and yield-generating. All participants must complete KYC/AML verification. Secondary trading is simulated in Phase 1.
           </p>
         </CardContent>
       </Card>
@@ -88,10 +88,10 @@ export default function InvestorDashboard() {
 
       <Card>
         <CardHeader className="flex flex-row items-center justify-between gap-2">
-          <CardTitle className="text-lg" data-testid="text-interests-title">My Submitted Interests</CardTitle>
+          <CardTitle className="text-lg" data-testid="text-interests-title">My Investments</CardTitle>
           <Link href="/investor/deals">
             <Button variant="ghost" size="sm" className="gap-1" data-testid="button-browse-deals-link">
-              Browse Deals
+              Browse Offerings
               <ArrowRight className="h-4 w-4" />
             </Button>
           </Link>
@@ -111,13 +111,13 @@ export default function InvestorDashboard() {
           ) : !interests?.length ? (
             <EmptyState
               icon={FileSearch}
-              title="No interests submitted yet"
-              description="Browse available deals and submit your expression of interest to get started."
+              title="No investments yet"
+              description="Browse available offerings and invest in digital securities to get started."
               action={
                 <Link href="/investor/deals">
                   <Button size="sm" className="gap-2" data-testid="button-browse-deals-empty">
                     <Search className="h-4 w-4" />
-                    Browse Deals
+                    Browse Offerings
                   </Button>
                 </Link>
               }

@@ -124,18 +124,18 @@ export default function InvestorDeals() {
 
   return (
     <DashboardLayout
-      title="Browse Deals"
-      description="Explore approved renewable energy investment opportunities"
+      title="Browse Offerings"
+      description="Explore approved digital securities offerings backed by renewable energy"
       breadcrumbs={[
         { label: "Overview", href: "/investor" },
-        { label: "Browse Deals" },
+        { label: "Offerings" },
       ]}
     >
       <Card className="mb-6 border-yellow-500/30 bg-yellow-500/10">
         <CardContent className="p-4 flex items-center gap-4">
           <AlertTriangle className="h-5 w-5 text-yellow-500 shrink-0" />
           <p className="text-sm text-yellow-500" data-testid="text-terms-banner">
-            By viewing these deal rooms, you acknowledge that this is an informational platform only. Commitments are non-binding expressions of interest, not offers to sell or buy securities.
+            Securities offered are asset-backed and yield-generating. All investments are subject to KYC/AML verification. Secondary trading is simulated in Phase 1. Only accredited investors may currently participate.
           </p>
         </CardContent>
       </Card>
@@ -265,8 +265,8 @@ export default function InvestorDeals() {
           <CardContent>
             <EmptyState
               icon={Search}
-              title={hasActiveFilters ? "No deals match your filters" : "No deals available"}
-              description={hasActiveFilters ? "Try adjusting your filter criteria to see more results." : "Check back later for new investment opportunities."}
+              title={hasActiveFilters ? "No offerings match your filters" : "No offerings available"}
+              description={hasActiveFilters ? "Try adjusting your filter criteria to see more results." : "Check back later for new digital securities offerings."}
               action={
                 hasActiveFilters ? (
                   <Button size="sm" variant="outline" onClick={clearFilters} data-testid="button-clear-filters-empty">
@@ -315,7 +315,7 @@ export default function InvestorDeals() {
                   <div className="border-t border-border pt-3 space-y-1.5">
                     {deal.capitalStack?.totalCapex && (
                       <div className="flex items-center justify-between text-sm">
-                        <span className="text-muted-foreground">Total CapEx</span>
+                        <span className="text-muted-foreground">Target Raise</span>
                         <span className="font-medium" data-testid={`text-deal-capex-${deal.id}`}>
                           {formatCurrency(deal.capitalStack.totalCapex)}
                         </span>
@@ -323,7 +323,7 @@ export default function InvestorDeals() {
                     )}
                     {deal.capitalStack?.equityNeeded && (
                       <div className="flex items-center justify-between text-sm">
-                        <span className="text-muted-foreground">Equity Needed</span>
+                        <span className="text-muted-foreground">Min Investment</span>
                         <span className="font-medium" data-testid={`text-deal-equity-${deal.id}`}>
                           {formatCurrency(deal.capitalStack.equityNeeded)}
                         </span>

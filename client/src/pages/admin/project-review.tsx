@@ -311,7 +311,7 @@ export default function AdminProjectReview() {
 
           <Card>
             <CardHeader>
-              <CardTitle className="text-lg">Developer Info</CardTitle>
+              <CardTitle className="text-lg">Issuer Info</CardTitle>
             </CardHeader>
             <CardContent className="space-y-3">
               <div className="flex items-center gap-2">
@@ -552,7 +552,7 @@ export default function AdminProjectReview() {
 
         <Card>
           <CardHeader>
-            <CardTitle className="text-lg">Investor Interest</CardTitle>
+            <CardTitle className="text-lg">Investment Commitments</CardTitle>
           </CardHeader>
           <CardContent>
             {interests.length > 0 ? (

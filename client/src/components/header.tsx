@@ -30,11 +30,17 @@ export function Header() {
 
         {isPublicPage && (
           <nav className="hidden md:flex items-center gap-6">
+            <Link href="/#pillars" className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors" data-testid="link-offerings">
+              Offerings
+            </Link>
+            <Link href="/#how-it-works" className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors" data-testid="link-issuers">
+              Issuers
+            </Link>
+            <Link href="/#compliance" className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors" data-testid="link-compliance">
+              Compliance
+            </Link>
             <Link href="/auth/login" className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors" data-testid="link-signin">
               Sign In
-            </Link>
-            <Link href="/auth/signup" className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors" data-testid="link-signup">
-              Get Started
             </Link>
           </nav>
         )}
@@ -85,7 +91,7 @@ export function Header() {
               </Link>
               <Link href="/auth/signup">
                 <Button size="sm" data-testid="button-signup">
-                  Get Started
+                  Create Account
                 </Button>
               </Link>
             </>

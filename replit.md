@@ -1,40 +1,70 @@
-# EcoXchange - Renewable Energy Deal Packaging Platform
+# EcoXchange - Regulated Digital Securities Marketplace for Renewable Energy
 
 ## Overview
-EcoXchange is a deal packaging platform for renewable energy projects. Developers submit solar and solar+storage projects through a guided wizard, receive automated readiness scoring, manage data room checklists, and connect with investors who can express interest in approved deals. Admins review projects, override scores, and generate export packets.
+EcoXchange is a regulated digital securities marketplace for renewable energy assets. The platform digitizes renewable energy project securities, issues yield-generating security tokens, enables compliant primary offerings, facilitates secondary trading (future), and distributes yield based on energy production or contracted revenues (PPAs). The long-term vision is not just capital formation but a platform that supports issuance, yield distribution, and secondary liquidity.
 
 ## Current State
-- **Status**: MVP Complete
+- **Status**: MVP / Phase 1 (Accredited investors, private offerings, simulated liquidity)
 - **Stack**: Express backend + React frontend (Vite/wouter routing)
 - **Storage**: In-memory (MemStorage) - no database persistence for pilot
 - **Auth**: Session-based with express-session + memorystore
+
+## North Star Vision
+EcoXchange becomes the marketplace layer for yield-generating renewable energy securities. Not just capital formation — but issuance, yield distribution, and secondary liquidity.
+
+### The Financial Product
+- **Asset Type**: Digitized renewable energy securities
+- **Structure**: Security token (equity, revenue-share, or structured yield claim) backed by real-world renewable energy projects
+- **Yield derived from**: Energy production, Power Purchase Agreements (PPAs), structured project cash flows
+- **Core Characteristics**: Income-generating, asset-backed, transparent, programmable distribution logic, tradable (future compliant secondary market)
+
+### Five Product Pillars
+1. **Digital Securities Issuance** - Tokenized renewable energy securities, offering management workflows, cap table tracking, compliance gating
+2. **Yield Infrastructure** - Revenue ingestion from projects, production-based yield calculations, automated distribution logic, transparent reporting dashboards
+3. **Marketplace Infrastructure** - Project discovery, investor dashboards, offering participation, secondary trading rails (future)
+4. **Compliance-First Architecture** - KYC/AML, broker-dealer/ATS pathway, transfer agent & custodian integrations, securities transfer restrictions
+5. **Liquidity Layer** - Compliant secondary trading (future), transfer restrictions enforced programmatically, holding period logic
+
+### Phased Execution
+- **Phase 1 (Now)**: Accredited-only, private offerings, simulated liquidity, yield calculation engine, no live secondary trading
+- **Phase 2**: Real yield distribution, transfer agent integration, custodian integration, structured SPV offerings
+- **Phase 3**: Reg CF / Reg A+ pathways, non-accredited access, ATS integration or licensing, real secondary marketplace
+
+### Target Investors
+- **Phase 1**: Accredited investors, family offices, climate funds, high-net-worth individuals
+- **Phase 2+**: Non-accredited investors, retail investors (subject to offering exemptions/compliance), climate-aligned individuals seeking yield
+
+### Brand Tone
+Use: Digital securities, structured yield, compliant marketplace, regulated infrastructure, asset-backed tokens
+Avoid: Crypto exchange, DeFi, permissionless, unregulated, democratizing finance
 
 ## Demo Accounts
 | Role | Email | Password |
 |------|-------|----------|
 | Admin | admin@ecoxchange.demo | Admin123! |
-| Developer | developer@ecoxchange.demo | Developer123! |
+| Issuer (Developer) | developer@ecoxchange.demo | Developer123! |
 | Investor | investor@ecoxchange.demo | Investor123! |
 
 ## Key Features
 
 ### Multi-Role Authentication
 - **ADMIN**: Review queue, score override, export packets, user management
-- **DEVELOPER**: Project wizard, data room management, interest inbox
-- **INVESTOR**: Browse approved deals, deal room detail, commit interest
+- **DEVELOPER (Issuer)**: Project tokenization wizard, data room management, interest inbox
+- **INVESTOR**: Browse offerings, offering detail, invest in digital securities
 
-### Developer Portal
-- 5-step project wizard (Basics, Status, Financials, Documents, Review)
+### Issuer Portal (Developer)
+- 5-step project tokenization wizard (Basics, Status, Financials, Documents, Review)
 - Automated readiness scoring (0-100 with GREEN/YELLOW/RED rating)
 - Data room checklist with document upload tracking
 - Capital stack computation
 - Investor interest inbox with accept/decline actions
 
 ### Investor Portal
-- Browse approved deals with filters (state, MW, stage, rating, offtaker)
-- Terms acceptance gate on deal rooms
-- Full deal room view: project details, readiness score, capital stack, data room
-- Interest commitment form (amount, structure, timeline, message)
+- Browse approved offerings with filters (state, MW, stage, rating, offtaker)
+- Terms acceptance gate on offering detail
+- Full offering view: project details, readiness score, capital stack, data room
+- Investment commitment form (amount, structure, timeline, message)
+- Digital security attributes: target raise, min investment, expected yield, yield basis, distribution frequency, security type
 
 ### Admin Panel
 - Dashboard with KPIs (projects by status, avg score, total interest)
@@ -45,12 +75,12 @@ EcoXchange is a deal packaging platform for renewable energy projects. Developer
 - User management table with KYC status column
 
 ### Identity Verification (Persona KYC)
-- Persona-powered identity verification for developers and investors
+- Persona-powered identity verification for issuers and investors
 - Admins are exempt from verification requirements
-- Developers must verify before submitting projects (wizard allows filling but blocks submit)
-- Investors must verify before committing interest in deals
+- Issuers must verify before submitting projects (wizard allows filling but blocks submit)
+- Investors must verify before investing in digital securities
 - Backend gating returns 403 if personaStatus !== "completed"
-- Frontend shows IdentityVerificationCard component on developer/investor dashboards
+- Frontend shows IdentityVerificationCard component on issuer/investor dashboards
 - Verification status polling every 10s when pending
 - Webhook endpoint (POST /api/persona/webhook) for async status updates with HMAC validation
 - Environment variables: PERSONA_API_KEY, PERSONA_TEMPLATE_ID, PERSONA_WEBHOOK_SECRET
@@ -70,13 +100,13 @@ Score starts at 100, deductions applied:
 
 ### Frontend (`client/src/`)
 - `/pages/` - Page components organized by role
-  - `/auth/` - Login, Signup
-  - `/developer/` - Dashboard, Project Wizard, Project Detail
-  - `/investor/` - Dashboard, Deals Browse, Deal Room
+  - `/auth/` - Login, Signup (with accreditation gating)
+  - `/developer/` - Dashboard, Project Wizard (Tokenization), Project Detail
+  - `/investor/` - Dashboard, Offerings Browse, Offering Detail
   - `/admin/` - Dashboard, Projects Queue, Project Review, Export Packet, Users
 - `/components/` - Reusable components
   - `dashboard-layout.tsx` - Sidebar navigation (shadcn Sidebar)
-  - `header.tsx` - Public header
+  - `header.tsx` - Public header with marketplace nav
   - `status-badge.tsx` - Status indicators (readiness, project, interest, checklist types)
   - `stats-card.tsx` - Metric cards
   - `empty-state.tsx` - Empty state with icon
@@ -108,7 +138,7 @@ Score starts at 100, deductions applied:
 - `POST /api/auth/signup` - Register (DEVELOPER or INVESTOR)
 - `POST /api/auth/logout` - Logout
 
-### Developer
+### Developer (Issuer)
 - `GET /api/developer/stats` - Dashboard stats
 - `GET /api/developer/projects` - Project list with scores
 - `POST /api/developer/projects` - Create project (wizard submit)
@@ -117,10 +147,10 @@ Score starts at 100, deductions applied:
 - `PATCH /api/developer/interests/:id` - Accept/decline interest
 
 ### Investor
-- `GET /api/investor/deals` - Browse approved deals
-- `GET /api/investor/deals/:id` - Deal room detail
-- `POST /api/investor/deals/:id/interest` - Submit interest
-- `GET /api/investor/interests` - My interests
+- `GET /api/investor/deals` - Browse approved offerings
+- `GET /api/investor/deals/:id` - Offering detail
+- `POST /api/investor/deals/:id/interest` - Submit investment interest
+- `GET /api/investor/interests` - My investments
 
 ### Admin
 - `GET /api/admin/stats` - Platform KPIs
@@ -136,6 +166,7 @@ Score starts at 100, deductions applied:
 - Logo: `/client/public/brand/ecoxchange-logo.png`
 - Primary: #73AC20 (Eco Green), Accent: #90C11B
 - Background: near-black (#0B0F0C), Cards: #101712
+- Tone: Institutional credibility, securities compliance awareness, marketplace sophistication, climate infrastructure seriousness
 
 ## Seed Data
 - 2 demo projects: "Sunfield Solar I" (GREEN, 95 score, APPROVED) and "Desert Sun Community Solar" (RED, 31 score, SUBMITTED)
@@ -143,7 +174,10 @@ Score starts at 100, deductions applied:
 - Complete documents and checklists for both projects
 
 ## Important Notes
-- This is a pilot MVP - non-binding interest expressions only
+- Phase 1 MVP: accredited investors only, private offerings, simulated secondary liquidity
 - In-memory storage resets on server restart
 - Documents are metadata-only (no actual file upload)
-- Disclaimer: informational platform, not a broker-dealer
+- EcoXchange is pursuing broker-dealer/ATS partnerships, transfer agent and custodian integrations
+- Until integrations are live, secondary trading is simulated
+- Securities are asset-backed and yield-generating
+- All offerings comply with relevant exemptions (Reg D initially, then Reg CF/Reg A+)
