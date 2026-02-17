@@ -49,7 +49,7 @@ export default function AdminDashboard() {
   return (
     <DashboardLayout
       title="Admin Dashboard"
-      description="Digital securities marketplace oversight and compliance review"
+      description="Digital securities platform oversight and compliance review"
     >
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
         {isLoading ? (

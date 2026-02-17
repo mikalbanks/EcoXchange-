@@ -77,7 +77,7 @@ export default function InvestorDashboard() {
         <CardContent className="p-4 flex items-center gap-4">
           <AlertTriangle className="h-5 w-5 text-yellow-500 shrink-0" />
           <p className="text-sm text-yellow-500" data-testid="text-disclaimer-banner">
-            EcoXchange is a digital securities marketplace. Securities are asset-backed and yield-generating. All participants must complete KYC/AML verification. Secondary trading is simulated in Phase 1.
+            EcoXchange is a digital securities platform. Securities are asset-backed and yield-generating. All participants must complete KYC/AML verification. Secondary trading is simulated in Phase 1.
           </p>
         </CardContent>
       </Card>

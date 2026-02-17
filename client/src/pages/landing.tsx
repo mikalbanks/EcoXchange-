@@ -35,7 +35,7 @@ export default function LandingPage() {
           <div className="max-w-4xl mx-auto text-center">
             <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-primary/10 border border-primary/20 mb-6">
               <img src="/brand/ecoxchange-logo.png" alt="" className="h-4 w-auto" data-testid="img-hero-badge-logo" />
-              <span className="text-sm font-medium text-primary">Digital Securities Marketplace</span>
+              <span className="text-sm font-medium text-primary">Digital Securities Platform</span>
             </div>
             
             <h1 className="text-4xl md:text-6xl font-bold tracking-tight mb-6" data-testid="text-hero-title">
@@ -46,10 +46,10 @@ export default function LandingPage() {
             </h1>
             
             <p className="text-lg md:text-xl text-muted-foreground max-w-2xl mx-auto mb-4" data-testid="text-hero-subtitle">
-              EcoXchange tokenizes renewable energy projects into regulated securities and distributes yield based on real-world energy production.
+              EcoXchange tokenizes renewable energy project SPV membership interests into regulated securities and distributes yield based on real-world energy production.
             </p>
             <p className="text-sm text-muted-foreground max-w-xl mx-auto mb-10">
-              Asset-backed digital securities with structured yield from solar PPAs and energy production revenue.
+              Asset-backed digital securities structured under Reg D 506(c) with yield from solar PPAs and contracted energy revenues.
             </p>
             
             <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
@@ -77,7 +77,7 @@ export default function LandingPage() {
           <div className="text-center mb-12">
             <h2 className="text-3xl font-bold mb-4" data-testid="text-pillars-title">Platform Pillars</h2>
             <p className="text-muted-foreground max-w-2xl mx-auto">
-              Five foundational pillars powering a compliant digital securities marketplace for renewable energy
+              Five foundational pillars powering a compliant digital securities platform for renewable energy
             </p>
           </div>
           
@@ -95,8 +95,8 @@ export default function LandingPage() {
               },
               {
                 icon: Globe,
-                title: "Marketplace Infrastructure",
-                desc: "Project discovery, investor dashboards, offering participation, and future secondary trading rails.",
+                title: "Investment Infrastructure",
+                desc: "Investor onboarding, project discovery, offering participation, investor dashboards, and future secondary trading rails.",
               },
               {
                 icon: Shield,
@@ -190,7 +190,7 @@ export default function LandingPage() {
                 Institutional-Grade Digital Securities
               </h2>
               <p className="text-muted-foreground mb-8">
-                EcoXchange provides compliant infrastructure for digital securities issuance, yield distribution, and marketplace participation for accredited investors.
+                EcoXchange provides compliant infrastructure for digital securities issuance, yield distribution, and investment participation. Each project is held in a dedicated SPV (Delaware LLC) with tokenized membership interests.
               </p>
               
               <div className="space-y-4">
@@ -387,7 +387,7 @@ export default function LandingPage() {
           <div className="text-center mb-12">
             <h2 className="text-3xl font-bold mb-4" data-testid="text-roadmap-title">Platform Roadmap</h2>
             <p className="text-muted-foreground max-w-2xl mx-auto">
-              A phased execution strategy toward a fully regulated digital securities marketplace
+              A phased execution strategy from digital securities platform to fully regulated marketplace
             </p>
           </div>
           
@@ -399,7 +399,7 @@ export default function LandingPage() {
                 statusColor: "text-primary",
                 items: [
                   "Accredited investors only",
-                  "Private offerings (Reg D)",
+                  "Private offerings (Reg D 506(c))",
                   "Simulated secondary liquidity",
                   "Yield calculation engine",
                   "KYC/AML verification",
@@ -425,7 +425,7 @@ export default function LandingPage() {
                   "Reg CF / Reg A+ pathways",
                   "Non-accredited investor access",
                   "ATS integration or licensing",
-                  "Real secondary marketplace",
+                  "Compliant secondary marketplace",
                   "Programmatic transfer restrictions",
                 ],
               },
@@ -459,7 +459,7 @@ export default function LandingPage() {
               Ready to Get Started?
             </h2>
             <p className="text-muted-foreground mb-8">
-              Join the compliant marketplace connecting renewable energy infrastructure with qualified investors.
+              Join the compliant platform connecting renewable energy infrastructure with qualified investors.
             </p>
             <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
               <Link href="/auth/signup">
@@ -487,7 +487,7 @@ export default function LandingPage() {
                 EcoXchange is pursuing broker-dealer and ATS partnerships, transfer agent and custodian integrations, and will enforce securities transfer restrictions programmatically. Until those integrations are live, secondary trading is simulated and only accredited investors may participate.
               </p>
               <p>
-                All offerings on EcoXchange comply with relevant securities exemptions. Phase 1 operates under Reg D for accredited investors. Future phases will introduce Reg CF and Reg A+ pathways for broader investor access, subject to regulatory approvals.
+                All offerings on EcoXchange comply with relevant securities exemptions. Phase 1 operates under Reg D 506(c) for accredited investors with general solicitation permitted. Future phases will introduce Reg CF and Reg A+ pathways for broader investor access, subject to regulatory approvals and BD/funding portal partnerships.
               </p>
               <p>
                 Securities offered through EcoXchange are asset-backed and yield-generating. All participants must complete KYC/AML verification. This platform is not a broker-dealer or investment advisor. Investment involves risk, including possible loss of principal.
@@ -508,12 +508,12 @@ export default function LandingPage() {
                 className="h-8 w-auto"
                 data-testid="img-footer-logo"
               />
-              <span className="text-sm text-muted-foreground">Digital Securities Marketplace</span>
+              <span className="text-sm text-muted-foreground">Digital Securities Platform</span>
             </div>
             <div className="flex flex-wrap items-center gap-6 text-sm text-muted-foreground">
               <Link href="/auth/login" className="hover:text-foreground transition-colors" data-testid="link-footer-login">Sign In</Link>
               <Link href="/auth/signup" className="hover:text-foreground transition-colors">Create Account</Link>
-              <span>© 2025 EcoXchange</span>
+              <span>© 2026 EcoXchange</span>
             </div>
           </div>
         </div>

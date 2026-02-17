@@ -201,7 +201,7 @@ export default function InvestorDealRoom() {
             </CardHeader>
             <CardContent className="space-y-4">
               <p className="text-sm text-muted-foreground" data-testid="text-terms-content">
-                By accessing this offering, you acknowledge that EcoXchange is a digital securities marketplace for renewable energy assets. Securities are asset-backed and yield-generating. All participants must complete KYC/AML verification. Secondary trading is currently simulated and will become compliant live trading in later phases. Investment involves risk, including possible loss of principal.
+                By accessing this offering, you acknowledge that EcoXchange is a digital securities platform for renewable energy assets. Securities are structured as SPV membership interests under Reg D 506(c), asset-backed and yield-generating. All participants must complete KYC/AML verification. Secondary trading is currently simulated and will become compliant live trading in later phases. Investment involves risk, including possible loss of principal.
               </p>
               <div className="flex justify-center gap-3">
                 <Button

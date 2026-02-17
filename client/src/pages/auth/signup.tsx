@@ -78,7 +78,7 @@ export default function SignupPage() {
             />
             <h1 className="text-2xl font-bold" data-testid="text-signup-title">Create your account</h1>
             <p className="text-muted-foreground mt-2">
-              Join the digital securities marketplace for renewable energy
+              Join the digital securities platform for renewable energy
             </p>
           </div>
 

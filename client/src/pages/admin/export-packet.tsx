@@ -312,7 +312,7 @@ export default function AdminExportPacket() {
 
           <div className="print-section text-center py-6 border-t border-border">
             <p className="text-xs text-muted-foreground">
-              EcoXchange -- Regulated digital securities marketplace. Securities offered under applicable exemptions. Not FDIC insured.
+              EcoXchange -- Regulated digital securities platform. Securities offered under applicable exemptions. Not FDIC insured.
             </p>
             <p className="text-xs text-muted-foreground mt-1">
               Generated on {new Date().toLocaleDateString()}
