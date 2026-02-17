@@ -1,5 +1,5 @@
 import { randomUUID } from "crypto";
-import { createHash } from "crypto";
+import bcrypt from "bcryptjs";
 import {
   type User, type InsertUser,
   type Project, type InsertProject,
@@ -9,14 +9,18 @@ import {
   type DataRoomChecklistItem, type InsertDataRoomChecklistItem,
   type InvestorInterest, type InsertInvestorInterest,
   type ProjectApprovalLog, type InsertProjectApprovalLog,
+  type Ppa, type InsertPpa,
+  type EnergyProduction, type InsertEnergyProduction,
+  type RevenueRecord, type InsertRevenueRecord,
+  type Distribution, type InsertDistribution,
 } from "@shared/schema";
 
 function hashPassword(password: string): string {
-  return createHash("sha256").update(password).digest("hex");
+  return bcrypt.hashSync(password, 12);
 }
 
 export function verifyPassword(password: string, hash: string): boolean {
-  return hashPassword(password) === hash;
+  return bcrypt.compareSync(password, hash);
 }
 
 export interface IStorage {
@@ -269,9 +273,9 @@ export class MemStorage implements IStorage {
       county: "Travis",
       latitude: "30.2672",
       longitude: "-97.7431",
-      capacityMW: "25.00",
+      capacityMW: "4.50",
       status: "APPROVED",
-      summary: "A 25MW utility-scale solar project in Central Texas with executed IA and approved permits. Ready for construction financing.",
+      summary: "A 4.5MW community solar project in Central Texas with executed IA and approved permits. Ready for construction financing.",
       offtakerType: "UTILITY",
       interconnectionStatus: "IA_EXECUTED",
       permittingStatus: "APPROVED",
@@ -285,31 +289,13 @@ export class MemStorage implements IStorage {
     this.capitalStacks.set(proj1Id, {
       id: cs1Id,
       projectId: proj1Id,
-      totalCapex: "28500000",
+      totalCapex: "5200000",
       taxCreditType: "ITC",
-      taxCreditEstimated: "8550000",
+      taxCreditEstimated: "1560000",
       taxCreditTransferabilityReady: true,
-      equityNeeded: "19950000",
+      equityNeeded: "3640000",
       debtPlaceholder: "0",
       notes: "30% ITC eligible. Transferability confirmed.",
-    });
-
-    const score1 = computeReadiness(
-      this.projects.get(proj1Id)!,
-      [],
-      [],
-      this.capitalStacks.get(proj1Id)
-    );
-    const rs1Id = randomUUID();
-    this.readinessScores.set(proj1Id, {
-      id: rs1Id,
-      projectId: proj1Id,
-      score: score1.score,
-      rating: score1.rating,
-      reasons: JSON.stringify(score1.reasons),
-      flags: JSON.stringify(score1.flags),
-      overriddenByAdmin: false,
-      overrideNotes: null,
     });
 
     // Generate checklist for project 1
@@ -343,16 +329,35 @@ export class MemStorage implements IStorage {
       });
     }
 
+    // Compute readiness AFTER creating docs and checklist
+    const score1 = computeReadiness(
+      this.projects.get(proj1Id)!,
+      Array.from(this.documents.values()).filter(d => d.projectId === proj1Id),
+      Array.from(this.checklistItems.values()).filter(c => c.projectId === proj1Id),
+      this.capitalStacks.get(proj1Id)
+    );
+    const rs1Id = randomUUID();
+    this.readinessScores.set(proj1Id, {
+      id: rs1Id,
+      projectId: proj1Id,
+      score: score1.score,
+      rating: score1.rating,
+      reasons: JSON.stringify(score1.reasons),
+      flags: JSON.stringify(score1.flags),
+      overriddenByAdmin: false,
+      overrideNotes: null,
+    });
+
     // Sample investor interest on project 1
     const int1Id = randomUUID();
     this.interests.set(int1Id, {
       id: int1Id,
       projectId: proj1Id,
       investorId: investorId,
-      amountIntent: "5000000",
+      amountIntent: "500000",
       structurePreference: "EQUITY",
       timeline: "IMMEDIATE",
-      message: "Interested in the full equity tranche. Our fund has deployed $200M+ in US solar. Would like to discuss tax credit transfer terms.",
+      message: "Interested in an equity position. Our fund focuses on community solar in ERCOT. Would like to discuss tax credit transfer terms.",
       status: "SUBMITTED",
       createdAt: new Date(Date.now() - 5 * 24 * 60 * 60 * 1000),
     });
@@ -370,9 +375,9 @@ export class MemStorage implements IStorage {
       county: "Maricopa",
       latitude: "33.4484",
       longitude: "-112.0740",
-      capacityMW: "8.50",
+      capacityMW: "2.80",
       status: "SUBMITTED",
-      summary: "An 8.5MW community solar + storage project in suburban Phoenix. Early stage, seeking development partners.",
+      summary: "A 2.8MW community solar + storage project in suburban Phoenix. Early stage, seeking development partners.",
       offtakerType: "COMMUNITY_SOLAR",
       interconnectionStatus: "APPLIED",
       permittingStatus: "IN_PROGRESS",
@@ -386,11 +391,11 @@ export class MemStorage implements IStorage {
     this.capitalStacks.set(proj2Id, {
       id: cs2Id,
       projectId: proj2Id,
-      totalCapex: "12000000",
+      totalCapex: "3100000",
       taxCreditType: "ITC",
-      taxCreditEstimated: "3600000",
+      taxCreditEstimated: "930000",
       taxCreditTransferabilityReady: false,
-      equityNeeded: "8400000",
+      equityNeeded: "2170000",
       debtPlaceholder: "0",
       notes: null,
     });

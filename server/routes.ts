@@ -3,24 +3,33 @@ import { createServer, type Server } from "http";
 import session from "express-session";
 import MemoryStore from "memorystore";
 import crypto from "crypto";
+import rateLimit from "express-rate-limit";
 import { storage, verifyPassword, computeReadiness, generateChecklist, computeCapitalStack } from "./storage";
 import { loginSchema, signupSchema, projectWizardStep1Schema, projectWizardStep2Schema, projectWizardStep3Schema, investorInterestFormSchema } from "@shared/schema";
 import { z } from "zod";
 
 const SessionStore = MemoryStore(session);
+const SESSION_SECRET = process.env.SESSION_SECRET || crypto.randomBytes(32).toString('hex');
+
+const authLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  max: 10,
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: { message: "Too many requests, please try again later" },
+});
 
 export async function registerRoutes(
   httpServer: Server,
   app: Express
 ): Promise<Server> {
-  // Session middleware (same as existing)
   app.use(
     session({
-      secret: process.env.SESSION_SECRET || "ecoxchange-demo-secret",
+      secret: SESSION_SECRET,
       resave: false,
       saveUninitialized: false,
       store: new SessionStore({ checkPeriod: 86400000 }),
-      cookie: { secure: false, httpOnly: true, maxAge: 24 * 60 * 60 * 1000 },
+      cookie: { secure: false, httpOnly: true, maxAge: 24 * 60 * 60 * 1000, sameSite: "lax" },
     })
   );
 
@@ -48,7 +57,7 @@ export async function registerRoutes(
     res.json({ user: { id: user.id, email: user.email, role: user.role, name: user.name, orgName: user.orgName, personaStatus: user.personaStatus } });
   });
 
-  app.post("/api/auth/login", async (req: any, res) => {
+  app.post("/api/auth/login", authLimiter, async (req: any, res) => {
     try {
       const data = loginSchema.parse(req.body);
       const user = await storage.getUserByEmail(data.email);
@@ -62,7 +71,7 @@ export async function registerRoutes(
     }
   });
 
-  app.post("/api/auth/signup", async (req: any, res) => {
+  app.post("/api/auth/signup", authLimiter, async (req: any, res) => {
     try {
       const data = signupSchema.parse(req.body);
       const existing = await storage.getUserByEmail(data.email);
@@ -171,6 +180,10 @@ export async function registerRoutes(
     try {
       const PERSONA_WEBHOOK_SECRET = process.env.PERSONA_WEBHOOK_SECRET;
 
+      // PRODUCTION: reject webhooks without valid signature
+      if (!PERSONA_WEBHOOK_SECRET) {
+        console.warn("Persona webhook: PERSONA_WEBHOOK_SECRET is not set — processing without signature validation (demo mode)");
+      }
       if (PERSONA_WEBHOOK_SECRET) {
         const signature = req.headers["persona-signature"] || "";
         const rawBody = JSON.stringify(req.body);
