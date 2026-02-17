@@ -28,6 +28,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import { YieldDashboard } from "@/components/yield-dashboard";
 import {
   CheckCircle,
   XCircle,
@@ -38,6 +39,7 @@ import {
   User,
   Building,
   Mail,
+  TrendingUp,
 } from "lucide-react";
 import type {
   Project,
@@ -483,6 +485,14 @@ export default function AdminProjectReview() {
             </CardContent>
           </Card>
         )}
+
+        <div>
+          <h3 className="text-lg font-semibold flex items-center gap-2 mb-3">
+            <TrendingUp className="h-4 w-4" />
+            Yield Performance
+          </h3>
+          <YieldDashboard projectId={id!} />
+        </div>
 
         <Card>
           <CardHeader>

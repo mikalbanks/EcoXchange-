@@ -12,7 +12,7 @@ I prefer clear, concise communication. When making changes, prioritize core func
 The platform features a dark mode by default, utilizing an eco-green brand color scheme (#73AC20 primary, #90C11B accent) against near-black backgrounds (#0B0F0C) and card elements (#101712). The design emphasizes institutional credibility and seriousness appropriate for a securities compliance and climate infrastructure platform. The logo is `ecoxchange-logo.png`.
 
 ### Technical Implementations
-The application is built with an Express.js backend and a React frontend (Vite with wouter routing). Authentication is session-based using `express-session` and `memorystore`. Currently, data persistence is handled by in-memory storage (`MemStorage`), meaning data resets on server restarts. The system supports multi-role authentication (Admin, Developer/Issuer, Investor), with specific dashboards and functionalities tailored to each role.
+The application is built with an Express.js backend and a React frontend (Vite with wouter routing). Authentication is session-based using `express-session` and `memorystore` with bcrypt password hashing (12 rounds) and rate limiting (10 req/15min) on auth endpoints. Currently, data persistence is handled by in-memory storage (`MemStorage`), meaning data resets on server restarts. The system supports multi-role authentication (Admin, Developer/Issuer, Investor), with specific dashboards and functionalities tailored to each role.
 
 ### Feature Specifications
 - **Multi-Role Authentication**: Differentiated access for Admin, Developer (Issuer), and Investor roles.
@@ -21,6 +21,7 @@ The application is built with an Express.js backend and a React frontend (Vite w
 - **Admin Panel**: Dashboard for platform KPIs, a review queue for projects, full project review capabilities with score override, export packet generation, and user management including KYC/AML status.
 - **Identity Verification**: Integrates Persona for KYC/AML verification for issuers and investors, with backend gating to enforce completion before critical actions.
 - **Readiness Scoring Engine**: A dynamic scoring system for projects based on various criteria (e.g., site control, interconnection, permitting, offtaker), yielding a GREEN, YELLOW, or RED rating.
+- **Energy-to-Yield Pipeline**: SCADA data ingestion → energy production tracking → PPA-based revenue computation (15% opex deduction) → distribution calculation (0.75% platform fee) → investor yield dashboard. Data model: ppas, energyProduction, revenueRecords, distributions tables. API: GET /api/projects/:id/yield. UI: YieldDashboard component integrated into deal-room, project-detail, and project-review pages.
 
 ### System Design Choices
 The architecture is compliance-first, designed to be forward-compatible with future regulated secondary trading requirements (ATS). It emphasizes vertical specialization for renewable energy securities, with a unique "energy-to-yield pipeline" that calculates production-based yield from SCADA data and automates distributions. The platform uses per-project Delaware LLCs as Special Purpose Vehicles (SPVs) for tokenizing membership interests. The initial phase operates under Reg D 506(c) for accredited investors, with plans to incorporate Reg CF for non-accredited investors in Phase 2.

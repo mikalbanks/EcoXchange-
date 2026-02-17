@@ -62,6 +62,19 @@ export interface IStorage {
 
   getApprovalLogs(projectId: string): Promise<ProjectApprovalLog[]>;
   createApprovalLog(log: InsertProjectApprovalLog): Promise<ProjectApprovalLog>;
+
+  getPpasByProject(projectId: string): Promise<Ppa[]>;
+  createPpa(ppa: InsertPpa): Promise<Ppa>;
+
+  getProductionByProject(projectId: string): Promise<EnergyProduction[]>;
+  createProduction(prod: InsertEnergyProduction): Promise<EnergyProduction>;
+
+  getRevenueByProject(projectId: string): Promise<RevenueRecord[]>;
+  createRevenue(rev: InsertRevenueRecord): Promise<RevenueRecord>;
+
+  getDistributionsByProject(projectId: string): Promise<Distribution[]>;
+  createDistribution(dist: InsertDistribution): Promise<Distribution>;
+  updateDistribution(id: string, updates: Partial<Distribution>): Promise<Distribution | undefined>;
 }
 
 // ─── Readiness Scoring Engine ────────────────────────────────────────────────
@@ -195,6 +208,30 @@ export function computeCapitalStack(totalCapex: number, taxCreditEstimated: numb
   };
 }
 
+// ─── Yield Computation Engine ─────────────────────────────────────────────────
+
+export function computeRevenue(
+  production: EnergyProduction,
+  ppa: Ppa
+): { grossRevenue: number; netRevenue: number; operatingExpenses: number } {
+  const mwh = parseFloat(production.productionMwh);
+  const pricePerMwh = parseFloat(ppa.pricePerMwh);
+  const grossRevenue = mwh * pricePerMwh;
+  const opexRate = 0.15;
+  const operatingExpenses = grossRevenue * opexRate;
+  const netRevenue = grossRevenue - operatingExpenses;
+  return { grossRevenue: Math.round(grossRevenue * 100) / 100, netRevenue: Math.round(netRevenue * 100) / 100, operatingExpenses: Math.round(operatingExpenses * 100) / 100 };
+}
+
+export function computeDistribution(
+  netRevenue: number,
+  platformFeeRate: number = 0.0075
+): { totalDistributable: number; investorShare: number; platformFee: number } {
+  const platformFee = Math.round(netRevenue * platformFeeRate * 100) / 100;
+  const investorShare = Math.round((netRevenue - platformFee) * 100) / 100;
+  return { totalDistributable: netRevenue, investorShare, platformFee };
+}
+
 // ─── MemStorage ──────────────────────────────────────────────────────────────
 
 export class MemStorage implements IStorage {
@@ -206,6 +243,10 @@ export class MemStorage implements IStorage {
   private checklistItems: Map<string, DataRoomChecklistItem> = new Map();
   private interests: Map<string, InvestorInterest> = new Map();
   private approvalLogs: Map<string, ProjectApprovalLog> = new Map();
+  private ppas: Map<string, Ppa> = new Map();
+  private productionRecords: Map<string, EnergyProduction> = new Map();
+  private revenueRecords: Map<string, RevenueRecord> = new Map();
+  private distributions: Map<string, Distribution> = new Map();
 
   constructor() {
     this.seedData();
@@ -465,6 +506,76 @@ export class MemStorage implements IStorage {
       notes: "Project meets all requirements for investor visibility.",
       createdAt: new Date(Date.now() - 15 * 24 * 60 * 60 * 1000),
     });
+
+    // ─── Yield Pipeline Seed Data (Project 1 only — approved + COD-ready) ────
+    const ppaId = randomUUID();
+    const now = new Date();
+    this.ppas.set(ppaId, {
+      id: ppaId,
+      projectId: proj1Id,
+      offtakerName: "Austin Energy",
+      contractStartDate: new Date(now.getFullYear() - 1, 0, 1),
+      contractEndDate: new Date(now.getFullYear() + 19, 11, 31),
+      pricePerMwh: "42.50",
+      escalationType: "ESCALATING",
+      escalationRate: "2.00",
+      contractedCapacityMW: "4.50",
+      createdAt: new Date(now.getFullYear() - 1, 0, 1),
+    });
+
+    const months = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+    const monthlyMwh = [420, 480, 600, 720, 810, 850, 870, 830, 690, 560, 440, 390];
+
+    for (let i = 0; i < 12; i++) {
+      const periodStart = new Date(now.getFullYear() - 1, i, 1);
+      const periodEnd = new Date(now.getFullYear() - 1, i + 1, 0);
+      const prodId = randomUUID();
+      const mwh = monthlyMwh[i];
+      const capacityFactor = (mwh / (4.5 * periodEnd.getDate() * 24)).toFixed(4);
+
+      this.productionRecords.set(prodId, {
+        id: prodId,
+        projectId: proj1Id,
+        periodStart,
+        periodEnd,
+        productionMwh: mwh.toString(),
+        capacityFactor,
+        source: "SCADA",
+        createdAt: periodEnd,
+      });
+
+      const rev = computeRevenue(
+        this.productionRecords.get(prodId)!,
+        this.ppas.get(ppaId)!
+      );
+      const revId = randomUUID();
+      this.revenueRecords.set(revId, {
+        id: revId,
+        projectId: proj1Id,
+        ppaId: ppaId,
+        productionId: prodId,
+        periodStart,
+        periodEnd,
+        grossRevenue: rev.grossRevenue.toString(),
+        operatingExpenses: rev.operatingExpenses.toString(),
+        netRevenue: rev.netRevenue.toString(),
+        createdAt: periodEnd,
+      });
+
+      const dist = computeDistribution(rev.netRevenue);
+      const distId = randomUUID();
+      this.distributions.set(distId, {
+        id: distId,
+        projectId: proj1Id,
+        periodLabel: `${months[i]} ${now.getFullYear() - 1}`,
+        totalDistributable: dist.totalDistributable.toString(),
+        investorShare: dist.investorShare.toString(),
+        platformFee: dist.platformFee.toString(),
+        status: i < 11 ? "DISTRIBUTED" : "APPROVED",
+        distributedAt: i < 11 ? new Date(now.getFullYear() - 1, i + 1, 15) : null,
+        createdAt: periodEnd,
+      });
+    }
   }
 
   // ─── Users ──────────────────────────────────────────────────────
@@ -741,6 +852,112 @@ export class MemStorage implements IStorage {
     };
     this.approvalLogs.set(id, newLog);
     return newLog;
+  }
+  // ─── PPAs ──────────────────────────────────────────────────────
+
+  async getPpasByProject(projectId: string): Promise<Ppa[]> {
+    return Array.from(this.ppas.values()).filter(p => p.projectId === projectId);
+  }
+
+  async createPpa(ppa: InsertPpa): Promise<Ppa> {
+    const id = randomUUID();
+    const newPpa: Ppa = {
+      id,
+      projectId: ppa.projectId,
+      offtakerName: ppa.offtakerName,
+      contractStartDate: ppa.contractStartDate,
+      contractEndDate: ppa.contractEndDate,
+      pricePerMwh: ppa.pricePerMwh,
+      escalationType: ppa.escalationType || "FIXED",
+      escalationRate: ppa.escalationRate || "0",
+      contractedCapacityMW: ppa.contractedCapacityMW,
+      createdAt: new Date(),
+    };
+    this.ppas.set(id, newPpa);
+    return newPpa;
+  }
+
+  // ─── Energy Production ────────────────────────────────────────
+
+  async getProductionByProject(projectId: string): Promise<EnergyProduction[]> {
+    return Array.from(this.productionRecords.values())
+      .filter(p => p.projectId === projectId)
+      .sort((a, b) => new Date(a.periodStart).getTime() - new Date(b.periodStart).getTime());
+  }
+
+  async createProduction(prod: InsertEnergyProduction): Promise<EnergyProduction> {
+    const id = randomUUID();
+    const newProd: EnergyProduction = {
+      id,
+      projectId: prod.projectId,
+      periodStart: prod.periodStart,
+      periodEnd: prod.periodEnd,
+      productionMwh: prod.productionMwh,
+      capacityFactor: prod.capacityFactor || null,
+      source: prod.source || "MANUAL",
+      createdAt: new Date(),
+    };
+    this.productionRecords.set(id, newProd);
+    return newProd;
+  }
+
+  // ─── Revenue Records ─────────────────────────────────────────
+
+  async getRevenueByProject(projectId: string): Promise<RevenueRecord[]> {
+    return Array.from(this.revenueRecords.values())
+      .filter(r => r.projectId === projectId)
+      .sort((a, b) => new Date(a.periodStart).getTime() - new Date(b.periodStart).getTime());
+  }
+
+  async createRevenue(rev: InsertRevenueRecord): Promise<RevenueRecord> {
+    const id = randomUUID();
+    const newRev: RevenueRecord = {
+      id,
+      projectId: rev.projectId,
+      ppaId: rev.ppaId,
+      productionId: rev.productionId,
+      periodStart: rev.periodStart,
+      periodEnd: rev.periodEnd,
+      grossRevenue: rev.grossRevenue,
+      operatingExpenses: rev.operatingExpenses || "0",
+      netRevenue: rev.netRevenue,
+      createdAt: new Date(),
+    };
+    this.revenueRecords.set(id, newRev);
+    return newRev;
+  }
+
+  // ─── Distributions ────────────────────────────────────────────
+
+  async getDistributionsByProject(projectId: string): Promise<Distribution[]> {
+    return Array.from(this.distributions.values())
+      .filter(d => d.projectId === projectId)
+      .sort((a, b) => new Date(a.createdAt!).getTime() - new Date(b.createdAt!).getTime());
+  }
+
+  async createDistribution(dist: InsertDistribution): Promise<Distribution> {
+    const id = randomUUID();
+    const newDist: Distribution = {
+      id,
+      projectId: dist.projectId,
+      periodLabel: dist.periodLabel,
+      totalDistributable: dist.totalDistributable,
+      investorShare: dist.investorShare,
+      platformFee: dist.platformFee,
+      status: dist.status || "PENDING",
+      distributedAt: dist.distributedAt || null,
+      createdAt: new Date(),
+    };
+    this.distributions.set(id, newDist);
+    return newDist;
+  }
+
+  async updateDistribution(id: string, updates: Partial<Distribution>): Promise<Distribution | undefined> {
+    const dist = this.distributions.get(id);
+    if (!dist) return undefined;
+    const updated = { ...dist, ...updates };
+    this.distributions.set(id, updated);
+    return updated;
   }
 }
 

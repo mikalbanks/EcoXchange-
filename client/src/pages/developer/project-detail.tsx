@@ -17,6 +17,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { useToast } from "@/hooks/use-toast";
+import { YieldDashboard } from "@/components/yield-dashboard";
 import {
   Sun,
   Battery,
@@ -28,6 +29,7 @@ import {
   Loader2,
   DollarSign,
   Users,
+  TrendingUp,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -339,6 +341,14 @@ export default function ProjectDetail() {
               )}
             </CardContent>
           </Card>
+        </div>
+
+        <div>
+          <h3 className="text-lg font-semibold flex items-center gap-2 mb-3">
+            <TrendingUp className="h-4 w-4" />
+            Yield Performance
+          </h3>
+          <YieldDashboard projectId={id!} />
         </div>
 
         <Card>

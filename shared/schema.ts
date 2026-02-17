@@ -303,6 +303,106 @@ export const insertProjectApprovalLogSchema = createInsertSchema(projectApproval
 export type InsertProjectApprovalLog = z.infer<typeof insertProjectApprovalLogSchema>;
 export type ProjectApprovalLog = typeof projectApprovalLogs.$inferSelect;
 
+// ─── PPAs (Power Purchase Agreements) ───────────────────────────────────────
+
+export const PpaEscalationType = {
+  FIXED: "FIXED",
+  ESCALATING: "ESCALATING",
+} as const;
+
+export const ppas = pgTable("ppas", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  projectId: varchar("project_id").notNull(),
+  offtakerName: text("offtaker_name").notNull(),
+  contractStartDate: timestamp("contract_start_date").notNull(),
+  contractEndDate: timestamp("contract_end_date").notNull(),
+  pricePerMwh: decimal("price_per_mwh", { precision: 10, scale: 2 }).notNull(),
+  escalationType: text("escalation_type").notNull().default("FIXED"),
+  escalationRate: decimal("escalation_rate", { precision: 5, scale: 2 }).default("0"),
+  contractedCapacityMW: decimal("contracted_capacity_mw", { precision: 10, scale: 2 }).notNull(),
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
+export const insertPpaSchema = createInsertSchema(ppas).omit({
+  id: true,
+  createdAt: true,
+});
+
+export type InsertPpa = z.infer<typeof insertPpaSchema>;
+export type Ppa = typeof ppas.$inferSelect;
+
+// ─── Energy Production ──────────────────────────────────────────────────────
+
+export const energyProduction = pgTable("energy_production", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  projectId: varchar("project_id").notNull(),
+  periodStart: timestamp("period_start").notNull(),
+  periodEnd: timestamp("period_end").notNull(),
+  productionMwh: decimal("production_mwh", { precision: 12, scale: 2 }).notNull(),
+  capacityFactor: decimal("capacity_factor", { precision: 5, scale: 4 }),
+  source: text("source").notNull().default("MANUAL"),
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
+export const insertEnergyProductionSchema = createInsertSchema(energyProduction).omit({
+  id: true,
+  createdAt: true,
+});
+
+export type InsertEnergyProduction = z.infer<typeof insertEnergyProductionSchema>;
+export type EnergyProduction = typeof energyProduction.$inferSelect;
+
+// ─── Revenue Records ────────────────────────────────────────────────────────
+
+export const revenueRecords = pgTable("revenue_records", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  projectId: varchar("project_id").notNull(),
+  ppaId: varchar("ppa_id").notNull(),
+  productionId: varchar("production_id").notNull(),
+  periodStart: timestamp("period_start").notNull(),
+  periodEnd: timestamp("period_end").notNull(),
+  grossRevenue: decimal("gross_revenue", { precision: 15, scale: 2 }).notNull(),
+  operatingExpenses: decimal("operating_expenses", { precision: 15, scale: 2 }).notNull().default("0"),
+  netRevenue: decimal("net_revenue", { precision: 15, scale: 2 }).notNull(),
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
+export const insertRevenueRecordSchema = createInsertSchema(revenueRecords).omit({
+  id: true,
+  createdAt: true,
+});
+
+export type InsertRevenueRecord = z.infer<typeof insertRevenueRecordSchema>;
+export type RevenueRecord = typeof revenueRecords.$inferSelect;
+
+// ─── Distributions ──────────────────────────────────────────────────────────
+
+export const DistributionStatus = {
+  PENDING: "PENDING",
+  APPROVED: "APPROVED",
+  DISTRIBUTED: "DISTRIBUTED",
+} as const;
+
+export const distributions = pgTable("distributions", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  projectId: varchar("project_id").notNull(),
+  periodLabel: text("period_label").notNull(),
+  totalDistributable: decimal("total_distributable", { precision: 15, scale: 2 }).notNull(),
+  investorShare: decimal("investor_share", { precision: 15, scale: 2 }).notNull(),
+  platformFee: decimal("platform_fee", { precision: 15, scale: 2 }).notNull(),
+  status: text("status").notNull().default("PENDING"),
+  distributedAt: timestamp("distributed_at"),
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
+export const insertDistributionSchema = createInsertSchema(distributions).omit({
+  id: true,
+  createdAt: true,
+});
+
+export type InsertDistribution = z.infer<typeof insertDistributionSchema>;
+export type Distribution = typeof distributions.$inferSelect;
+
 // ─── Zod Validation Schemas ─────────────────────────────────────────────────
 
 export const loginSchema = z.object({

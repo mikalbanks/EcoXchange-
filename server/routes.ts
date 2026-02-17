@@ -768,5 +768,44 @@ export async function registerRoutes(
     });
   });
 
+  // ─── Yield Pipeline Routes ────────────────────────────────────────────────
+
+  app.get("/api/projects/:id/yield", requireAuth, async (req: any, res) => {
+    const project = await storage.getProject(req.params.id);
+    if (!project) return res.status(404).json({ message: "Project not found" });
+
+    const [ppas, production, revenue, distributions] = await Promise.all([
+      storage.getPpasByProject(project.id),
+      storage.getProductionByProject(project.id),
+      storage.getRevenueByProject(project.id),
+      storage.getDistributionsByProject(project.id),
+    ]);
+
+    const totalProduction = production.reduce((s, p) => s + parseFloat(p.productionMwh), 0);
+    const totalGrossRevenue = revenue.reduce((s, r) => s + parseFloat(r.grossRevenue), 0);
+    const totalNetRevenue = revenue.reduce((s, r) => s + parseFloat(r.netRevenue), 0);
+    const totalDistributed = distributions
+      .filter(d => d.status === "DISTRIBUTED")
+      .reduce((s, d) => s + parseFloat(d.investorShare), 0);
+    const avgCapacityFactor = production.length > 0
+      ? production.reduce((s, p) => s + parseFloat(p.capacityFactor || "0"), 0) / production.length
+      : 0;
+
+    res.json({
+      ppas,
+      production,
+      revenue,
+      distributions,
+      summary: {
+        totalProductionMwh: Math.round(totalProduction * 100) / 100,
+        totalGrossRevenue: Math.round(totalGrossRevenue * 100) / 100,
+        totalNetRevenue: Math.round(totalNetRevenue * 100) / 100,
+        totalDistributed: Math.round(totalDistributed * 100) / 100,
+        avgCapacityFactor: Math.round(avgCapacityFactor * 10000) / 10000,
+        periodsReported: production.length,
+      },
+    });
+  });
+
   return httpServer;
 }
