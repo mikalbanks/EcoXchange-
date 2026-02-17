@@ -14,7 +14,7 @@ export function Header() {
   const { user, logout, isLoading } = useAuth();
   const [location] = useLocation();
 
-  const isPublicPage = location === "/" || location === "/about" || location === "/compliance";
+  const isPublicPage = location === "/" || location === "/about" || location === "/compliance" || location === "/yield-simulation";
 
   return (
     <header className="sticky top-0 z-50 w-full border-b border-border/40 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
@@ -38,6 +38,9 @@ export function Header() {
             </Link>
             <Link href="/#compliance" className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors" data-testid="link-compliance">
               Compliance
+            </Link>
+            <Link href="/yield-simulation" className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors" data-testid="link-yield-simulation">
+              Yield Simulator
             </Link>
             <Link href="/auth/login" className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors" data-testid="link-signin">
               Sign In

@@ -24,6 +24,7 @@ import AdminProjects from "@/pages/admin/projects";
 import AdminProjectReview from "@/pages/admin/project-review";
 import AdminExportPacket from "@/pages/admin/export-packet";
 import AdminUsers from "@/pages/admin/users";
+import YieldSimulationPage from "@/pages/yield-simulation";
 
 function ProtectedRoute({ 
   children, 
@@ -60,6 +61,7 @@ function Router() {
       <Route path="/" component={LandingPage} />
       <Route path="/auth/login" component={LoginPage} />
       <Route path="/auth/signup" component={SignupPage} />
+      <Route path="/yield-simulation" component={YieldSimulationPage} />
       
       <Route path="/developer">
         <ProtectedRoute allowedRoles={["DEVELOPER"]}>
