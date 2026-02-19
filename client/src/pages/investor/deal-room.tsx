@@ -29,6 +29,7 @@ import {
   FormItem,
   FormLabel,
   FormMessage,
+  FormDescription,
 } from "@/components/ui/form";
 import { YieldDashboard } from "@/components/yield-dashboard";
 import {
@@ -108,6 +109,7 @@ interface DealRoomData {
 function formatCurrency(value: string | number | null): string {
   if (!value) return "$0";
   const num = typeof value === "string" ? parseFloat(value) : value;
+  if (isNaN(num)) return "$0";
   return `$${num.toLocaleString("en-US", { minimumFractionDigits: 0, maximumFractionDigits: 0 })}`;
 }
 
@@ -262,10 +264,10 @@ export default function InvestorDealRoom() {
   }
 
   const { project, readinessScore, capitalStack, documents, checklist, developer, myInterest } = data;
-  const totalCapex = parseFloat(capitalStack?.totalCapex || "0");
-  const taxCreditEstimated = parseFloat(capitalStack?.taxCreditEstimated || "0");
-  const equityNeeded = parseFloat(capitalStack?.equityNeeded || "0");
-  const debtPlaceholder = parseFloat(capitalStack?.debtPlaceholder || "0");
+  const totalCapex = parseFloat(capitalStack?.totalCapex || "0") || 0;
+  const taxCreditEstimated = parseFloat(capitalStack?.taxCreditEstimated || "0") || 0;
+  const equityNeeded = parseFloat(capitalStack?.equityNeeded || "0") || 0;
+  const debtPlaceholder = parseFloat(capitalStack?.debtPlaceholder || "0") || 0;
 
   const reasons = readinessScore?.reasons
     ? (typeof readinessScore.reasons === "string" ? readinessScore.reasons.split("\n").filter(Boolean) : [])
@@ -546,10 +548,17 @@ export default function InvestorDealRoom() {
                           <Input
                             type="number"
                             placeholder="Enter amount in USD"
+                            min="10000"
+                            step="1000"
                             {...field}
                             data-testid="input-amount-intent"
                           />
                         </FormControl>
+                        <FormDescription className="text-xs">
+                          {equityNeeded > 0
+                            ? `Equity target: ${formatCurrency(equityNeeded)}. Enter your intended investment amount in USD.`
+                            : "Enter your intended investment amount in USD."}
+                        </FormDescription>
                         <FormMessage />
                       </FormItem>
                     )}

@@ -1,3 +1,4 @@
+import { motion } from "framer-motion";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { cn } from "@/lib/utils";
 import { type LucideIcon } from "lucide-react";
@@ -23,6 +24,11 @@ export function StatsCard({
   className 
 }: StatsCardProps) {
   return (
+    <motion.div
+      initial={{ opacity: 0, y: 8 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.3, ease: "easeOut" }}
+    >
     <Card className={cn("relative overflow-visible", className)}>
       <CardHeader className="flex flex-row items-center justify-between gap-2 pb-2">
         <CardTitle className="text-sm font-medium text-muted-foreground">
@@ -54,5 +60,6 @@ export function StatsCard({
         )}
       </CardContent>
     </Card>
+    </motion.div>
   );
 }

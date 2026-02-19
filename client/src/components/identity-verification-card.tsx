@@ -1,4 +1,4 @@
-import { useState, useCallback, useRef } from "react";
+import { useState, useCallback, useRef, useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { useAuth } from "@/lib/auth";
 import { apiRequest, queryClient } from "@/lib/queryClient";
@@ -25,6 +25,17 @@ export function IdentityVerificationCard() {
   const { toast } = useToast();
   const [isStarting, setIsStarting] = useState(false);
   const personaClientRef = useRef<any>(null);
+
+  useEffect(() => {
+    return () => {
+      if (personaClientRef.current) {
+        if (typeof personaClientRef.current.destroy === "function") {
+          personaClientRef.current.destroy();
+        }
+        personaClientRef.current = null;
+      }
+    };
+  }, []);
 
   const { data: statusData } = useQuery<PersonaStatusResponse>({
     queryKey: ["/api/persona/status"],

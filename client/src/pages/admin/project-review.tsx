@@ -119,7 +119,7 @@ export default function AdminProjectReview() {
   };
 
   const handleOverride = () => {
-    const score = parseInt(overrideScore);
+    const score = parseInt(overrideScore, 10);
     if (isNaN(score) || score < 0 || score > 100) {
       toast({ title: "Invalid score", description: "Score must be between 0 and 100.", variant: "destructive" });
       return;
@@ -204,7 +204,7 @@ export default function AdminProjectReview() {
           </Link>
           <Button
             variant="outline"
-            className="gap-2"
+            className="gap-2 border-amber-500/50 text-amber-400 hover:bg-amber-500/10 hover:text-amber-300"
             onClick={() => setActionDialog("REQUEST_CHANGES")}
             data-testid="button-request-changes"
           >

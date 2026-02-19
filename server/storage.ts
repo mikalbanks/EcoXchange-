@@ -15,7 +15,7 @@ import {
   type Distribution, type InsertDistribution,
 } from "@shared/schema";
 
-function hashPassword(password: string): string {
+export function hashPassword(password: string): string {
   return bcrypt.hashSync(password, 12);
 }
 

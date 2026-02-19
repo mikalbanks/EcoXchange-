@@ -1,14 +1,19 @@
 import { Link, useLocation } from "wouter";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/lib/auth";
-import { 
+import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuSeparator,
-  DropdownMenuTrigger 
+  DropdownMenuTrigger
 } from "@/components/ui/dropdown-menu";
-import { User, LogOut, LayoutDashboard } from "lucide-react";
+import {
+  Sheet,
+  SheetContent,
+  SheetTrigger,
+} from "@/components/ui/sheet";
+import { User, LogOut, LayoutDashboard, Menu } from "lucide-react";
 
 export function Header() {
   const { user, logout, isLoading } = useAuth();
@@ -29,23 +34,60 @@ export function Header() {
         </Link>
 
         {isPublicPage && (
-          <nav className="hidden md:flex items-center gap-6">
-            <Link href="/#pillars" className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors" data-testid="link-offerings">
-              Offerings
-            </Link>
-            <Link href="/#how-it-works" className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors" data-testid="link-issuers">
-              Issuers
-            </Link>
-            <Link href="/#compliance" className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors" data-testid="link-compliance">
-              Compliance
-            </Link>
-            <Link href="/yield-simulation" className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors" data-testid="link-yield-simulation">
-              Yield Simulator
-            </Link>
-            <Link href="/auth/login" className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors" data-testid="link-signin">
-              Sign In
-            </Link>
-          </nav>
+          <>
+            <nav className="hidden md:flex items-center gap-6">
+              <Link href="/#pillars" className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors" data-testid="link-offerings">
+                Offerings
+              </Link>
+              <Link href="/#how-it-works" className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors" data-testid="link-issuers">
+                Issuers
+              </Link>
+              <Link href="/#compliance" className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors" data-testid="link-compliance">
+                Compliance
+              </Link>
+              <Link href="/yield-simulation" className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors" data-testid="link-yield-simulation">
+                Yield Simulator
+              </Link>
+              <Link href="/auth/login" className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors" data-testid="link-signin">
+                Sign In
+              </Link>
+            </nav>
+
+            <div className="md:hidden">
+              <Sheet>
+                <SheetTrigger asChild>
+                  <Button variant="ghost" size="icon" data-testid="button-mobile-menu">
+                    <Menu className="h-5 w-5" />
+                    <span className="sr-only">Open menu</span>
+                  </Button>
+                </SheetTrigger>
+                <SheetContent side="right" className="w-64">
+                  <nav className="flex flex-col gap-5 mt-8">
+                    <Link href="/#pillars" className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors">
+                      Offerings
+                    </Link>
+                    <Link href="/#how-it-works" className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors">
+                      Issuers
+                    </Link>
+                    <Link href="/#compliance" className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors">
+                      Compliance
+                    </Link>
+                    <Link href="/yield-simulation" className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors">
+                      Yield Simulator
+                    </Link>
+                    <Link href="/auth/login" className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors">
+                      Sign In
+                    </Link>
+                    <Link href="/auth/signup">
+                      <Button className="w-full" size="sm" data-testid="button-mobile-signup">
+                        Create Account
+                      </Button>
+                    </Link>
+                  </nav>
+                </SheetContent>
+              </Sheet>
+            </div>
+          </>
         )}
 
         <div className="flex items-center gap-3">

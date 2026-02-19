@@ -4,12 +4,18 @@ import session from "express-session";
 import MemoryStore from "memorystore";
 import crypto from "crypto";
 import rateLimit from "express-rate-limit";
-import { storage, verifyPassword, computeReadiness, generateChecklist, computeCapitalStack } from "./storage";
+import { storage, verifyPassword, hashPassword, computeReadiness, generateChecklist, computeCapitalStack } from "./storage";
 import { loginSchema, signupSchema, projectWizardStep1Schema, projectWizardStep2Schema, projectWizardStep3Schema, investorInterestFormSchema } from "@shared/schema";
 import { z } from "zod";
 
 const SessionStore = MemoryStore(session);
 const SESSION_SECRET = process.env.SESSION_SECRET || crypto.randomBytes(32).toString('hex');
+
+function safeJsonParse<T>(json: string | null | undefined, fallback: T): T {
+  if (!json) return fallback;
+  try { return JSON.parse(json) as T; }
+  catch { return fallback; }
+}
 
 const authLimiter = rateLimit({
   windowMs: 15 * 60 * 1000,
@@ -79,7 +85,7 @@ export async function registerRoutes(
       if (existing) return res.status(400).json({ message: "Email already registered" });
       const user = await storage.createUser({
         email: data.email,
-        passwordHash: data.password,
+        passwordHash: hashPassword(data.password),
         role: data.role,
         name: data.email.split("@")[0],
         orgName: null,
@@ -181,9 +187,11 @@ export async function registerRoutes(
     try {
       const PERSONA_WEBHOOK_SECRET = process.env.PERSONA_WEBHOOK_SECRET;
 
-      // PRODUCTION: reject webhooks without valid signature
+      // [SECURITY RISK] In production, PERSONA_WEBHOOK_SECRET must be set to validate webhook
+      // signatures. Without it, any caller can forge identity verification events.
+      // Demo mode is intentionally permissive — do NOT deploy to production without this secret.
       if (!PERSONA_WEBHOOK_SECRET) {
-        console.warn("Persona webhook: PERSONA_WEBHOOK_SECRET is not set — processing without signature validation (demo mode)");
+        console.warn("[SECURITY RISK] Persona webhook: PERSONA_WEBHOOK_SECRET not set — accepting unverified webhooks. Demo mode only. Set this env var before production.");
       }
       if (PERSONA_WEBHOOK_SECRET) {
         const signature = req.headers["persona-signature"] || "";
@@ -400,8 +408,8 @@ export async function registerRoutes(
       project,
       readinessScore: score ? {
         ...score,
-        reasons: score.reasons ? JSON.parse(score.reasons) : [],
-        flags: score.flags ? JSON.parse(score.flags) : {},
+        reasons: safeJsonParse(score.reasons, []),
+        flags: safeJsonParse(score.flags, {}),
       } : null,
       capitalStack,
       checklist,
@@ -522,8 +530,8 @@ export async function registerRoutes(
       project,
       readinessScore: score ? {
         ...score,
-        reasons: score.reasons ? JSON.parse(score.reasons) : [],
-        flags: score.flags ? JSON.parse(score.flags) : {},
+        reasons: safeJsonParse(score.reasons, []),
+        flags: safeJsonParse(score.flags, {}),
       } : null,
       capitalStack,
       documents,
@@ -654,8 +662,8 @@ export async function registerRoutes(
       project,
       readinessScore: score ? {
         ...score,
-        reasons: score.reasons ? JSON.parse(score.reasons) : [],
-        flags: score.flags ? JSON.parse(score.flags) : {},
+        reasons: safeJsonParse(score.reasons, []),
+        flags: safeJsonParse(score.flags, {}),
       } : null,
       capitalStack,
       checklist,
@@ -756,8 +764,8 @@ export async function registerRoutes(
       project,
       readinessScore: score ? {
         ...score,
-        reasons: score.reasons ? JSON.parse(score.reasons) : [],
-        flags: score.flags ? JSON.parse(score.flags) : {},
+        reasons: safeJsonParse(score.reasons, []),
+        flags: safeJsonParse(score.flags, {}),
       } : null,
       capitalStack,
       checklist,

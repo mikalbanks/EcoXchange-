@@ -29,7 +29,9 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { useToast } from "@/hooks/use-toast";
-import { Loader2, Check, FileText, X } from "lucide-react";
+import { Loader2, Check, FileText, X, HelpCircle } from "lucide-react";
+import { Progress } from "@/components/ui/progress";
+import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import {
   projectWizardStep1Schema,
   projectWizardStep2Schema,
@@ -115,21 +117,29 @@ export default function ProjectWizard() {
       return res.json();
     },
     onSuccess: async (data) => {
-      if (pendingDocs.length > 0) {
-        for (const doc of pendingDocs) {
-          try {
-            await apiRequest("POST", `/api/developer/projects/${data.id}/documents`, doc);
-          } catch (err) {
-            console.error("Failed to upload document:", err);
-          }
+      const failedDocs: string[] = [];
+      for (const doc of pendingDocs) {
+        try {
+          await apiRequest("POST", `/api/developer/projects/${data.id}/documents`, doc);
+        } catch (err) {
+          console.error("Failed to upload document:", err);
+          failedDocs.push(doc.filename);
         }
       }
       queryClient.invalidateQueries({ queryKey: ["/api/developer/projects"] });
       queryClient.invalidateQueries({ queryKey: ["/api/developer/stats"] });
-      toast({
-        title: "Project created",
-        description: "Your project has been submitted successfully.",
-      });
+      if (failedDocs.length > 0) {
+        toast({
+          title: "Project created with warnings",
+          description: `Submitted, but ${failedDocs.length} document(s) failed to attach: ${failedDocs.join(", ")}. Re-upload from the project detail page.`,
+          variant: "destructive",
+        });
+      } else {
+        toast({
+          title: "Project created",
+          description: "Your project has been submitted successfully.",
+        });
+      }
       setLocation(`/developer/projects/${data.id}`);
     },
     onError: (error: Error) => {
@@ -198,6 +208,13 @@ export default function ProjectWizard() {
             </p>
           </div>
         )}
+        <div className="mb-4">
+          <div className="flex items-center justify-between text-xs text-muted-foreground mb-2">
+            <span>Step {currentStep} of {STEPS.length}</span>
+            <span>{Math.round(((currentStep - 1) / (STEPS.length - 1)) * 100)}% complete</span>
+          </div>
+          <Progress value={((currentStep - 1) / (STEPS.length - 1)) * 100} className="h-1.5" data-testid="wizard-progress-bar" />
+        </div>
         <div className="flex items-center justify-center mb-8" data-testid="step-indicator">
           {STEPS.map((step, index) => (
             <div key={step.number} className="flex items-center">
@@ -480,7 +497,17 @@ export default function ProjectWizard() {
                       name="offtakerType"
                       render={({ field }) => (
                         <FormItem>
-                          <FormLabel>Offtaker Type</FormLabel>
+                          <FormLabel className="flex items-center gap-1.5">
+                            Offtaker Type
+                            <Tooltip>
+                              <TooltipTrigger asChild>
+                                <HelpCircle className="h-3.5 w-3.5 text-muted-foreground cursor-help" />
+                              </TooltipTrigger>
+                              <TooltipContent className="max-w-xs">
+                                <p>C&amp;I: Commercial &amp; Industrial buyer. Community Solar: shared local program. Utility: large utility PPA. Merchant: sells at spot market rates (higher risk).</p>
+                              </TooltipContent>
+                            </Tooltip>
+                          </FormLabel>
                           <Select onValueChange={field.onChange} value={field.value}>
                             <FormControl>
                               <SelectTrigger data-testid="select-offtaker">
@@ -562,7 +589,17 @@ export default function ProjectWizard() {
                       name="taxCreditType"
                       render={({ field }) => (
                         <FormItem>
-                          <FormLabel>Tax Credit Type</FormLabel>
+                          <FormLabel className="flex items-center gap-1.5">
+                            Tax Credit Type
+                            <Tooltip>
+                              <TooltipTrigger asChild>
+                                <HelpCircle className="h-3.5 w-3.5 text-muted-foreground cursor-help" />
+                              </TooltipTrigger>
+                              <TooltipContent className="max-w-xs">
+                                <p>ITC: one-time Investment Tax Credit on project cost. PTC: Production Tax Credit earned per kWh of electricity generated over 10 years.</p>
+                              </TooltipContent>
+                            </Tooltip>
+                          </FormLabel>
                           <Select onValueChange={field.onChange} value={field.value}>
                             <FormControl>
                               <SelectTrigger data-testid="select-tax-credit-type">
@@ -634,7 +671,17 @@ export default function ProjectWizard() {
                           />
                         </FormControl>
                         <div className="space-y-1 leading-none">
-                          <FormLabel>Tax Credit Transferability Ready</FormLabel>
+                          <FormLabel className="flex items-center gap-1.5">
+                            Tax Credit Transferability Ready
+                            <Tooltip>
+                              <TooltipTrigger asChild>
+                                <HelpCircle className="h-3.5 w-3.5 text-muted-foreground cursor-help" />
+                              </TooltipTrigger>
+                              <TooltipContent className="max-w-xs">
+                                <p>Under the Inflation Reduction Act, projects may transfer (sell) their tax credits to third-party buyers. Check this if the project is structured to allow transferability.</p>
+                              </TooltipContent>
+                            </Tooltip>
+                          </FormLabel>
                           <p className="text-sm text-muted-foreground">
                             This project is ready for tax credit transferability
                           </p>
