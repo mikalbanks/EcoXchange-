@@ -77,7 +77,8 @@ export interface IStorage {
   updateDistribution(id: string, updates: Partial<Distribution>): Promise<Distribution | undefined>;
 }
 
-export { computeReadiness, generateChecklist, computeCapitalStack, computeRevenue, computeDistribution } from "./scoring-engine";
+import { computeReadiness, generateChecklist, computeCapitalStack, computeRevenue, computeDistribution } from "./scoring-engine";
+export { computeReadiness, generateChecklist, computeCapitalStack, computeRevenue, computeDistribution };
 
 // ─── MemStorage ──────────────────────────────────────────────────────────────
 
