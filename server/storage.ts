@@ -77,63 +77,7 @@ export interface IStorage {
   updateDistribution(id: string, updates: Partial<Distribution>): Promise<Distribution | undefined>;
 }
 
-// ─── Readiness Scoring Engine ────────────────────────────────────────────────
-
-ca
-}
-
-// ─── Checklist Generation ────────────────────────────────────────────────────
-
-export function generateChecklist(project: Project): Array<{ key: string; label: string; required: boolean }> {
-  const items: Array<{ key: string; label: string; required: boolean }> = [
-    { key: "site_control", label: "Site Control Documentation (LOI/Option/Lease)", required: true },
-    { key: "interconnection", label: "Interconnection Application / Status Evidence", required: true },
-    { key: "permitting", label: "Permitting Evidence", required: true },
-    { key: "financial_model", label: "Basic Financial Model", required: true },
-    { key: "feoc_attestation", label: "FEOC Compliance Attestation", required: true },
-  ];
-
-  const stage = project.stage;
-  if (stage === "NTP" || stage === "CONSTRUCTION" || stage === "COD") {
-    items.push({ key: "epc_contract", label: "EPC Contract or Term Sheet", required: true });
-    items.push({ key: "insurance", label: "Insurance Evidence", required: false });
-  }
-
-  return items;
-}
-
-// ─── Capital Stack Engine ────────────────────────────────────────────────────
-
-export function computeCapitalStack(totalCapex: number, taxCreditEstimated: number): { equityNeeded: number; debtPlaceholder: number } {
-  return {
-    equityNeeded: Math.max(totalCapex - taxCreditEstimated, 0),
-    debtPlaceholder: 0,
-  };
-}
-
-// ─── Yield Computation Engine ─────────────────────────────────────────────────
-
-export function computeRevenue(
-  production: EnergyProduction,
-  ppa: Ppa
-): { grossRevenue: number; netRevenue: number; operatingExpenses: number } {
-  const mwh = parseFloat(production.productionMwh);
-  const pricePerMwh = parseFloat(ppa.pricePerMwh);
-  const grossRevenue = mwh * pricePerMwh;
-  const opexRate = 0.15;
-  const operatingExpenses = grossRevenue * opexRate;
-  const netRevenue = grossRevenue - operatingExpenses;
-  return { grossRevenue: Math.round(grossRevenue * 100) / 100, netRevenue: Math.round(netRevenue * 100) / 100, operatingExpenses: Math.round(operatingExpenses * 100) / 100 };
-}
-
-export function computeDistribution(
-  netRevenue: number,
-  platformFeeRate: number = 0.0075
-): { totalDistributable: number; investorShare: number; platformFee: number } {
-  const platformFee = Math.round(netRevenue * platformFeeRate * 100) / 100;
-  const investorShare = Math.round((netRevenue - platformFee) * 100) / 100;
-  return { totalDistributable: netRevenue, investorShare, platformFee };
-}
+export { computeReadiness, generateChecklist, computeCapitalStack, computeRevenue, computeDistribution } from "./scoring-engine";
 
 // ─── MemStorage ──────────────────────────────────────────────────────────────
 
