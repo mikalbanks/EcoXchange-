@@ -7,6 +7,8 @@ import rateLimit from "express-rate-limit";
 import { storage, verifyPassword, hashPassword, computeReadiness, generateChecklist, computeCapitalStack } from "./storage";
 import { loginSchema, signupSchema, projectWizardStep1Schema, projectWizardStep2Schema, projectWizardStep3Schema, investorInterestFormSchema } from "@shared/schema";
 import { z } from "zod";
+import pool from "./db";
+import { buildSeasonalForecast } from "./lib/yieldForecast";
 
 const SessionStore = MemoryStore(session);
 const SESSION_SECRET = process.env.SESSION_SECRET || crypto.randomBytes(32).toString('hex');
@@ -814,6 +816,136 @@ export async function registerRoutes(
         periodsReported: production.length,
       },
     });
+  });
+
+  // ═══ PVDAQ Telemetry Routes ═══
+
+  app.get("/api/pvdaq/systems/:systemId/monthly", async (req, res) => {
+    try {
+      const systemId = Number(req.params.systemId);
+      if (isNaN(systemId)) return res.status(400).json({ message: "Invalid system ID" });
+
+      const result = await pool.query(
+        `SELECT to_char(month, 'YYYY-MM') AS month,
+                monthly_energy_kwh,
+                avg_power_kw,
+                peak_power_kw,
+                sample_count,
+                days_in_month,
+                capacity_factor,
+                assumed_ppa_usd_per_kwh,
+                estimated_revenue_usd
+           FROM pv_monthly_metrics
+          WHERE system_id = $1
+          ORDER BY month`,
+        [systemId],
+      );
+      res.json(result.rows);
+    } catch (err) {
+      console.error("PVDAQ monthly error:", err);
+      res.status(500).json({ message: "Failed to fetch monthly metrics" });
+    }
+  });
+
+  app.get("/api/pvdaq/systems/:systemId/kpis", async (req, res) => {
+    try {
+      const systemId = Number(req.params.systemId);
+      if (isNaN(systemId)) return res.status(400).json({ message: "Invalid system ID" });
+
+      const systemResult = await pool.query(
+        `SELECT * FROM pv_systems WHERE system_id = $1`,
+        [systemId],
+      );
+      const system = systemResult.rows[0];
+      if (!system) return res.status(404).json({ message: "System not found" });
+
+      const metricsResult = await pool.query(
+        `SELECT
+            COUNT(*) AS total_months,
+            MIN(month) AS start_month,
+            MAX(month) AS end_month,
+            COALESCE(SUM(monthly_energy_kwh) / 1000.0, 0) AS total_mwh,
+            COALESCE(AVG(monthly_energy_kwh) / 30.0 / 1000.0, 0) AS avg_daily_mwh,
+            COALESCE(SUM(estimated_revenue_usd), 0) AS total_revenue_usd
+         FROM pv_monthly_metrics
+         WHERE system_id = $1`,
+        [systemId],
+      );
+      const metrics = metricsResult.rows[0];
+
+      const trailing12Result = await pool.query(
+        `SELECT COALESCE(SUM(estimated_revenue_usd), 0) AS trailing_12mo_revenue
+         FROM (
+           SELECT estimated_revenue_usd
+           FROM pv_monthly_metrics
+           WHERE system_id = $1
+           ORDER BY month DESC
+           LIMIT 12
+         ) sub`,
+        [systemId],
+      );
+
+      res.json({
+        system_id: system.system_id,
+        public_name: system.public_name,
+        capacity_kw: system.capacity_kw,
+        technology: system.technology,
+        tracking_type: system.tracking_type,
+        location_state: system.location_state,
+        total_mwh: Number(Number(metrics.total_mwh).toFixed(2)),
+        avg_daily_mwh: Number(Number(metrics.avg_daily_mwh).toFixed(2)),
+        total_revenue_usd: Number(Number(metrics.total_revenue_usd).toFixed(2)),
+        trailing_12mo_revenue: Number(Number(trailing12Result.rows[0].trailing_12mo_revenue).toFixed(2)),
+        start_month: metrics.start_month,
+        end_month: metrics.end_month,
+        total_months: Number(metrics.total_months),
+      });
+    } catch (err) {
+      console.error("PVDAQ KPIs error:", err);
+      res.status(500).json({ message: "Failed to fetch KPIs" });
+    }
+  });
+
+  app.get("/api/pvdaq/systems/:systemId/forecast", async (req, res) => {
+    try {
+      const systemId = Number(req.params.systemId);
+      if (isNaN(systemId)) return res.status(400).json({ message: "Invalid system ID" });
+
+      const ppa = Number(req.query.ppa ?? 0.085);
+      const degradation = Number(req.query.degradation ?? 0.005);
+
+      if (isNaN(ppa) || ppa <= 0 || ppa > 1) return res.status(400).json({ message: "PPA rate must be between 0 and 1" });
+      if (isNaN(degradation) || degradation < 0 || degradation > 0.1) return res.status(400).json({ message: "Degradation rate must be between 0 and 0.1" });
+
+      const history = await pool.query(
+        `SELECT to_char(month, 'YYYY-MM') AS month,
+                monthly_energy_kwh
+           FROM pv_monthly_metrics
+          WHERE system_id = $1
+          ORDER BY month`,
+        [systemId],
+      );
+
+      if (history.rows.length === 0) {
+        return res.status(404).json({ message: "No historical data found" });
+      }
+
+      const forecast = buildSeasonalForecast(history.rows, ppa, degradation, 12);
+      res.json(forecast);
+    } catch (err) {
+      console.error("PVDAQ forecast error:", err);
+      res.status(500).json({ message: "Failed to generate forecast" });
+    }
+  });
+
+  app.get("/api/pvdaq/systems", async (_req, res) => {
+    try {
+      const result = await pool.query("SELECT * FROM pv_systems ORDER BY system_id");
+      res.json(result.rows);
+    } catch (err) {
+      console.error("PVDAQ systems error:", err);
+      res.status(500).json({ message: "Failed to fetch systems" });
+    }
   });
 
   return httpServer;
