@@ -17,11 +17,12 @@ The application is built with an Express.js backend and a React frontend (Vite w
 ### Feature Specifications
 - **Multi-Role Authentication**: Differentiated access for Admin, Developer (Issuer), and Investor roles.
 - **Issuer Portal**: A 5-step project tokenization wizard, data room management, automated readiness scoring (0-100), and an investment commitment inbox.
-- **Investor Portal**: Functionality to browse approved offerings with filters, view detailed offering information, submit investment commitments, and track personal investments.
+- **Investor Portal**: Functionality to browse approved offerings with filters, view detailed offering information, submit investment commitments, and track personal investments. Currently shows 2 approved projects (Sunfield Solar I and Colorado Sun CdTe I) and 1 submitted project (Desert Sun Community Solar).
 - **Admin Panel**: Dashboard for platform KPIs, a review queue for projects, full project review capabilities with score override, export packet generation, and user management including KYC/AML status.
 - **Identity Verification**: Integrates Persona for KYC/AML verification for issuers and investors, with backend gating to enforce completion before critical actions.
 - **Readiness Scoring Engine**: A dynamic scoring system for projects based on various criteria (e.g., site control, interconnection, permitting, offtaker), yielding a GREEN, YELLOW, or RED rating.
 - **Energy-to-Yield Pipeline**: SCADA data ingestion → energy production tracking → PPA-based revenue computation (15% opex deduction) → distribution calculation (0.75% platform fee) → investor yield dashboard. Data model: ppas, energyProduction, revenueRecords, distributions tables. API: GET /api/projects/:id/yield. UI: YieldDashboard component integrated into deal-room, project-detail, and project-review pages.
+- **Colorado Sun CdTe I (PVDAQ-backed)**: A real 4.7MW CdTe project listing with returns derived from actual NREL PVDAQ telemetry data (system 9068, 6+ years, ~7,861 MWh/yr avg). PPA: $85/MWh with Xcel Energy, 1.5% escalation. Seeded with 12 months of production/revenue/distribution data computed from PVDAQ monthly averages. Stage: COD. Status: APPROVED.
 - **PVDAQ Telemetry Dashboard**: Real NREL PVDAQ data (system 9068, 4.7 MW CdTe, Colorado) ingested into PostgreSQL. Seasonal forecast model with configurable PPA rate and degradation. API: GET /api/pvdaq/systems/:systemId/{monthly,kpis,forecast}. UI: /telemetry page with KPI cards, monthly generation/revenue charts, 12-month forecast with editable assumptions. Data: pv_systems, pv_monthly_metrics, pv_daily_metrics tables. ETL: server/etl/load-pvdaq.ts. Forecast logic: server/lib/yieldForecast.ts. DB connection: server/db.ts.
 
 ### System Design Choices

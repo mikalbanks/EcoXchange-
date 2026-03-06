@@ -424,6 +424,184 @@ export class MemStorage implements IStorage {
         createdAt: periodEnd,
       });
     }
+
+    // ─── Project 3: Colorado Sun CdTe I (PVDAQ-backed, real data) ────
+    const proj3Id = randomUUID();
+    this.projects.set(proj3Id, {
+      id: proj3Id,
+      developerId: devId,
+      name: "Colorado Sun CdTe I",
+      technology: "SOLAR",
+      stage: "COD",
+      country: "US",
+      state: "Colorado",
+      county: "Adams",
+      latitude: "39.8561",
+      longitude: "-104.6737",
+      capacityMW: "4.70",
+      status: "APPROVED",
+      summary: "A 4.7MW cadmium telluride (CdTe) thin-film solar facility in eastern Colorado with 6+ years of verified SCADA production history. Single-axis tracking, utility PPA with Xcel Energy. Returns derived from actual NREL PVDAQ telemetry data.",
+      offtakerType: "UTILITY",
+      interconnectionStatus: "IA_EXECUTED",
+      permittingStatus: "APPROVED",
+      siteControlStatus: "OWNED",
+      feocAttested: true,
+      createdAt: new Date(Date.now() - 60 * 24 * 60 * 60 * 1000),
+      updatedAt: new Date(),
+    });
+
+    const cs3Id = randomUUID();
+    this.capitalStacks.set(proj3Id, {
+      id: cs3Id,
+      projectId: proj3Id,
+      totalCapex: "5875000",
+      taxCreditType: "ITC",
+      taxCreditEstimated: "1762500",
+      taxCreditTransferabilityReady: true,
+      equityNeeded: "4112500",
+      debtPlaceholder: "0",
+      notes: "30% ITC eligible. Operational asset with verified production history. Transferability confirmed.",
+    });
+
+    const checklist3 = generateChecklist(this.projects.get(proj3Id)!);
+    for (const item of checklist3) {
+      const itemId3 = randomUUID();
+      this.checklistItems.set(itemId3, {
+        id: itemId3,
+        projectId: proj3Id,
+        key: item.key,
+        label: item.label,
+        required: item.required,
+        status: "UPLOADED",
+        notes: null,
+      });
+    }
+
+    const doc3Types = ["SITE_CONTROL", "INTERCONNECTION", "PERMITS", "FINANCIAL_MODEL", "FEOC_ATTESTATION", "EPC", "PPA"];
+    const doc3Names = ["deed_of_trust.pdf", "ia_executed_xcel.pdf", "adams_county_permit.pdf", "financial_model_v4.xlsx", "feoc_attestation_signed.pdf", "epc_completion_cert.pdf", "ppa_xcel_energy.pdf"];
+    for (let i = 0; i < doc3Types.length; i++) {
+      const docId3 = randomUUID();
+      this.documents.set(docId3, {
+        id: docId3,
+        projectId: proj3Id,
+        type: doc3Types[i],
+        filename: doc3Names[i],
+        filePath: `/uploads/${proj3Id}/${doc3Names[i]}`,
+        uploadedBy: devId,
+        createdAt: new Date(Date.now() - 45 * 24 * 60 * 60 * 1000),
+      });
+    }
+
+    const score3 = computeReadiness(
+      this.projects.get(proj3Id)!,
+      Array.from(this.documents.values()).filter(d => d.projectId === proj3Id),
+      Array.from(this.checklistItems.values()).filter(c => c.projectId === proj3Id),
+      this.capitalStacks.get(proj3Id)
+    );
+    const rs3Id = randomUUID();
+    this.readinessScores.set(proj3Id, {
+      id: rs3Id,
+      projectId: proj3Id,
+      score: score3.score,
+      rating: score3.rating,
+      reasons: JSON.stringify(score3.reasons),
+      flags: JSON.stringify(score3.flags),
+      overriddenByAdmin: false,
+      overrideNotes: null,
+    });
+
+    const log3Id = randomUUID();
+    this.approvalLogs.set(log3Id, {
+      id: log3Id,
+      projectId: proj3Id,
+      adminId: adminId,
+      action: "APPROVE",
+      notes: "Operational asset with verified PVDAQ production data. Approved for investor visibility.",
+      createdAt: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000),
+    });
+
+    // ─── Yield Pipeline for Project 3 (PVDAQ-derived actuals) ────
+    const ppa3Id = randomUUID();
+    this.ppas.set(ppa3Id, {
+      id: ppa3Id,
+      projectId: proj3Id,
+      offtakerName: "Xcel Energy",
+      contractStartDate: new Date(now.getFullYear() - 1, 0, 1),
+      contractEndDate: new Date(now.getFullYear() + 19, 11, 31),
+      pricePerMwh: "85.00",
+      escalationType: "ESCALATING",
+      escalationRate: "1.50",
+      contractedCapacityMW: "4.70",
+      createdAt: new Date(now.getFullYear() - 1, 0, 1),
+    });
+
+    // Monthly production from NREL PVDAQ system 9068 averages (6+ years of real data)
+    const pvdaqMonthlyMwh = [388, 493, 669, 813, 807, 869, 956, 790, 714, 592, 398, 372];
+
+    for (let i = 0; i < 12; i++) {
+      const p3Start = new Date(now.getFullYear() - 1, i, 1);
+      const p3End = new Date(now.getFullYear() - 1, i + 1, 0);
+      const p3ProdId = randomUUID();
+      const p3Mwh = pvdaqMonthlyMwh[i];
+      const p3Cf = (p3Mwh / (4.7 * p3End.getDate() * 24)).toFixed(4);
+
+      this.productionRecords.set(p3ProdId, {
+        id: p3ProdId,
+        projectId: proj3Id,
+        periodStart: p3Start,
+        periodEnd: p3End,
+        productionMwh: p3Mwh.toString(),
+        capacityFactor: p3Cf,
+        source: "SCADA",
+        createdAt: p3End,
+      });
+
+      const rev3 = computeRevenue(
+        this.productionRecords.get(p3ProdId)!,
+        this.ppas.get(ppa3Id)!
+      );
+      const rev3Id = randomUUID();
+      this.revenueRecords.set(rev3Id, {
+        id: rev3Id,
+        projectId: proj3Id,
+        ppaId: ppa3Id,
+        productionId: p3ProdId,
+        periodStart: p3Start,
+        periodEnd: p3End,
+        grossRevenue: rev3.grossRevenue.toString(),
+        operatingExpenses: rev3.operatingExpenses.toString(),
+        netRevenue: rev3.netRevenue.toString(),
+        createdAt: p3End,
+      });
+
+      const dist3 = computeDistribution(rev3.netRevenue);
+      const dist3Id = randomUUID();
+      this.distributions.set(dist3Id, {
+        id: dist3Id,
+        projectId: proj3Id,
+        periodLabel: `${months[i]} ${now.getFullYear() - 1}`,
+        totalDistributable: dist3.totalDistributable.toString(),
+        investorShare: dist3.investorShare.toString(),
+        platformFee: dist3.platformFee.toString(),
+        status: i < 11 ? "DISTRIBUTED" : "APPROVED",
+        distributedAt: i < 11 ? new Date(now.getFullYear() - 1, i + 1, 15) : null,
+        createdAt: p3End,
+      });
+    }
+
+    // Investor interest on project 3
+    const int3Id = randomUUID();
+    this.interests.set(int3Id, {
+      id: int3Id,
+      projectId: proj3Id,
+      investorId: investorId,
+      amountIntent: "750000",
+      structurePreference: "EQUITY",
+      timeline: "IMMEDIATE",
+      message: "Strong interest in the verified production profile. 6 years of PVDAQ data gives us confidence in the yield projections. Requesting data room access.",
+      status: "SUBMITTED",
+      createdAt: new Date(Date.now() - 3 * 24 * 60 * 60 * 1000),
+    });
   }
 
   // ─── Users ──────────────────────────────────────────────────────
