@@ -58,6 +58,7 @@ import DeveloperDashboard from "@/pages/developer/dashboard";
 import DeveloperProjectWizard from "@/pages/developer/project-wizard";
 import DeveloperProjectDetail from "@/pages/developer/project-detail";
 
+import PrivacyPolicy from "@/pages/privacy";
 import InvestorDashboard from "@/pages/investor/dashboard";
 import InvestorDeals from "@/pages/investor/deals";
 import InvestorDealRoom from "@/pages/investor/deal-room";
@@ -108,6 +109,7 @@ function Router() {
       <Route path="/auth/signup" component={SignupPage} />
       <Route path="/yield-simulation" component={YieldSimulationPage} />
       <Route path="/telemetry" component={YieldForecastDashboard} />
+      <Route path="/privacy" component={PrivacyPolicy} />
       
       <Route path="/developer">
         <ProtectedRoute allowedRoles={["DEVELOPER"]}>

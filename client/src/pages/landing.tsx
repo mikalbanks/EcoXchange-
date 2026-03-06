@@ -513,7 +513,8 @@ export default function LandingPage() {
             <div className="flex flex-wrap items-center gap-6 text-sm text-muted-foreground">
               <Link href="/auth/login" className="hover:text-foreground transition-colors" data-testid="link-footer-login">Sign In</Link>
               <Link href="/auth/signup" className="hover:text-foreground transition-colors">Create Account</Link>
-              <span>© 2026 EcoXchange</span>
+              <Link href="/privacy" className="hover:text-foreground transition-colors" data-testid="link-footer-privacy">Privacy Policy</Link>
+              <span>© 2026 EcoXchange, Inc.</span>
             </div>
           </div>
         </div>
