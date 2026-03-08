@@ -72,7 +72,7 @@ export default function LandingPage() {
       </section>
 
       {/* Product Pillars */}
-      <section className="py-20 border-t border-border/40">
+      <section id="pillars" className="py-20 border-t border-border/40 scroll-mt-20">
         <div className="container mx-auto px-4">
           <div className="text-center mb-12">
             <h2 className="text-3xl font-bold mb-4" data-testid="text-pillars-title">Platform Pillars</h2>
@@ -272,7 +272,7 @@ export default function LandingPage() {
       </section>
 
       {/* How It Works */}
-      <section className="py-20 bg-card/30">
+      <section id="how-it-works" className="py-20 bg-card/30 scroll-mt-20">
         <div className="container mx-auto px-4">
           <div className="text-center mb-12">
             <h2 className="text-3xl font-bold mb-4">How It Works</h2>
@@ -478,7 +478,7 @@ export default function LandingPage() {
       </section>
 
       {/* Compliance & Regulatory Footnotes */}
-      <section className="py-12 border-t border-border/40">
+      <section id="compliance" className="py-12 border-t border-border/40 scroll-mt-20">
         <div className="container mx-auto px-4">
           <div className="max-w-4xl mx-auto">
             <h3 className="text-sm font-semibold mb-4 text-muted-foreground uppercase tracking-wider">Regulatory & Compliance</h3>

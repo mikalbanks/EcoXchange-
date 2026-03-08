@@ -2,6 +2,10 @@
 @tailwind components;
 @tailwind utilities;
 
+html {
+  scroll-behavior: smooth;
+}
+
 /* LIGHT MODE - EcoXchange Brand Theme */
 :root {
   --button-outline: rgba(0,0,0, .10);

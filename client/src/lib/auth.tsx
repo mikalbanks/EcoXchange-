@@ -60,13 +60,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     const data = await res.json();
     setUser(data.user);
 
-    if (data.user.role === "ADMIN") {
-      setLocation("/admin");
-    } else if (data.user.role === "DEVELOPER") {
-      setLocation("/developer");
-    } else {
-      setLocation("/investor");
-    }
+    const dest = data.user.role === "ADMIN" ? "/admin" 
+      : data.user.role === "DEVELOPER" ? "/developer" 
+      : "/investor";
+    
+    setTimeout(() => setLocation(dest), 0);
+
+    return data.user;
   }
 
   async function signup(email: string, password: string, role: "INVESTOR" | "DEVELOPER") {
