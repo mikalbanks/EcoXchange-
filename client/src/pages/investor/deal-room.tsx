@@ -32,6 +32,7 @@ import {
   FormDescription,
 } from "@/components/ui/form";
 import { YieldDashboard } from "@/components/yield-dashboard";
+import { AIPredictionCard } from "@/components/ai-prediction";
 import {
   AlertTriangle,
   Shield,
@@ -432,6 +433,14 @@ export default function InvestorDealRoom() {
             Yield Performance
           </h3>
           <YieldDashboard projectId={id!} />
+        </div>
+
+        <div>
+          <h3 className="text-lg font-semibold flex items-center gap-2 mb-3">
+            <TrendingUp className="h-4 w-4" />
+            AI Financial Prediction
+          </h3>
+          <AIPredictionCard projectId={id!} projectName={project.name} />
         </div>
 
         <Card>

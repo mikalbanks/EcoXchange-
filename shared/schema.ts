@@ -3,6 +3,8 @@ import { pgTable, text, varchar, boolean, decimal, timestamp, integer } from "dr
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod";
 
+export * from "./models/chat";
+
 export const UserRole = {
   ADMIN: "ADMIN",
   DEVELOPER: "DEVELOPER",
