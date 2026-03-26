@@ -222,7 +222,8 @@ export async function getMonthlyHistory(projectId: string): Promise<ScadaMonthly
   }
 
   const months = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
-  const records: ScadaMonthlyRecord[] = production.map((p) => {
+  const sortedProduction = [...production].sort((a, b) => a.periodStart.getTime() - b.periodStart.getTime());
+  const records: ScadaMonthlyRecord[] = sortedProduction.map((p) => {
     const rev = revenueByPeriod.get(p.periodStart.toISOString());
     const month = p.periodStart.getMonth();
     const year = p.periodStart.getFullYear();
