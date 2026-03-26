@@ -15,6 +15,8 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { useQuery as useScadaQuery } from "@tanstack/react-query";
+import { HealthBadge } from "@/components/scada";
 import {
   AlertTriangle,
   Search,
@@ -24,7 +26,57 @@ import {
   Users,
   Filter,
   X,
+  Activity,
 } from "lucide-react";
+
+interface ScadaQuickData {
+  totalProductionMwh: number;
+  trailing12MonthRevenue: number;
+  avgCapacityFactor: number;
+}
+
+function ScadaQuickMetrics({ projectId }: { projectId: string }) {
+  const { data } = useScadaQuery<ScadaQuickData>({
+    queryKey: ["/api/projects", projectId, "scada", "summary"],
+    queryFn: async () => {
+      const res = await fetch(`/api/projects/${projectId}/scada/summary`, { credentials: "include" });
+      if (!res.ok) return null;
+      return res.json();
+    },
+    staleTime: 60000,
+  });
+
+  if (!data || data.totalProductionMwh === 0) return null;
+
+  return (
+    <div className="border-t border-border pt-2 space-y-1" data-testid={`scada-metrics-${projectId}`}>
+      <div className="flex items-center gap-1 text-xs text-muted-foreground mb-1">
+        <Activity className="h-3 w-3 text-primary" />
+        <span className="font-medium text-primary">SCADA Metrics</span>
+      </div>
+      <div className="grid grid-cols-3 gap-2 text-xs">
+        <div>
+          <span className="text-muted-foreground block">Production</span>
+          <span className="font-medium" data-testid={`text-scada-prod-${projectId}`}>
+            {data.totalProductionMwh.toLocaleString()} MWh
+          </span>
+        </div>
+        <div>
+          <span className="text-muted-foreground block">Revenue</span>
+          <span className="font-medium" data-testid={`text-scada-rev-${projectId}`}>
+            ${(data.trailing12MonthRevenue / 1000).toFixed(0)}K
+          </span>
+        </div>
+        <div>
+          <span className="text-muted-foreground block">Cap Factor</span>
+          <span className="font-medium" data-testid={`text-scada-cf-${projectId}`}>
+            {(data.avgCapacityFactor * 100).toFixed(1)}%
+          </span>
+        </div>
+      </div>
+    </div>
+  );
+}
 
 const US_STATES = [
   "AL","AK","AZ","AR","CA","CO","CT","DE","FL","GA","HI","ID","IL","IN","IA",
@@ -290,9 +342,12 @@ export default function InvestorDeals() {
                     <CardTitle className="text-base" data-testid={`text-deal-name-${deal.id}`}>
                       {deal.name}
                     </CardTitle>
-                    {deal.readinessScore && (
-                      <StatusBadge status={deal.readinessScore.rating} type="readiness" />
-                    )}
+                    <div className="flex items-center gap-2">
+                      <HealthBadge projectId={deal.id} size="sm" />
+                      {deal.readinessScore && (
+                        <StatusBadge status={deal.readinessScore.rating} type="readiness" />
+                      )}
+                    </div>
                   </div>
                 </CardHeader>
                 <CardContent className="space-y-3">
@@ -311,6 +366,8 @@ export default function InvestorDeals() {
                     <span>{deal.technology.replace(/_/g, " ")}</span>
                     <span>{deal.stage.replace(/_/g, " ")}</span>
                   </div>
+
+                  <ScadaQuickMetrics projectId={deal.id} />
 
                   <div className="border-t border-border pt-3 space-y-1.5">
                     {deal.capitalStack?.totalCapex && (

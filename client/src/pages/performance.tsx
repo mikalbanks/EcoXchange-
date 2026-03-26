@@ -1,5 +1,5 @@
 import { Header } from "@/components/header";
-import { ScadaSummaryCards, ProductionChart, ForecastChart, RevenueBridgeWaterfall, HealthBadge } from "@/components/scada";
+import { ScadaSummaryCards, ProductionChart, ForecastChart, ForecastVsActualChart, RevenueBridgeWaterfall, DistributionWaterfall, HealthBadge } from "@/components/scada";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Link } from "wouter";
@@ -97,7 +97,14 @@ export default function PerformancePage() {
       </section>
 
       <section className="container mx-auto px-4 pb-8">
-        <RevenueBridgeWaterfall projectId={FEATURED_PROJECT_ID} showProvenance usePublicApi />
+        <ForecastVsActualChart projectId={FEATURED_PROJECT_ID} showProvenance usePublicApi />
+      </section>
+
+      <section className="container mx-auto px-4 pb-8">
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          <RevenueBridgeWaterfall projectId={FEATURED_PROJECT_ID} showProvenance usePublicApi />
+          <DistributionWaterfall projectId={FEATURED_PROJECT_ID} showProvenance usePublicApi />
+        </div>
       </section>
 
       <section className="container mx-auto px-4 pb-8">

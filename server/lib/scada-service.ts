@@ -404,6 +404,78 @@ export async function getIngestionStatus(projectId: string): Promise<ScadaIngest
   };
 }
 
+export interface ScadaDistributions {
+  records: Array<{
+    period: string;
+    grossRevenue: number;
+    operatingExpenses: number;
+    netRevenue: number;
+    platformFee: number;
+    investorShare: number;
+    status: string;
+  }>;
+  totals: {
+    grossRevenue: number;
+    operatingExpenses: number;
+    netRevenue: number;
+    platformFee: number;
+    investorShare: number;
+    distributed: number;
+    pending: number;
+  };
+  provenance: ScadaProvenance;
+}
+
+export async function getDistributions(projectId: string): Promise<ScadaDistributions | null> {
+  const project = await storage.getProject(projectId);
+  if (!project) return null;
+
+  const [revenue, distributions, dataSources] = await Promise.all([
+    storage.getRevenueByProject(projectId),
+    storage.getDistributionsByProject(projectId),
+    storage.getScadaDataSourcesByProject(projectId),
+  ]);
+
+  if (distributions.length === 0) {
+    return { records: [], totals: { grossRevenue: 0, operatingExpenses: 0, netRevenue: 0, platformFee: 0, investorShare: 0, distributed: 0, pending: 0 }, provenance: buildProvenance(dataSources) };
+  }
+
+  const records = distributions.map((d, i) => {
+    const rev = revenue[i];
+    return {
+      period: d.periodLabel,
+      grossRevenue: rev ? parseFloat(rev.grossRevenue) : 0,
+      operatingExpenses: rev ? parseFloat(rev.operatingExpenses) : 0,
+      netRevenue: rev ? parseFloat(rev.netRevenue) : 0,
+      platformFee: parseFloat(d.platformFee),
+      investorShare: parseFloat(d.investorShare),
+      status: d.status,
+    };
+  });
+
+  const totGross = records.reduce((s, r) => s + r.grossRevenue, 0);
+  const totOpex = records.reduce((s, r) => s + r.operatingExpenses, 0);
+  const totNet = records.reduce((s, r) => s + r.netRevenue, 0);
+  const totFee = records.reduce((s, r) => s + r.platformFee, 0);
+  const totShare = records.reduce((s, r) => s + r.investorShare, 0);
+  const distributed = records.filter(r => r.status === "DISTRIBUTED").reduce((s, r) => s + r.investorShare, 0);
+  const pending = records.filter(r => r.status !== "DISTRIBUTED").reduce((s, r) => s + r.investorShare, 0);
+
+  return {
+    records,
+    totals: {
+      grossRevenue: Math.round(totGross * 100) / 100,
+      operatingExpenses: Math.round(totOpex * 100) / 100,
+      netRevenue: Math.round(totNet * 100) / 100,
+      platformFee: Math.round(totFee * 100) / 100,
+      investorShare: Math.round(totShare * 100) / 100,
+      distributed: Math.round(distributed * 100) / 100,
+      pending: Math.round(pending * 100) / 100,
+    },
+    provenance: buildProvenance(dataSources),
+  };
+}
+
 export async function getRevenueBridge(projectId: string): Promise<ScadaRevenueBridge | null> {
   const project = await storage.getProject(projectId);
   if (!project) return null;

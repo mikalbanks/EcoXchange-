@@ -33,7 +33,7 @@ import {
 } from "@/components/ui/form";
 import { YieldDashboard } from "@/components/yield-dashboard";
 import { AIPredictionCard } from "@/components/ai-prediction";
-import { ScadaSummaryCards, ProductionChart, ForecastChart, RevenueBridgeWaterfall, HealthBadge } from "@/components/scada";
+import { ScadaSummaryCards, ProductionChart, ForecastChart, ForecastVsActualChart, RevenueBridgeWaterfall, DistributionWaterfall, HealthBadge } from "@/components/scada";
 import {
   AlertTriangle,
   Shield,
@@ -441,7 +441,11 @@ export default function InvestorDealRoom() {
             <ProductionChart projectId={id!} />
             <ForecastChart projectId={id!} />
           </div>
-          <RevenueBridgeWaterfall projectId={id!} showProvenance />
+          <ForecastVsActualChart projectId={id!} />
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            <RevenueBridgeWaterfall projectId={id!} showProvenance />
+            <DistributionWaterfall projectId={id!} showProvenance />
+          </div>
         </div>
 
         <div>

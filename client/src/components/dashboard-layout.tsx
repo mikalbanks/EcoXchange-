@@ -26,23 +26,28 @@ import {
   Search,
   ClipboardCheck,
   TrendingUp,
+  BarChart3,
+  Activity,
 } from "lucide-react";
 
 const developerNavItems = [
   { title: "Overview", url: "/developer", icon: LayoutDashboard },
   { title: "Projects", url: "/developer/projects", icon: FolderKanban },
+  { title: "Performance", url: "/performance", icon: BarChart3 },
 ];
 
 const investorNavItems = [
   { title: "Overview", url: "/investor", icon: LayoutDashboard },
   { title: "Offerings", url: "/investor/deals", icon: Search },
   { title: "My Investments", url: "/investor/interests", icon: TrendingUp },
+  { title: "Performance", url: "/performance", icon: BarChart3 },
 ];
 
 const adminNavItems = [
   { title: "Overview", url: "/admin", icon: LayoutDashboard },
   { title: "Review Queue", url: "/admin/projects", icon: ClipboardCheck },
   { title: "Users", url: "/admin/users", icon: Users },
+  { title: "Performance", url: "/performance", icon: BarChart3 },
 ];
 
 interface DashboardLayoutProps {

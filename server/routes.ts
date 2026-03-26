@@ -1053,6 +1053,17 @@ export async function registerRoutes(
     }
   });
 
+  app.get("/api/public/projects/:id/scada/distributions", async (req: any, res) => {
+    try {
+      if (!FEATURED_PROJECT_IDS.has(req.params.id)) return res.status(404).json({ message: "Not found" });
+      const result = await scadaService.getDistributions(req.params.id);
+      if (!result) return res.status(404).json({ message: "Not found" });
+      res.json(result);
+    } catch (err) {
+      res.status(500).json({ message: "Failed to fetch" });
+    }
+  });
+
   app.get("/api/projects/:id/scada/summary", requireAuth, requireProjectAccess, async (req: any, res) => {
     try {
       const result = await scadaService.getProjectSummary(req.params.id);
@@ -1137,6 +1148,17 @@ export async function registerRoutes(
     } catch (err) {
       console.error("SCADA revenue bridge error:", err);
       res.status(500).json({ message: "Failed to fetch revenue bridge" });
+    }
+  });
+
+  app.get("/api/projects/:id/scada/distributions", requireAuth, requireProjectAccess, async (req: any, res) => {
+    try {
+      const result = await scadaService.getDistributions(req.params.id);
+      if (!result) return res.status(404).json({ message: "Project not found" });
+      res.json(result);
+    } catch (err) {
+      console.error("SCADA distributions error:", err);
+      res.status(500).json({ message: "Failed to fetch distributions" });
     }
   });
 
