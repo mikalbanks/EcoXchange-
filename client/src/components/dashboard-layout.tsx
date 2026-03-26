@@ -34,7 +34,7 @@ const developerNavItems = [
   { title: "Overview", url: "/developer", icon: LayoutDashboard },
   { title: "Projects", url: "/developer/projects", icon: FolderKanban },
   { title: "Performance", url: "/performance", icon: BarChart3 },
-  { title: "Operations", url: "/developer/projects", icon: Activity },
+  { title: "Operations", url: "/operations", icon: Activity },
 ];
 
 const investorNavItems = [
@@ -49,7 +49,7 @@ const adminNavItems = [
   { title: "Review Queue", url: "/admin/projects", icon: ClipboardCheck },
   { title: "Users", url: "/admin/users", icon: Users },
   { title: "Performance", url: "/performance", icon: BarChart3 },
-  { title: "Operations", url: "/admin/projects", icon: Activity },
+  { title: "Operations", url: "/operations", icon: Activity },
 ];
 
 interface DashboardLayoutProps {

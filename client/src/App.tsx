@@ -72,6 +72,7 @@ import AdminUsers from "@/pages/admin/users";
 import YieldSimulationPage from "@/pages/yield-simulation";
 import YieldForecastDashboard from "@/pages/pvdaq/yield-forecast-dashboard";
 import PerformancePage from "@/pages/performance";
+import OperationsPage from "@/pages/operations";
 
 function ProtectedRoute({ 
   children, 
@@ -178,6 +179,12 @@ function Router() {
       <Route path="/admin/users">
         <ProtectedRoute allowedRoles={["ADMIN"]}>
           <AdminUsers />
+        </ProtectedRoute>
+      </Route>
+
+      <Route path="/operations">
+        <ProtectedRoute allowedRoles={["ADMIN", "DEVELOPER"]}>
+          <OperationsPage />
         </ProtectedRoute>
       </Route>
 

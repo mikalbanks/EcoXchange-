@@ -51,7 +51,7 @@ export function Header() {
               <Link href="/auth/login?redirect=/developer" className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors" data-testid="link-developer-portal">
                 Developer Portal
               </Link>
-              <Link href="/auth/login?redirect=/admin" className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors" data-testid="link-operations">
+              <Link href="/auth/login?redirect=/operations" className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors" data-testid="link-operations">
                 Operations
               </Link>
               <Link href="/auth/login" className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors" data-testid="link-signin">
@@ -84,7 +84,7 @@ export function Header() {
                     <Link href="/auth/login?redirect=/developer" className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors" data-testid="link-mobile-developer-portal">
                       Developer Portal
                     </Link>
-                    <Link href="/auth/login?redirect=/admin" className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors" data-testid="link-mobile-operations">
+                    <Link href="/auth/login?redirect=/operations" className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors" data-testid="link-mobile-operations">
                       Operations
                     </Link>
                     <Link href="/auth/login" className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors" data-testid="link-mobile-signin">

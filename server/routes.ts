@@ -1182,6 +1182,37 @@ export async function registerRoutes(
     }
   });
 
+  app.get("/api/operations/data-sources", requireAuth, async (req: any, res) => {
+    try {
+      const user = await storage.getUser(req.session.userId);
+      if (!user || (user.role !== "ADMIN" && user.role !== "DEVELOPER")) {
+        return res.status(403).json({ message: "Not authorized" });
+      }
+
+      let projects: any[];
+      if (user.role === "ADMIN") {
+        projects = await storage.getAllProjects();
+      } else {
+        projects = await storage.getProjectsByDeveloper(user.id);
+      }
+
+      const result: Array<{ project: { id: string; name: string; technology: string; capacityMW: string | null }; sources: any[] }> = [];
+      for (const p of projects) {
+        const sources = await storage.getScadaDataSourcesByProject(p.id);
+        if (sources.length > 0) {
+          result.push({
+            project: { id: p.id, name: p.name, technology: p.technology, capacityMW: p.capacityMW },
+            sources,
+          });
+        }
+      }
+      res.json(result);
+    } catch (err) {
+      console.error("Operations data sources error:", err);
+      res.status(500).json({ message: "Failed to fetch operations data" });
+    }
+  });
+
   // ─── AI Financial Prediction ──────────────────────────────────────
   app.post("/api/projects/:id/ai-prediction", requireAuth, async (req: any, res) => {
     try {
