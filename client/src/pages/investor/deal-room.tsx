@@ -33,6 +33,7 @@ import {
 } from "@/components/ui/form";
 import { YieldDashboard } from "@/components/yield-dashboard";
 import { AIPredictionCard } from "@/components/ai-prediction";
+import { ScadaSummaryCards, ProductionChart, ForecastChart, RevenueBridgeWaterfall, HealthBadge } from "@/components/scada";
 import {
   AlertTriangle,
   Shield,
@@ -426,6 +427,22 @@ export default function InvestorDealRoom() {
             </CardContent>
           </Card>
         )}
+
+        <div className="space-y-6">
+          <div className="flex items-center justify-between">
+            <h3 className="text-lg font-semibold flex items-center gap-2">
+              <TrendingUp className="h-4 w-4" />
+              SCADA Performance
+            </h3>
+            <HealthBadge projectId={id!} size="md" />
+          </div>
+          <ScadaSummaryCards projectId={id!} showProvenance />
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            <ProductionChart projectId={id!} />
+            <ForecastChart projectId={id!} />
+          </div>
+          <RevenueBridgeWaterfall projectId={id!} showProvenance />
+        </div>
 
         <div>
           <h3 className="text-lg font-semibold flex items-center gap-2 mb-3">

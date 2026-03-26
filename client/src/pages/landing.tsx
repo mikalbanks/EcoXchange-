@@ -1,8 +1,11 @@
 import { Link } from "wouter";
+import { useQuery } from "@tanstack/react-query";
 import { Header } from "@/components/header";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { Skeleton } from "@/components/ui/skeleton";
+import { HealthBadge } from "@/components/scada";
 import { 
   Sun, 
   Wind, 
@@ -21,7 +24,128 @@ import {
   Scale,
   RefreshCw,
   CheckCircle,
+  MapPin,
+  Activity,
 } from "lucide-react";
+
+interface ScadaSummaryData {
+  totalProductionMwh: number;
+  totalGrossRevenue: number;
+  totalNetRevenue: number;
+  avgCapacityFactor: number;
+  periodsReported: number;
+  trailing12MonthRevenue: number;
+  provenance: {
+    verificationStatus: string;
+    sourceType: string;
+    providerName: string | null;
+    dataQuality: string;
+  };
+}
+
+function formatCompact(num: number): string {
+  if (num >= 1000000) return `$${(num / 1000000).toFixed(1)}M`;
+  if (num >= 1000) return `$${(num / 1000).toFixed(0)}K`;
+  return `$${num.toFixed(0)}`;
+}
+
+function FeaturedProjectSection() {
+  const { data, isLoading } = useQuery<ScadaSummaryData>({
+    queryKey: ["/api/public/projects", "proj3", "scada", "summary"],
+    queryFn: async () => {
+      const res = await fetch("/api/public/projects/proj3/scada/summary", { credentials: "include" });
+      if (!res.ok) throw new Error("Failed");
+      return res.json();
+    },
+    staleTime: 120000,
+  });
+
+  return (
+    <section className="py-20">
+      <div className="container mx-auto px-4">
+        <div className="text-center mb-12">
+          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-primary/10 border border-primary/20 mb-4">
+            <Activity className="h-3.5 w-3.5 text-primary" />
+            <span className="text-sm font-medium text-primary">Live SCADA Data</span>
+          </div>
+          <h2 className="text-3xl font-bold mb-4" data-testid="text-featured-title">Featured Project</h2>
+          <p className="text-muted-foreground max-w-2xl mx-auto">
+            Real-time production data from NREL PVDAQ-verified solar installations
+          </p>
+        </div>
+
+        <Card className="max-w-4xl mx-auto relative overflow-hidden">
+          <div className="absolute inset-0 bg-gradient-to-br from-primary/5 to-transparent pointer-events-none" />
+          <CardContent className="p-6 md:p-8 relative">
+            <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-6">
+              <div className="flex items-center gap-4">
+                <div className="flex items-center justify-center w-12 h-12 rounded-xl bg-primary/10 text-primary">
+                  <Sun className="h-6 w-6" />
+                </div>
+                <div>
+                  <h3 className="text-xl font-bold" data-testid="text-featured-name">Colorado Sun CdTe I</h3>
+                  <div className="flex items-center gap-3 text-sm text-muted-foreground mt-0.5">
+                    <span className="flex items-center gap-1"><MapPin className="h-3 w-3" /> Colorado</span>
+                    <span className="flex items-center gap-1"><Zap className="h-3 w-3" /> 6.3 MW</span>
+                  </div>
+                </div>
+              </div>
+              <div className="flex items-center gap-2">
+                <HealthBadge projectId="proj3" size="md" usePublicApi />
+              </div>
+            </div>
+
+            {isLoading ? (
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                {[...Array(4)].map((_, i) => <Skeleton key={i} className="h-20 w-full rounded-lg" />)}
+              </div>
+            ) : data && data.periodsReported > 0 ? (
+              <>
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
+                  <div className="rounded-lg bg-muted/30 p-4">
+                    <p className="text-xs text-muted-foreground flex items-center gap-1"><Zap className="h-3 w-3" /> Production</p>
+                    <p className="text-lg font-bold mt-1" data-testid="text-featured-production">{data.totalProductionMwh.toLocaleString()} MWh</p>
+                    <p className="text-xs text-muted-foreground">{data.periodsReported} months</p>
+                  </div>
+                  <div className="rounded-lg bg-muted/30 p-4">
+                    <p className="text-xs text-muted-foreground flex items-center gap-1"><TrendingUp className="h-3 w-3" /> Net Revenue</p>
+                    <p className="text-lg font-bold mt-1" data-testid="text-featured-revenue">{formatCompact(data.totalNetRevenue)}</p>
+                  </div>
+                  <div className="rounded-lg bg-muted/30 p-4">
+                    <p className="text-xs text-muted-foreground flex items-center gap-1"><BarChart3 className="h-3 w-3" /> Capacity Factor</p>
+                    <p className="text-lg font-bold mt-1" data-testid="text-featured-capacity">{(data.avgCapacityFactor * 100).toFixed(1)}%</p>
+                  </div>
+                  <div className="rounded-lg bg-muted/30 p-4">
+                    <p className="text-xs text-muted-foreground flex items-center gap-1"><Activity className="h-3 w-3" /> Trailing 12m</p>
+                    <p className="text-lg font-bold mt-1" data-testid="text-featured-trailing">{formatCompact(data.trailing12MonthRevenue)}</p>
+                  </div>
+                </div>
+
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                    <Badge variant="outline" className="text-[10px] bg-emerald-500/20 text-emerald-400 border-emerald-500/50">
+                      {data.provenance.verificationStatus.replace(/_/g, " ")}
+                    </Badge>
+                    <span>{data.provenance.providerName || data.provenance.sourceType.replace(/_/g, " ")}</span>
+                  </div>
+                  <Link href="/performance">
+                    <Button variant="outline" size="sm" className="gap-1" data-testid="button-view-performance">
+                      View Full Performance <ArrowRight className="h-3.5 w-3.5" />
+                    </Button>
+                  </Link>
+                </div>
+              </>
+            ) : (
+              <div className="text-center py-8">
+                <p className="text-sm text-muted-foreground">Performance data loading...</p>
+              </div>
+            )}
+          </CardContent>
+        </Card>
+      </div>
+    </section>
+  );
+}
 
 export default function LandingPage() {
   return (
@@ -180,6 +304,9 @@ export default function LandingPage() {
           </div>
         </div>
       </section>
+
+      {/* Featured Project — Live SCADA */}
+      <FeaturedProjectSection />
 
       {/* Sample Offering + Features */}
       <section className="py-20">

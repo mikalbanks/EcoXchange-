@@ -163,7 +163,7 @@ export class MemStorage implements IStorage {
     });
 
     // GREEN project
-    const proj1Id = randomUUID();
+    const proj1Id = "proj1";
     this.projects.set(proj1Id, {
       id: proj1Id,
       developerId: devId,
@@ -265,7 +265,7 @@ export class MemStorage implements IStorage {
     });
 
     // RED project
-    const proj2Id = randomUUID();
+    const proj2Id = "proj2";
     this.projects.set(proj2Id, {
       id: proj2Id,
       developerId: devId,
@@ -439,7 +439,7 @@ export class MemStorage implements IStorage {
     }
 
     // ─── Project 3: Colorado Sun CdTe I (PVDAQ-backed, real data) ────
-    const proj3Id = randomUUID();
+    const proj3Id = "proj3";
     this.projects.set(proj3Id, {
       id: proj3Id,
       developerId: devId,

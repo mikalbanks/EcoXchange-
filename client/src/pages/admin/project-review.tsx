@@ -29,6 +29,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { YieldDashboard } from "@/components/yield-dashboard";
+import { ScadaSummaryCards, HealthBadge } from "@/components/scada";
 import {
   CheckCircle,
   XCircle,
@@ -485,6 +486,17 @@ export default function AdminProjectReview() {
             </CardContent>
           </Card>
         )}
+
+        <div className="space-y-4">
+          <div className="flex items-center justify-between">
+            <h3 className="text-lg font-semibold flex items-center gap-2">
+              <TrendingUp className="h-4 w-4" />
+              SCADA Telemetry
+            </h3>
+            <HealthBadge projectId={id!} size="md" />
+          </div>
+          <ScadaSummaryCards projectId={id!} compact showProvenance />
+        </div>
 
         <div>
           <h3 className="text-lg font-semibold flex items-center gap-2 mb-3">

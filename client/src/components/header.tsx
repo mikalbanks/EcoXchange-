@@ -19,7 +19,7 @@ export function Header() {
   const { user, logout, isLoading } = useAuth();
   const [location] = useLocation();
 
-  const isPublicPage = location === "/" || location === "/about" || location === "/compliance" || location === "/yield-simulation" || location === "/telemetry";
+  const isPublicPage = location === "/" || location === "/about" || location === "/compliance" || location === "/yield-simulation" || location === "/telemetry" || location === "/performance";
 
   return (
     <header className="sticky top-0 z-50 w-full border-b border-border/40 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
@@ -36,20 +36,17 @@ export function Header() {
         {isPublicPage && (
           <>
             <nav className="hidden md:flex items-center gap-6">
+              <Link href="/" className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors" data-testid="link-home">
+                Home
+              </Link>
               <Link href="/#pillars" className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors" data-testid="link-offerings">
-                Offerings
+                Marketplace
               </Link>
-              <Link href="/#how-it-works" className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors" data-testid="link-issuers">
-                Issuers
-              </Link>
-              <Link href="/#compliance" className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors" data-testid="link-compliance">
-                Compliance
+              <Link href="/performance" className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors" data-testid="link-performance">
+                Performance
               </Link>
               <Link href="/yield-simulation" className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors" data-testid="link-yield-simulation">
                 Yield Simulator
-              </Link>
-              <Link href="/telemetry" className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors" data-testid="link-telemetry">
-                Telemetry
               </Link>
               <Link href="/auth/login" className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors" data-testid="link-signin">
                 Sign In
@@ -66,22 +63,19 @@ export function Header() {
                 </SheetTrigger>
                 <SheetContent side="right" className="w-64">
                   <nav className="flex flex-col gap-5 mt-8">
-                    <Link href="/#pillars" className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors">
-                      Offerings
+                    <Link href="/" className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors" data-testid="link-mobile-home">
+                      Home
                     </Link>
-                    <Link href="/#how-it-works" className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors">
-                      Issuers
+                    <Link href="/#pillars" className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors" data-testid="link-mobile-marketplace">
+                      Marketplace
                     </Link>
-                    <Link href="/#compliance" className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors">
-                      Compliance
+                    <Link href="/performance" className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors" data-testid="link-mobile-performance">
+                      Performance
                     </Link>
-                    <Link href="/yield-simulation" className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors">
+                    <Link href="/yield-simulation" className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors" data-testid="link-mobile-yield-simulation">
                       Yield Simulator
                     </Link>
-                    <Link href="/telemetry" className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors">
-                      Telemetry
-                    </Link>
-                    <Link href="/auth/login" className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors">
+                    <Link href="/auth/login" className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors" data-testid="link-mobile-signin">
                       Sign In
                     </Link>
                     <Link href="/auth/signup">

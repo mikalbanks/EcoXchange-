@@ -996,6 +996,63 @@ export async function registerRoutes(
     return res.status(403).json({ message: "Access denied" });
   };
 
+  const FEATURED_PROJECT_IDS = new Set(["proj3"]);
+
+  app.get("/api/public/projects/:id/scada/summary", async (req: any, res) => {
+    try {
+      if (!FEATURED_PROJECT_IDS.has(req.params.id)) return res.status(404).json({ message: "Not found" });
+      const result = await scadaService.getProjectSummary(req.params.id);
+      if (!result) return res.status(404).json({ message: "Not found" });
+      res.json(result);
+    } catch (err) {
+      res.status(500).json({ message: "Failed to fetch" });
+    }
+  });
+
+  app.get("/api/public/projects/:id/scada/health", async (req: any, res) => {
+    try {
+      if (!FEATURED_PROJECT_IDS.has(req.params.id)) return res.status(404).json({ message: "Not found" });
+      const result = await scadaService.getHealthStatus(req.params.id);
+      if (!result) return res.status(404).json({ message: "Not found" });
+      res.json(result);
+    } catch (err) {
+      res.status(500).json({ message: "Failed to fetch" });
+    }
+  });
+
+  app.get("/api/public/projects/:id/scada/monthly", async (req: any, res) => {
+    try {
+      if (!FEATURED_PROJECT_IDS.has(req.params.id)) return res.status(404).json({ message: "Not found" });
+      const result = await scadaService.getMonthlyHistory(req.params.id);
+      if (!result) return res.status(404).json({ message: "Not found" });
+      res.json(result);
+    } catch (err) {
+      res.status(500).json({ message: "Failed to fetch" });
+    }
+  });
+
+  app.get("/api/public/projects/:id/scada/forecast", async (req: any, res) => {
+    try {
+      if (!FEATURED_PROJECT_IDS.has(req.params.id)) return res.status(404).json({ message: "Not found" });
+      const result = await scadaService.getForecast(req.params.id);
+      if (!result) return res.status(404).json({ message: "Not found" });
+      res.json(result);
+    } catch (err) {
+      res.status(500).json({ message: "Failed to fetch" });
+    }
+  });
+
+  app.get("/api/public/projects/:id/scada/revenue-bridge", async (req: any, res) => {
+    try {
+      if (!FEATURED_PROJECT_IDS.has(req.params.id)) return res.status(404).json({ message: "Not found" });
+      const result = await scadaService.getRevenueBridge(req.params.id);
+      if (!result) return res.status(404).json({ message: "Not found" });
+      res.json(result);
+    } catch (err) {
+      res.status(500).json({ message: "Failed to fetch" });
+    }
+  });
+
   app.get("/api/projects/:id/scada/summary", requireAuth, requireProjectAccess, async (req: any, res) => {
     try {
       const result = await scadaService.getProjectSummary(req.params.id);

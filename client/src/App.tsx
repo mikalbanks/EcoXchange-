@@ -71,6 +71,7 @@ import AdminExportPacket from "@/pages/admin/export-packet";
 import AdminUsers from "@/pages/admin/users";
 import YieldSimulationPage from "@/pages/yield-simulation";
 import YieldForecastDashboard from "@/pages/pvdaq/yield-forecast-dashboard";
+import PerformancePage from "@/pages/performance";
 
 function ProtectedRoute({ 
   children, 
@@ -109,6 +110,7 @@ function Router() {
       <Route path="/auth/signup" component={SignupPage} />
       <Route path="/yield-simulation" component={YieldSimulationPage} />
       <Route path="/telemetry" component={YieldForecastDashboard} />
+      <Route path="/performance" component={PerformancePage} />
       <Route path="/privacy" component={PrivacyPolicy} />
       
       <Route path="/developer">

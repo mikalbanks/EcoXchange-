@@ -18,6 +18,7 @@ import {
 } from "@/components/ui/select";
 import { useToast } from "@/hooks/use-toast";
 import { YieldDashboard } from "@/components/yield-dashboard";
+import { ScadaSummaryCards, HealthBadge } from "@/components/scada";
 import {
   Sun,
   Battery,
@@ -341,6 +342,17 @@ export default function ProjectDetail() {
               )}
             </CardContent>
           </Card>
+        </div>
+
+        <div className="space-y-4">
+          <div className="flex items-center justify-between">
+            <h3 className="text-lg font-semibold flex items-center gap-2">
+              <TrendingUp className="h-4 w-4" />
+              SCADA Telemetry
+            </h3>
+            <HealthBadge projectId={id!} size="md" />
+          </div>
+          <ScadaSummaryCards projectId={id!} compact showProvenance />
         </div>
 
         <div>
