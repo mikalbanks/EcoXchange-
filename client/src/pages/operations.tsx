@@ -58,9 +58,9 @@ interface ScadaConnector {
   id: string;
   name: string;
   slug: string;
-  description: string;
+  description: string | null;
   status: string;
-  supportedTechnologies: string;
+  supportedTechnologies: string | null;
 }
 
 interface IngestionEvent {
@@ -408,7 +408,7 @@ function ConnectorsTab() {
                   </div>
                   <div>
                     <h4 className="font-medium text-sm" data-testid={`text-connector-name-${connector.slug}`}>{connector.name}</h4>
-                    <p className="text-xs text-muted-foreground">{connector.supportedTechnologies.replace(/,/g, " · ")}</p>
+                    <p className="text-xs text-muted-foreground">{(connector.supportedTechnologies ?? "").replace(/,/g, " · ")}</p>
                   </div>
                 </div>
                 {connector.status === "AVAILABLE" ? (
@@ -417,7 +417,7 @@ function ConnectorsTab() {
                   <Badge variant="outline" className="text-[10px]">Coming Soon</Badge>
                 )}
               </div>
-              <p className="text-xs text-muted-foreground mb-4">{connector.description}</p>
+              <p className="text-xs text-muted-foreground mb-4">{connector.description ?? ""}</p>
               <Button
                 size="sm"
                 variant={connector.status === "AVAILABLE" ? "default" : "outline"}
