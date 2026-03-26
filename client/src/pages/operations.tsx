@@ -255,6 +255,9 @@ function CsvUploadTab() {
           <div
             className="border-2 border-dashed border-border rounded-lg p-8 text-center cursor-pointer hover:border-primary/50 transition-colors"
             onClick={handleFileDrop}
+            onDragOver={(e) => { e.preventDefault(); e.currentTarget.classList.add("border-primary/50"); }}
+            onDragLeave={(e) => { e.currentTarget.classList.remove("border-primary/50"); }}
+            onDrop={(e) => { e.preventDefault(); e.currentTarget.classList.remove("border-primary/50"); handleFileDrop(); }}
             data-testid="zone-csv-upload"
           >
             <Upload className="h-10 w-10 text-muted-foreground mx-auto mb-3 opacity-40" />

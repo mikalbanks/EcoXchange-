@@ -1162,7 +1162,11 @@ export async function registerRoutes(
     }
   });
 
-  app.get("/api/scada/connectors", requireAuth, async (_req: any, res) => {
+  app.get("/api/scada/connectors", requireAuth, async (_req: any, res: any) => {
+    const user = await storage.getUser(_req.session.userId);
+    if (!user || (user.role !== "ADMIN" && user.role !== "DEVELOPER")) {
+      return res.status(403).json({ message: "Not authorized" });
+    }
     try {
       const connectors = await storage.getAllScadaConnectors();
       res.json(connectors);
