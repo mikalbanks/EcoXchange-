@@ -384,6 +384,15 @@ function ConnectorsTab() {
         </Badge>
       </div>
 
+      {!isLoading && (!connectors || connectors.length === 0) ? (
+        <Card>
+          <CardContent className="pt-6 text-center text-sm text-muted-foreground py-12">
+            <Link2 className="h-10 w-10 mx-auto mb-3 opacity-30" />
+            <p>No connectors available.</p>
+            <p className="text-xs mt-1">SCADA platform connectors will appear here when configured.</p>
+          </CardContent>
+        </Card>
+      ) : (
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         {(connectors || []).map((connector) => (
           <Card key={connector.id} data-testid={`card-connector-${connector.slug}`}>
@@ -426,6 +435,7 @@ function ConnectorsTab() {
           </Card>
         ))}
       </div>
+      )}
     </div>
   );
 }
@@ -508,8 +518,10 @@ function ReconciliationLogTab() {
 function PublishMetricsSection() {
   const { toast } = useToast();
   const [publishing, setPublishing] = useState(false);
+  const [showConfirm, setShowConfirm] = useState(false);
 
   function handlePublish() {
+    setShowConfirm(false);
     setPublishing(true);
     setTimeout(() => {
       setPublishing(false);
@@ -534,10 +546,13 @@ function PublishMetricsSection() {
                 Push refreshed SCADA data to public-facing performance views and investor dashboards.
                 This action simulates a cache refresh and metrics recalculation.
               </p>
+              <Badge variant="outline" className="text-[10px] gap-1 mt-1.5">
+                <Info className="h-2.5 w-2.5" /> Demo / Prototype
+              </Badge>
             </div>
           </div>
           <Button
-            onClick={handlePublish}
+            onClick={() => setShowConfirm(true)}
             disabled={publishing}
             className="shrink-0"
             data-testid="button-publish-metrics"
@@ -549,6 +564,24 @@ function PublishMetricsSection() {
             )}
           </Button>
         </div>
+
+        {showConfirm && (
+          <div className="mt-4 p-4 rounded-lg border border-border bg-muted/30" data-testid="dialog-publish-confirm">
+            <p className="text-sm font-medium mb-1">Confirm Publish</p>
+            <p className="text-xs text-muted-foreground mb-3">
+              This will push refreshed SCADA metrics to all public-facing performance views and investor dashboards.
+              In production, this recalculates cached summaries and updates live data feeds.
+            </p>
+            <div className="flex items-center gap-2">
+              <Button size="sm" onClick={handlePublish} data-testid="button-confirm-publish">
+                <ArrowUpRight className="h-3.5 w-3.5 mr-1.5" /> Confirm Publish
+              </Button>
+              <Button size="sm" variant="outline" onClick={() => setShowConfirm(false)} data-testid="button-cancel-publish">
+                Cancel
+              </Button>
+            </div>
+          </div>
+        )}
       </CardContent>
     </Card>
   );
