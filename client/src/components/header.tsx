@@ -45,8 +45,11 @@ export function Header() {
               <Link href="/performance" className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors" data-testid="link-performance">
                 Performance
               </Link>
-              <Link href="/yield-simulation" className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors" data-testid="link-yield-simulation">
-                Yield Simulator
+              <Link href="/investor" className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors" data-testid="link-investor-dashboard">
+                Investor Dashboard
+              </Link>
+              <Link href="/developer" className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors" data-testid="link-developer-portal">
+                Developer Portal
               </Link>
               <Link href="/auth/login" className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors" data-testid="link-signin">
                 Sign In
@@ -72,8 +75,11 @@ export function Header() {
                     <Link href="/performance" className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors" data-testid="link-mobile-performance">
                       Performance
                     </Link>
-                    <Link href="/yield-simulation" className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors" data-testid="link-mobile-yield-simulation">
-                      Yield Simulator
+                    <Link href="/investor" className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors" data-testid="link-mobile-investor-dashboard">
+                      Investor Dashboard
+                    </Link>
+                    <Link href="/developer" className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors" data-testid="link-mobile-developer-portal">
+                      Developer Portal
                     </Link>
                     <Link href="/auth/login" className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors" data-testid="link-mobile-signin">
                       Sign In

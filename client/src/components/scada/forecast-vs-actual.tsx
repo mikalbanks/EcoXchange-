@@ -104,8 +104,8 @@ export function ForecastVsActualChart({ projectId, showProvenance = false, heigh
     }
   }
 
-  const allKeys = new Set([...actualByKey.keys(), ...forecastByKey.keys()]);
-  const sortedKeys = [...allKeys].sort();
+  const allKeys = new Set(Array.from(actualByKey.keys()).concat(Array.from(forecastByKey.keys())));
+  const sortedKeys = Array.from(allKeys).sort();
 
   if (sortedKeys.length === 0) {
     return (
