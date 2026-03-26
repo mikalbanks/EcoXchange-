@@ -1,5 +1,5 @@
 export { HealthBadge } from "./health-badge";
-export { ProvenancePanel } from "./provenance-panel";
+export { ProvenancePanel, ProvenancePanel as DataProvenancePanel } from "./provenance-panel";
 export type { ScadaProvenance } from "./provenance-panel";
 export { ScadaSummaryCards } from "./summary-cards";
 export { ProductionChart } from "./production-chart";
