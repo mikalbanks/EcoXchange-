@@ -440,8 +440,16 @@ export async function getDistributions(projectId: string): Promise<ScadaDistribu
     return { records: [], totals: { grossRevenue: 0, operatingExpenses: 0, netRevenue: 0, platformFee: 0, investorShare: 0, distributed: 0, pending: 0 }, provenance: buildProvenance(dataSources) };
   }
 
-  const records = distributions.map((d, i) => {
-    const rev = revenue[i];
+  const monthNames = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+  const revenueByLabel = new Map<string, typeof revenue[0]>();
+  for (const r of revenue) {
+    const dt = new Date(r.periodStart);
+    const label = `${monthNames[dt.getMonth()]} ${dt.getFullYear()}`;
+    revenueByLabel.set(label, r);
+  }
+
+  const records = distributions.map((d) => {
+    const rev = revenueByLabel.get(d.periodLabel);
     return {
       period: d.periodLabel,
       grossRevenue: rev ? parseFloat(rev.grossRevenue) : 0,

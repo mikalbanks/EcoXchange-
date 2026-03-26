@@ -39,7 +39,7 @@ export function Header() {
               <Link href="/" className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors" data-testid="link-home">
                 Home
               </Link>
-              <Link href="/#pillars" className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors" data-testid="link-offerings">
+              <Link href="/investor/deals" className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors" data-testid="link-offerings">
                 Marketplace
               </Link>
               <Link href="/performance" className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors" data-testid="link-performance">
@@ -50,6 +50,9 @@ export function Header() {
               </Link>
               <Link href="/developer" className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors" data-testid="link-developer-portal">
                 Developer Portal
+              </Link>
+              <Link href="/admin" className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors" data-testid="link-operations">
+                Operations
               </Link>
               <Link href="/auth/login" className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors" data-testid="link-signin">
                 Sign In
@@ -69,7 +72,7 @@ export function Header() {
                     <Link href="/" className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors" data-testid="link-mobile-home">
                       Home
                     </Link>
-                    <Link href="/#pillars" className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors" data-testid="link-mobile-marketplace">
+                    <Link href="/investor/deals" className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors" data-testid="link-mobile-marketplace">
                       Marketplace
                     </Link>
                     <Link href="/performance" className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors" data-testid="link-mobile-performance">
@@ -80,6 +83,9 @@ export function Header() {
                     </Link>
                     <Link href="/developer" className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors" data-testid="link-mobile-developer-portal">
                       Developer Portal
+                    </Link>
+                    <Link href="/admin" className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors" data-testid="link-mobile-operations">
+                      Operations
                     </Link>
                     <Link href="/auth/login" className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors" data-testid="link-mobile-signin">
                       Sign In
