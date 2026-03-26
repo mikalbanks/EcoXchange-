@@ -10,6 +10,7 @@ import { z } from "zod";
 import pool from "./db";
 import { buildSeasonalForecast } from "./lib/yieldForecast";
 import { generateROIPrediction, type ProjectFinancialData } from "./lib/ai-predictions";
+import * as scadaService from "./lib/scada-service";
 
 const SessionStore = MemoryStore(session);
 const SESSION_SECRET = process.env.SESSION_SECRET || crypto.randomBytes(32).toString('hex');
@@ -968,6 +969,137 @@ export async function registerRoutes(
     } catch (err) {
       console.error("PVDAQ systems error:", err);
       res.status(500).json({ message: "Failed to fetch systems" });
+    }
+  });
+
+  // ─── SCADA Project-Level Routes ─────────────────────────────────────
+
+  const requireProjectAccess = async (req: any, res: any, next: any) => {
+    if (!req.session.userId) return res.status(401).json({ message: "Not authenticated" });
+    const user = await storage.getUser(req.session.userId);
+    if (!user) return res.status(401).json({ message: "Not authenticated" });
+    const project = await storage.getProject(req.params.id);
+    if (!project) return res.status(404).json({ message: "Project not found" });
+
+    if (user.role === "ADMIN") {
+      req.project = project;
+      return next();
+    }
+    if (user.role === "DEVELOPER" && project.developerId === user.id) {
+      req.project = project;
+      return next();
+    }
+    if (user.role === "INVESTOR" && project.status === "APPROVED") {
+      req.project = project;
+      return next();
+    }
+    return res.status(403).json({ message: "Access denied" });
+  };
+
+  app.get("/api/projects/:id/scada/summary", requireAuth, requireProjectAccess, async (req: any, res) => {
+    try {
+      const result = await scadaService.getProjectSummary(req.params.id);
+      if (!result) return res.status(404).json({ message: "Project not found" });
+      res.json(result);
+    } catch (err) {
+      console.error("SCADA summary error:", err);
+      res.status(500).json({ message: "Failed to fetch SCADA summary" });
+    }
+  });
+
+  app.get("/api/projects/:id/scada/monthly", requireAuth, requireProjectAccess, async (req: any, res) => {
+    try {
+      const result = await scadaService.getMonthlyHistory(req.params.id);
+      if (!result) return res.status(404).json({ message: "Project not found" });
+      res.json(result);
+    } catch (err) {
+      console.error("SCADA monthly error:", err);
+      res.status(500).json({ message: "Failed to fetch monthly history" });
+    }
+  });
+
+  app.get("/api/projects/:id/scada/forecast", requireAuth, requireProjectAccess, async (req: any, res) => {
+    try {
+      const ppaRateRaw = req.query.ppaRate as string | undefined;
+      const degradationRaw = req.query.degradation as string | undefined;
+      const monthsRaw = req.query.months as string | undefined;
+
+      let ppaRate: number | undefined;
+      let degradation: number | undefined;
+      let months: number | undefined;
+
+      if (ppaRateRaw !== undefined) {
+        ppaRate = parseFloat(ppaRateRaw);
+        if (isNaN(ppaRate) || ppaRate < 0 || ppaRate > 1) return res.status(400).json({ message: "ppaRate must be a number between 0 and 1" });
+      }
+      if (degradationRaw !== undefined) {
+        degradation = parseFloat(degradationRaw);
+        if (isNaN(degradation) || degradation < 0 || degradation > 0.1) return res.status(400).json({ message: "degradation must be a number between 0 and 0.1" });
+      }
+      if (monthsRaw !== undefined) {
+        months = parseInt(monthsRaw);
+        if (isNaN(months) || months < 1 || months > 60) return res.status(400).json({ message: "months must be an integer between 1 and 60" });
+      }
+
+      const result = await scadaService.getForecast(req.params.id, ppaRate, degradation, months);
+      if (!result) return res.status(404).json({ message: "Project not found or no production data" });
+      res.json(result);
+    } catch (err) {
+      console.error("SCADA forecast error:", err);
+      res.status(500).json({ message: "Failed to generate forecast" });
+    }
+  });
+
+  app.get("/api/projects/:id/scada/health", requireAuth, requireProjectAccess, async (req: any, res) => {
+    try {
+      const result = await scadaService.getHealthStatus(req.params.id);
+      if (!result) return res.status(404).json({ message: "Project not found" });
+      res.json(result);
+    } catch (err) {
+      console.error("SCADA health error:", err);
+      res.status(500).json({ message: "Failed to fetch health status" });
+    }
+  });
+
+  app.get("/api/projects/:id/scada/ingestion", requireAuth, requireProjectAccess, async (req: any, res) => {
+    try {
+      const result = await scadaService.getIngestionStatus(req.params.id);
+      if (!result) return res.status(404).json({ message: "Project not found" });
+      res.json(result);
+    } catch (err) {
+      console.error("SCADA ingestion error:", err);
+      res.status(500).json({ message: "Failed to fetch ingestion status" });
+    }
+  });
+
+  app.get("/api/projects/:id/scada/revenue-bridge", requireAuth, requireProjectAccess, async (req: any, res) => {
+    try {
+      const result = await scadaService.getRevenueBridge(req.params.id);
+      if (!result) return res.status(404).json({ message: "Project not found" });
+      res.json(result);
+    } catch (err) {
+      console.error("SCADA revenue bridge error:", err);
+      res.status(500).json({ message: "Failed to fetch revenue bridge" });
+    }
+  });
+
+  app.get("/api/scada/connectors", requireAuth, async (_req: any, res) => {
+    try {
+      const connectors = await storage.getAllScadaConnectors();
+      res.json(connectors);
+    } catch (err) {
+      console.error("SCADA connectors error:", err);
+      res.status(500).json({ message: "Failed to fetch connectors" });
+    }
+  });
+
+  app.get("/api/projects/:id/scada/data-sources", requireAuth, requireProjectAccess, async (req: any, res) => {
+    try {
+      const sources = await storage.getScadaDataSourcesByProject(req.params.id);
+      res.json(sources);
+    } catch (err) {
+      console.error("SCADA data sources error:", err);
+      res.status(500).json({ message: "Failed to fetch data sources" });
     }
   });
 

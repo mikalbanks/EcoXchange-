@@ -13,6 +13,8 @@ import {
   type EnergyProduction, type InsertEnergyProduction,
   type RevenueRecord, type InsertRevenueRecord,
   type Distribution, type InsertDistribution,
+  type ScadaDataSource, type InsertScadaDataSource,
+  type ScadaConnector, type InsertScadaConnector,
 } from "@shared/schema";
 
 export function hashPassword(password: string): string {
@@ -75,6 +77,15 @@ export interface IStorage {
   getDistributionsByProject(projectId: string): Promise<Distribution[]>;
   createDistribution(dist: InsertDistribution): Promise<Distribution>;
   updateDistribution(id: string, updates: Partial<Distribution>): Promise<Distribution | undefined>;
+
+  getScadaDataSourcesByProject(projectId: string): Promise<ScadaDataSource[]>;
+  getScadaDataSource(id: string): Promise<ScadaDataSource | undefined>;
+  createScadaDataSource(source: InsertScadaDataSource): Promise<ScadaDataSource>;
+  updateScadaDataSource(id: string, updates: Partial<ScadaDataSource>): Promise<ScadaDataSource | undefined>;
+
+  getAllScadaConnectors(): Promise<ScadaConnector[]>;
+  getScadaConnector(id: string): Promise<ScadaConnector | undefined>;
+  createScadaConnector(connector: InsertScadaConnector): Promise<ScadaConnector>;
 }
 
 import { computeReadiness, generateChecklist, computeCapitalStack, computeRevenue, computeDistribution } from "./scoring-engine";
@@ -95,6 +106,8 @@ export class MemStorage implements IStorage {
   private productionRecords: Map<string, EnergyProduction> = new Map();
   private revenueRecords: Map<string, RevenueRecord> = new Map();
   private distributions: Map<string, Distribution> = new Map();
+  private scadaDataSources: Map<string, ScadaDataSource> = new Map();
+  private scadaConnectors: Map<string, ScadaConnector> = new Map();
 
   constructor() {
     this.seedData();
@@ -602,6 +615,83 @@ export class MemStorage implements IStorage {
       status: "SUBMITTED",
       createdAt: new Date(Date.now() - 3 * 24 * 60 * 60 * 1000),
     });
+
+    // ─── SCADA Connector Placeholders ────────────────────────────────
+    const connectors = [
+      { name: "AlsoEnergy", slug: "alsoenergy", description: "Enterprise-grade solar monitoring and asset management platform. Supports utility-scale and C&I portfolios.", status: "COMING_SOON", supportedTechnologies: "SOLAR,SOLAR_STORAGE" },
+      { name: "Enphase", slug: "enphase", description: "Microinverter-based monitoring for residential and small commercial solar installations.", status: "COMING_SOON", supportedTechnologies: "SOLAR" },
+      { name: "SolarEdge", slug: "solaredge", description: "Power optimizer and inverter monitoring platform for residential, C&I, and utility-scale systems.", status: "COMING_SOON", supportedTechnologies: "SOLAR,SOLAR_STORAGE" },
+      { name: "NREL PVDAQ", slug: "pvdaq", description: "NREL Photovoltaic Data Acquisition system providing verified historical telemetry from research-grade installations.", status: "AVAILABLE", supportedTechnologies: "SOLAR" },
+      { name: "Power Factors", slug: "power-factors", description: "Asset performance management for utility-scale renewables including solar, wind, and storage.", status: "COMING_SOON", supportedTechnologies: "SOLAR,SOLAR_STORAGE" },
+    ];
+    for (const c of connectors) {
+      const cId = randomUUID();
+      this.scadaConnectors.set(cId, {
+        id: cId,
+        name: c.name,
+        slug: c.slug,
+        description: c.description,
+        status: c.status,
+        logoUrl: null,
+        supportedTechnologies: c.supportedTechnologies,
+        configSchema: null,
+        createdAt: new Date(),
+      });
+    }
+
+    const pvdaqConnector = Array.from(this.scadaConnectors.values()).find(c => c.slug === "pvdaq");
+
+    // ─── SCADA Data Sources per Project ──────────────────────────────
+    const ds1Id = randomUUID();
+    this.scadaDataSources.set(ds1Id, {
+      id: ds1Id,
+      projectId: proj1Id,
+      sourceType: "MANUAL",
+      providerName: "Manual Entry",
+      status: "ACTIVE",
+      dataQuality: "MEDIUM",
+      lastSyncAt: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000),
+      recordCount: 12,
+      connectorId: null,
+      configJson: null,
+      notes: "Monthly production data entered manually from inverter reports.",
+      createdAt: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000),
+      updatedAt: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000),
+    });
+
+    const ds2Id = randomUUID();
+    this.scadaDataSources.set(ds2Id, {
+      id: ds2Id,
+      projectId: proj2Id,
+      sourceType: "CSV_UPLOAD",
+      providerName: "CSV Import",
+      status: "PENDING",
+      dataQuality: "UNKNOWN",
+      lastSyncAt: null,
+      recordCount: 0,
+      connectorId: null,
+      configJson: null,
+      notes: "Awaiting initial production data upload. Project is pre-NTP.",
+      createdAt: new Date(Date.now() - 14 * 24 * 60 * 60 * 1000),
+      updatedAt: new Date(Date.now() - 14 * 24 * 60 * 60 * 1000),
+    });
+
+    const ds3Id = randomUUID();
+    this.scadaDataSources.set(ds3Id, {
+      id: ds3Id,
+      projectId: proj3Id,
+      sourceType: "PVDAQ_VERIFIED",
+      providerName: "NREL PVDAQ (System 9068)",
+      status: "ACTIVE",
+      dataQuality: "HIGH",
+      lastSyncAt: new Date(Date.now() - 1 * 24 * 60 * 60 * 1000),
+      recordCount: 12,
+      connectorId: pvdaqConnector?.id || null,
+      configJson: JSON.stringify({ systemId: 9068, capacityKw: 4700, technology: "CdTe", trackingType: "Single-Axis" }),
+      notes: "Verified telemetry from NREL PVDAQ system 9068. 6+ years of research-grade production data.",
+      createdAt: new Date(Date.now() - 60 * 24 * 60 * 60 * 1000),
+      updatedAt: new Date(Date.now() - 1 * 24 * 60 * 60 * 1000),
+    });
   }
 
   // ─── Users ──────────────────────────────────────────────────────
@@ -984,6 +1074,72 @@ export class MemStorage implements IStorage {
     const updated = { ...dist, ...updates };
     this.distributions.set(id, updated);
     return updated;
+  }
+
+  // ─── SCADA Data Sources ────────────────────────────────────────
+
+  async getScadaDataSourcesByProject(projectId: string): Promise<ScadaDataSource[]> {
+    return Array.from(this.scadaDataSources.values()).filter(s => s.projectId === projectId);
+  }
+
+  async getScadaDataSource(id: string): Promise<ScadaDataSource | undefined> {
+    return this.scadaDataSources.get(id);
+  }
+
+  async createScadaDataSource(source: InsertScadaDataSource): Promise<ScadaDataSource> {
+    const id = randomUUID();
+    const newSource: ScadaDataSource = {
+      id,
+      projectId: source.projectId,
+      sourceType: source.sourceType || "MANUAL",
+      providerName: source.providerName || null,
+      status: source.status || "PENDING",
+      dataQuality: source.dataQuality || "UNKNOWN",
+      lastSyncAt: source.lastSyncAt || null,
+      recordCount: source.recordCount || 0,
+      connectorId: source.connectorId || null,
+      configJson: source.configJson || null,
+      notes: source.notes || null,
+      createdAt: new Date(),
+      updatedAt: new Date(),
+    };
+    this.scadaDataSources.set(id, newSource);
+    return newSource;
+  }
+
+  async updateScadaDataSource(id: string, updates: Partial<ScadaDataSource>): Promise<ScadaDataSource | undefined> {
+    const source = this.scadaDataSources.get(id);
+    if (!source) return undefined;
+    const updated = { ...source, ...updates, updatedAt: new Date() };
+    this.scadaDataSources.set(id, updated);
+    return updated;
+  }
+
+  // ─── SCADA Connectors ─────────────────────────────────────────
+
+  async getAllScadaConnectors(): Promise<ScadaConnector[]> {
+    return Array.from(this.scadaConnectors.values());
+  }
+
+  async getScadaConnector(id: string): Promise<ScadaConnector | undefined> {
+    return this.scadaConnectors.get(id);
+  }
+
+  async createScadaConnector(connector: InsertScadaConnector): Promise<ScadaConnector> {
+    const id = randomUUID();
+    const newConnector: ScadaConnector = {
+      id,
+      name: connector.name,
+      slug: connector.slug,
+      description: connector.description || null,
+      status: connector.status || "COMING_SOON",
+      logoUrl: connector.logoUrl || null,
+      supportedTechnologies: connector.supportedTechnologies || null,
+      configSchema: connector.configSchema || null,
+      createdAt: new Date(),
+    };
+    this.scadaConnectors.set(id, newConnector);
+    return newConnector;
   }
 }
 

@@ -405,6 +405,82 @@ export const insertDistributionSchema = createInsertSchema(distributions).omit({
 export type InsertDistribution = z.infer<typeof insertDistributionSchema>;
 export type Distribution = typeof distributions.$inferSelect;
 
+// ─── SCADA Data Sources ──────────────────────────────────────────────────────
+
+export const ScadaSourceType = {
+  PVDAQ_VERIFIED: "PVDAQ_VERIFIED",
+  CSV_UPLOAD: "CSV_UPLOAD",
+  CONNECTOR: "CONNECTOR",
+  MANUAL: "MANUAL",
+} as const;
+
+export const ScadaSourceStatus = {
+  ACTIVE: "ACTIVE",
+  INACTIVE: "INACTIVE",
+  ERROR: "ERROR",
+  PENDING: "PENDING",
+} as const;
+
+export const ScadaDataQuality = {
+  HIGH: "HIGH",
+  MEDIUM: "MEDIUM",
+  LOW: "LOW",
+  UNKNOWN: "UNKNOWN",
+} as const;
+
+export const scadaDataSources = pgTable("scada_data_sources", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  projectId: varchar("project_id").notNull(),
+  sourceType: text("source_type").notNull().default("MANUAL"),
+  providerName: text("provider_name"),
+  status: text("status").notNull().default("PENDING"),
+  dataQuality: text("data_quality").notNull().default("UNKNOWN"),
+  lastSyncAt: timestamp("last_sync_at"),
+  recordCount: integer("record_count").default(0),
+  connectorId: varchar("connector_id"),
+  configJson: text("config_json"),
+  notes: text("notes"),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+});
+
+export const insertScadaDataSourceSchema = createInsertSchema(scadaDataSources).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
+export type InsertScadaDataSource = z.infer<typeof insertScadaDataSourceSchema>;
+export type ScadaDataSource = typeof scadaDataSources.$inferSelect;
+
+// ─── SCADA Connectors ────────────────────────────────────────────────────────
+
+export const ScadaConnectorStatus = {
+  AVAILABLE: "AVAILABLE",
+  COMING_SOON: "COMING_SOON",
+  BETA: "BETA",
+} as const;
+
+export const scadaConnectors = pgTable("scada_connectors", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  name: text("name").notNull(),
+  slug: text("slug").notNull().unique(),
+  description: text("description"),
+  status: text("status").notNull().default("COMING_SOON"),
+  logoUrl: text("logo_url"),
+  supportedTechnologies: text("supported_technologies"),
+  configSchema: text("config_schema"),
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
+export const insertScadaConnectorSchema = createInsertSchema(scadaConnectors).omit({
+  id: true,
+  createdAt: true,
+});
+
+export type InsertScadaConnector = z.infer<typeof insertScadaConnectorSchema>;
+export type ScadaConnector = typeof scadaConnectors.$inferSelect;
+
 // ─── Zod Validation Schemas ─────────────────────────────────────────────────
 
 export const loginSchema = z.object({
