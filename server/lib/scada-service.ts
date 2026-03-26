@@ -1,6 +1,6 @@
 import { storage } from "../storage";
 import { buildSeasonalForecast } from "./yieldForecast";
-import type { ScadaDataSource } from "@shared/schema";
+import type { ScadaDataSource, RevenueRecord } from "@shared/schema";
 
 export interface ScadaProvenance {
   sourceType: string;
