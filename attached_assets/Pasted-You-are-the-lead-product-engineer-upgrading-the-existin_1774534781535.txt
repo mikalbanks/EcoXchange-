@@ -1,0 +1,97 @@
+You are the lead product engineer upgrading the existing EcoXchange Replit app in-place.
+
+Objective:
+Integrate the SCADA / telemetry feature deeply into the core demo and polish the overall website so the app feels like an investor-ready renewable energy securities platform.
+
+Current state to preserve:
+- Existing role-based app structure
+- Existing PVDAQ telemetry page and endpoints
+- Existing yield dashboard
+- Existing seeded flagship project, Colorado Sun CdTe I
+- Existing investor, developer, and admin flows
+
+Core product requirement:
+SCADA is not a side dashboard. It is the core differentiator of EcoXchange. The app must clearly show the flow:
+Energy production data -> PPA revenue -> expense waterfall -> distributable cash -> investor distributions.
+
+Do not build a full real-time hardware integration.
+Phase 1 should remain a demo-grade but believable SCADA layer with:
+1. historical verified telemetry (PVDAQ-backed)
+2. CSV/manual upload mode
+3. connector placeholder mode for future providers like AlsoEnergy, Enphase, SolarEdge, etc.
+
+Build goals:
+
+1. Create a reusable SCADA domain layer
+Refactor existing PVDAQ logic into a generalized project performance / SCADA service layer.
+Add project-level APIs for:
+- summary
+- monthly history
+- forecast
+- health
+- ingestion status
+
+2. Add SCADA components and use them across the app
+Create reusable components for:
+- SCADA summary cards
+- production history chart
+- forecast vs actual chart
+- revenue bridge
+- distribution waterfall
+- data provenance panel
+- SCADA health badge
+
+Embed these components into:
+- landing page featured project area
+- investor marketplace project cards
+- investor deal room
+- developer project detail
+- admin project review
+- standalone performance page
+
+3. Build a lightweight SCADA operations flow
+Add admin/developer interfaces for:
+- data source status
+- last sync timestamp
+- data quality state
+- CSV upload stub
+- monthly reconciliation log
+- publish updated metrics
+
+4. Polish the public website and product UX
+Improve:
+- homepage hierarchy
+- nav clarity
+- design consistency
+- chart styling
+- card spacing
+- disclosures
+- CTA flow
+- mobile responsiveness
+
+Public nav should orient around:
+Home, Marketplace, Performance, Investor Dashboard, Developer Portal, Operations
+
+5. Strengthen the flagship project story
+For Colorado Sun CdTe I, make the deal room clearly show:
+- verified production history
+- trailing 12-month revenue
+- projected next-12-month revenue
+- distribution logic
+- investor trust signals
+- source provenance
+
+6. Keep the demo credible
+All flows should be clearly demo/sample data.
+Do not imply live securities execution or live broker-dealer workflow.
+Use realistic statuses and polished UX.
+
+Technical preferences:
+- preserve existing architecture where useful
+- create modular reusable components
+- keep routes coherent
+- use shared mock data/services where needed
+- do not leave telemetry logic isolated to a single page
+
+Definition of done:
+The app should feel like a polished investor demo where SCADA-powered performance data is visibly central to underwriting, investor trust, and distribution reporting.
