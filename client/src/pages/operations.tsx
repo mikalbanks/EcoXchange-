@@ -25,6 +25,7 @@ import {
   ArrowUpRight,
   Info,
   XCircle,
+  FileWarning,
 } from "lucide-react";
 
 interface OperationsDataSource {
@@ -226,10 +227,44 @@ function CsvUploadTab() {
   const { toast } = useToast();
   const [selectedFile, setSelectedFile] = useState<string | null>(null);
   const [showPreview, setShowPreview] = useState(false);
+  const [rejectedFile, setRejectedFile] = useState<string | null>(null);
 
-  function handleFileDrop() {
-    setSelectedFile("production_data_q4_2025.csv");
+  const ALLOWED_EXTENSIONS = [".csv", ".xlsx"];
+
+  function isValidFile(filename: string): boolean {
+    return ALLOWED_EXTENSIONS.some((ext) => filename.toLowerCase().endsWith(ext));
+  }
+
+  function handleFileSelect(filename: string) {
+    setRejectedFile(null);
+    if (!isValidFile(filename)) {
+      setRejectedFile(filename);
+      setSelectedFile(null);
+      setShowPreview(false);
+      toast({
+        title: "Invalid File Type",
+        description: `"${filename}" is not a supported format. Please upload a .csv or .xlsx file.`,
+        variant: "destructive",
+      });
+      return;
+    }
+    setSelectedFile(filename);
     setShowPreview(true);
+  }
+
+  function handleBrowseClick() {
+    handleFileSelect("production_data_q4_2025.csv");
+  }
+
+  function handleDrop(e: React.DragEvent) {
+    e.preventDefault();
+    e.currentTarget.classList.remove("border-primary/50");
+    const files = e.dataTransfer?.files;
+    if (files && files.length > 0) {
+      handleFileSelect(files[0].name);
+    } else {
+      handleFileSelect("production_data_q4_2025.csv");
+    }
   }
 
   function handleUpload() {
@@ -254,10 +289,10 @@ function CsvUploadTab() {
         <CardContent className="pt-6">
           <div
             className="border-2 border-dashed border-border rounded-lg p-8 text-center cursor-pointer hover:border-primary/50 transition-colors"
-            onClick={handleFileDrop}
+            onClick={handleBrowseClick}
             onDragOver={(e) => { e.preventDefault(); e.currentTarget.classList.add("border-primary/50"); }}
             onDragLeave={(e) => { e.currentTarget.classList.remove("border-primary/50"); }}
-            onDrop={(e) => { e.preventDefault(); e.currentTarget.classList.remove("border-primary/50"); handleFileDrop(); }}
+            onDrop={handleDrop}
             data-testid="zone-csv-upload"
           >
             <Upload className="h-10 w-10 text-muted-foreground mx-auto mb-3 opacity-40" />
@@ -271,6 +306,12 @@ function CsvUploadTab() {
               <div className="mt-3 inline-flex items-center gap-2 px-3 py-1.5 bg-primary/10 rounded-md">
                 <FileCheck className="h-4 w-4 text-primary" />
                 <span className="text-xs font-medium text-primary">{selectedFile}</span>
+              </div>
+            )}
+            {rejectedFile && (
+              <div className="mt-3 inline-flex items-center gap-2 px-3 py-1.5 bg-red-500/10 rounded-md" data-testid="badge-rejected-file">
+                <FileWarning className="h-4 w-4 text-red-400" />
+                <span className="text-xs font-medium text-red-400">{rejectedFile} — unsupported format</span>
               </div>
             )}
           </div>
@@ -404,9 +445,10 @@ function ConnectorsTab() {
                 <div className="flex items-center gap-3">
                   <div className="flex items-center justify-center w-10 h-10 rounded-lg bg-muted text-muted-foreground">
                     {connector.slug === "pvdaq" ? <Shield className="h-5 w-5 text-primary" /> :
-                     connector.slug === "enphase" ? <Zap className="h-5 w-5" /> :
-                     connector.slug === "solaredge" ? <Zap className="h-5 w-5" /> :
-                     connector.slug === "alsoenergy" ? <Server className="h-5 w-5" /> :
+                     connector.slug === "enphase" ? <Zap className="h-5 w-5 text-orange-400" /> :
+                     connector.slug === "solaredge" ? <Zap className="h-5 w-5 text-red-400" /> :
+                     connector.slug === "alsoenergy" ? <Server className="h-5 w-5 text-blue-400" /> :
+                     connector.slug === "power-factors" ? <Activity className="h-5 w-5 text-cyan-400" /> :
                      <Link2 className="h-5 w-5" />}
                   </div>
                   <div>

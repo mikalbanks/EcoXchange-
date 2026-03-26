@@ -1162,11 +1162,7 @@ export async function registerRoutes(
     }
   });
 
-  app.get("/api/scada/connectors", requireAuth, async (_req: any, res: any) => {
-    const user = await storage.getUser(_req.session.userId);
-    if (!user || (user.role !== "ADMIN" && user.role !== "DEVELOPER")) {
-      return res.status(403).json({ message: "Not authorized" });
-    }
+  app.get("/api/scada/connectors", requireRole("ADMIN", "DEVELOPER"), async (_req: any, res) => {
     try {
       const connectors = await storage.getAllScadaConnectors();
       res.json(connectors);
@@ -1186,13 +1182,9 @@ export async function registerRoutes(
     }
   });
 
-  app.get("/api/operations/data-sources", requireAuth, async (req: any, res) => {
+  app.get("/api/operations/data-sources", requireRole("ADMIN", "DEVELOPER"), async (req: any, res) => {
     try {
-      const user = await storage.getUser(req.session.userId);
-      if (!user || (user.role !== "ADMIN" && user.role !== "DEVELOPER")) {
-        return res.status(403).json({ message: "Not authorized" });
-      }
-
+      const user = req.user;
       let projects: any[];
       if (user.role === "ADMIN") {
         projects = await storage.getAllProjects();
