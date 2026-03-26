@@ -1,7 +1,6 @@
 import { storage } from "../storage";
-import { computeRevenue, computeDistribution } from "../scoring-engine";
 import { buildSeasonalForecast } from "./yieldForecast";
-import type { EnergyProduction, Ppa, RevenueRecord, Distribution, ScadaDataSource } from "@shared/schema";
+import type { ScadaDataSource } from "@shared/schema";
 
 export interface ScadaProvenance {
   sourceType: string;
@@ -73,6 +72,7 @@ export interface ScadaHealthStatus {
     status: "PASS" | "WARN" | "FAIL";
     message: string;
   }>;
+  provenance: ScadaProvenance;
 }
 
 export interface ScadaIngestionStatus {
@@ -86,6 +86,7 @@ export interface ScadaIngestionStatus {
   }>;
   lastIngestion: string | null;
   totalRecords: number;
+  provenance: ScadaProvenance;
 }
 
 export interface RevenueBridgeStep {
@@ -110,8 +111,21 @@ export interface ScadaRevenueBridge {
   provenance: ScadaProvenance;
 }
 
+function selectPrimarySource(dataSources: ScadaDataSource[]): ScadaDataSource | undefined {
+  if (dataSources.length === 0) return undefined;
+  const active = dataSources.filter(s => s.status === "ACTIVE");
+  if (active.length > 0) {
+    return active.sort((a, b) => {
+      const aSync = a.lastSyncAt?.getTime() || 0;
+      const bSync = b.lastSyncAt?.getTime() || 0;
+      return bSync - aSync;
+    })[0];
+  }
+  return dataSources[0];
+}
+
 function buildProvenance(dataSources: ScadaDataSource[]): ScadaProvenance {
-  const primary = dataSources[0];
+  const primary = selectPrimarySource(dataSources);
   if (!primary) {
     return {
       sourceType: "UNKNOWN",
@@ -289,7 +303,7 @@ export async function getHealthStatus(projectId: string): Promise<ScadaHealthSta
     storage.getProductionByProject(projectId),
   ]);
 
-  const primary = dataSources[0];
+  const primary = selectPrimarySource(dataSources);
   const checks: ScadaHealthStatus["checks"] = [];
 
   if (!primary) {
@@ -297,6 +311,7 @@ export async function getHealthStatus(projectId: string): Promise<ScadaHealthSta
       overall: "NO_DATA",
       dataSource: { status: "NONE", sourceType: "NONE", providerName: null, lastSyncAt: null, dataQuality: "UNKNOWN" },
       checks: [{ name: "Data Source", status: "FAIL", message: "No SCADA data source configured for this project." }],
+      provenance: buildProvenance(dataSources),
     };
   }
 
@@ -354,6 +369,7 @@ export async function getHealthStatus(projectId: string): Promise<ScadaHealthSta
       dataQuality: primary.dataQuality,
     },
     checks,
+    provenance: buildProvenance(dataSources),
   };
 }
 
@@ -383,6 +399,7 @@ export async function getIngestionStatus(projectId: string): Promise<ScadaIngest
     })),
     lastIngestion,
     totalRecords,
+    provenance: buildProvenance(dataSources),
   };
 }
 
