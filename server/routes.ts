@@ -12,6 +12,7 @@ import { buildSeasonalForecast } from "./lib/yieldForecast";
 import { generateROIPrediction, type ProjectFinancialData } from "./lib/ai-predictions";
 import * as scadaService from "./lib/scada-service";
 import { settleProject } from "./services/settle-project";
+import { runSgtHandshake } from "./services/sgt-handshake";
 import { db } from "./db";
 import { accounts as accountsTable, transactions as txTable, postings as postingsTable } from "@shared/schema";
 import { eq, sql as dsql } from "drizzle-orm";
@@ -1279,6 +1280,22 @@ export async function registerRoutes(
     } catch (error: any) {
       console.error("AI prediction error:", error);
       res.status(500).json({ message: "Failed to generate AI prediction" });
+    }
+  });
+
+  // ═══ SGT Handshake Route ═══
+
+  app.post("/api/projects/:id/sgt-handshake", requireRole("ADMIN"), async (req: any, res) => {
+    try {
+      const projectId = req.params.id;
+      console.log(`🤝 [SGT Handshake] Admin ${req.user.id} triggered handshake for project ${projectId}`);
+
+      const result = await runSgtHandshake(projectId);
+
+      res.json(result);
+    } catch (error: any) {
+      console.error("SGT Handshake error:", error);
+      res.status(500).json({ message: error.message || "SGT Handshake failed" });
     }
   });
 
