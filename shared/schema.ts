@@ -172,6 +172,10 @@ export const projects = pgTable("projects", {
   permittingStatus: text("permitting_status").notNull().default("UNKNOWN"),
   siteControlStatus: text("site_control_status").notNull().default("NONE"),
   feocAttested: boolean("feoc_attested").default(false),
+  ppaRate: decimal("ppa_rate", { precision: 10, scale: 4 }).default("0"),
+  monthlyDebtService: decimal("monthly_debt_service", { precision: 15, scale: 2 }).default("0"),
+  monthlyOpex: decimal("monthly_opex", { precision: 15, scale: 2 }).default("0"),
+  reserveRate: decimal("reserve_rate", { precision: 5, scale: 4 }).default("0"),
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
 });
@@ -555,6 +559,11 @@ export const AccountType = {
   EQUITY: "EQUITY",
   REVENUE: "REVENUE",
   EXPENSE: "EXPENSE",
+  INVESTOR_YIELD: "INVESTOR_YIELD",
+  PLATFORM_FEE: "PLATFORM_FEE",
+  DEBT_SERVICE: "DEBT_SERVICE",
+  OPEX_FUND: "OPEX_FUND",
+  RESERVES: "RESERVES",
 } as const;
 
 export const accounts = pgTable("accounts", {

@@ -1,6 +1,6 @@
 import "dotenv/config";
 import { db } from "./db";
-import { projects, meters, sgtIntervals } from "@shared/schema";
+import { projects, meters, sgtIntervals, accounts } from "@shared/schema";
 import { subDays, startOfDay, addMinutes, isAfter } from "date-fns";
 
 async function seed1MW() {
@@ -25,6 +25,10 @@ async function seed1MW() {
     permittingStatus: "APPROVED",
     siteControlStatus: "OWNED",
     feocAttested: true,
+    ppaRate: "0.0425",
+    monthlyDebtService: "8500.00",
+    monthlyOpex: "3200.00",
+    reserveRate: "0.05",
   }).returning();
 
   console.log(`📋 Project created: ${project.id}`);
@@ -40,6 +44,22 @@ async function seed1MW() {
   }).returning();
 
   console.log(`📡 Meter created: ${meter.id}`);
+
+  const waterfallAccounts = [
+    { code: "4000", name: "Debt Service", accountType: "DEBT_SERVICE", denominatedIn: "USD" },
+    { code: "4100", name: "Operating Expenses", accountType: "OPEX_FUND", denominatedIn: "USD" },
+    { code: "4200", name: "Reserve Fund", accountType: "RESERVES", denominatedIn: "USD" },
+    { code: "4300", name: "Platform Fee", accountType: "PLATFORM_FEE", denominatedIn: "USD" },
+    { code: "4400", name: "Investor Yield", accountType: "INVESTOR_YIELD", denominatedIn: "USD" },
+  ];
+
+  for (const acct of waterfallAccounts) {
+    const [created] = await db.insert(accounts).values({
+      projectId: project.id,
+      ...acct,
+    }).returning();
+    console.log(`💰 Account created: ${created.code} - ${created.name}`);
+  }
 
   const intervals: Array<{
     meterId: string;

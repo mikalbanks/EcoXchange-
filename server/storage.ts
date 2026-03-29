@@ -215,6 +215,10 @@ export class MemStorage implements IStorage {
       permittingStatus: "APPROVED",
       siteControlStatus: "LEASE",
       feocAttested: true,
+      ppaRate: "0.0425",
+      monthlyDebtService: "8500.00",
+      monthlyOpex: "3200.00",
+      reserveRate: "0.05",
       createdAt: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000),
       updatedAt: new Date(),
     });
@@ -318,6 +322,10 @@ export class MemStorage implements IStorage {
       permittingStatus: "IN_PROGRESS",
       siteControlStatus: "LOI",
       feocAttested: false,
+      ppaRate: "0",
+      monthlyDebtService: "0",
+      monthlyOpex: "0",
+      reserveRate: "0",
       createdAt: new Date(Date.now() - 14 * 24 * 60 * 60 * 1000),
       updatedAt: new Date(),
     });
@@ -493,6 +501,10 @@ export class MemStorage implements IStorage {
       permittingStatus: "APPROVED",
       siteControlStatus: "OWNED",
       feocAttested: true,
+      ppaRate: "0.0380",
+      monthlyDebtService: "9200.00",
+      monthlyOpex: "3500.00",
+      reserveRate: "0.04",
       createdAt: new Date(Date.now() - 60 * 24 * 60 * 60 * 1000),
       updatedAt: new Date(),
     });
@@ -806,6 +818,10 @@ export class MemStorage implements IStorage {
       permittingStatus: project.permittingStatus || "UNKNOWN",
       siteControlStatus: project.siteControlStatus || "NONE",
       feocAttested: project.feocAttested || false,
+      ppaRate: project.ppaRate || "0",
+      monthlyDebtService: project.monthlyDebtService || "0",
+      monthlyOpex: project.monthlyOpex || "0",
+      reserveRate: project.reserveRate || "0",
       createdAt: new Date(),
       updatedAt: new Date(),
     };
