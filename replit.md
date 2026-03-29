@@ -44,3 +44,32 @@ The architecture is compliance-first, designed to be forward-compatible with fut
 - **Qualified Custodian**: Planned integration for secure holding of digital assets.
 - **Plaid**: Potentially used for financial data connectivity (though Persona is primary for KYC).
 - **SCADA Systems**: Integration with SCADA (Supervisory Control and Data Acquisition) and other project monitoring systems for revenue ingestion and yield calculation.
+- **Securitize Bridge (Mock)**: Mock integration with Securitize RWA Protocol for institutional yield distribution via Base (Ethereum L2). Server: server/services/securitize-bridge.ts. Mock mode controlled by USE_MOCK_SECURITIZE env var.
+
+## SGT Waterfall Engine
+
+### Overview
+The Synthetic Gross Telemetry (SGT) layer processes 15-minute interval meter data through an institutional revenue waterfall to generate double-entry ledger postings and trigger Securitize yield distributions.
+
+### Data Flow
+1. **Intervals** (sgt_intervals): 15-min telemetry with syntheticGrossWh from net meter + satellite irradiance
+2. **Daily Aggregation**: Intervals grouped by date for ledger transactions (not per-interval)
+3. **Revenue Calculation**: Daily syntheticGrossWh → kWh → USD via project's ppaRate
+4. **Waterfall**: Debt Service → OpEx → Reserves (%) → Platform Fee (1.5%) → Investor Yield (remainder)
+5. **Ledger**: One transaction per day with 5 postings (one per waterfall tier), all within a SQL transaction
+6. **Distribution**: Securitize bridge distributes investor yield, updates transaction status (PENDING → COMPLETED/FAILED)
+
+### Key Files
+- `server/services/waterfall-engine.ts` — Core engine: interval query, daily aggregation, waterfall math, atomic ledger posting
+- `server/services/settle-project.ts` — Orchestrator: waterfall engine + Securitize bridge + status updates
+- `server/services/securitize-bridge.ts` — Mock Securitize RWA Protocol
+- `server/seed-sgt.ts` — Seeds 1 MW project (Centennial Logistics Hub) with 30 days of intervals + partial settlement
+
+### API
+- `POST /api/projects/:id/settle` — ADMIN only, triggers settlement with optional fromDate/toDate
+- `GET /api/projects/:id/waterfall-summary` — Authenticated, returns account balances and recent transactions
+
+### Schema Additions (Task #6)
+- `sgt_intervals.settled_at` — Timestamp marking when an interval was settled (prevents double-settlement)
+- `transactions.status` — PENDING | COMPLETED | FAILED (distribution state tracking)
+- `TransactionStatus` constant in shared/schema.ts

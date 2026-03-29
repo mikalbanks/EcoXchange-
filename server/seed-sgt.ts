@@ -2,6 +2,8 @@ import "dotenv/config";
 import { db } from "./db";
 import { projects, meters, sgtIntervals, accounts } from "@shared/schema";
 import { subDays, startOfDay, addMinutes, isAfter } from "date-fns";
+import { settleIntervals } from "./services/waterfall-engine";
+import { pool } from "./db";
 
 async function seed1MW() {
   console.log("🌞 Scaling up: Seeding 1 MW EcoXchange Asset...");
@@ -120,7 +122,37 @@ async function seed1MW() {
   console.log(`📊 Project: Centennial Logistics Hub - Site 01`);
   console.log(`🔋 Capacity: 1,000 kW (1 MW)`);
   console.log(`📈 Intervals seeded: ${intervals.length}`);
-  console.log(`💰 Estimated Monthly Revenue: ~$15,000 - $18,000 USD`);
+
+  console.log(`\n💰 Running partial settlement (first 20 days)...`);
+  const settleTo = startOfDay(subDays(new Date(), 10));
+  const result = await settleIntervals(project.id, undefined, settleTo);
+
+  console.log(`✅ Settlement complete:`);
+  console.log(`   Days settled: ${result.daysSettled}`);
+  console.log(`   Intervals settled: ${result.totalIntervalsSettled}`);
+  console.log(`   Total gross Wh: ${result.totalGrossWh.toFixed(2)}`);
+  console.log(`   Total revenue: $${result.totalRevenueUsd.toFixed(2)}`);
+  console.log(`   Waterfall breakdown:`);
+  for (const [tier, amount] of Object.entries(result.waterfallSummary)) {
+    console.log(`     ${tier}: $${amount.toFixed(2)}`);
+  }
+
+  const client = await pool.connect();
+  try {
+    const txIds = result.dailySettlements.map((d) => d.transactionId);
+    if (txIds.length > 0) {
+      const placeholders = txIds.map((_, i) => `$${i + 1}`).join(", ");
+      await client.query(
+        `UPDATE transactions SET status = 'COMPLETED' WHERE id IN (${placeholders})`,
+        txIds,
+      );
+      console.log(`   Marked ${txIds.length} transactions as COMPLETED`);
+    }
+  } finally {
+    client.release();
+  }
+
+  console.log(`\n🎉 Full seed complete. Exiting.`);
   process.exit(0);
 }
 

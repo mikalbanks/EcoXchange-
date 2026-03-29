@@ -11,6 +11,10 @@ import pool from "./db";
 import { buildSeasonalForecast } from "./lib/yieldForecast";
 import { generateROIPrediction, type ProjectFinancialData } from "./lib/ai-predictions";
 import * as scadaService from "./lib/scada-service";
+import { settleProject } from "./services/settle-project";
+import { db } from "./db";
+import { accounts as accountsTable, transactions as txTable, postings as postingsTable } from "@shared/schema";
+import { eq, sql as dsql } from "drizzle-orm";
 
 const SessionStore = MemoryStore(session);
 const SESSION_SECRET = process.env.SESSION_SECRET || crypto.randomBytes(32).toString('hex');
@@ -1275,6 +1279,104 @@ export async function registerRoutes(
     } catch (error: any) {
       console.error("AI prediction error:", error);
       res.status(500).json({ message: "Failed to generate AI prediction" });
+    }
+  });
+
+  // ═══ SGT Waterfall Settlement Routes ═══
+
+  app.post("/api/projects/:id/settle", requireRole("ADMIN"), async (req: any, res) => {
+    try {
+      const projectId = req.params.id;
+      const { fromDate, toDate } = req.body || {};
+
+      let from: Date | undefined;
+      let to: Date | undefined;
+
+      if (fromDate) {
+        from = new Date(fromDate);
+        if (isNaN(from.getTime())) return res.status(400).json({ message: "Invalid fromDate" });
+      }
+      if (toDate) {
+        to = new Date(toDate);
+        if (isNaN(to.getTime())) return res.status(400).json({ message: "Invalid toDate" });
+      }
+
+      console.log(`🔄 [Settlement] Admin ${req.user.id} triggered settlement for project ${projectId}`);
+
+      const result = await settleProject(projectId, from, to);
+
+      console.log(`✅ [Settlement] Project ${projectId}: ${result.settlement.daysSettled} days settled, $${result.settlement.totalRevenueUsd.toFixed(2)} total revenue`);
+
+      res.json(result);
+    } catch (error: any) {
+      console.error("Settlement error:", error);
+      res.status(500).json({ message: error.message || "Settlement failed" });
+    }
+  });
+
+  app.get("/api/projects/:id/waterfall-summary", requireRole("ADMIN", "DEVELOPER", "INVESTOR"), async (req: any, res) => {
+    try {
+      const projectId = req.params.id;
+
+      const project = await storage.getProject(projectId);
+      if (!project) return res.status(404).json({ message: "Project not found" });
+
+      if (req.user.role === "DEVELOPER" && project.developerId !== req.user.id) {
+        return res.status(403).json({ message: "Forbidden" });
+      }
+
+      const projectAccounts = await db
+        .select()
+        .from(accountsTable)
+        .where(eq(accountsTable.projectId, projectId));
+
+      if (projectAccounts.length === 0) {
+        return res.json({ accounts: [], totals: {}, recentTransactions: [] });
+      }
+
+      const accountIds = projectAccounts.map((a) => a.id);
+
+      const balanceRows = await db.execute(dsql`
+        SELECT p.account_id, SUM(CAST(p.amount AS numeric)) as total
+        FROM postings p
+        WHERE p.account_id IN (${dsql.join(accountIds.map((id) => dsql`${id}`), dsql`, `)})
+        GROUP BY p.account_id
+      `);
+
+      const balanceMap = new Map<string, number>();
+      for (const row of balanceRows.rows as any[]) {
+        balanceMap.set(row.account_id, Number(row.total || 0));
+      }
+
+      const accountSummaries = projectAccounts.map((acct) => ({
+        id: acct.id,
+        code: acct.code,
+        name: acct.name,
+        accountType: acct.accountType,
+        denominatedIn: acct.denominatedIn,
+        balance: balanceMap.get(acct.id) || 0,
+      }));
+
+      const totals: Record<string, number> = {};
+      for (const acct of accountSummaries) {
+        totals[acct.accountType] = acct.balance;
+      }
+
+      const recentTxRows = await db
+        .select()
+        .from(txTable)
+        .where(eq(txTable.projectId, projectId))
+        .orderBy(dsql`${txTable.occurredAt} DESC`)
+        .limit(30);
+
+      res.json({
+        accounts: accountSummaries,
+        totals,
+        recentTransactions: recentTxRows,
+      });
+    } catch (error: any) {
+      console.error("Waterfall summary error:", error);
+      res.status(500).json({ message: error.message || "Failed to get waterfall summary" });
     }
   });
 

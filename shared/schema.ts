@@ -540,11 +540,13 @@ export const sgtIntervals = pgTable("sgt_intervals", {
   irradianceWm2: decimal("irradiance_wm2", { precision: 10, scale: 4 }),
   source: text("source").notNull().default("CALCULATED"),
   qualityFlag: text("quality_flag"),
+  settledAt: timestamp("settled_at"),
   createdAt: timestamp("created_at").defaultNow(),
 });
 
 export const insertSgtIntervalSchema = createInsertSchema(sgtIntervals).omit({
   id: true,
+  settledAt: true,
   createdAt: true,
 });
 
@@ -587,11 +589,18 @@ export type Account = typeof accounts.$inferSelect;
 
 // ─── SGT: Transactions ──────────────────────────────────────────────────────
 
+export const TransactionStatus = {
+  PENDING: "PENDING",
+  COMPLETED: "COMPLETED",
+  FAILED: "FAILED",
+} as const;
+
 export const transactions = pgTable("transactions", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
   projectId: varchar("project_id").notNull().references(() => projects.id),
   intervalId: integer("interval_id").references(() => sgtIntervals.id),
   memo: text("memo"),
+  status: text("status").notNull().default("PENDING"),
   occurredAt: timestamp("occurred_at").notNull(),
   createdAt: timestamp("created_at").defaultNow(),
 });
