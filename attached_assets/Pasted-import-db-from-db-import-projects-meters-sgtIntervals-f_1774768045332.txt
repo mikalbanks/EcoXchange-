@@ -1,0 +1,78 @@
+import { db } from "./db";
+import { projects, meters, sgtIntervals } from "./db/schema";
+import { subDays, startOfDay, addMinutes, isAfter } from "date-fns";
+
+async function seed1MW() {
+  console.log("🌞 Scaling up: Seeding 1 MW EcoXchange Asset...");
+
+  // 1. Create a 1 MW Institutional-Grade Project
+  const [project] = await db.insert(projects).values({
+    name: "Centennial Logistics Hub - Site 01",
+    gpsLat: "34.0522", // Los Angeles, CA (High yield/High PPA area)
+    gpsLong: "-118.2437",
+    capacityKw: "1000.00", // 1 Megawatt
+    ppaRate: "0.1450", // $0.145/kWh (C&I rates are higher in CA)
+    status: "active",
+  }).returning();
+
+  const [meter] = await db.insert(meters).values({
+    projectId: project.id,
+    utilityApiId: "METER_CAL_9901",
+    solcastId: "SOL_LA_BASIN_X2",
+  }).returning();
+
+  // 2. Generate 30 Days of 15-Minute Data
+  const intervals = [];
+  let currentStep = startOfDay(subDays(new Date(), 30));
+
+  while (isAfter(new Date(), currentStep)) {
+    const hour = currentStep.getHours();
+    
+    // SCALE: 1MW projects usually sit on buildings with heavy HVAC/Machinery
+    // Night baseload (120kW) vs Daytime peak load (350kW)
+    const isWorkHours = hour >= 8 && hour <= 18;
+    const consumptionKw = isWorkHours 
+      ? 300 + (Math.random() * 50)  // Heavy daytime load
+      : 120 + (Math.random() * 10); // Solid nighttime baseload
+
+    // SOLAR: Peak 950kW AC (accounting for inverter efficiency)
+    let solarGrossKw = 0;
+    if (hour >= 6 && hour <= 20) {
+        const sunIntensity = Math.sin(Math.PI * (hour - 6) / 14);
+        // Add random "Cloud transients" (5-10% dips)
+        const cloudNoise = (Math.random() > 0.8) ? 0.7 : 0.95; 
+        solarGrossKw = 950 * sunIntensity * cloudNoise;
+    }
+
+    // SGT LOGIC
+    const netMeterKw = consumptionKw - solarGrossKw;
+    const satIrradianceKw = solarGrossKw * (1 + (Math.random() * 0.02 - 0.01)); // 1% Satellite Drift
+
+    intervals.push({
+      meterId: meter.id,
+      timestamp: currentStep,
+      // Convert kW to kWh for the 15-min interval (kW / 4)
+      netMeterKwh: (netMeterKw / 4).toFixed(4),
+      satelliteIrradiance: (satIrradianceKw / 4).toFixed(4),
+      calculatedBaseload: (consumptionKw / 4).toFixed(4),
+      syntheticGrossKwh: (solarGrossKw / 4).toFixed(4),
+      driftPct: (Math.random() * 1.5).toFixed(2),
+      isVerified: true,
+    });
+
+    currentStep = addMinutes(currentStep, 15);
+  }
+
+  // Batch Insert
+  for (let i = 0; i < intervals.length; i += 500) {
+    await db.insert(sgtIntervals).values(intervals.slice(i, i + 500));
+    console.log(`📡 Uploaded Telemetry Batch: ${i} to ${i + 500}`);
+  }
+
+  console.log("\n✅ SUCCESS: 1 MW Asset Live on Ledger.");
+  console.log("📊 Project: Centennial Logistics Hub");
+  console.log("💰 Estimated Monthly Revenue: ~$15,000 - $18,000 USD");
+  process.exit(0);
+}
+
+seed1MW().catch(console.error);
