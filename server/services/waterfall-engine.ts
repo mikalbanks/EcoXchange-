@@ -1,12 +1,15 @@
-import { db, pool } from "../db";
+import { db } from "../db";
 import {
   projects,
   meters,
   accounts,
+  sgtIntervals,
+  transactions as transactionsTable,
+  postings as postingsTable,
   type Project,
   type Account,
 } from "@shared/schema";
-import { eq } from "drizzle-orm";
+import { eq, sql, and, isNull, inArray, gte, lte } from "drizzle-orm";
 
 export interface WaterfallTier {
   accountCode: string;
@@ -73,7 +76,8 @@ function computeWaterfall(
   }
 
   const reserveRate = Math.max(0, Math.min(1, Number(project.reserveRate || 0)));
-  const reserveAmount = Number((remaining * reserveRate).toFixed(4));
+  const reserveTarget = Number((dailyRevenueUsd * reserveRate).toFixed(4));
+  const reserveAmount = Math.min(remaining, reserveTarget);
   remaining -= reserveAmount;
   const reserveAcct = accountsByType.get("RESERVES");
   if (reserveAcct) {
@@ -167,43 +171,22 @@ export async function settleIntervals(
 
   const meterIds = projectMeters.map((m) => m.id);
 
-  const client = await pool.connect();
-  try {
-    await client.query("BEGIN");
+  return await db.transaction(async (tx) => {
+    const conditions = [
+      isNull(sgtIntervals.settledAt),
+      inArray(sgtIntervals.meterId, meterIds),
+    ];
+    if (fromDate) conditions.push(gte(sgtIntervals.intervalStart, fromDate));
+    if (toDate) conditions.push(lte(sgtIntervals.intervalEnd, toDate));
 
-    let lockQuery = `
-      UPDATE sgt_intervals
-      SET settled_at = NOW()
-      WHERE id IN (
-        SELECT id FROM sgt_intervals
-        WHERE settled_at IS NULL
-          AND meter_id = ANY($1)
-    `;
-    const lockParams: any[] = [meterIds];
-    let paramIdx = 2;
+    const unsettledIntervals = await tx
+      .select()
+      .from(sgtIntervals)
+      .where(and(...conditions))
+      .orderBy(sgtIntervals.intervalStart)
+      .for("update", { skipLocked: true });
 
-    if (fromDate) {
-      lockQuery += ` AND interval_start >= $${paramIdx}`;
-      lockParams.push(fromDate);
-      paramIdx++;
-    }
-    if (toDate) {
-      lockQuery += ` AND interval_end <= $${paramIdx}`;
-      lockParams.push(toDate);
-      paramIdx++;
-    }
-
-    lockQuery += ` ORDER BY interval_start FOR UPDATE SKIP LOCKED
-      )
-      RETURNING id, meter_id, interval_start, interval_end,
-                net_wh, expected_gross_wh, synthetic_gross_wh,
-                irradiance_wm2, source, quality_flag`;
-
-    const lockResult = await client.query(lockQuery, lockParams);
-    const claimedIntervals = lockResult.rows;
-
-    if (claimedIntervals.length === 0) {
-      await client.query("COMMIT");
+    if (unsettledIntervals.length === 0) {
       return {
         projectId,
         projectName: project.name,
@@ -220,19 +203,25 @@ export async function settleIntervals(
       };
     }
 
+    const settledIds = unsettledIntervals.map((i) => i.id);
+    await tx
+      .update(sgtIntervals)
+      .set({ settledAt: new Date() })
+      .where(inArray(sgtIntervals.id, settledIds));
+
     const dailyGroups = new Map<
       string,
       { intervalIds: number[]; totalGrossWh: number; count: number }
     >();
 
-    for (const row of claimedIntervals) {
-      const dateKey = new Date(row.interval_start).toISOString().slice(0, 10);
+    for (const row of unsettledIntervals) {
+      const dateKey = new Date(row.intervalStart).toISOString().slice(0, 10);
       if (!dailyGroups.has(dateKey)) {
         dailyGroups.set(dateKey, { intervalIds: [], totalGrossWh: 0, count: 0 });
       }
       const group = dailyGroups.get(dateKey)!;
       group.intervalIds.push(row.id);
-      group.totalGrossWh += Number(row.synthetic_gross_wh || 0);
+      group.totalGrossWh += Number(row.syntheticGrossWh || 0);
       group.count++;
     }
 
@@ -250,32 +239,34 @@ export async function settleIntervals(
 
       const waterfall = computeWaterfall(dailyRevenue, project, accountsByType);
 
-      const txResult = await client.query(
-        `INSERT INTO transactions (id, project_id, memo, status, occurred_at, created_at)
-         VALUES (gen_random_uuid(), $1, $2, 'PENDING', $3, NOW())
-         RETURNING id`,
-        [
+      const [txRow] = await tx
+        .insert(transactionsTable)
+        .values({
           projectId,
-          `Daily settlement for ${dateKey}: ${group.count} intervals, ${grossKwh.toFixed(2)} kWh gross, $${dailyRevenue.toFixed(2)} revenue`,
-          new Date(dateKey),
-        ],
-      );
-      const txId = txResult.rows[0].id;
+          memo: `Daily settlement for ${dateKey}: ${group.count} intervals, ${grossKwh.toFixed(2)} kWh gross, $${dailyRevenue.toFixed(2)} revenue`,
+          status: "PENDING",
+          occurredAt: new Date(dateKey),
+        })
+        .returning();
+
+      const txId = txRow.id;
 
       const totalCredited = waterfall.reduce((sum, t) => sum + t.amount, 0);
-      await client.query(
-        `INSERT INTO postings (transaction_id, account_id, amount, direction, created_at)
-         VALUES ($1, $2, $3, 'DEBIT', NOW())`,
-        [txId, revenueAccountId, totalCredited.toFixed(4)],
-      );
+      await tx.insert(postingsTable).values({
+        transactionId: txId,
+        accountId: revenueAccountId,
+        amount: totalCredited.toFixed(4),
+        direction: "DEBIT",
+      });
 
       for (const tier of waterfall) {
         const acct = accountsByType.get(tier.accountType)!;
-        await client.query(
-          `INSERT INTO postings (transaction_id, account_id, amount, direction, created_at)
-           VALUES ($1, $2, $3, 'CREDIT', NOW())`,
-          [txId, acct.id, tier.amount.toFixed(4)],
-        );
+        await tx.insert(postingsTable).values({
+          transactionId: txId,
+          accountId: acct.id,
+          amount: tier.amount.toFixed(4),
+          direction: "CREDIT",
+        });
       }
 
       dailySettlements.push({
@@ -297,8 +288,6 @@ export async function settleIntervals(
       totalIntervalsSettled += group.count;
     }
 
-    await client.query("COMMIT");
-
     return {
       projectId,
       projectName: project.name,
@@ -313,10 +302,5 @@ export async function settleIntervals(
       waterfallSummary,
       dailySettlements,
     };
-  } catch (err) {
-    await client.query("ROLLBACK");
-    throw err;
-  } finally {
-    client.release();
-  }
+  });
 }

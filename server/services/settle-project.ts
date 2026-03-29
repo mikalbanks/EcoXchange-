@@ -1,4 +1,6 @@
-import { pool } from "../db";
+import { db } from "../db";
+import { transactions as transactionsTable } from "@shared/schema";
+import { inArray } from "drizzle-orm";
 import { settleIntervals, type SettlementResult } from "./waterfall-engine";
 import { securitize } from "./securitize-bridge";
 
@@ -14,23 +16,12 @@ export interface FullSettlementResult {
 }
 
 async function updateTransactionStatuses(txIds: string[], status: "COMPLETED" | "FAILED") {
-  const client = await pool.connect();
-  try {
-    await client.query("BEGIN");
-    for (let i = 0; i < txIds.length; i += 100) {
-      const batch = txIds.slice(i, i + 100);
-      const placeholders = batch.map((_, idx) => `$${idx + 2}`).join(", ");
-      await client.query(
-        `UPDATE transactions SET status = $1 WHERE id IN (${placeholders})`,
-        [status, ...batch],
-      );
-    }
-    await client.query("COMMIT");
-  } catch (err) {
-    await client.query("ROLLBACK");
-    throw err;
-  } finally {
-    client.release();
+  for (let i = 0; i < txIds.length; i += 100) {
+    const batch = txIds.slice(i, i + 100);
+    await db
+      .update(transactionsTable)
+      .set({ status })
+      .where(inArray(transactionsTable.id, batch));
   }
 }
 
