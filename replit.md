@@ -36,6 +36,26 @@ The application is built with an Express.js backend and a React frontend (Vite w
 ### System Design Choices
 The architecture is compliance-first, designed to be forward-compatible with future regulated secondary trading requirements (ATS). It emphasizes vertical specialization for renewable energy securities, with a unique "energy-to-yield pipeline" that calculates production-based yield from SCADA data and automates distributions. The platform uses per-project Delaware LLCs as Special Purpose Vehicles (SPVs) for tokenizing membership interests. The initial phase operates under Reg D 506(c) for accredited investors, with plans to incorporate Reg CF for non-accredited investors in Phase 2.
 
+## Solcast Sky Oracle
+
+### Overview
+Satellite-derived telemetry service providing 'Estimated Actuals' for SGT verification. Connects to Solcast Advanced PV Power API with a dual-mode safety switch.
+
+### Dual-Mode Operation
+- **Trial Active** (`IS_TRIAL_ACTIVE=true`): Uses real project GPS coordinates for actual site data
+- **Sandbox Mode** (default): Uses Fort Peck, MT (48.3078, -105.1017) — a free unmetered SURFRAD node for zero-cost development
+
+### Key Files
+- `server/services/solcast.ts` — Core service: `getSatellitePowerEstimate(capacityKw, lat?, lon?)`
+- `scripts/test-oracle.ts` — Test script for verifying API connectivity (50 MW test)
+
+### Environment Variables
+- `SOLCAST_API_KEY` — Solcast API key (required)
+- `IS_TRIAL_ACTIVE` — Set to `true` to use real GPS coordinates (default: false/sandbox)
+
+### Capacity Range
+Supports projects from 1 MW to 70 MW via the `capacity` parameter passed to Solcast's Advanced PV endpoint.
+
 ## External Dependencies
 
 - **Persona**: Used for identity verification (KYC/AML) for both issuers and investors.
