@@ -141,6 +141,7 @@ export async function settleIntervals(
   }
 
   const requiredTypes = [
+    "REVENUE_CLEARING",
     "DEBT_SERVICE",
     "OPEX_FUND",
     "RESERVES",
@@ -241,7 +242,7 @@ export async function settleIntervals(
     let totalRevenueUsd = 0;
     let totalIntervalsSettled = 0;
 
-    const revenueAccountId = accountsByType.get("INVESTOR_YIELD")!.id;
+    const revenueAccountId = accountsByType.get("REVENUE_CLEARING")!.id;
 
     for (const [dateKey, group] of Array.from(dailyGroups.entries()).sort()) {
       const grossKwh = group.totalGrossWh / 1000;

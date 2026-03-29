@@ -1248,6 +1248,7 @@ export class MemStorage implements IStorage {
       irradianceWm2: interval.irradianceWm2 || null,
       source: interval.source || "CALCULATED",
       qualityFlag: interval.qualityFlag || null,
+      settledAt: null,
       createdAt: new Date(),
     };
     this.sgtIntervalsMap.set(id, newInterval);
@@ -1297,6 +1298,7 @@ export class MemStorage implements IStorage {
       projectId: tx.projectId,
       intervalId: tx.intervalId || null,
       memo: tx.memo || null,
+      status: tx.status || "PENDING",
       occurredAt: tx.occurredAt,
       createdAt: new Date(),
     };

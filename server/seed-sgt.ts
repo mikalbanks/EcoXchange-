@@ -48,6 +48,7 @@ async function seed1MW() {
   console.log(`📡 Meter created: ${meter.id}`);
 
   const waterfallAccounts = [
+    { code: "3000", name: "Revenue Clearing", accountType: "REVENUE_CLEARING", denominatedIn: "USD" },
     { code: "4000", name: "Debt Service", accountType: "DEBT_SERVICE", denominatedIn: "USD" },
     { code: "4100", name: "Operating Expenses", accountType: "OPEX_FUND", denominatedIn: "USD" },
     { code: "4200", name: "Reserve Fund", accountType: "RESERVES", denominatedIn: "USD" },

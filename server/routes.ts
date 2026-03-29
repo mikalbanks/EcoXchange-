@@ -1337,15 +1337,18 @@ export async function registerRoutes(
       const accountIds = projectAccounts.map((a) => a.id);
 
       const balanceRows = await db.execute(dsql`
-        SELECT p.account_id, SUM(CAST(p.amount AS numeric)) as total
+        SELECT p.account_id, p.direction, SUM(CAST(p.amount AS numeric)) as total
         FROM postings p
         WHERE p.account_id IN (${dsql.join(accountIds.map((id) => dsql`${id}`), dsql`, `)})
-        GROUP BY p.account_id
+        GROUP BY p.account_id, p.direction
       `);
 
       const balanceMap = new Map<string, number>();
       for (const row of balanceRows.rows as any[]) {
-        balanceMap.set(row.account_id, Number(row.total || 0));
+        const acctId = row.account_id as string;
+        const amount = Number(row.total || 0);
+        const sign = row.direction === "CREDIT" ? 1 : -1;
+        balanceMap.set(acctId, (balanceMap.get(acctId) || 0) + sign * amount);
       }
 
       const accountSummaries = projectAccounts.map((acct) => ({
