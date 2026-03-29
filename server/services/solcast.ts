@@ -56,14 +56,16 @@ export async function getSatellitePowerEstimate(
 
   try {
     const response = await axios.get(
-      "https://api.solcast.com.au/pv_power/advanced/estimated_actuals",
+      "https://api.solcast.com.au/world_pv_power/estimated_actuals",
       {
         params: {
           latitude: targetLat,
           longitude: targetLon,
           capacity: capacityKw,
           format: "json",
-          api_key: SOLCAST_API_KEY,
+        },
+        headers: {
+          Authorization: `Bearer ${SOLCAST_API_KEY}`,
         },
         timeout: 15000,
       },
