@@ -1,0 +1,52 @@
+import { pgTable, uuid, varchar, decimal, timestamp, boolean, unique } from "drizzle-orm/pg-core";
+import { relations } from "drizzle-orm";
+
+export const projects = pgTable("projects", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  name: varchar("name", { length: 255 }).notNull(),
+  gpsLat: decimal("gps_lat", { precision: 9, scale: 6 }),
+  gpsLong: decimal("gps_long", { precision: 9, scale: 6 }),
+  capacityKw: decimal("capacity_kw", { precision: 10, scale: 2 }).notNull(),
+  ppaRate: decimal("ppa_rate", { precision: 10, scale: 4 }).notNull(),
+  status: varchar("status", { length: 50 }).default("active"),
+});
+
+export const meters = pgTable("meters", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  projectId: uuid("project_id").references(() => projects.id),
+  utilityApiId: varchar("utility_api_id", { length: 255 }).unique(),
+  solcastId: varchar("solcast_id", { length: 255 }).unique(),
+});
+
+export const sgtIntervals = pgTable("sgt_intervals", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  meterId: uuid("meter_id").references(() => meters.id),
+  timestamp: timestamp("timestamp", { withTimezone: true }).notNull(),
+  netMeterKwh: decimal("net_meter_kwh", { precision: 12, scale: 4 }),
+  satelliteIrradiance: decimal("satellite_irradiance", { precision: 12, scale: 4 }),
+  calculatedBaseload: decimal("calculated_baseload", { precision: 12, scale: 4 }),
+  syntheticGrossKwh: decimal("synthetic_gross_kwh", { precision: 12, scale: 4 }),
+  driftPct: decimal("drift_pct", { precision: 5, scale: 2 }),
+  isVerified: boolean("is_verified").default(false),
+}, (t) => ({ unq: unique().on(t.meterId, t.timestamp) }));
+
+export const accounts = pgTable("accounts", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  ownerId: varchar("owner_id", { length: 255 }).notNull(),
+  type: varchar("type", { length: 50 }).notNull(), // 'yield', 'fees', 'operating'
+});
+
+export const transactions = pgTable("transactions", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  projectId: uuid("project_id").references(() => projects.id),
+  amount: decimal("amount", { precision: 15, scale: 2 }).notNull(),
+  type: varchar("type", { length: 50 }).notNull(),
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
+export const postings = pgTable("postings", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  transactionId: uuid("transaction_id").references(() => transactions.id),
+  accountId: uuid("account_id").references(() => accounts.id),
+  amount: decimal("amount", { precision: 15, scale: 2 }).notNull(),
+});
