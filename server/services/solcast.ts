@@ -24,11 +24,28 @@ export async function getSatellitePowerEstimate(
     );
   }
 
-  const targetLat = IS_TRIAL_ACTIVE && lat ? lat : FREE_LAT;
-  const targetLon = IS_TRIAL_ACTIVE && lon ? lon : FREE_LON;
+  let targetLat: number;
+  let targetLon: number;
+  let usingRealSite: boolean;
+
+  if (IS_TRIAL_ACTIVE) {
+    if (lat == null || lon == null) {
+      throw new Error(
+        "Trial mode is active but no GPS coordinates provided. Supply lat/lon for the target asset.",
+      );
+    }
+    targetLat = lat;
+    targetLon = lon;
+    usingRealSite = true;
+  } else {
+    targetLat = FREE_LAT;
+    targetLon = FREE_LON;
+    usingRealSite = false;
+  }
 
   console.log(
-    `🛰️ [Sky Oracle] Requesting data for ${capacityKw}kW at ${targetLat}, ${targetLon}`,
+    `🛰️ [Sky Oracle] Requesting data for ${capacityKw}kW at ${targetLat}, ${targetLon}` +
+      (usingRealSite ? " (Trial — real site)" : " (Sandbox — Fort Peck)"),
   );
 
   try {
@@ -56,8 +73,8 @@ export async function getSatellitePowerEstimate(
     return {
       pvEstimateKw: latest.pv_estimate,
       timestamp: latest.period_end,
-      isRealSite: IS_TRIAL_ACTIVE,
-      siteName: IS_TRIAL_ACTIVE
+      isRealSite: usingRealSite,
+      siteName: usingRealSite
         ? "Target Asset"
         : "Fort Peck (Unmetered Sandbox)",
     };

@@ -12,7 +12,9 @@ async function main() {
   try {
     const result = await getSatellitePowerEstimate(capacityKw, 34.0522, -118.2437);
 
-    console.log("✅ Sky Oracle Response:");
+    console.log("✅ Sky Oracle Response (full object):");
+    console.dir(result, { depth: null });
+    console.log("\n   Summary:");
     console.log(`   PV Estimate:   ${result.pvEstimateKw} kW`);
     console.log(`   Timestamp:     ${result.timestamp}`);
     console.log(`   Real Site:     ${result.isRealSite}`);
