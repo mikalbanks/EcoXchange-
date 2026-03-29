@@ -24,6 +24,12 @@ export async function getSatellitePowerEstimate(
     );
   }
 
+  if (capacityKw < 1 || capacityKw > 70000) {
+    throw new Error(
+      `Capacity must be between 1 kW and 70,000 kW (70 MW). Received: ${capacityKw} kW`,
+    );
+  }
+
   let targetLat: number;
   let targetLon: number;
   let usingRealSite: boolean;
@@ -68,7 +74,10 @@ export async function getSatellitePowerEstimate(
       throw new Error("Solcast returned no estimated actuals data.");
     }
 
-    const latest = actuals[0];
+    const latest = actuals.reduce((best: any, curr: any) =>
+      new Date(curr.period_end) > new Date(best.period_end) ? curr : best,
+      actuals[0],
+    );
 
     return {
       pvEstimateKw: latest.pv_estimate,
