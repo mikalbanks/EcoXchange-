@@ -1,9 +1,9 @@
 import "dotenv/config";
 import { db } from "./db";
-import { projects, meters, sgtIntervals, accounts } from "@shared/schema";
+import { projects, meters, sgtIntervals, accounts, transactions } from "@shared/schema";
 import { subDays, startOfDay, addMinutes, isAfter } from "date-fns";
 import { settleIntervals } from "./services/waterfall-engine";
-import { pool } from "./db";
+import { inArray } from "drizzle-orm";
 
 async function seed1MW() {
   console.log("🌞 Scaling up: Seeding 1 MW EcoXchange Asset...");
@@ -138,19 +138,13 @@ async function seed1MW() {
     console.log(`     ${tier}: $${amount.toFixed(2)}`);
   }
 
-  const client = await pool.connect();
-  try {
-    const txIds = result.dailySettlements.map((d) => d.transactionId);
-    if (txIds.length > 0) {
-      const placeholders = txIds.map((_, i) => `$${i + 1}`).join(", ");
-      await client.query(
-        `UPDATE transactions SET status = 'COMPLETED' WHERE id IN (${placeholders})`,
-        txIds,
-      );
-      console.log(`   Marked ${txIds.length} transactions as COMPLETED`);
-    }
-  } finally {
-    client.release();
+  const txIds = result.dailySettlements.map((d) => d.transactionId);
+  if (txIds.length > 0) {
+    await db
+      .update(transactions)
+      .set({ status: "COMPLETED" })
+      .where(inArray(transactions.id, txIds));
+    console.log(`   Marked ${txIds.length} transactions as COMPLETED`);
   }
 
   console.log(`\n🎉 Full seed complete. Exiting.`);
