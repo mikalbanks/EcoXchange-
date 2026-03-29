@@ -1,5 +1,5 @@
 import { sql } from "drizzle-orm";
-import { pgTable, text, varchar, boolean, decimal, timestamp, integer } from "drizzle-orm/pg-core";
+import { pgTable, text, varchar, boolean, decimal, timestamp, integer, serial } from "drizzle-orm/pg-core";
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod";
 
@@ -164,6 +164,7 @@ export const projects = pgTable("projects", {
   latitude: decimal("latitude", { precision: 10, scale: 6 }),
   longitude: decimal("longitude", { precision: 10, scale: 6 }),
   capacityMW: decimal("capacity_mw", { precision: 10, scale: 2 }),
+  capacityKw: decimal("capacity_kw", { precision: 10, scale: 2 }),
   status: text("status").notNull().default("DRAFT"),
   summary: text("summary"),
   offtakerType: text("offtaker_type").notNull().default("C_AND_I"),
@@ -480,6 +481,138 @@ export const insertScadaConnectorSchema = createInsertSchema(scadaConnectors).om
 
 export type InsertScadaConnector = z.infer<typeof insertScadaConnectorSchema>;
 export type ScadaConnector = typeof scadaConnectors.$inferSelect;
+
+// ─── SGT: Meters ─────────────────────────────────────────────────────────────
+
+export const MeterType = {
+  NET: "NET",
+  PRODUCTION: "PRODUCTION",
+  CONSUMPTION: "CONSUMPTION",
+} as const;
+
+export const MeterProvider = {
+  UTILITY_API: "UTILITY_API",
+  MANUAL: "MANUAL",
+} as const;
+
+export const meters = pgTable("meters", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  projectId: varchar("project_id").notNull().references(() => projects.id),
+  meterType: text("meter_type").notNull().default("NET"),
+  provider: text("provider").notNull().default("MANUAL"),
+  providerUid: text("provider_uid"),
+  name: text("name"),
+  timezone: text("timezone").notNull().default("UTC"),
+  isActive: boolean("is_active").notNull().default(true),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+});
+
+export const insertMeterSchema = createInsertSchema(meters).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
+export type InsertMeter = z.infer<typeof insertMeterSchema>;
+export type Meter = typeof meters.$inferSelect;
+
+// ─── SGT: Intervals ──────────────────────────────────────────────────────────
+
+export const IntervalSource = {
+  UTILITY_API: "UTILITY_API",
+  SOLCAST: "SOLCAST",
+  CALCULATED: "CALCULATED",
+} as const;
+
+export const sgtIntervals = pgTable("sgt_intervals", {
+  id: serial("id").primaryKey(),
+  meterId: varchar("meter_id").notNull().references(() => meters.id),
+  intervalStart: timestamp("interval_start").notNull(),
+  intervalEnd: timestamp("interval_end").notNull(),
+  netWh: decimal("net_wh", { precision: 14, scale: 2 }),
+  expectedGrossWh: decimal("expected_gross_wh", { precision: 14, scale: 2 }),
+  syntheticGrossWh: decimal("synthetic_gross_wh", { precision: 14, scale: 2 }),
+  irradianceWm2: decimal("irradiance_wm2", { precision: 10, scale: 4 }),
+  source: text("source").notNull().default("CALCULATED"),
+  qualityFlag: text("quality_flag"),
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
+export const insertSgtIntervalSchema = createInsertSchema(sgtIntervals).omit({
+  id: true,
+  createdAt: true,
+});
+
+export type InsertSgtInterval = z.infer<typeof insertSgtIntervalSchema>;
+export type SgtInterval = typeof sgtIntervals.$inferSelect;
+
+// ─── SGT: Accounts (Double-Entry Ledger) ────────────────────────────────────
+
+export const AccountType = {
+  ASSET: "ASSET",
+  LIABILITY: "LIABILITY",
+  EQUITY: "EQUITY",
+  REVENUE: "REVENUE",
+  EXPENSE: "EXPENSE",
+} as const;
+
+export const accounts = pgTable("accounts", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  projectId: varchar("project_id").notNull().references(() => projects.id),
+  code: text("code").notNull(),
+  name: text("name").notNull(),
+  accountType: text("account_type").notNull(),
+  denominatedIn: text("denominated_in").notNull().default("Wh"),
+  isActive: boolean("is_active").notNull().default(true),
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
+export const insertAccountSchema = createInsertSchema(accounts).omit({
+  id: true,
+  createdAt: true,
+});
+
+export type InsertAccount = z.infer<typeof insertAccountSchema>;
+export type Account = typeof accounts.$inferSelect;
+
+// ─── SGT: Transactions ──────────────────────────────────────────────────────
+
+export const transactions = pgTable("transactions", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  projectId: varchar("project_id").notNull().references(() => projects.id),
+  intervalId: integer("interval_id").references(() => sgtIntervals.id),
+  memo: text("memo"),
+  occurredAt: timestamp("occurred_at").notNull(),
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
+export const insertTransactionSchema = createInsertSchema(transactions).omit({
+  id: true,
+  createdAt: true,
+});
+
+export type InsertTransaction = z.infer<typeof insertTransactionSchema>;
+export type Transaction = typeof transactions.$inferSelect;
+
+// ─── SGT: Postings (Double-Entry Ledger Lines) ──────────────────────────────
+
+export const postings = pgTable("postings", {
+  id: serial("id").primaryKey(),
+  transactionId: varchar("transaction_id").notNull().references(() => transactions.id),
+  accountId: varchar("account_id").notNull().references(() => accounts.id),
+  amount: decimal("amount", { precision: 16, scale: 4 }).notNull(),
+  direction: text("direction").notNull(),
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
+export const insertPostingSchema = createInsertSchema(postings).omit({
+  id: true,
+  createdAt: true,
+});
+
+export type InsertPosting = z.infer<typeof insertPostingSchema>;
+export type Posting = typeof postings.$inferSelect;
 
 // ─── Zod Validation Schemas ─────────────────────────────────────────────────
 

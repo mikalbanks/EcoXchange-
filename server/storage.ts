@@ -15,6 +15,11 @@ import {
   type Distribution, type InsertDistribution,
   type ScadaDataSource, type InsertScadaDataSource,
   type ScadaConnector, type InsertScadaConnector,
+  type Meter, type InsertMeter,
+  type SgtInterval, type InsertSgtInterval,
+  type Account, type InsertAccount,
+  type Transaction, type InsertTransaction,
+  type Posting, type InsertPosting,
 } from "@shared/schema";
 
 export function hashPassword(password: string): string {
@@ -86,6 +91,25 @@ export interface IStorage {
   getAllScadaConnectors(): Promise<ScadaConnector[]>;
   getScadaConnector(id: string): Promise<ScadaConnector | undefined>;
   createScadaConnector(connector: InsertScadaConnector): Promise<ScadaConnector>;
+
+  getMetersByProject(projectId: string): Promise<Meter[]>;
+  getMeter(id: string): Promise<Meter | undefined>;
+  createMeter(meter: InsertMeter): Promise<Meter>;
+  updateMeter(id: string, updates: Partial<Meter>): Promise<Meter | undefined>;
+
+  getSgtIntervalsByMeter(meterId: string): Promise<SgtInterval[]>;
+  createSgtInterval(interval: InsertSgtInterval): Promise<SgtInterval>;
+
+  getAccountsByProject(projectId: string): Promise<Account[]>;
+  getAccount(id: string): Promise<Account | undefined>;
+  createAccount(account: InsertAccount): Promise<Account>;
+
+  getTransactionsByProject(projectId: string): Promise<Transaction[]>;
+  getTransaction(id: string): Promise<Transaction | undefined>;
+  createTransaction(tx: InsertTransaction): Promise<Transaction>;
+
+  getPostingsByTransaction(transactionId: string): Promise<Posting[]>;
+  createPosting(posting: InsertPosting): Promise<Posting>;
 }
 
 import { computeReadiness, generateChecklist, computeCapitalStack, computeRevenue, computeDistribution } from "./scoring-engine";
@@ -108,6 +132,13 @@ export class MemStorage implements IStorage {
   private distributions: Map<string, Distribution> = new Map();
   private scadaDataSources: Map<string, ScadaDataSource> = new Map();
   private scadaConnectors: Map<string, ScadaConnector> = new Map();
+  private metersMap: Map<string, Meter> = new Map();
+  private sgtIntervalsMap: Map<number, SgtInterval> = new Map();
+  private sgtIntervalSeq: number = 1;
+  private accountsMap: Map<string, Account> = new Map();
+  private transactionsMap: Map<string, Transaction> = new Map();
+  private postingsMap: Map<number, Posting> = new Map();
+  private postingSeq: number = 1;
 
   constructor() {
     this.seedData();
@@ -176,6 +207,7 @@ export class MemStorage implements IStorage {
       latitude: "30.2672",
       longitude: "-97.7431",
       capacityMW: "4.50",
+      capacityKw: "4500",
       status: "APPROVED",
       summary: "A 4.5MW community solar project in Central Texas with executed IA and approved permits. Ready for construction financing.",
       offtakerType: "UTILITY",
@@ -278,6 +310,7 @@ export class MemStorage implements IStorage {
       latitude: "33.4484",
       longitude: "-112.0740",
       capacityMW: "2.80",
+      capacityKw: "2800",
       status: "SUBMITTED",
       summary: "A 2.8MW community solar + storage project in suburban Phoenix. Early stage, seeking development partners.",
       offtakerType: "COMMUNITY_SOLAR",
@@ -452,6 +485,7 @@ export class MemStorage implements IStorage {
       latitude: "39.8561",
       longitude: "-104.6737",
       capacityMW: "4.70",
+      capacityKw: "4700",
       status: "APPROVED",
       summary: "A 4.7MW cadmium telluride (CdTe) thin-film solar facility in eastern Colorado with 6+ years of verified SCADA production history. Single-axis tracking, utility PPA with Xcel Energy. Returns derived from actual NREL PVDAQ telemetry data.",
       offtakerType: "UTILITY",
@@ -764,6 +798,7 @@ export class MemStorage implements IStorage {
       latitude: project.latitude || null,
       longitude: project.longitude || null,
       capacityMW: project.capacityMW || null,
+      capacityKw: project.capacityKw || null,
       status: project.status || "DRAFT",
       summary: project.summary || null,
       offtakerType: project.offtakerType || "C_AND_I",
@@ -1140,6 +1175,137 @@ export class MemStorage implements IStorage {
     };
     this.scadaConnectors.set(id, newConnector);
     return newConnector;
+  }
+
+  // ─── SGT: Meters ──────────────────────────────────────────────
+
+  async getMetersByProject(projectId: string): Promise<Meter[]> {
+    return Array.from(this.metersMap.values()).filter(m => m.projectId === projectId);
+  }
+
+  async getMeter(id: string): Promise<Meter | undefined> {
+    return this.metersMap.get(id);
+  }
+
+  async createMeter(meter: InsertMeter): Promise<Meter> {
+    const id = randomUUID();
+    const newMeter: Meter = {
+      id,
+      projectId: meter.projectId,
+      meterType: meter.meterType || "NET",
+      provider: meter.provider || "MANUAL",
+      providerUid: meter.providerUid || null,
+      name: meter.name || null,
+      timezone: meter.timezone || "UTC",
+      isActive: meter.isActive !== undefined ? meter.isActive : true,
+      createdAt: new Date(),
+      updatedAt: new Date(),
+    };
+    this.metersMap.set(id, newMeter);
+    return newMeter;
+  }
+
+  async updateMeter(id: string, updates: Partial<Meter>): Promise<Meter | undefined> {
+    const meter = this.metersMap.get(id);
+    if (!meter) return undefined;
+    const updated = { ...meter, ...updates, updatedAt: new Date() };
+    this.metersMap.set(id, updated);
+    return updated;
+  }
+
+  // ─── SGT: Intervals ──────────────────────────────────────────
+
+  async getSgtIntervalsByMeter(meterId: string): Promise<SgtInterval[]> {
+    return Array.from(this.sgtIntervalsMap.values()).filter(i => i.meterId === meterId);
+  }
+
+  async createSgtInterval(interval: InsertSgtInterval): Promise<SgtInterval> {
+    const id = this.sgtIntervalSeq++;
+    const newInterval: SgtInterval = {
+      id,
+      meterId: interval.meterId,
+      intervalStart: interval.intervalStart,
+      intervalEnd: interval.intervalEnd,
+      netWh: interval.netWh || null,
+      expectedGrossWh: interval.expectedGrossWh || null,
+      syntheticGrossWh: interval.syntheticGrossWh || null,
+      irradianceWm2: interval.irradianceWm2 || null,
+      source: interval.source || "CALCULATED",
+      qualityFlag: interval.qualityFlag || null,
+      createdAt: new Date(),
+    };
+    this.sgtIntervalsMap.set(id, newInterval);
+    return newInterval;
+  }
+
+  // ─── SGT: Accounts ───────────────────────────────────────────
+
+  async getAccountsByProject(projectId: string): Promise<Account[]> {
+    return Array.from(this.accountsMap.values()).filter(a => a.projectId === projectId);
+  }
+
+  async getAccount(id: string): Promise<Account | undefined> {
+    return this.accountsMap.get(id);
+  }
+
+  async createAccount(account: InsertAccount): Promise<Account> {
+    const id = randomUUID();
+    const newAccount: Account = {
+      id,
+      projectId: account.projectId,
+      code: account.code,
+      name: account.name,
+      accountType: account.accountType,
+      denominatedIn: account.denominatedIn || "Wh",
+      isActive: account.isActive !== undefined ? account.isActive : true,
+      createdAt: new Date(),
+    };
+    this.accountsMap.set(id, newAccount);
+    return newAccount;
+  }
+
+  // ─── SGT: Transactions ───────────────────────────────────────
+
+  async getTransactionsByProject(projectId: string): Promise<Transaction[]> {
+    return Array.from(this.transactionsMap.values()).filter(t => t.projectId === projectId);
+  }
+
+  async getTransaction(id: string): Promise<Transaction | undefined> {
+    return this.transactionsMap.get(id);
+  }
+
+  async createTransaction(tx: InsertTransaction): Promise<Transaction> {
+    const id = randomUUID();
+    const newTx: Transaction = {
+      id,
+      projectId: tx.projectId,
+      intervalId: tx.intervalId || null,
+      memo: tx.memo || null,
+      occurredAt: tx.occurredAt,
+      createdAt: new Date(),
+    };
+    this.transactionsMap.set(id, newTx);
+    return newTx;
+  }
+
+  // ─── SGT: Postings ───────────────────────────────────────────
+
+  async getPostingsByTransaction(transactionId: string): Promise<Posting[]> {
+    return Array.from(this.postingsMap.values()).filter(p => p.transactionId === transactionId);
+  }
+
+  async createPosting(posting: InsertPosting): Promise<Posting> {
+    const id = this.postingSeq++;
+    const newPosting: Posting = {
+      id,
+      transactionId: posting.transactionId,
+      accountId: posting.accountId,
+      amount: posting.amount,
+      direction: posting.direction,
+      createdAt: new Date(),
+    };
+    this.postingsMap.set(id, newPosting);
+    return newPosting;
   }
 }
 
