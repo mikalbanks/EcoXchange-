@@ -79,8 +79,8 @@ const DEMO_INGESTION_LOG: IngestionEvent[] = [
   {
     id: "evt-1",
     timestamp: new Date(Date.now() - 1 * 24 * 60 * 60 * 1000).toISOString(),
-    source: "NREL PVDAQ (System 9068)",
-    project: "Colorado Sun CdTe I",
+    source: "Solcast Sky Oracle",
+    project: "Lancaster Sun Ranch",
     records: 12,
     status: "SUCCESS",
     qualityChecks: ["Schema validation passed", "Range check passed", "Completeness: 100%"],
@@ -90,7 +90,7 @@ const DEMO_INGESTION_LOG: IngestionEvent[] = [
     id: "evt-2",
     timestamp: new Date(Date.now() - 3 * 24 * 60 * 60 * 1000).toISOString(),
     source: "Manual Entry",
-    project: "Sunfield Solar I",
+    project: "Imperial Valley Solar I",
     records: 12,
     status: "WARNING",
     qualityChecks: ["Schema validation passed", "Range check: 2 outliers flagged", "Completeness: 100%"],
@@ -99,18 +99,18 @@ const DEMO_INGESTION_LOG: IngestionEvent[] = [
   {
     id: "evt-3",
     timestamp: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString(),
-    source: "NREL PVDAQ (System 9068)",
-    project: "Colorado Sun CdTe I",
+    source: "SGT Handshake",
+    project: "Lancaster Sun Ranch",
     records: 1,
     status: "SUCCESS",
     qualityChecks: ["Schema validation passed", "Range check passed", "Completeness: 100%"],
-    message: "Incremental sync: December 2025 production record added.",
+    message: "Incremental sync: latest production record verified via SGT Handshake.",
   },
   {
     id: "evt-4",
     timestamp: new Date(Date.now() - 14 * 24 * 60 * 60 * 1000).toISOString(),
     source: "CSV Import",
-    project: "Desert Sun Community Solar",
+    project: "Pecos Flat Solar Farm",
     records: 0,
     status: "FAILED",
     qualityChecks: ["Schema validation failed: missing 'production_mwh' column"],
@@ -119,8 +119,8 @@ const DEMO_INGESTION_LOG: IngestionEvent[] = [
   {
     id: "evt-5",
     timestamp: new Date(Date.now() - 21 * 24 * 60 * 60 * 1000).toISOString(),
-    source: "NREL PVDAQ (System 9068)",
-    project: "Colorado Sun CdTe I",
+    source: "Solcast Sky Oracle",
+    project: "Lancaster Sun Ranch",
     records: 12,
     status: "SUCCESS",
     qualityChecks: ["Schema validation passed", "Range check passed", "Completeness: 100%", "Cross-validation with PPA records: matched"],
@@ -170,7 +170,7 @@ function DataSourcesTab() {
                 <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
                   <div className="flex items-start gap-4">
                     <div className="flex items-center justify-center w-10 h-10 rounded-lg bg-primary/10 text-primary shrink-0">
-                      {ds.sourceType === "PVDAQ_VERIFIED" ? <Shield className="h-5 w-5" /> :
+                      {ds.sourceType === "SGT_VERIFIED" ? <Shield className="h-5 w-5" /> :
                        ds.sourceType === "CSV_UPLOAD" ? <FileUp className="h-5 w-5" /> :
                        <Database className="h-5 w-5" />}
                     </div>
@@ -444,7 +444,7 @@ function ConnectorsTab() {
               <div className="flex items-start justify-between mb-3">
                 <div className="flex items-center gap-3">
                   <div className="flex items-center justify-center w-10 h-10 rounded-lg bg-muted text-muted-foreground">
-                    {connector.slug === "pvdaq" ? <Shield className="h-5 w-5 text-primary" /> :
+                    {connector.slug === "solcast-sky-oracle" ? <Shield className="h-5 w-5 text-primary" /> :
                      connector.slug === "enphase" ? <Zap className="h-5 w-5 text-orange-400" /> :
                      connector.slug === "solaredge" ? <Zap className="h-5 w-5 text-red-400" /> :
                      connector.slug === "alsoenergy" ? <Server className="h-5 w-5 text-blue-400" /> :

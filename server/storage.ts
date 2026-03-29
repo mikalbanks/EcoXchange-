@@ -198,26 +198,26 @@ export class MemStorage implements IStorage {
     this.projects.set(proj1Id, {
       id: proj1Id,
       developerId: devId,
-      name: "Sunfield Solar I",
+      name: "Imperial Valley Solar I",
       technology: "SOLAR",
       stage: "NTP",
       country: "US",
-      state: "Texas",
-      county: "Travis",
-      latitude: "30.2672",
-      longitude: "-97.7431",
-      capacityMW: "4.50",
-      capacityKw: "4500",
+      state: "California",
+      county: "Imperial",
+      latitude: "32.8476",
+      longitude: "-115.5695",
+      capacityMW: "12.00",
+      capacityKw: "12000",
       status: "APPROVED",
-      summary: "A 4.5MW community solar project in Central Texas with executed IA and approved permits. Ready for construction financing.",
+      summary: "A 12MW utility-scale solar project in Imperial Valley, CA with executed IA and approved permits. Single-axis tracking on 80 acres of leased agricultural land. Ready for construction financing.",
       offtakerType: "UTILITY",
       interconnectionStatus: "IA_EXECUTED",
       permittingStatus: "APPROVED",
       siteControlStatus: "LEASE",
       feocAttested: true,
-      ppaRate: "0.0425",
-      monthlyDebtService: "8500.00",
-      monthlyOpex: "3200.00",
+      ppaRate: "0.0450",
+      monthlyDebtService: "22000.00",
+      monthlyOpex: "8500.00",
       reserveRate: "0.05",
       createdAt: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000),
       updatedAt: new Date(),
@@ -227,11 +227,11 @@ export class MemStorage implements IStorage {
     this.capitalStacks.set(proj1Id, {
       id: cs1Id,
       projectId: proj1Id,
-      totalCapex: "5200000",
+      totalCapex: "13800000",
       taxCreditType: "ITC",
-      taxCreditEstimated: "1560000",
+      taxCreditEstimated: "4140000",
       taxCreditTransferabilityReady: true,
-      equityNeeded: "3640000",
+      equityNeeded: "9660000",
       debtPlaceholder: "0",
       notes: "30% ITC eligible. Transferability confirmed.",
     });
@@ -305,18 +305,18 @@ export class MemStorage implements IStorage {
     this.projects.set(proj2Id, {
       id: proj2Id,
       developerId: devId,
-      name: "Desert Sun Community Solar",
+      name: "Pecos Flat Solar Farm",
       technology: "SOLAR_STORAGE",
       stage: "PRE_NTP",
       country: "US",
-      state: "Arizona",
-      county: "Maricopa",
-      latitude: "33.4484",
-      longitude: "-112.0740",
-      capacityMW: "2.80",
-      capacityKw: "2800",
+      state: "Texas",
+      county: "Pecos",
+      latitude: "31.4237",
+      longitude: "-103.4925",
+      capacityMW: "5.50",
+      capacityKw: "5500",
       status: "SUBMITTED",
-      summary: "A 2.8MW community solar + storage project in suburban Phoenix. Early stage, seeking development partners.",
+      summary: "A 5.5MW solar + storage project in Pecos County, TX. Early stage with LOI on 40 acres of ranch land. Seeking development partners.",
       offtakerType: "COMMUNITY_SOLAR",
       interconnectionStatus: "APPLIED",
       permittingStatus: "IN_PROGRESS",
@@ -334,11 +334,11 @@ export class MemStorage implements IStorage {
     this.capitalStacks.set(proj2Id, {
       id: cs2Id,
       projectId: proj2Id,
-      totalCapex: "3100000",
+      totalCapex: "6100000",
       taxCreditType: "ITC",
-      taxCreditEstimated: "930000",
+      taxCreditEstimated: "1830000",
       taxCreditTransferabilityReady: false,
-      equityNeeded: "2170000",
+      equityNeeded: "4270000",
       debtPlaceholder: "0",
       notes: null,
     });
@@ -479,31 +479,31 @@ export class MemStorage implements IStorage {
       });
     }
 
-    // ─── Project 3: Colorado Sun CdTe I (PVDAQ-backed, real data) ────
+    // ─── Project 3: Lancaster Sun Ranch (SGT-verified, Solcast data) ────
     const proj3Id = "proj3";
     this.projects.set(proj3Id, {
       id: proj3Id,
       developerId: devId,
-      name: "Colorado Sun CdTe I",
+      name: "Lancaster Sun Ranch",
       technology: "SOLAR",
       stage: "COD",
       country: "US",
-      state: "Colorado",
-      county: "Adams",
-      latitude: "39.8561",
-      longitude: "-104.6737",
-      capacityMW: "4.70",
-      capacityKw: "4700",
+      state: "California",
+      county: "Los Angeles",
+      latitude: "34.6868",
+      longitude: "-118.1542",
+      capacityMW: "25.00",
+      capacityKw: "25000",
       status: "APPROVED",
-      summary: "A 4.7MW cadmium telluride (CdTe) thin-film solar facility in eastern Colorado with 6+ years of verified SCADA production history. Single-axis tracking, utility PPA with Xcel Energy. Returns derived from actual NREL PVDAQ telemetry data.",
+      summary: "A 25MW single-axis tracking solar facility in Lancaster, CA with verified SCADA production history. Utility PPA with Southern California Edison. Returns derived from Solcast Sky Oracle satellite telemetry with SGT Handshake verification.",
       offtakerType: "UTILITY",
       interconnectionStatus: "IA_EXECUTED",
       permittingStatus: "APPROVED",
       siteControlStatus: "OWNED",
       feocAttested: true,
-      ppaRate: "0.0380",
-      monthlyDebtService: "9200.00",
-      monthlyOpex: "3500.00",
+      ppaRate: "0.0420",
+      monthlyDebtService: "48000.00",
+      monthlyOpex: "18500.00",
       reserveRate: "0.04",
       createdAt: new Date(Date.now() - 60 * 24 * 60 * 60 * 1000),
       updatedAt: new Date(),
@@ -513,11 +513,11 @@ export class MemStorage implements IStorage {
     this.capitalStacks.set(proj3Id, {
       id: cs3Id,
       projectId: proj3Id,
-      totalCapex: "5875000",
+      totalCapex: "31250000",
       taxCreditType: "ITC",
-      taxCreditEstimated: "1762500",
+      taxCreditEstimated: "9375000",
       taxCreditTransferabilityReady: true,
-      equityNeeded: "4112500",
+      equityNeeded: "21875000",
       debtPlaceholder: "0",
       notes: "30% ITC eligible. Operational asset with verified production history. Transferability confirmed.",
     });
@@ -537,7 +537,7 @@ export class MemStorage implements IStorage {
     }
 
     const doc3Types = ["SITE_CONTROL", "INTERCONNECTION", "PERMITS", "FINANCIAL_MODEL", "FEOC_ATTESTATION", "EPC", "PPA"];
-    const doc3Names = ["deed_of_trust.pdf", "ia_executed_xcel.pdf", "adams_county_permit.pdf", "financial_model_v4.xlsx", "feoc_attestation_signed.pdf", "epc_completion_cert.pdf", "ppa_xcel_energy.pdf"];
+    const doc3Names = ["deed_of_trust.pdf", "ia_executed_sce.pdf", "la_county_permit.pdf", "financial_model_v4.xlsx", "feoc_attestation_signed.pdf", "epc_completion_cert.pdf", "ppa_sce_energy.pdf"];
     for (let i = 0; i < doc3Types.length; i++) {
       const docId3 = randomUUID();
       this.documents.set(docId3, {
@@ -575,34 +575,34 @@ export class MemStorage implements IStorage {
       projectId: proj3Id,
       adminId: adminId,
       action: "APPROVE",
-      notes: "Operational asset with verified PVDAQ production data. Approved for investor visibility.",
+      notes: "Operational asset with verified Solcast Sky Oracle production data. Approved for investor visibility.",
       createdAt: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000),
     });
 
-    // ─── Yield Pipeline for Project 3 (PVDAQ-derived actuals) ────
+    // ─── Yield Pipeline for Project 3 (Solcast Sky Oracle-derived actuals) ────
     const ppa3Id = randomUUID();
     this.ppas.set(ppa3Id, {
       id: ppa3Id,
       projectId: proj3Id,
-      offtakerName: "Xcel Energy",
+      offtakerName: "Southern California Edison",
       contractStartDate: new Date(now.getFullYear() - 1, 0, 1),
       contractEndDate: new Date(now.getFullYear() + 19, 11, 31),
-      pricePerMwh: "85.00",
+      pricePerMwh: "72.00",
       escalationType: "ESCALATING",
       escalationRate: "1.50",
-      contractedCapacityMW: "4.70",
+      contractedCapacityMW: "25.00",
       createdAt: new Date(now.getFullYear() - 1, 0, 1),
     });
 
-    // Monthly production from NREL PVDAQ system 9068 averages (6+ years of real data)
-    const pvdaqMonthlyMwh = [388, 493, 669, 813, 807, 869, 956, 790, 714, 592, 398, 372];
+    // Monthly production from Solcast Sky Oracle satellite estimates (Lancaster, CA 25MW)
+    const sgtMonthlyMwh = [2100, 2600, 3500, 4200, 4800, 5100, 5300, 5000, 3900, 3100, 2300, 1950];
 
     for (let i = 0; i < 12; i++) {
       const p3Start = new Date(now.getFullYear() - 1, i, 1);
       const p3End = new Date(now.getFullYear() - 1, i + 1, 0);
       const p3ProdId = randomUUID();
-      const p3Mwh = pvdaqMonthlyMwh[i];
-      const p3Cf = (p3Mwh / (4.7 * p3End.getDate() * 24)).toFixed(4);
+      const p3Mwh = sgtMonthlyMwh[i];
+      const p3Cf = (p3Mwh / (25.0 * p3End.getDate() * 24)).toFixed(4);
 
       this.productionRecords.set(p3ProdId, {
         id: p3ProdId,
@@ -657,7 +657,7 @@ export class MemStorage implements IStorage {
       amountIntent: "750000",
       structurePreference: "EQUITY",
       timeline: "IMMEDIATE",
-      message: "Strong interest in the verified production profile. 6 years of PVDAQ data gives us confidence in the yield projections. Requesting data room access.",
+      message: "Strong interest in the verified production profile. Solcast-verified satellite telemetry gives us confidence in the yield projections. Requesting data room access.",
       status: "SUBMITTED",
       createdAt: new Date(Date.now() - 3 * 24 * 60 * 60 * 1000),
     });
@@ -667,7 +667,7 @@ export class MemStorage implements IStorage {
       { name: "AlsoEnergy", slug: "alsoenergy", description: "Enterprise-grade solar monitoring and asset management platform. Supports utility-scale and C&I portfolios.", status: "COMING_SOON", supportedTechnologies: "SOLAR,SOLAR_STORAGE" },
       { name: "Enphase", slug: "enphase", description: "Microinverter-based monitoring for residential and small commercial solar installations.", status: "COMING_SOON", supportedTechnologies: "SOLAR" },
       { name: "SolarEdge", slug: "solaredge", description: "Power optimizer and inverter monitoring platform for residential, C&I, and utility-scale systems.", status: "COMING_SOON", supportedTechnologies: "SOLAR,SOLAR_STORAGE" },
-      { name: "NREL PVDAQ", slug: "pvdaq", description: "NREL Photovoltaic Data Acquisition system providing verified historical telemetry from research-grade installations.", status: "AVAILABLE", supportedTechnologies: "SOLAR" },
+      { name: "Solcast Sky Oracle", slug: "solcast-sky-oracle", description: "Satellite-derived solar irradiance and estimated actuals from Solcast Advanced PV Power API for SGT verification.", status: "AVAILABLE", supportedTechnologies: "SOLAR,SOLAR_STORAGE" },
       { name: "Power Factors", slug: "power-factors", description: "Asset performance management for utility-scale renewables including solar, wind, and storage.", status: "COMING_SOON", supportedTechnologies: "SOLAR,SOLAR_STORAGE" },
     ];
     for (const c of connectors) {
@@ -685,7 +685,7 @@ export class MemStorage implements IStorage {
       });
     }
 
-    const pvdaqConnector = Array.from(this.scadaConnectors.values()).find(c => c.slug === "pvdaq");
+    const solcastConnector = Array.from(this.scadaConnectors.values()).find(c => c.slug === "solcast-sky-oracle");
 
     // ─── SCADA Data Sources per Project ──────────────────────────────
     const ds1Id = randomUUID();
@@ -726,15 +726,15 @@ export class MemStorage implements IStorage {
     this.scadaDataSources.set(ds3Id, {
       id: ds3Id,
       projectId: proj3Id,
-      sourceType: "PVDAQ_VERIFIED",
-      providerName: "NREL PVDAQ (System 9068)",
+      sourceType: "SGT_VERIFIED",
+      providerName: "Solcast Sky Oracle",
       status: "ACTIVE",
       dataQuality: "HIGH",
       lastSyncAt: new Date(Date.now() - 1 * 24 * 60 * 60 * 1000),
       recordCount: 12,
-      connectorId: pvdaqConnector?.id || null,
-      configJson: JSON.stringify({ systemId: 9068, capacityKw: 4700, technology: "CdTe", trackingType: "Single-Axis" }),
-      notes: "Verified telemetry from NREL PVDAQ system 9068. 6+ years of research-grade production data.",
+      connectorId: solcastConnector?.id || null,
+      configJson: JSON.stringify({ capacityKw: 25000, technology: "Mono-Si", trackingType: "Single-Axis", lat: 34.6868, lon: -118.1542 }),
+      notes: "Verified satellite telemetry from Solcast Sky Oracle with SGT Handshake verification.",
       createdAt: new Date(Date.now() - 60 * 24 * 60 * 60 * 1000),
       updatedAt: new Date(Date.now() - 1 * 24 * 60 * 60 * 1000),
     });

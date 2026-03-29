@@ -70,7 +70,7 @@ function FeaturedProjectSection() {
           </div>
           <h2 className="text-3xl font-bold mb-4" data-testid="text-featured-title">Featured Project</h2>
           <p className="text-muted-foreground max-w-2xl mx-auto">
-            Real-time production data from NREL PVDAQ-verified solar installations
+            Real-time production data from Solcast Sky Oracle-verified solar installations
           </p>
         </div>
 
@@ -83,10 +83,10 @@ function FeaturedProjectSection() {
                   <Sun className="h-6 w-6" />
                 </div>
                 <div>
-                  <h3 className="text-xl font-bold" data-testid="text-featured-name">Colorado Sun CdTe I</h3>
+                  <h3 className="text-xl font-bold" data-testid="text-featured-name">Lancaster Sun Ranch</h3>
                   <div className="flex items-center gap-3 text-sm text-muted-foreground mt-0.5">
-                    <span className="flex items-center gap-1"><MapPin className="h-3 w-3" /> Colorado</span>
-                    <span className="flex items-center gap-1"><Zap className="h-3 w-3" /> 6.3 MW</span>
+                    <span className="flex items-center gap-1"><MapPin className="h-3 w-3" /> California</span>
+                    <span className="flex items-center gap-1"><Zap className="h-3 w-3" /> 25 MW</span>
                   </div>
                 </div>
               </div>
@@ -351,14 +351,14 @@ export default function LandingPage() {
                     />
                     <div>
                       <p className="font-semibold">Sample Offering</p>
-                      <p className="text-sm text-muted-foreground">Sunfield Solar I</p>
+                      <p className="text-sm text-muted-foreground">Imperial Valley Solar I</p>
                     </div>
                   </div>
                   
                   <div className="space-y-4">
                     <div className="flex justify-between py-2 border-b border-border/50">
                       <span className="text-muted-foreground">Target Raise</span>
-                      <span className="font-medium" data-testid="text-sample-target-raise">$5,000,000</span>
+                      <span className="font-medium" data-testid="text-sample-target-raise">$13,800,000</span>
                     </div>
                     <div className="flex justify-between py-2 border-b border-border/50">
                       <span className="text-muted-foreground">Min Investment</span>

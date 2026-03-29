@@ -138,7 +138,7 @@ function buildProvenance(dataSources: ScadaDataSource[]): ScadaProvenance {
   }
 
   let verificationStatus = "UNVERIFIED";
-  if (primary.sourceType === "PVDAQ_VERIFIED") verificationStatus = "VERIFIED";
+  if (primary.sourceType === "SGT_VERIFIED") verificationStatus = "VERIFIED";
   else if (primary.sourceType === "CONNECTOR" && primary.dataQuality === "HIGH") verificationStatus = "AUTOMATED";
   else if (primary.sourceType === "MANUAL" || primary.sourceType === "CSV_UPLOAD") verificationStatus = "SELF_REPORTED";
 

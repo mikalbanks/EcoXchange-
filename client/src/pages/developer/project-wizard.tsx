@@ -278,7 +278,7 @@ export default function ProjectWizard() {
                         <FormLabel>Project Name</FormLabel>
                         <FormControl>
                           <Input
-                            placeholder="e.g., Sunfield Solar Farm"
+                            placeholder="e.g., Desert Mesa Solar Farm"
                             data-testid="input-project-name"
                             {...field}
                           />

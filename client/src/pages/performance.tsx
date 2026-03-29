@@ -49,7 +49,7 @@ export default function PerformancePage() {
               Project Performance
             </h1>
             <p className="text-lg text-muted-foreground max-w-2xl mx-auto" data-testid="text-performance-subtitle">
-              Real-time SCADA telemetry from verified renewable energy projects. Production data sourced from NREL PVDAQ with full provenance tracking.
+              Real-time SCADA telemetry from verified renewable energy projects. Production data sourced from Solcast Sky Oracle with full provenance tracking.
             </p>
           </div>
         </div>
@@ -64,11 +64,11 @@ export default function PerformancePage() {
                   <Sun className="h-6 w-6" />
                 </div>
                 <div>
-                  <CardTitle className="text-xl" data-testid="text-featured-project-name">Colorado Sun CdTe I</CardTitle>
+                  <CardTitle className="text-xl" data-testid="text-featured-project-name">Lancaster Sun Ranch</CardTitle>
                   <div className="flex items-center gap-3 text-sm text-muted-foreground mt-1">
-                    <span className="flex items-center gap-1"><MapPin className="h-3.5 w-3.5" /> Colorado, Weld</span>
-                    <span className="flex items-center gap-1"><Zap className="h-3.5 w-3.5" /> 6.3 MW</span>
-                    <span>CdTe Thin-Film Solar</span>
+                    <span className="flex items-center gap-1"><MapPin className="h-3.5 w-3.5" /> California, Los Angeles</span>
+                    <span className="flex items-center gap-1"><Zap className="h-3.5 w-3.5" /> 25 MW</span>
+                    <span>Single-Axis Tracking Solar</span>
                   </div>
                 </div>
               </div>
@@ -120,7 +120,7 @@ export default function PerformancePage() {
           <CardContent className="py-8 text-center">
             <h2 className="text-xl font-bold mb-2">Ready to invest in verified renewable energy?</h2>
             <p className="text-muted-foreground mb-6 max-w-lg mx-auto">
-              All performance data is sourced from NREL PVDAQ with full provenance tracking. Create an account to access the complete marketplace.
+              All performance data is sourced from Solcast Sky Oracle with full provenance tracking. Create an account to access the complete marketplace.
             </p>
             <div className="flex items-center justify-center gap-3">
               <Link href="/auth/signup?role=investor">

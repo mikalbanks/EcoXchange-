@@ -413,7 +413,7 @@ export type Distribution = typeof distributions.$inferSelect;
 // ─── SCADA Data Sources ──────────────────────────────────────────────────────
 
 export const ScadaSourceType = {
-  PVDAQ_VERIFIED: "PVDAQ_VERIFIED",
+  SGT_VERIFIED: "SGT_VERIFIED",
   CSV_UPLOAD: "CSV_UPLOAD",
   CONNECTOR: "CONNECTOR",
   MANUAL: "MANUAL",
