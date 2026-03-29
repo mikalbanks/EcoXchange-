@@ -8,6 +8,13 @@
       "when": 1774766942795,
       "tag": "0000_ancient_stick",
       "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "7",
+      "when": 1774772632449,
+      "tag": "0001_naive_slapstick",
+      "breakpoints": true
     }
   ]
 }
