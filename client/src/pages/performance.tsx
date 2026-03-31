@@ -49,7 +49,7 @@ export default function PerformancePage() {
               Project Performance
             </h1>
             <p className="text-lg text-muted-foreground max-w-2xl mx-auto" data-testid="text-performance-subtitle">
-              Real-time SCADA telemetry from verified renewable energy projects. Production data sourced from Solcast Sky Oracle with full provenance tracking.
+              Real-time SCADA telemetry powered by the SGT Pipeline — Solcast Sky Oracle satellite data, Utility Shadow net metering, and double-entry waterfall settlement.
             </p>
           </div>
         </div>
@@ -120,7 +120,7 @@ export default function PerformancePage() {
           <CardContent className="py-8 text-center">
             <h2 className="text-xl font-bold mb-2">Ready to invest in verified renewable energy?</h2>
             <p className="text-muted-foreground mb-6 max-w-lg mx-auto">
-              All performance data is sourced from Solcast Sky Oracle with full provenance tracking. Create an account to access the complete marketplace.
+              All performance data flows through the SGT Pipeline — satellite telemetry, utility metering, and waterfall settlement with full provenance tracking.
             </p>
             <div className="flex items-center justify-center gap-3">
               <Link href="/auth/signup?role=investor">

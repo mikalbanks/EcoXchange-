@@ -26,6 +26,13 @@ import {
   Info,
   XCircle,
   FileWarning,
+  Satellite,
+  PlugZap,
+  Workflow,
+  Landmark,
+  Coins,
+  Play,
+  MapPin,
 } from "lucide-react";
 
 interface OperationsDataSource {
@@ -79,12 +86,12 @@ const DEMO_INGESTION_LOG: IngestionEvent[] = [
   {
     id: "evt-1",
     timestamp: new Date(Date.now() - 1 * 24 * 60 * 60 * 1000).toISOString(),
-    source: "Solcast Sky Oracle",
+    source: "SGT Handshake (Solcast + Utility Shadow)",
     project: "Lancaster Sun Ranch",
-    records: 12,
+    records: 96,
     status: "SUCCESS",
-    qualityChecks: ["Schema validation passed", "Range check passed", "Completeness: 100%"],
-    message: "Monthly production data synced successfully. 12 records ingested with HIGH quality rating.",
+    qualityChecks: ["Sky Oracle telemetry verified", "Utility Shadow reconciled", "SGT interval validated", "Waterfall settlement complete"],
+    message: "Full SGT pipeline executed. 96 intervals generated via Sky Oracle satellite data + Utility Shadow net metering. Waterfall settlement distributed to all accounts.",
   },
   {
     id: "evt-2",
@@ -99,32 +106,32 @@ const DEMO_INGESTION_LOG: IngestionEvent[] = [
   {
     id: "evt-3",
     timestamp: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString(),
-    source: "SGT Handshake",
-    project: "Lancaster Sun Ranch",
-    records: 1,
+    source: "Utility Shadow (Net Meter Sim)",
+    project: "Imperial Valley Solar I",
+    records: 96,
     status: "SUCCESS",
-    qualityChecks: ["Schema validation passed", "Range check passed", "Completeness: 100%"],
-    message: "Incremental sync: latest production record verified via SGT Handshake.",
+    qualityChecks: ["Consumption ratio calibrated (2% utility-scale)", "Noise band ±5% applied", "Net meter reconciled with Sky Oracle"],
+    message: "Utility Shadow simulation completed for 12MW utility-scale project. Net meter data generated with 2% self-consumption ratio.",
   },
   {
     id: "evt-4",
     timestamp: new Date(Date.now() - 14 * 24 * 60 * 60 * 1000).toISOString(),
-    source: "CSV Import",
-    project: "Pecos Flat Solar Farm",
-    records: 0,
-    status: "FAILED",
-    qualityChecks: ["Schema validation failed: missing 'production_mwh' column"],
-    message: "CSV upload rejected. Required column 'production_mwh' not found in uploaded file.",
+    source: "Waterfall Engine",
+    project: "Lancaster Sun Ranch",
+    records: 30,
+    status: "SUCCESS",
+    qualityChecks: ["Double-entry balanced", "REVENUE_CLEARING debited", "All 5 tiers credited", "FOR UPDATE SKIP LOCKED acquired"],
+    message: "Waterfall settlement processed 30 days of SGT intervals. Revenue distributed across debt service, OpEx, reserves, platform fee, and investor yield.",
   },
   {
     id: "evt-5",
     timestamp: new Date(Date.now() - 21 * 24 * 60 * 60 * 1000).toISOString(),
-    source: "Solcast Sky Oracle",
-    project: "Lancaster Sun Ranch",
-    records: 12,
+    source: "Sky Oracle (Solcast Satellite)",
+    project: "Pecos Flat Solar Farm",
+    records: 48,
     status: "SUCCESS",
-    qualityChecks: ["Schema validation passed", "Range check passed", "Completeness: 100%", "Cross-validation with PPA records: matched"],
-    message: "Full historical backfill completed. 12 months of verified telemetry data loaded.",
+    qualityChecks: ["Satellite PV estimate received", "Irradiance cross-check passed", "Capacity factor within expected range", "GPS coordinates validated"],
+    message: "Sky Oracle satellite sweep for Pecos County, TX. 48 half-hour PV power estimates ingested from Solcast world_pv_power endpoint (5.5MW capacity).",
   },
 ];
 
@@ -632,6 +639,298 @@ function PublishMetricsSection() {
   );
 }
 
+interface PipelineProject {
+  projectId: string;
+  projectName: string;
+  capacityMW: string;
+  state: string;
+  latitude: string;
+  longitude: string;
+  pipeline: Record<string, { status: string; provider: string }>;
+}
+
+interface PipelineStatus {
+  pipelineVersion: string;
+  totalProjects: number;
+  solcastConnected: boolean;
+  utilityShadowActive: boolean;
+  projects: PipelineProject[];
+}
+
+const PIPELINE_STAGE_META: Record<string, { label: string; icon: typeof Satellite }> = {
+  skyOracle: { label: "Sky Oracle", icon: Satellite },
+  utilityShadow: { label: "Utility Shadow", icon: PlugZap },
+  sgtHandshake: { label: "SGT Handshake", icon: Workflow },
+  waterfallEngine: { label: "Waterfall Engine", icon: Landmark },
+  securitizeBridge: { label: "Securitize Bridge", icon: Coins },
+};
+
+function PipelineStatusBadge({ status }: { status: string }) {
+  const isGreen = ["CONNECTED", "ACTIVE", "READY", "CONFIGURED"].includes(status);
+  const isYellow = ["FALLBACK_MODE", "MOCK"].includes(status);
+  return (
+    <span className={`inline-flex items-center gap-1.5 px-2 py-0.5 rounded text-[10px] font-medium border ${
+      isGreen ? "bg-emerald-500/10 text-emerald-400 border-emerald-500/20" :
+      isYellow ? "bg-yellow-500/10 text-yellow-400 border-yellow-500/20" :
+      "bg-muted text-muted-foreground border-border"
+    }`}>
+      <span className={`w-1.5 h-1.5 rounded-full ${isGreen ? "bg-emerald-400" : isYellow ? "bg-yellow-400" : "bg-muted-foreground"}`} />
+      {status.replace(/_/g, " ")}
+    </span>
+  );
+}
+
+function SgtPipelineTab() {
+  const { toast } = useToast();
+  const [handshakeLoading, setHandshakeLoading] = useState<string | null>(null);
+  const [settleLoading, setSettleLoading] = useState<string | null>(null);
+  const [lastHandshake, setLastHandshake] = useState<any>(null);
+  const [lastSettlement, setLastSettlement] = useState<any>(null);
+
+  const { data, isLoading, refetch } = useQuery<PipelineStatus>({
+    queryKey: ["/api/public/sgt-pipeline-status"],
+    queryFn: async () => {
+      const res = await fetch("/api/public/sgt-pipeline-status");
+      if (!res.ok) throw new Error("Failed");
+      return res.json();
+    },
+    staleTime: 30000,
+  });
+
+  async function triggerHandshake(projectId: string) {
+    setHandshakeLoading(projectId);
+    setLastHandshake(null);
+    try {
+      const res = await fetch(`/api/projects/${projectId}/sgt-handshake`, {
+        method: "POST",
+        credentials: "include",
+      });
+      if (!res.ok) {
+        const err = await res.json();
+        throw new Error(err.message || "Handshake failed");
+      }
+      const result = await res.json();
+      setLastHandshake(result);
+      toast({ title: "SGT Handshake Complete", description: `Interval #${result.intervalId} created — ${result.syntheticGrossWh.toFixed(2)} Wh synthetic gross` });
+      refetch();
+    } catch (err: any) {
+      toast({ title: "Handshake Failed", description: err.message, variant: "destructive" });
+    } finally {
+      setHandshakeLoading(null);
+    }
+  }
+
+  async function triggerSettle(projectId: string) {
+    setSettleLoading(projectId);
+    setLastSettlement(null);
+    try {
+      const res = await fetch(`/api/projects/${projectId}/settle`, {
+        method: "POST",
+        credentials: "include",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({}),
+      });
+      if (!res.ok) {
+        const err = await res.json();
+        throw new Error(err.message || "Settlement failed");
+      }
+      const result = await res.json();
+      setLastSettlement(result);
+      toast({ title: "Settlement Complete", description: `${result.settlement.daysSettled} days settled — $${result.settlement.totalRevenueUsd.toFixed(2)} total revenue` });
+    } catch (err: any) {
+      toast({ title: "Settlement Failed", description: err.message, variant: "destructive" });
+    } finally {
+      setSettleLoading(null);
+    }
+  }
+
+  return (
+    <div className="space-y-4">
+      <div className="flex items-center justify-between">
+        <p className="text-sm text-muted-foreground">Live SGT pipeline status and manual controls</p>
+        {data && (
+          <Badge variant="outline" className="text-xs gap-1">
+            <Workflow className="h-3 w-3" /> {data.pipelineVersion}
+          </Badge>
+        )}
+      </div>
+
+      {data && (
+        <div className="grid grid-cols-2 md:grid-cols-5 gap-3 mb-2">
+          {Object.entries(PIPELINE_STAGE_META).map(([key, meta]) => {
+            const IconComp = meta.icon;
+            const statuses = data.projects.map(p => p.pipeline[key]?.status).filter(Boolean);
+            const allConnected = statuses.every(s => ["CONNECTED", "ACTIVE", "READY", "CONFIGURED"].includes(s));
+            const anyActive = statuses.some(s => ["CONNECTED", "ACTIVE", "READY", "CONFIGURED"].includes(s));
+            return (
+              <Card key={key}>
+                <CardContent className="pt-4 pb-3 px-3 text-center">
+                  <div className={`flex items-center justify-center w-8 h-8 rounded-full mx-auto mb-2 ${allConnected ? "bg-emerald-500/10 text-emerald-400" : anyActive ? "bg-yellow-500/10 text-yellow-400" : "bg-muted text-muted-foreground"}`}>
+                    <IconComp className="h-4 w-4" />
+                  </div>
+                  <p className="text-xs font-medium">{meta.label}</p>
+                  <p className="text-[10px] text-muted-foreground mt-0.5">
+                    {allConnected ? "Online" : anyActive ? "Partial" : "Standby"}
+                  </p>
+                </CardContent>
+              </Card>
+            );
+          })}
+        </div>
+      )}
+
+      {isLoading ? (
+        <div className="space-y-3">
+          {[1, 2].map((i) => (
+            <Card key={i}><CardContent className="pt-6"><Skeleton className="h-28 w-full" /></CardContent></Card>
+          ))}
+        </div>
+      ) : data && data.projects.length > 0 ? (
+        data.projects.map((proj) => (
+          <Card key={proj.projectId} data-testid={`card-sgt-pipeline-${proj.projectId}`}>
+            <CardContent className="pt-5 pb-4">
+              <div className="flex flex-col md:flex-row md:items-start justify-between gap-4">
+                <div className="flex-1">
+                  <div className="flex items-center gap-2 mb-2">
+                    <h4 className="font-medium text-sm" data-testid={`text-sgt-name-${proj.projectId}`}>{proj.projectName}</h4>
+                    <Badge variant="outline" className="text-[10px]">{proj.capacityMW} MW</Badge>
+                  </div>
+                  <p className="text-xs text-muted-foreground flex items-center gap-1 mb-3">
+                    <MapPin className="h-3 w-3" />
+                    {proj.state} ({proj.latitude}, {proj.longitude})
+                  </p>
+                  <div className="grid grid-cols-2 md:grid-cols-5 gap-2">
+                    {Object.entries(proj.pipeline).map(([key, val]) => (
+                      <div key={key} className="space-y-0.5">
+                        <p className="text-[10px] text-muted-foreground">{PIPELINE_STAGE_META[key]?.label || key}</p>
+                        <PipelineStatusBadge status={val.status} />
+                      </div>
+                    ))}
+                  </div>
+                </div>
+                <div className="flex items-center gap-2 shrink-0">
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    onClick={() => triggerHandshake(proj.projectId)}
+                    disabled={handshakeLoading === proj.projectId}
+                    data-testid={`button-handshake-${proj.projectId}`}
+                  >
+                    {handshakeLoading === proj.projectId ? (
+                      <><RefreshCw className="h-3.5 w-3.5 mr-1.5 animate-spin" /> Running...</>
+                    ) : (
+                      <><Play className="h-3.5 w-3.5 mr-1.5" /> Handshake</>
+                    )}
+                  </Button>
+                  <Button
+                    size="sm"
+                    onClick={() => triggerSettle(proj.projectId)}
+                    disabled={settleLoading === proj.projectId}
+                    data-testid={`button-settle-${proj.projectId}`}
+                  >
+                    {settleLoading === proj.projectId ? (
+                      <><RefreshCw className="h-3.5 w-3.5 mr-1.5 animate-spin" /> Settling...</>
+                    ) : (
+                      <><Landmark className="h-3.5 w-3.5 mr-1.5" /> Settle</>
+                    )}
+                  </Button>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        ))
+      ) : (
+        <Card>
+          <CardContent className="pt-6 text-center text-sm text-muted-foreground py-12">
+            <Workflow className="h-10 w-10 mx-auto mb-3 opacity-30" />
+            <p>No approved projects with pipeline configuration.</p>
+          </CardContent>
+        </Card>
+      )}
+
+      {lastHandshake && (
+        <Card className="border-primary/30" data-testid="card-handshake-result">
+          <CardHeader className="pb-2">
+            <CardTitle className="text-sm flex items-center gap-2">
+              <CheckCircle className="h-4 w-4 text-emerald-400" />
+              Last Handshake Result
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="text-xs space-y-1.5">
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+              <div>
+                <p className="text-muted-foreground">Interval ID</p>
+                <p className="font-medium">#{lastHandshake.intervalId}</p>
+              </div>
+              <div>
+                <p className="text-muted-foreground">Synthetic Gross</p>
+                <p className="font-medium">{lastHandshake.syntheticGrossWh.toFixed(2)} Wh</p>
+              </div>
+              <div>
+                <p className="text-muted-foreground">Sky Oracle (kW)</p>
+                <p className="font-medium">{lastHandshake.skyOracle.pvEstimateKw.toFixed(2)} kW</p>
+              </div>
+              <div>
+                <p className="text-muted-foreground">Source</p>
+                <p className="font-medium">{lastHandshake.skyOracle.source.replace(/_/g, " ")}</p>
+              </div>
+            </div>
+            <div className="flex flex-wrap gap-1.5 mt-2">
+              {lastHandshake.telemetrySources.map((src: string, i: number) => (
+                <Badge key={i} variant="outline" className="text-[10px]">{src}</Badge>
+              ))}
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
+      {lastSettlement && (
+        <Card className="border-primary/30" data-testid="card-settlement-result">
+          <CardHeader className="pb-2">
+            <CardTitle className="text-sm flex items-center gap-2">
+              <CheckCircle className="h-4 w-4 text-emerald-400" />
+              Last Settlement Result
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="text-xs space-y-1.5">
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+              <div>
+                <p className="text-muted-foreground">Days Settled</p>
+                <p className="font-medium">{lastSettlement.settlement.daysSettled}</p>
+              </div>
+              <div>
+                <p className="text-muted-foreground">Intervals</p>
+                <p className="font-medium">{lastSettlement.settlement.totalIntervalsSettled}</p>
+              </div>
+              <div>
+                <p className="text-muted-foreground">Total Revenue</p>
+                <p className="font-medium text-primary">${lastSettlement.settlement.totalRevenueUsd.toFixed(2)}</p>
+              </div>
+              <div>
+                <p className="text-muted-foreground">Distribution</p>
+                <p className="font-medium">{lastSettlement.distribution?.success ? "Success" : "N/A"}</p>
+              </div>
+            </div>
+            {lastSettlement.settlement.waterfallSummary && Object.keys(lastSettlement.settlement.waterfallSummary).length > 0 && (
+              <div className="mt-2 pt-2 border-t border-border/50">
+                <p className="text-muted-foreground mb-1">Waterfall Breakdown</p>
+                <div className="grid grid-cols-3 md:grid-cols-6 gap-2">
+                  {Object.entries(lastSettlement.settlement.waterfallSummary).map(([key, val]) => (
+                    <div key={key}>
+                      <p className="text-[10px] text-muted-foreground">{key.replace(/_/g, " ")}</p>
+                      <p className="font-medium">${(val as number).toFixed(2)}</p>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+          </CardContent>
+        </Card>
+      )}
+    </div>
+  );
+}
+
 function formatRelativeTime(iso: string): string {
   const diff = Date.now() - new Date(iso).getTime();
   const hours = Math.floor(diff / (1000 * 60 * 60));
@@ -675,6 +974,9 @@ export default function OperationsPage() {
             <TabsTrigger value="log" className="gap-1.5" data-testid="tab-log">
               <FileText className="h-3.5 w-3.5" /> Reconciliation Log
             </TabsTrigger>
+            <TabsTrigger value="sgt-pipeline" className="gap-1.5" data-testid="tab-sgt-pipeline">
+              <Workflow className="h-3.5 w-3.5" /> SGT Pipeline
+            </TabsTrigger>
           </TabsList>
 
           <div className="mt-4">
@@ -689,6 +991,9 @@ export default function OperationsPage() {
             </TabsContent>
             <TabsContent value="log">
               <ReconciliationLogTab />
+            </TabsContent>
+            <TabsContent value="sgt-pipeline">
+              <SgtPipelineTab />
             </TabsContent>
           </div>
         </Tabs>

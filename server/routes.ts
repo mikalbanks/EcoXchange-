@@ -1151,6 +1151,56 @@ export async function registerRoutes(
     }
   });
 
+  // ═══ SGT Pipeline Status (Public) ═══
+
+  app.get("/api/public/sgt-pipeline-status", async (_req, res) => {
+    try {
+      const allProjects = await storage.getAllProjects();
+      const approvedProjects = allProjects.filter(p => p.status === "APPROVED");
+
+      const projectStatuses = [];
+      for (const project of approvedProjects) {
+        const capacityKw = Number(project.capacityKw || 0);
+        const hasSolcastKey = !!process.env.SOLCAST_API_KEY;
+        const hasCoords = !!(project.latitude && project.longitude);
+
+        const projectAccounts = await db
+          .select()
+          .from(accountsTable)
+          .where(eq(accountsTable.projectId, project.id));
+
+        const hasWaterfallAccounts = projectAccounts.length >= 5;
+
+        projectStatuses.push({
+          projectId: project.id,
+          projectName: project.name,
+          capacityMW: project.capacityMW,
+          state: project.state,
+          latitude: project.latitude,
+          longitude: project.longitude,
+          pipeline: {
+            skyOracle: { status: hasSolcastKey && hasCoords ? "CONNECTED" : "STANDBY", provider: "Solcast Satellite API" },
+            utilityShadow: { status: "ACTIVE", provider: "Utility Shadow v2026.1" },
+            sgtHandshake: { status: hasSolcastKey ? "READY" : "FALLBACK_MODE", provider: "SGT Handshake Orchestrator" },
+            waterfallEngine: { status: hasWaterfallAccounts ? "CONFIGURED" : "PENDING_SETUP", provider: "Double-Entry Waterfall Engine" },
+            securitizeBridge: { status: "MOCK", provider: "Securitize RWA Protocol (Mock)" },
+          },
+        });
+      }
+
+      res.json({
+        pipelineVersion: "v2026.1",
+        totalProjects: approvedProjects.length,
+        solcastConnected: !!process.env.SOLCAST_API_KEY,
+        utilityShadowActive: true,
+        projects: projectStatuses,
+      });
+    } catch (err: any) {
+      console.error("Pipeline status error:", err);
+      res.status(500).json({ message: "Failed to fetch pipeline status" });
+    }
+  });
+
   // ═══ SGT Handshake Route ═══
 
   app.post("/api/projects/:id/sgt-handshake", requireRole("ADMIN"), async (req: any, res) => {

@@ -26,6 +26,11 @@ import {
   CheckCircle,
   MapPin,
   Activity,
+  Satellite,
+  PlugZap,
+  Workflow,
+  Landmark,
+  Coins,
 } from "lucide-react";
 
 interface ScadaSummaryData {
@@ -142,6 +147,151 @@ function FeaturedProjectSection() {
             )}
           </CardContent>
         </Card>
+      </div>
+    </section>
+  );
+}
+
+interface PipelineProject {
+  projectId: string;
+  projectName: string;
+  capacityMW: string;
+  state: string;
+  pipeline: {
+    skyOracle: { status: string; provider: string };
+    utilityShadow: { status: string; provider: string };
+    sgtHandshake: { status: string; provider: string };
+    waterfallEngine: { status: string; provider: string };
+    securitizeBridge: { status: string; provider: string };
+  };
+}
+
+interface PipelineStatus {
+  pipelineVersion: string;
+  totalProjects: number;
+  solcastConnected: boolean;
+  utilityShadowActive: boolean;
+  projects: PipelineProject[];
+}
+
+function PipelineStageIcon({ stage }: { stage: string }) {
+  switch (stage) {
+    case "skyOracle": return <Satellite className="h-5 w-5" />;
+    case "utilityShadow": return <PlugZap className="h-5 w-5" />;
+    case "sgtHandshake": return <Workflow className="h-5 w-5" />;
+    case "waterfallEngine": return <Landmark className="h-5 w-5" />;
+    case "securitizeBridge": return <Coins className="h-5 w-5" />;
+    default: return <Activity className="h-5 w-5" />;
+  }
+}
+
+function StatusDot({ status }: { status: string }) {
+  const color = status === "CONNECTED" || status === "ACTIVE" || status === "READY" || status === "CONFIGURED"
+    ? "bg-emerald-400"
+    : status === "FALLBACK_MODE" || status === "MOCK"
+    ? "bg-yellow-400"
+    : "bg-muted-foreground";
+  return <span className={`inline-block w-2 h-2 rounded-full ${color}`} />;
+}
+
+const PIPELINE_STAGES = [
+  { key: "skyOracle", label: "Sky Oracle", desc: "Satellite PV telemetry from Solcast — real-time solar irradiance and power estimates for any GPS coordinate" },
+  { key: "utilityShadow", label: "Utility Shadow", desc: "Simulated net meter data scaling consumption by project size — C&I vs utility-scale profiles with realistic noise" },
+  { key: "sgtHandshake", label: "SGT Handshake", desc: "Reconciles satellite solar estimates with net meter readings to produce verified 15-minute SGT intervals" },
+  { key: "waterfallEngine", label: "Waterfall Engine", desc: "Double-entry ledger distributing daily revenue through debt service, OpEx, reserves, platform fee, and investor yield" },
+  { key: "securitizeBridge", label: "Securitize Bridge", desc: "RWA protocol bridge for on-chain yield distribution to tokenized security holders" },
+];
+
+function SgtPipelineSection() {
+  const { data, isLoading } = useQuery<PipelineStatus>({
+    queryKey: ["/api/public/sgt-pipeline-status"],
+    queryFn: async () => {
+      const res = await fetch("/api/public/sgt-pipeline-status");
+      if (!res.ok) throw new Error("Failed");
+      return res.json();
+    },
+    staleTime: 120000,
+  });
+
+  return (
+    <section className="py-20 bg-card/30">
+      <div className="container mx-auto px-4">
+        <div className="text-center mb-12">
+          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-primary/10 border border-primary/20 mb-4">
+            <Workflow className="h-3.5 w-3.5 text-primary" />
+            <span className="text-sm font-medium text-primary">SGT Pipeline</span>
+          </div>
+          <h2 className="text-3xl font-bold mb-4" data-testid="text-pipeline-title">
+            Institutional Revenue Infrastructure
+          </h2>
+          <p className="text-muted-foreground max-w-2xl mx-auto">
+            Five-stage telemetry-to-yield pipeline connecting satellite data to investor distributions in real time
+          </p>
+        </div>
+
+        <div className="max-w-5xl mx-auto">
+          <div className="grid grid-cols-1 md:grid-cols-5 gap-3 mb-10">
+            {PIPELINE_STAGES.map((stage, i) => (
+              <div key={stage.key} className="relative">
+                <Card className="h-full group hover-elevate relative overflow-visible">
+                  <CardContent className="pt-5 pb-4 px-4 text-center">
+                    <div className="flex items-center justify-center w-10 h-10 rounded-full bg-primary/10 mx-auto mb-3 group-hover:glow-lime transition-all">
+                      <PipelineStageIcon stage={stage.key} />
+                    </div>
+                    <h4 className="text-sm font-semibold mb-1">{stage.label}</h4>
+                    <p className="text-[11px] text-muted-foreground leading-tight">{stage.desc}</p>
+                  </CardContent>
+                </Card>
+                {i < PIPELINE_STAGES.length - 1 && (
+                  <div className="hidden md:flex absolute top-1/2 -right-3 transform -translate-y-1/2 z-10">
+                    <ArrowRight className="h-4 w-4 text-primary/50" />
+                  </div>
+                )}
+              </div>
+            ))}
+          </div>
+
+          {isLoading ? (
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              {[1, 2].map((i) => <Skeleton key={i} className="h-32 w-full rounded-lg" />)}
+            </div>
+          ) : data && data.projects.length > 0 ? (
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              {data.projects.map((proj) => (
+                <Card key={proj.projectId} data-testid={`card-pipeline-${proj.projectId}`}>
+                  <CardContent className="pt-5 pb-4">
+                    <div className="flex items-center justify-between mb-3">
+                      <div>
+                        <h4 className="font-medium text-sm" data-testid={`text-pipeline-name-${proj.projectId}`}>{proj.projectName}</h4>
+                        <p className="text-xs text-muted-foreground">{proj.state} · {proj.capacityMW} MW</p>
+                      </div>
+                      <Badge variant="outline" className="text-[10px]">{data.pipelineVersion}</Badge>
+                    </div>
+                    <div className="space-y-1.5">
+                      {Object.entries(proj.pipeline).map(([key, val]) => (
+                        <div key={key} className="flex items-center justify-between text-xs">
+                          <span className="text-muted-foreground">{PIPELINE_STAGES.find(s => s.key === key)?.label || key}</span>
+                          <span className="flex items-center gap-1.5">
+                            <StatusDot status={val.status} />
+                            <span className={val.status === "CONNECTED" || val.status === "ACTIVE" || val.status === "READY" || val.status === "CONFIGURED" ? "text-emerald-400" : val.status === "MOCK" || val.status === "FALLBACK_MODE" ? "text-yellow-400" : "text-muted-foreground"}>
+                              {val.status.replace(/_/g, " ")}
+                            </span>
+                          </span>
+                        </div>
+                      ))}
+                    </div>
+                  </CardContent>
+                </Card>
+              ))}
+            </div>
+          ) : (
+            <Card>
+              <CardContent className="py-8 text-center text-sm text-muted-foreground">
+                <p>Pipeline status loading...</p>
+              </CardContent>
+            </Card>
+          )}
+        </div>
       </div>
     </section>
   );
@@ -461,6 +611,9 @@ export default function LandingPage() {
           </div>
         </div>
       </section>
+
+      {/* SGT Pipeline Infrastructure */}
+      <SgtPipelineSection />
 
       {/* Audience / Phases */}
       <section className="py-20">
