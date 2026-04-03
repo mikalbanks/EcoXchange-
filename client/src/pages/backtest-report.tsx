@@ -1,3 +1,4 @@
+import { useState, useRef, useCallback } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Header } from "@/components/header";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -11,7 +12,7 @@ import {
 import type { LucideIcon } from "lucide-react";
 import {
   Shield, CheckCircle2, AlertTriangle, TrendingUp, Zap, Clock, BarChart3,
-  Printer, FileText, MapPin, Sun, Activity,
+  Printer, FileText, MapPin, Sun, Activity, Download, Loader2,
 } from "lucide-react";
 
 interface BacktestSite {
@@ -123,7 +124,86 @@ function StatCard({ icon: Icon, label, value, sublabel, color }: {
   );
 }
 
+async function exportToPdf(element: HTMLElement, filename: string) {
+  const html2canvas = (await import("html2canvas")).default;
+  const { jsPDF } = await import("jspdf");
+
+  const printHeader = element.querySelector("[data-pdf-header]") as HTMLElement | null;
+  const actionBar = element.querySelector("[data-pdf-action-bar]") as HTMLElement | null;
+  const appHeader = element.querySelector("[data-pdf-app-header]") as HTMLElement | null;
+
+  if (printHeader) printHeader.style.display = "block";
+  if (actionBar) actionBar.style.display = "none";
+  if (appHeader) appHeader.style.display = "none";
+  element.classList.add("pdf-capture-mode");
+
+  try {
+    await new Promise(r => setTimeout(r, 300));
+
+    const canvas = await html2canvas(element, {
+      scale: 2,
+      useCORS: true,
+      backgroundColor: "#ffffff",
+      logging: false,
+      windowWidth: 1100,
+    });
+
+    const pdf = new jsPDF({ orientation: "portrait", unit: "mm", format: "a4" });
+    const pageWidth = 210;
+    const pageHeight = 297;
+    const margin = 8;
+    const contentWidth = pageWidth - margin * 2;
+    const imgHeight = (canvas.height * contentWidth) / canvas.width;
+
+    let yOffset = 0;
+    let pageNum = 0;
+    const availableHeight = pageHeight - margin * 2;
+
+    while (yOffset < imgHeight) {
+      if (pageNum > 0) pdf.addPage();
+
+      const sourceY = (yOffset / imgHeight) * canvas.height;
+      const sourceHeight = Math.min(
+        (availableHeight / imgHeight) * canvas.height,
+        canvas.height - sourceY
+      );
+      const sliceHeight = (sourceHeight / canvas.height) * imgHeight;
+
+      const sliceCanvas = document.createElement("canvas");
+      sliceCanvas.width = canvas.width;
+      sliceCanvas.height = sourceHeight;
+      const ctx = sliceCanvas.getContext("2d");
+      if (ctx) {
+        ctx.fillStyle = "#ffffff";
+        ctx.fillRect(0, 0, sliceCanvas.width, sliceCanvas.height);
+        ctx.drawImage(
+          canvas,
+          0, sourceY, canvas.width, sourceHeight,
+          0, 0, sliceCanvas.width, sourceHeight
+        );
+      }
+
+      const sliceData = sliceCanvas.toDataURL("image/png");
+      pdf.addImage(sliceData, "PNG", margin, margin, contentWidth, sliceHeight);
+
+      yOffset += availableHeight;
+      pageNum++;
+    }
+
+    const safeFilename = filename.replace(/[^a-zA-Z0-9._-]/g, "_");
+    pdf.save(safeFilename);
+  } finally {
+    element.classList.remove("pdf-capture-mode");
+    if (printHeader) printHeader.style.display = "";
+    if (actionBar) actionBar.style.display = "";
+    if (appHeader) appHeader.style.display = "";
+  }
+}
+
 export default function BacktestReportPage() {
+  const reportRef = useRef<HTMLDivElement>(null);
+  const [pdfExporting, setPdfExporting] = useState(false);
+
   const { data: report, isLoading, error } = useQuery<BacktestReportData>({
     queryKey: ["/api/public/backtest/report"],
     queryFn: async () => {
@@ -132,6 +212,20 @@ export default function BacktestReportPage() {
       return res.json();
     },
   });
+
+  const handleDownloadPdf = useCallback(async () => {
+    if (!reportRef.current || !report) return;
+    setPdfExporting(true);
+    try {
+      const dateStr = new Date(report.generatedAt).toISOString().slice(0, 10);
+      const filename = `SGT-Backtest-${report.site.siteId}-${dateStr}.pdf`;
+      await exportToPdf(reportRef.current, filename);
+    } catch (err) {
+      console.error("PDF export failed:", err);
+    } finally {
+      setPdfExporting(false);
+    }
+  }, [report]);
 
   if (isLoading) {
     return (
@@ -202,13 +296,44 @@ export default function BacktestReportPage() {
   ].filter(d => d.value > 0);
 
   return (
-    <div className="min-h-screen bg-gradient-dark print:bg-white print:text-black">
-      <div className="print:hidden">
+    <div className="min-h-screen bg-gradient-dark print:bg-white print:text-black" ref={reportRef}>
+      <style>{`
+        .pdf-capture-mode {
+          background: white !important;
+          color: black !important;
+        }
+        .pdf-capture-mode * {
+          color: black !important;
+          border-color: #d1d5db !important;
+        }
+        .pdf-capture-mode .bg-card\\/80,
+        .pdf-capture-mode .bg-card\\/50,
+        .pdf-capture-mode [class*="bg-card"] {
+          background-color: white !important;
+        }
+        .pdf-capture-mode .bg-gradient-dark {
+          background: white !important;
+        }
+        .pdf-capture-mode [class*="text-muted"] {
+          color: #4b5563 !important;
+        }
+        .pdf-capture-mode [class*="text-primary"] {
+          color: #73AC20 !important;
+        }
+        .pdf-capture-mode [class*="bg-primary\\/5"],
+        .pdf-capture-mode [class*="bg-primary\\/20"] {
+          background-color: #f0fdf4 !important;
+        }
+        .pdf-capture-mode [data-testid="stat-mae"] { color: #73AC20 !important; }
+        .pdf-capture-mode [data-testid="stat-pass-@2%"] { color: #73AC20 !important; }
+        .pdf-capture-mode [data-testid="stat-pass-@5%"] { color: #73AC20 !important; }
+      `}</style>
+      <div className="print:hidden" data-pdf-app-header>
         <Header />
       </div>
 
       <div className="container mx-auto px-4 py-8 max-w-6xl space-y-8 print:space-y-6 print:py-4">
-        <div className="flex items-center justify-between print:hidden">
+        <div className="flex items-center justify-between print:hidden" data-pdf-action-bar>
           <div>
             <div className="flex items-center gap-2 text-muted-foreground text-sm mb-2">
               <FileText className="h-4 w-4" />
@@ -222,13 +347,29 @@ export default function BacktestReportPage() {
               Generated {new Date(report.generatedAt).toLocaleDateString("en-US", { year: "numeric", month: "long", day: "numeric" })}
             </p>
           </div>
-          <Button variant="outline" size="sm" onClick={() => window.print()} data-testid="button-print">
-            <Printer className="h-4 w-4 mr-2" />
-            Print Report
-          </Button>
+          <div className="flex items-center gap-2">
+            <Button
+              variant="default"
+              size="sm"
+              onClick={handleDownloadPdf}
+              disabled={pdfExporting}
+              data-testid="button-download-pdf"
+            >
+              {pdfExporting ? (
+                <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+              ) : (
+                <Download className="h-4 w-4 mr-2" />
+              )}
+              {pdfExporting ? "Generating..." : "Download PDF"}
+            </Button>
+            <Button variant="outline" size="sm" onClick={() => window.print()} data-testid="button-print">
+              <Printer className="h-4 w-4 mr-2" />
+              Print
+            </Button>
+          </div>
         </div>
 
-        <div className="hidden print:block border-b-2 border-black pb-4 mb-6">
+        <div className="hidden print:block border-b-2 border-black pb-4 mb-6" data-pdf-header>
           <div className="flex items-center justify-between">
             <div>
               <h1 className="text-2xl font-bold">EcoXchange — SGT Backtest Validation Report</h1>
