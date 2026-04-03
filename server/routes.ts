@@ -1318,15 +1318,18 @@ export async function registerRoutes(
     }
   });
 
-  app.get("/api/public/backtest/report", async (_req, res) => {
+  app.get("/api/public/backtest/report", async (req, res) => {
     try {
       const { getCachedBacktestReport } = await import("./services/backtest-engine");
       const report = await getCachedBacktestReport();
-      const sampledIntervals = report.intervals.filter((_, i) => i % 4 === 0);
+      const sampled = req.query.sampled === "true";
+      const intervals = sampled
+        ? report.intervals.filter((_, i) => i % 4 === 0)
+        : report.intervals;
       res.json({
         site: report.site,
         statistics: report.statistics,
-        intervals: sampledIntervals,
+        intervals,
         generatedAt: report.generatedAt,
         engineVersion: report.engineVersion,
       });

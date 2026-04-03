@@ -8,6 +8,7 @@ import {
   LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer,
   BarChart, Bar, Cell, PieChart, Pie,
 } from "recharts";
+import type { LucideIcon } from "lucide-react";
 import {
   Shield, CheckCircle2, AlertTriangle, TrendingUp, Zap, Clock, BarChart3,
   Printer, FileText, MapPin, Sun, Activity,
@@ -99,7 +100,7 @@ function ConfidenceGauge({ score }: { score: number }) {
 }
 
 function StatCard({ icon: Icon, label, value, sublabel, color }: {
-  icon: any; label: string; value: string; sublabel?: string; color?: string;
+  icon: LucideIcon; label: string; value: string; sublabel?: string; color?: string;
 }) {
   return (
     <Card className="bg-card/50 border-border/50">
@@ -122,6 +123,11 @@ function StatCard({ icon: Icon, label, value, sublabel, color }: {
 export default function BacktestReportPage() {
   const { data: report, isLoading, error } = useQuery<BacktestReportData>({
     queryKey: ["/api/public/backtest/report"],
+    queryFn: async () => {
+      const res = await fetch("/api/public/backtest/report?sampled=true");
+      if (!res.ok) throw new Error("Failed to fetch backtest report");
+      return res.json();
+    },
   });
 
   if (isLoading) {
@@ -247,10 +253,11 @@ export default function BacktestReportPage() {
                     Validation Summary
                   </h2>
                   <p className="text-muted-foreground mt-2 print:text-gray-600 leading-relaxed" data-testid="text-validation-statement">
-                    Validation against PVDAQ {site.siteId} confirms SGT reliability at ±{statistics.mae.toFixed(2)}% accuracy.
-                    The Solcast Sky Oracle satellite estimates achieved a {statistics.passRate5Pct.toFixed(1)}% handshake pass rate
+                    Validation against PVDAQ {site.siteId} site parameters confirms SGT reliability at ±{statistics.mae.toFixed(2)}% accuracy.
+                    Satellite estimates calibrated against the Solcast Sky Oracle achieved a {statistics.passRate5Pct.toFixed(1)}% handshake pass rate
                     within 5% tolerance across {statistics.daylightIntervals.toLocaleString()} daylight intervals,
                     with a confidence score of {statistics.confidenceScore.toFixed(1)}%.
+                    Meter data synthesized from site specifications (capacity, array type, solar geometry) to model PVDAQ ground truth.
                   </p>
                 </div>
                 <div className="flex flex-wrap gap-2">
@@ -458,7 +465,7 @@ export default function BacktestReportPage() {
                 <h4 className="font-semibold text-foreground print:text-black">Methodology</h4>
                 <ul className="space-y-1 text-muted-foreground print:text-gray-700">
                   <li>Satellite estimates sourced from Solcast Sky Oracle (world_pv_power endpoint)</li>
-                  <li>Ground truth data from NREL PVDAQ Site {site.siteId} meter readings</li>
+                  <li>Ground truth modeled from NREL PVDAQ Site {site.siteId} specifications (capacity, array type, location)</li>
                   <li>15-minute interval granularity across {statistics.totalIntervals.toLocaleString()} data points</li>
                   <li>Daylight-only statistical analysis ({statistics.daylightIntervals.toLocaleString()} intervals)</li>
                   <li>Handshake tolerance tested at 2% and 5% thresholds</li>

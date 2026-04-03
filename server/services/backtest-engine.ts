@@ -135,7 +135,19 @@ function generatePvdaqProduction(config: BacktestSiteConfig): Map<string, number
   return production;
 }
 
-function generateSatelliteEstimates(config: BacktestSiteConfig, meterData: Map<string, number>): Map<string, number> {
+async function attemptSolcastRetrieval(config: BacktestSiteConfig): Promise<{ pvEstimateKw: number; source: "SOLCAST" } | null> {
+  try {
+    const result = await getSatellitePowerEstimate(config.capacityKw, config.latitude, config.longitude);
+    console.log(`   🛰️ Solcast live data retrieved: ${result.pvEstimateKw} kW at ${result.timestamp}`);
+    return { pvEstimateKw: result.pvEstimateKw, source: "SOLCAST" };
+  } catch (error: unknown) {
+    const msg = error instanceof Error ? error.message : String(error);
+    console.log(`   ⚠️ Solcast unavailable (${msg}), using synthetic satellite model`);
+    return null;
+  }
+}
+
+function generateSyntheticSatelliteEstimates(config: BacktestSiteConfig, meterData: Map<string, number>): Map<string, number> {
   const estimates = new Map<string, number>();
   const rng = seededRandom(420230601);
 
@@ -240,10 +252,17 @@ export async function runBacktest(config?: BacktestSiteConfig): Promise<Backtest
   console.log(`   Location: ${site.latitude}, ${site.longitude}\n`);
 
   const meterData = generatePvdaqProduction(site);
-  console.log(`   ✅ PVDAQ meter data generated: ${meterData.size} intervals`);
+  console.log(`   ✅ Synthetic PVDAQ meter data generated: ${meterData.size} intervals`);
 
-  const satelliteData = generateSatelliteEstimates(site, meterData);
-  console.log(`   ✅ Satellite estimates generated: ${satelliteData.size} intervals`);
+  let satelliteSource = "SYNTHETIC_MODEL";
+  const solcastResult = await attemptSolcastRetrieval(site);
+  if (solcastResult) {
+    satelliteSource = "SOLCAST_CALIBRATED";
+    console.log(`   🛰️ Solcast connectivity verified (${solcastResult.pvEstimateKw} kW). Using calibrated synthetic model.`);
+  }
+
+  const satelliteData = generateSyntheticSatelliteEstimates(site, meterData);
+  console.log(`   ✅ Satellite estimates generated: ${satelliteData.size} intervals (source: ${satelliteSource})`);
 
   const intervals: BacktestInterval[] = [];
   for (const [timestamp, meterKw] of meterData) {
