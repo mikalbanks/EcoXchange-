@@ -127,7 +127,7 @@ export default function BacktestReportPage() {
   const { data: report, isLoading, error } = useQuery<BacktestReportData>({
     queryKey: ["/api/public/backtest/report"],
     queryFn: async () => {
-      const res = await fetch("/api/public/backtest/report?sampled=true");
+      const res = await fetch("/api/public/backtest/report");
       if (!res.ok) throw new Error("Failed to fetch backtest report");
       return res.json();
     },
@@ -454,16 +454,16 @@ export default function BacktestReportPage() {
           <CardHeader>
             <CardTitle className="text-base flex items-center gap-2">
               <Clock className="h-4 w-4 text-primary" />
-              Sample Interval Detail (Every 4th Interval)
+              Interval Detail (Every 4th Point Rendered)
             </CardTitle>
             <p className="text-sm text-muted-foreground">
-              Showing {intervals.length.toLocaleString()} sampled intervals out of {statistics.totalIntervals.toLocaleString()} total
+              {statistics.totalIntervals.toLocaleString()} total intervals, chart renders every 4th for readability
             </p>
           </CardHeader>
           <CardContent>
             <div className="h-[300px]" data-testid="chart-interval-detail">
               <ResponsiveContainer width="100%" height="100%">
-                <LineChart data={chartData.filter((_, i) => i % 3 === 0)}>
+                <LineChart data={chartData.filter((_, i) => i % 4 === 0)}>
                   <CartesianGrid strokeDasharray="3 3" className="opacity-20" />
                   <XAxis dataKey="time" tick={{ fontSize: 9 }} interval={Math.floor(chartData.length / 30)} />
                   <YAxis tick={{ fontSize: 11 }} label={{ value: "kW", angle: -90, position: "insideLeft", style: { fontSize: 11 } }} />
