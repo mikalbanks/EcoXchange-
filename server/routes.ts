@@ -1348,7 +1348,8 @@ export async function registerRoutes(
       res.json({
         site: report.site,
         statistics: report.statistics,
-        intervalCount: report.intervals.length,
+        intervals: report.intervals,
+        satelliteSource: report.satelliteSource,
         generatedAt: report.generatedAt,
         engineVersion: report.engineVersion,
       });
