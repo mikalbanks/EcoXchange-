@@ -1,5 +1,6 @@
 import { useState, useRef, useCallback } from "react";
 import { useQuery } from "@tanstack/react-query";
+import { useToast } from "@/hooks/use-toast";
 import { Header } from "@/components/header";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -203,6 +204,7 @@ async function exportToPdf(element: HTMLElement, filename: string) {
 export default function BacktestReportPage() {
   const reportRef = useRef<HTMLDivElement>(null);
   const [pdfExporting, setPdfExporting] = useState(false);
+  const { toast } = useToast();
 
   const { data: report, isLoading, error } = useQuery<BacktestReportData>({
     queryKey: ["/api/public/backtest/report"],
@@ -220,12 +222,14 @@ export default function BacktestReportPage() {
       const dateStr = new Date(report.generatedAt).toISOString().slice(0, 10);
       const filename = `SGT-Backtest-${report.site.siteId}-${dateStr}.pdf`;
       await exportToPdf(reportRef.current, filename);
+      toast({ title: "PDF downloaded", description: filename });
     } catch (err) {
       console.error("PDF export failed:", err);
+      toast({ title: "PDF export failed", description: "Please try again or use Print Report instead.", variant: "destructive" });
     } finally {
       setPdfExporting(false);
     }
-  }, [report]);
+  }, [report, toast]);
 
   if (isLoading) {
     return (
@@ -364,7 +368,7 @@ export default function BacktestReportPage() {
             </Button>
             <Button variant="outline" size="sm" onClick={() => window.print()} data-testid="button-print">
               <Printer className="h-4 w-4 mr-2" />
-              Print
+              Print Report
             </Button>
           </div>
         </div>
