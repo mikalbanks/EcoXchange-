@@ -1330,6 +1330,7 @@ export async function registerRoutes(
         site: report.site,
         statistics: report.statistics,
         intervals,
+        satelliteSource: report.satelliteSource,
         generatedAt: report.generatedAt,
         engineVersion: report.engineVersion,
       });

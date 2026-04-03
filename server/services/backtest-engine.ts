@@ -1,4 +1,4 @@
-import { getSatellitePowerEstimate } from "./solcast";
+import axios from "axios";
 
 export interface BacktestSiteConfig {
   siteId: string;
@@ -41,10 +41,13 @@ export interface BacktestStatistics {
   };
 }
 
+export type SatelliteSource = "SOLCAST_HISTORICAL" | "SYNTHETIC_FALLBACK";
+
 export interface BacktestReport {
   site: BacktestSiteConfig;
   statistics: BacktestStatistics;
   intervals: BacktestInterval[];
+  satelliteSource: SatelliteSource;
   generatedAt: string;
   engineVersion: string;
 }
@@ -135,43 +138,132 @@ function generatePvdaqProduction(config: BacktestSiteConfig): Map<string, number
   return production;
 }
 
-async function attemptSolcastRetrieval(config: BacktestSiteConfig): Promise<{ pvEstimateKw: number; source: "SOLCAST" } | null> {
+async function fetchSolcastHistoricalSeries(
+  config: BacktestSiteConfig,
+  timestamps: string[],
+): Promise<Map<string, number> | null> {
+  const SOLCAST_API_KEY = process.env.SOLCAST_API_KEY;
+  if (!SOLCAST_API_KEY) {
+    console.log(`   ⚠️ SOLCAST_API_KEY not configured, using synthetic satellite model`);
+    return null;
+  }
+
   try {
-    const result = await getSatellitePowerEstimate(config.capacityKw, config.latitude, config.longitude);
-    console.log(`   🛰️ Solcast live data retrieved: ${result.pvEstimateKw} kW at ${result.timestamp}`);
-    return { pvEstimateKw: result.pvEstimateKw, source: "SOLCAST" };
+    console.log(`   🛰️ Attempting Solcast estimated_actuals retrieval for ${config.capacityKw} kW at ${config.latitude}, ${config.longitude}...`);
+    const response = await axios.get(
+      "https://api.solcast.com.au/world_pv_power/estimated_actuals",
+      {
+        params: {
+          latitude: config.latitude,
+          longitude: config.longitude,
+          capacity: config.capacityKw,
+          format: "json",
+          hours: 168,
+        },
+        headers: { Authorization: `Bearer ${SOLCAST_API_KEY}` },
+        timeout: 20000,
+      },
+    );
+
+    const actuals = response.data?.estimated_actuals;
+    if (!actuals || actuals.length === 0) {
+      console.log(`   ⚠️ Solcast returned no estimated actuals, using synthetic satellite model`);
+      return null;
+    }
+
+    console.log(`   🛰️ Solcast returned ${actuals.length} estimated_actuals records`);
+
+    const solcastMap = new Map<string, number>();
+    for (const record of actuals) {
+      const periodEnd = new Date(record.period_end);
+      const periodKey = periodEnd.toISOString();
+      solcastMap.set(periodKey, record.pv_estimate || 0);
+    }
+
+    const matchedCount = timestamps.filter(t => solcastMap.has(t)).length;
+    const coveragePct = (matchedCount / timestamps.filter(t => {
+      const h = new Date(t).getUTCHours();
+      return h >= 5 && h <= 20;
+    }).length) * 100;
+
+    if (coveragePct < 10) {
+      console.log(`   ⚠️ Solcast coverage too low (${coveragePct.toFixed(1)}% of daylight intervals). Historical period ${config.startDate}–${config.endDate} not available in estimated_actuals window.`);
+      console.log(`   ⚠️ Falling back to synthetic satellite model (Solcast estimated_actuals only covers recent ~7 days)`);
+      return null;
+    }
+
+    console.log(`   ✅ Solcast historical data matched ${matchedCount}/${timestamps.length} intervals (${coveragePct.toFixed(1)}% daylight coverage)`);
+    return solcastMap;
   } catch (error: unknown) {
-    const msg = error instanceof Error ? error.message : String(error);
-    console.log(`   ⚠️ Solcast unavailable (${msg}), using synthetic satellite model`);
+    if (axios.isAxiosError(error)) {
+      const status = error.response?.status;
+      if (status === 429) {
+        console.log(`   ⚠️ Solcast rate limit exceeded (HTTP 429), using synthetic satellite model`);
+      } else if (status === 401 || status === 403) {
+        console.log(`   ⚠️ Solcast auth failed (HTTP ${status}), using synthetic satellite model`);
+      } else {
+        console.log(`   ⚠️ Solcast API error (HTTP ${status}), using synthetic satellite model`);
+      }
+    } else {
+      const msg = error instanceof Error ? error.message : String(error);
+      console.log(`   ⚠️ Solcast unavailable (${msg}), using synthetic satellite model`);
+    }
     return null;
   }
 }
 
-function generateSyntheticSatelliteEstimates(config: BacktestSiteConfig, meterData: Map<string, number>): Map<string, number> {
+function generateSyntheticSatelliteEstimates(config: BacktestSiteConfig): Map<string, number> {
   const estimates = new Map<string, number>();
-  const rng = seededRandom(420230601);
+  const rng = seededRandom(720230601);
 
-  for (const [timestamp, meterKw] of meterData) {
-    if (meterKw === 0) {
-      estimates.set(timestamp, 0);
-      continue;
-    }
+  const start = new Date(config.startDate + "T00:00:00Z");
+  const end = new Date(config.endDate + "T23:59:59Z");
 
-    const biasPct = (rng() - 0.48) * 0.06;
-    const noisePct = (rng() - 0.5) * 0.04;
-    const satelliteKw = meterKw * (1 + biasPct + noisePct);
+  let dailyCloudPattern = 0.85;
 
-    const hour = new Date(timestamp).getUTCHours() + new Date(timestamp).getUTCMinutes() / 60;
-    let transientError = 0;
-    if (rng() < 0.03) {
-      transientError = meterKw * (rng() * 0.15) * (rng() < 0.5 ? 1 : -1);
-    }
+  for (let d = new Date(start); d <= end; d.setUTCDate(d.getUTCDate() + 1)) {
+    const dayOfYear = Math.floor((d.getTime() - new Date(d.getUTCFullYear(), 0, 0).getTime()) / 86400000);
 
-    if (hour < 7 || hour > 19) {
-      const edgeNoise = meterKw * (rng() - 0.5) * 0.12;
-      estimates.set(timestamp, Math.max(0, Number((satelliteKw + edgeNoise).toFixed(2))));
-    } else {
-      estimates.set(timestamp, Math.max(0, Number((satelliteKw + transientError).toFixed(2))));
+    dailyCloudPattern = 0.82 + rng() * 0.16;
+    const hasMorningCloud = rng() < 0.22;
+    const hasAfternoonCloud = rng() < 0.18;
+
+    for (let interval = 0; interval < 96; interval++) {
+      const hour = interval * 0.25;
+      const ts = new Date(d);
+      ts.setUTCHours(Math.floor(hour), (hour % 1) * 60, 0, 0);
+      const key = ts.toISOString();
+
+      const elev = solarElevation(dayOfYear, hour, config.latitude);
+
+      if (elev <= 2) {
+        estimates.set(key, 0);
+        continue;
+      }
+
+      const airmass = 1 / Math.sin(Math.max(elev, 5) * Math.PI / 180);
+      const clearSkyFraction = Math.pow(0.7, Math.pow(airmass, 0.678));
+
+      const trackingBoost = config.arrayType === "horizontal_single_axis" ? 1.15 : 1.0;
+      const elevNorm = Math.sin(elev * Math.PI / 180);
+
+      let cloudFactor = dailyCloudPattern;
+      if (hasMorningCloud && hour < 10) cloudFactor *= (0.62 + rng() * 0.28);
+      if (hasAfternoonCloud && hour > 14) cloudFactor *= (0.67 + rng() * 0.23);
+
+      const tempDerate = hour > 11 && hour < 16 ? (0.94 + rng() * 0.04) : (0.97 + rng() * 0.02);
+      const soiling = 0.975;
+
+      let powerKw = config.capacityKw * elevNorm * clearSkyFraction * trackingBoost * cloudFactor * tempDerate * soiling;
+
+      const irradianceNoise = 1.0 + (rng() - 0.5) * 0.05;
+      powerKw *= irradianceNoise;
+
+      if (powerKw > config.capacityKw * 0.95) {
+        powerKw = config.capacityKw * (0.93 + rng() * 0.05);
+      }
+
+      estimates.set(key, Math.max(0, Number(powerKw.toFixed(2))));
     }
   }
 
@@ -254,15 +346,24 @@ export async function runBacktest(config?: BacktestSiteConfig): Promise<Backtest
   const meterData = generatePvdaqProduction(site);
   console.log(`   ✅ Synthetic PVDAQ meter data generated: ${meterData.size} intervals`);
 
-  let satelliteSource = "SYNTHETIC_MODEL";
-  const solcastResult = await attemptSolcastRetrieval(site);
-  if (solcastResult) {
-    satelliteSource = "SOLCAST_CALIBRATED";
-    console.log(`   🛰️ Solcast connectivity verified (${solcastResult.pvEstimateKw} kW). Using calibrated synthetic model.`);
-  }
+  const allTimestamps = Array.from(meterData.keys());
+  let satelliteSource: SatelliteSource = "SYNTHETIC_FALLBACK";
+  let satelliteData: Map<string, number>;
 
-  const satelliteData = generateSyntheticSatelliteEstimates(site, meterData);
-  console.log(`   ✅ Satellite estimates generated: ${satelliteData.size} intervals (source: ${satelliteSource})`);
+  const solcastSeries = await fetchSolcastHistoricalSeries(site, allTimestamps);
+  if (solcastSeries) {
+    satelliteSource = "SOLCAST_HISTORICAL";
+    satelliteData = solcastSeries;
+    for (const ts of allTimestamps) {
+      if (!satelliteData.has(ts)) {
+        satelliteData.set(ts, 0);
+      }
+    }
+    console.log(`   ✅ Using Solcast historical data as satellite truth (${satelliteData.size} intervals)`);
+  } else {
+    satelliteData = generateSyntheticSatelliteEstimates(site);
+    console.log(`   ✅ Using synthetic satellite model as fallback (${satelliteData.size} intervals)`);
+  }
 
   const intervals: BacktestInterval[] = [];
   for (const [timestamp, meterKw] of meterData) {
@@ -310,12 +411,15 @@ export async function runBacktest(config?: BacktestSiteConfig): Promise<Backtest
   console.log(`║    1-2%: ${statistics.errorBuckets.within2Pct} intervals                           ║`);
   console.log(`║    2-5%: ${statistics.errorBuckets.within5Pct} intervals                           ║`);
   console.log(`║    >5%:  ${statistics.errorBuckets.above5Pct} intervals                            ║`);
+  console.log(`╠══════════════════════════════════════════════════╣`);
+  console.log(`║  Satellite Source: ${satelliteSource.padEnd(29)}║`);
   console.log(`╚══════════════════════════════════════════════════╝\n`);
 
   return {
     site,
     statistics,
     intervals,
+    satelliteSource,
     generatedAt: new Date().toISOString(),
     engineVersion: "v2026.1-backtest",
   };
