@@ -73,6 +73,7 @@ import YieldSimulationPage from "@/pages/yield-simulation";
 
 import PerformancePage from "@/pages/performance";
 import OperationsPage from "@/pages/operations";
+import BacktestReportPage from "@/pages/backtest-report";
 
 function ProtectedRoute({ 
   children, 
@@ -112,6 +113,7 @@ function Router() {
       <Route path="/yield-simulation" component={YieldSimulationPage} />
 
       <Route path="/performance" component={PerformancePage} />
+      <Route path="/backtest-report" component={BacktestReportPage} />
       <Route path="/privacy" component={PrivacyPolicy} />
       
       <Route path="/developer">

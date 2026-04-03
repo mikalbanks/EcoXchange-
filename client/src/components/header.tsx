@@ -19,7 +19,7 @@ export function Header() {
   const { user, logout, isLoading } = useAuth();
   const [location] = useLocation();
 
-  const isPublicPage = location === "/" || location === "/about" || location === "/compliance" || location === "/yield-simulation" || location === "/performance";
+  const isPublicPage = location === "/" || location === "/about" || location === "/compliance" || location === "/yield-simulation" || location === "/performance" || location === "/backtest-report";
 
   return (
     <header className="sticky top-0 z-50 w-full border-b border-border/40 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">

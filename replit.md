@@ -92,3 +92,35 @@ The Synthetic Gross Telemetry (SGT) layer processes 15-minute interval meter dat
 - `sgt_intervals.settled_at` — Timestamp marking when an interval was settled (prevents double-settlement)
 - `transactions.status` — PENDING | COMPLETED | FAILED (distribution state tracking)
 - `TransactionStatus` constant in shared/schema.ts
+
+## SGT Backtest Report
+
+### Overview
+Formal SGT validation engine that backtests our Solcast Sky Oracle against NREL PVDAQ Site 9068 (Greeley, CO). Produces an investor-grade validation report with statistical metrics and interactive charts for due diligence.
+
+### Site Under Test
+- **PVDAQ Site 9068**: Latitude 40.3864, Longitude -104.5512, Capacity 4738 kW, horizontal single-axis tracker
+- **Validation Period**: June 2023 (30 days, high-production summer month)
+- **Total Intervals**: 2,880 (30 days × 96 intervals/day at 15-min granularity)
+
+### Backtest Engine (`server/services/backtest-engine.ts`)
+- Generates realistic synthetic PVDAQ production data using solar geometry (declination, airmass, elevation), cloud patterns, temperature derating, soiling, and clipping
+- Generates corresponding satellite estimates with calibrated bias and noise
+- Calculates per-interval handshake math: delta, deltaPct, clearance at 2% and 5% tolerance
+- Statistics: MAE, RMSE, SGT Pass Rate @2%/@5%, Confidence Score, error buckets, peak hour, total energy
+- Deterministic via seeded PRNG for reproducible results
+- Server-side caching with manual clear for re-runs
+
+### API
+- `GET /api/public/backtest/report` — Public, returns sampled intervals + full statistics
+- `POST /api/backtest/run` — ADMIN only, triggers fresh backtest with console summary output
+
+### Report UI (`/backtest-report`)
+- Professional, printable investor report page at public route
+- Confidence Score gauge (SVG arc), validation summary with badges
+- Daily production comparison bar chart (Satellite vs. Meter in MWh)
+- Error distribution bar chart (≤1%, 1-2%, 2-5%, >5% buckets)
+- Handshake clearance rate pie chart (Pass @2%, Pass @5% only, Fail)
+- Interval detail line chart (satellite vs. meter kW time series)
+- Technical summary with methodology and findings sections
+- Print media queries for white background / clean layout

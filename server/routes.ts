@@ -1318,5 +1318,41 @@ export async function registerRoutes(
     }
   });
 
+  app.get("/api/public/backtest/report", async (_req, res) => {
+    try {
+      const { getCachedBacktestReport } = await import("./services/backtest-engine");
+      const report = await getCachedBacktestReport();
+      const sampledIntervals = report.intervals.filter((_, i) => i % 4 === 0);
+      res.json({
+        site: report.site,
+        statistics: report.statistics,
+        intervals: sampledIntervals,
+        generatedAt: report.generatedAt,
+        engineVersion: report.engineVersion,
+      });
+    } catch (error: any) {
+      console.error("Backtest report error:", error);
+      res.status(500).json({ message: error.message || "Failed to generate backtest report" });
+    }
+  });
+
+  app.post("/api/backtest/run", requireRole("ADMIN"), async (_req: any, res) => {
+    try {
+      const { runBacktest, clearBacktestCache } = await import("./services/backtest-engine");
+      clearBacktestCache();
+      const report = await runBacktest();
+      res.json({
+        site: report.site,
+        statistics: report.statistics,
+        intervalCount: report.intervals.length,
+        generatedAt: report.generatedAt,
+        engineVersion: report.engineVersion,
+      });
+    } catch (error: any) {
+      console.error("Backtest run error:", error);
+      res.status(500).json({ message: error.message || "Failed to run backtest" });
+    }
+  });
+
   return httpServer;
 }
