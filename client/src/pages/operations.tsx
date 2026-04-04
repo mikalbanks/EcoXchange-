@@ -34,6 +34,10 @@ import {
   Coins,
   Play,
   MapPin,
+  Download,
+  ChevronDown,
+  ChevronUp,
+  ExternalLink,
 } from "lucide-react";
 
 interface OperationsDataSource {
@@ -287,6 +291,115 @@ interface CsvPreviewData {
   sampleRows: Array<{ timestamp: string; productionKwh: number; capacityFactor?: number }>;
 }
 
+function SampleDataCard() {
+  return (
+    <Card className="border-primary/20 bg-primary/5" data-testid="card-sample-data">
+      <CardContent className="pt-5 pb-4">
+        <div className="flex items-start gap-3">
+          <div className="flex items-center justify-center w-9 h-9 rounded-lg bg-primary/10 text-primary shrink-0">
+            <Download className="h-4 w-4" />
+          </div>
+          <div className="flex-1">
+            <h4 className="font-medium text-sm mb-1">Try with Sample Data</h4>
+            <p className="text-xs text-muted-foreground mb-3">
+              Download realistic solar production datasets to test the full ingestion pipeline.
+            </p>
+            <div className="flex flex-wrap gap-2">
+              <a
+                href="/samples/imperial_valley_solar_12mo.csv"
+                download
+                className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-md bg-background border border-border text-xs font-medium hover:border-primary/50 transition-colors"
+                data-testid="link-sample-imperial"
+              >
+                <Download className="h-3 w-3" />
+                Imperial Valley — 12mo Monthly
+              </a>
+              <a
+                href="/samples/lancaster_sun_ranch_daily_q4.csv"
+                download
+                className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-md bg-background border border-border text-xs font-medium hover:border-primary/50 transition-colors"
+                data-testid="link-sample-lancaster"
+              >
+                <Download className="h-3 w-3" />
+                Lancaster Sun Ranch — 90d Daily
+              </a>
+            </div>
+          </div>
+        </div>
+      </CardContent>
+    </Card>
+  );
+}
+
+function DemoGuideCard() {
+  const [dismissed, setDismissed] = useState(() => {
+    try { return localStorage.getItem("ecoxchange-demo-guide-dismissed") === "true"; }
+    catch { return false; }
+  });
+  const [expanded, setExpanded] = useState(true);
+
+  if (dismissed) return null;
+
+  const steps = [
+    { num: 1, label: "Upload CSV", desc: "Upload sample or real production data", tab: "upload" },
+    { num: 2, label: "View Data Sources", desc: "Verify ingested data quality and status", tab: "sources" },
+    { num: 3, label: "Run SGT Handshake", desc: "Validate satellite vs meter data", tab: "sgt-pipeline" },
+    { num: 4, label: "Run Waterfall Settlement", desc: "Distribute revenue across tiers", tab: "sgt-pipeline" },
+    { num: 5, label: "View Performance", desc: "See production charts and yield dashboard", href: "/performance" },
+    { num: 6, label: "View Backtest Report", desc: "Review SGT validation results", href: "/backtest-report" },
+    { num: 7, label: "Download PDF", desc: "Export investor-ready report", href: "/backtest-report" },
+  ];
+
+  function handleDismiss() {
+    setDismissed(true);
+    try { localStorage.setItem("ecoxchange-demo-guide-dismissed", "true"); }
+    catch {}
+  }
+
+  return (
+    <Card className="border-primary/30 bg-gradient-to-r from-primary/5 to-transparent mb-4" data-testid="card-demo-guide">
+      <CardContent className="pt-5 pb-4">
+        <div className="flex items-start justify-between mb-2">
+          <div className="flex items-center gap-2">
+            <Play className="h-4 w-4 text-primary" />
+            <h4 className="font-medium text-sm">Partner Demo Walkthrough</h4>
+            <Badge variant="outline" className="text-[10px] border-primary/30 text-primary">7 steps</Badge>
+          </div>
+          <div className="flex items-center gap-1">
+            <Button variant="ghost" size="sm" className="h-7 px-2" onClick={() => setExpanded(!expanded)} data-testid="button-toggle-guide">
+              {expanded ? <ChevronUp className="h-3.5 w-3.5" /> : <ChevronDown className="h-3.5 w-3.5" />}
+            </Button>
+            <Button variant="ghost" size="sm" className="h-7 px-2 text-muted-foreground hover:text-foreground" onClick={handleDismiss} data-testid="button-dismiss-guide">
+              <XCircle className="h-3.5 w-3.5" />
+            </Button>
+          </div>
+        </div>
+        <p className="text-xs text-muted-foreground mb-3">
+          Follow these steps to demonstrate the full telemetry-to-yield pipeline for partners and investors.
+        </p>
+        {expanded && (
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-2" data-testid="guide-steps">
+            {steps.map((step) => (
+              <div
+                key={step.num}
+                className="flex items-start gap-2 p-2 rounded-md bg-background/50 border border-border/50 text-xs"
+              >
+                <span className="flex items-center justify-center w-5 h-5 rounded-full bg-primary/10 text-primary text-[10px] font-bold shrink-0 mt-0.5">
+                  {step.num}
+                </span>
+                <div>
+                  <p className="font-medium">{step.label}</p>
+                  <p className="text-muted-foreground text-[10px]">{step.desc}</p>
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+      </CardContent>
+    </Card>
+  );
+}
+
 function CsvUploadTab() {
   const { toast } = useToast();
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
@@ -390,11 +503,13 @@ function CsvUploadTab() {
       }
       const data = await res.json();
       const dupeMsg = data.skippedDuplicates > 0 ? ` (${data.skippedDuplicates} duplicates skipped)` : "";
-      toast({ title: "Data Ingested", description: `${data.recordsIngested} records imported successfully${dupeMsg}.` });
+      toast({ title: "Data Ingested", description: `${data.recordsIngested} records imported successfully${dupeMsg}. Performance views updated.` });
       setSelectedFile(null);
       setPreview(null);
       queryClient.invalidateQueries({ queryKey: ["/api/operations/data-sources"] });
       queryClient.invalidateQueries({ queryKey: ["/api/projects/all-for-upload"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/public/backtest/report"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/performance"] });
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : "Failed to ingest CSV";
       toast({ title: "Ingestion Failed", description: msg, variant: "destructive" });
@@ -539,6 +654,8 @@ function CsvUploadTab() {
         </Card>
       )}
 
+      <SampleDataCard />
+
       <Card>
         <CardContent className="pt-6">
           <div className="flex items-start gap-3">
@@ -597,7 +714,7 @@ function ConnectorsTab() {
       <div className="flex items-center justify-between">
         <p className="text-sm text-muted-foreground">Available SCADA monitoring platform connectors</p>
         <Badge variant="outline" className="text-xs gap-1">
-          <Info className="h-3 w-3" /> Demo / Prototype
+          <Info className="h-3 w-3" /> Integration Preview
         </Badge>
       </div>
 
@@ -664,7 +781,7 @@ function ReconciliationLogTab() {
       <div className="flex items-center justify-between">
         <p className="text-sm text-muted-foreground">History of data ingestion events and quality checks</p>
         <Badge variant="outline" className="text-xs gap-1">
-          <Info className="h-3 w-3" /> Demo Data
+          <Info className="h-3 w-3" /> Sample Events
         </Badge>
       </div>
 
@@ -765,7 +882,7 @@ function PublishMetricsSection() {
                 This action simulates a cache refresh and metrics recalculation.
               </p>
               <Badge variant="outline" className="text-[10px] gap-1 mt-1.5">
-                <Info className="h-2.5 w-2.5" /> Demo / Prototype
+                <Info className="h-2.5 w-2.5" /> Auto-publishes after CSV ingest
               </Badge>
             </div>
           </div>
@@ -1120,11 +1237,12 @@ export default function OperationsPage() {
         { label: "Operations" },
       ]}
       actions={
-        <Badge variant="outline" className="gap-1 text-xs">
-          <Activity className="h-3 w-3" /> Prototype
+        <Badge variant="outline" className="gap-1 text-xs border-primary/30 text-primary">
+          <Activity className="h-3 w-3" /> Operations Center
         </Badge>
       }
     >
+      <DemoGuideCard />
       <PublishMetricsSection />
 
       <div className="mt-6">

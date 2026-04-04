@@ -1474,7 +1474,7 @@ export async function registerRoutes(
 
       const { projectId, meterDataSource } = req.body || {};
       let config;
-      if (projectId && meterDataSource === "stored") {
+      if (projectId) {
         const project = await storage.getProject(projectId);
         if (project) {
           config = {
@@ -1486,8 +1486,7 @@ export async function registerRoutes(
             arrayType: "fixed",
             startDate: "2023-06-01",
             endDate: "2024-05-31",
-            projectId: project.id,
-            meterDataSource: "stored" as const,
+            ...(meterDataSource === "stored" ? { projectId: project.id, meterDataSource: "stored" as const } : {}),
           };
         }
       }

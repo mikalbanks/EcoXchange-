@@ -1,11 +1,13 @@
 import { useState, useRef, useCallback } from "react";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useMutation } from "@tanstack/react-query";
+import { queryClient } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 import { Header } from "@/components/header";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
+import { Switch } from "@/components/ui/switch";
 import {
   LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer,
   BarChart, Bar, Cell, PieChart, Pie,
@@ -13,7 +15,7 @@ import {
 import type { LucideIcon } from "lucide-react";
 import {
   Shield, CheckCircle2, AlertTriangle, TrendingUp, Zap, Clock, BarChart3,
-  Printer, FileText, MapPin, Sun, Activity, Download, Loader2,
+  Printer, FileText, MapPin, Sun, Activity, Download, Loader2, Database, RefreshCw,
 } from "lucide-react";
 
 interface BacktestSite {
@@ -201,9 +203,14 @@ async function exportToPdf(element: HTMLElement, filename: string) {
   }
 }
 
+type MeterDataSource = "synthetic" | "stored";
+
 export default function BacktestReportPage() {
   const reportRef = useRef<HTMLDivElement>(null);
   const [pdfExporting, setPdfExporting] = useState(false);
+  const [useRealData, setUseRealData] = useState(false);
+  const [selectedProjectId, setSelectedProjectId] = useState("proj1");
+  const [meterSource, setMeterSource] = useState<MeterDataSource>("synthetic");
   const { toast } = useToast();
 
   const { data: report, isLoading, error } = useQuery<BacktestReportData>({
@@ -214,6 +221,35 @@ export default function BacktestReportPage() {
       return res.json();
     },
   });
+
+  const runBacktestMutation = useMutation({
+    mutationFn: async ({ projectId, meterDataSource }: { projectId: string; meterDataSource: MeterDataSource }) => {
+      const res = await fetch("/api/backtest/run", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        credentials: "include",
+        body: JSON.stringify({ projectId, meterDataSource: meterDataSource === "stored" ? "stored" : undefined }),
+      });
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({ message: "Failed to run backtest" }));
+        throw new Error(err.message);
+      }
+      return res.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/public/backtest/report"] });
+      toast({ title: "Backtest Complete", description: `Report regenerated using ${useRealData ? "stored meter" : "synthetic"} data.` });
+    },
+    onError: (err: Error) => {
+      toast({ title: "Backtest Failed", description: err.message, variant: "destructive" });
+    },
+  });
+
+  function handleRunBacktest() {
+    const src: MeterDataSource = useRealData ? "stored" : "synthetic";
+    setMeterSource(src);
+    runBacktestMutation.mutate({ projectId: selectedProjectId, meterDataSource: src });
+  }
 
   const handleDownloadPdf = useCallback(async () => {
     if (!reportRef.current || !report) return;
@@ -343,6 +379,11 @@ export default function BacktestReportPage() {
               <FileText className="h-4 w-4" />
               <span>SGT Validation Report</span>
               <Badge variant="outline" className="text-xs">{report.engineVersion}</Badge>
+              {meterSource === "stored" && (
+                <Badge className="bg-emerald-500/20 text-emerald-400 border-emerald-500/30 text-xs gap-1" data-testid="badge-real-data">
+                  <Database className="h-3 w-3" /> Real Meter Data
+                </Badge>
+              )}
             </div>
             <h1 className="text-3xl md:text-4xl font-bold tracking-tight" data-testid="text-report-title">
               SGT Backtest Report
@@ -372,6 +413,50 @@ export default function BacktestReportPage() {
             </Button>
           </div>
         </div>
+
+        <Card className="print:hidden border-border/50" data-testid="card-backtest-controls">
+          <CardContent className="pt-5 pb-4">
+            <div className="flex flex-col sm:flex-row sm:items-center gap-4">
+              <div className="flex items-center gap-3 flex-1">
+                <div>
+                  <label className="text-xs font-medium text-muted-foreground mb-1 block">Project</label>
+                  <select
+                    className="bg-background border border-border rounded-md px-3 py-1.5 text-sm min-w-[200px]"
+                    value={selectedProjectId}
+                    onChange={(e) => setSelectedProjectId(e.target.value)}
+                    data-testid="select-backtest-project"
+                  >
+                    <option value="proj1">Imperial Valley Solar I (12 MW)</option>
+                    <option value="proj3">Lancaster Sun Ranch (25 MW)</option>
+                  </select>
+                </div>
+                <div className="flex items-center gap-2 pt-4">
+                  <Switch
+                    checked={useRealData}
+                    onCheckedChange={setUseRealData}
+                    data-testid="switch-real-data"
+                  />
+                  <label className="text-xs font-medium cursor-pointer" onClick={() => setUseRealData(!useRealData)}>
+                    Use Stored Meter Data
+                  </label>
+                </div>
+              </div>
+              <Button
+                size="sm"
+                onClick={handleRunBacktest}
+                disabled={runBacktestMutation.isPending}
+                className="shrink-0"
+                data-testid="button-run-backtest"
+              >
+                {runBacktestMutation.isPending ? (
+                  <><RefreshCw className="h-3.5 w-3.5 mr-1.5 animate-spin" /> Running...</>
+                ) : (
+                  <><Activity className="h-3.5 w-3.5 mr-1.5" /> Run Backtest</>
+                )}
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
 
         <div className="hidden print:block border-b-2 border-black pb-4 mb-6" data-pdf-header>
           <div className="flex items-center justify-between">
