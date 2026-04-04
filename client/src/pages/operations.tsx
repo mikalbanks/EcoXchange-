@@ -345,7 +345,7 @@ function DemoGuideCard({ onSwitchTab }: { onSwitchTab?: (tab: string) => void })
     { num: 2, label: "View Data Sources", desc: "Verify ingested data quality and status", tab: "sources" },
     { num: 3, label: "Run SGT Handshake", desc: "Validate satellite vs meter data", tab: "sgt-pipeline" },
     { num: 4, label: "Run Waterfall Settlement", desc: "Distribute revenue across tiers", tab: "sgt-pipeline" },
-    { num: 5, label: "View Performance", desc: "See production charts and yield dashboard", href: "/performance" },
+    { num: 5, label: "View Performance", desc: "See production charts and yield dashboard", href: "/performance/proj1" },
     { num: 6, label: "View Backtest Report", desc: "Review SGT validation results", href: "/backtest-report" },
     { num: 7, label: "Download PDF", desc: "Export investor-ready report", href: "/backtest-report" },
   ];
