@@ -331,7 +331,7 @@ function SampleDataCard() {
   );
 }
 
-function DemoGuideCard() {
+function DemoGuideCard({ onSwitchTab }: { onSwitchTab?: (tab: string) => void }) {
   const [dismissed, setDismissed] = useState(() => {
     try { return localStorage.getItem("ecoxchange-demo-guide-dismissed") === "true"; }
     catch { return false; }
@@ -340,7 +340,7 @@ function DemoGuideCard() {
 
   if (dismissed) return null;
 
-  const steps = [
+  const steps: Array<{ num: number; label: string; desc: string; tab?: string; href?: string }> = [
     { num: 1, label: "Upload CSV", desc: "Upload sample or real production data", tab: "upload" },
     { num: 2, label: "View Data Sources", desc: "Verify ingested data quality and status", tab: "sources" },
     { num: 3, label: "Run SGT Handshake", desc: "Validate satellite vs meter data", tab: "sgt-pipeline" },
@@ -354,6 +354,14 @@ function DemoGuideCard() {
     setDismissed(true);
     try { localStorage.setItem("ecoxchange-demo-guide-dismissed", "true"); }
     catch {}
+  }
+
+  function handleStepClick(step: { tab?: string; href?: string }) {
+    if (step.tab && onSwitchTab) {
+      onSwitchTab(step.tab);
+    } else if (step.href) {
+      window.location.href = step.href;
+    }
   }
 
   return (
@@ -380,18 +388,23 @@ function DemoGuideCard() {
         {expanded && (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-2" data-testid="guide-steps">
             {steps.map((step) => (
-              <div
+              <button
                 key={step.num}
-                className="flex items-start gap-2 p-2 rounded-md bg-background/50 border border-border/50 text-xs"
+                className="flex items-start gap-2 p-2 rounded-md bg-background/50 border border-border/50 text-xs text-left hover:border-primary/50 hover:bg-primary/5 transition-colors cursor-pointer"
+                onClick={() => handleStepClick(step)}
+                data-testid={`guide-step-${step.num}`}
               >
                 <span className="flex items-center justify-center w-5 h-5 rounded-full bg-primary/10 text-primary text-[10px] font-bold shrink-0 mt-0.5">
                   {step.num}
                 </span>
                 <div>
-                  <p className="font-medium">{step.label}</p>
+                  <p className="font-medium flex items-center gap-1">
+                    {step.label}
+                    {step.href && <ExternalLink className="h-2.5 w-2.5 text-muted-foreground" />}
+                  </p>
                   <p className="text-muted-foreground text-[10px]">{step.desc}</p>
                 </div>
-              </div>
+              </button>
             ))}
           </div>
         )}
@@ -1242,7 +1255,7 @@ export default function OperationsPage() {
         </Badge>
       }
     >
-      <DemoGuideCard />
+      <DemoGuideCard onSwitchTab={setActiveTab} />
       <PublishMetricsSection />
 
       <div className="mt-6">

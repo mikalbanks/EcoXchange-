@@ -1166,6 +1166,25 @@ export async function registerRoutes(
       const created = await storage.bulkCreateProduction(insertRecords);
       const skippedDupes = normalized.length - deduped.length;
 
+      const PPA_RATE_PER_MWH = 72;
+      const OPEX_RATIO = 0.15;
+      for (const prod of created) {
+        const mwh = parseFloat(prod.productionMwh);
+        const gross = mwh * PPA_RATE_PER_MWH;
+        const opex = gross * OPEX_RATIO;
+        const net = gross - opex;
+        await storage.createRevenue({
+          projectId,
+          ppaId: null,
+          productionId: prod.id,
+          periodStart: prod.periodStart,
+          periodEnd: prod.periodEnd,
+          grossRevenue: gross.toFixed(2),
+          operatingExpenses: opex.toFixed(2),
+          netRevenue: net.toFixed(2),
+        });
+      }
+
       const assessedQuality = csvConnector.assessDataQuality(result.validation);
 
       const allProjectProduction = await storage.getProductionByProject(projectId);
@@ -1458,6 +1477,7 @@ export async function registerRoutes(
         statistics: report.statistics,
         intervals,
         satelliteSource: report.satelliteSource,
+        meterDataSource: report.meterDataSource,
         generatedAt: report.generatedAt,
         engineVersion: report.engineVersion,
       });
@@ -1497,6 +1517,7 @@ export async function registerRoutes(
         statistics: report.statistics,
         intervals: report.intervals,
         satelliteSource: report.satelliteSource,
+        meterDataSource: report.meterDataSource,
         generatedAt: report.generatedAt,
         engineVersion: report.engineVersion,
       });

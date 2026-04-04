@@ -52,6 +52,7 @@ export interface BacktestReport {
   statistics: BacktestStatistics;
   intervals: BacktestInterval[];
   satelliteSource: SatelliteSource;
+  meterDataSource: MeterDataSource;
   generatedAt: string;
   engineVersion: string;
 }
@@ -494,6 +495,7 @@ export async function runBacktest(config?: BacktestSiteConfig): Promise<Backtest
     statistics,
     intervals,
     satelliteSource,
+    meterDataSource: dataSource,
     generatedAt: new Date().toISOString(),
     engineVersion: "v2026.1-backtest",
   };

@@ -60,12 +60,14 @@ interface BacktestInterval {
 }
 
 type SatelliteSource = "SOLCAST_HISTORICAL" | "SYNTHETIC_FALLBACK";
+type MeterDataSourceType = "synthetic" | "stored";
 
 interface BacktestReportData {
   site: BacktestSite;
   statistics: BacktestStatistics;
   intervals: BacktestInterval[];
   satelliteSource: SatelliteSource;
+  meterDataSource?: MeterDataSourceType;
   generatedAt: string;
   engineVersion: string;
 }
@@ -203,14 +205,11 @@ async function exportToPdf(element: HTMLElement, filename: string) {
   }
 }
 
-type MeterDataSource = "synthetic" | "stored";
-
 export default function BacktestReportPage() {
   const reportRef = useRef<HTMLDivElement>(null);
   const [pdfExporting, setPdfExporting] = useState(false);
   const [useRealData, setUseRealData] = useState(false);
   const [selectedProjectId, setSelectedProjectId] = useState("proj1");
-  const [meterSource, setMeterSource] = useState<MeterDataSource>("synthetic");
   const { toast } = useToast();
 
   const { data: report, isLoading, error } = useQuery<BacktestReportData>({
@@ -223,7 +222,7 @@ export default function BacktestReportPage() {
   });
 
   const runBacktestMutation = useMutation({
-    mutationFn: async ({ projectId, meterDataSource }: { projectId: string; meterDataSource: MeterDataSource }) => {
+    mutationFn: async ({ projectId, meterDataSource }: { projectId: string; meterDataSource: string }) => {
       const res = await fetch("/api/backtest/run", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -246,9 +245,7 @@ export default function BacktestReportPage() {
   });
 
   function handleRunBacktest() {
-    const src: MeterDataSource = useRealData ? "stored" : "synthetic";
-    setMeterSource(src);
-    runBacktestMutation.mutate({ projectId: selectedProjectId, meterDataSource: src });
+    runBacktestMutation.mutate({ projectId: selectedProjectId, meterDataSource: useRealData ? "stored" : "synthetic" });
   }
 
   const handleDownloadPdf = useCallback(async () => {
@@ -379,7 +376,7 @@ export default function BacktestReportPage() {
               <FileText className="h-4 w-4" />
               <span>SGT Validation Report</span>
               <Badge variant="outline" className="text-xs">{report.engineVersion}</Badge>
-              {meterSource === "stored" && (
+              {report.meterDataSource === "stored" && (
                 <Badge className="bg-emerald-500/20 text-emerald-400 border-emerald-500/30 text-xs gap-1" data-testid="badge-real-data">
                   <Database className="h-3 w-3" /> Real Meter Data
                 </Badge>
