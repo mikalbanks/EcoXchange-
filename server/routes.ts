@@ -1497,6 +1497,22 @@ export async function registerRoutes(
       if (projectId) {
         const project = await storage.getProject(projectId);
         if (project) {
+          let startDate = "2023-06-01";
+          let endDate = "2024-05-31";
+
+          if (meterDataSource === "stored") {
+            const dateRange = await db.execute(dsql`
+              SELECT MIN(period_start) as min_date, MAX(period_end) as max_date
+              FROM energy_production
+              WHERE project_id = ${projectId}
+            `);
+            const row = dateRange.rows?.[0];
+            if (row?.min_date && row?.max_date) {
+              startDate = new Date(row.min_date as string).toISOString().split("T")[0];
+              endDate = new Date(row.max_date as string).toISOString().split("T")[0];
+            }
+          }
+
           config = {
             siteId: project.id,
             siteName: project.name,
@@ -1504,8 +1520,8 @@ export async function registerRoutes(
             longitude: parseFloat(project.longitude || "-115.5695"),
             capacityKw: parseFloat(project.capacityKw || "0"),
             arrayType: "fixed",
-            startDate: "2023-06-01",
-            endDate: "2024-05-31",
+            startDate,
+            endDate,
             ...(meterDataSource === "stored" ? { projectId: project.id, meterDataSource: "stored" as const } : {}),
           };
         }

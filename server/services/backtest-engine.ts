@@ -407,6 +407,7 @@ export async function runBacktest(config?: BacktestSiteConfig): Promise<Backtest
   console.log(`   Meter Data Source: ${dataSource}\n`);
 
   let meterData: Map<string, number>;
+  let actualMeterSource: MeterDataSource = dataSource;
   if (dataSource === "stored" && site.projectId) {
     const storedData = await loadStoredMeterData(site.projectId, site);
     if (storedData) {
@@ -414,6 +415,7 @@ export async function runBacktest(config?: BacktestSiteConfig): Promise<Backtest
       console.log(`   ✅ Stored production data loaded: ${meterData.size} intervals from database`);
     } else {
       meterData = generatePvdaqProduction(site);
+      actualMeterSource = "synthetic";
       console.log(`   ⚠️ No stored data found, falling back to synthetic: ${meterData.size} intervals`);
     }
   } else {
@@ -495,7 +497,7 @@ export async function runBacktest(config?: BacktestSiteConfig): Promise<Backtest
     statistics,
     intervals,
     satelliteSource,
-    meterDataSource: dataSource,
+    meterDataSource: actualMeterSource,
     generatedAt: new Date().toISOString(),
     engineVersion: "v2026.1-backtest",
   };
