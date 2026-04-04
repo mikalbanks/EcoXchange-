@@ -1,9 +1,10 @@
 import { db } from "../db";
-import { projects, meters, sgtIntervals } from "@shared/schema";
-import { eq } from "drizzle-orm";
+import { projects, meters, sgtIntervals, scadaDataSources } from "@shared/schema";
+import { eq, and } from "drizzle-orm";
 import { getSatellitePowerEstimate, type SkyOracleResult } from "./solcast";
 import { getNetMeterShadow, type NetMeterShadowResult } from "./utility-shadow";
 import { addMinutes } from "date-fns";
+import { storage } from "../storage";
 
 export interface SgtHandshakeResult {
   projectId: string;
@@ -35,6 +36,62 @@ function generateSyntheticSolarEstimate(capacityKw: number): SkyOracleResult {
     isRealSite: false,
     siteName: "Synthetic Fallback (no Solcast)",
   };
+}
+
+const METERED_FRESHNESS_DAYS = 90;
+
+async function hasRealScadaData(projectId: string): Promise<boolean> {
+  try {
+    const dataSources = await storage.getScadaDataSourcesByProject(projectId);
+    const realSources = dataSources.filter(
+      s => s.status === "ACTIVE" && (s.sourceType === "CSV_UPLOAD" || s.sourceType === "CONNECTOR")
+    );
+    if (realSources.length === 0) return false;
+
+    const production = await storage.getProductionByProject(projectId);
+    const cutoff = new Date();
+    cutoff.setDate(cutoff.getDate() - METERED_FRESHNESS_DAYS);
+
+    return production.some(p =>
+      (p.source === "CSV_UPLOAD" || p.source === "SCADA") &&
+      new Date(p.periodEnd) > cutoff
+    );
+  } catch {
+    return false;
+  }
+}
+
+async function getLatestMeterReading(projectId: string, capacityKw: number): Promise<{ grossKw: number; source: string } | null> {
+  try {
+    const production = await storage.getProductionByProject(projectId);
+    const realProduction = production
+      .filter(p => p.source === "CSV_UPLOAD" || p.source === "SCADA")
+      .sort((a, b) => new Date(b.periodEnd).getTime() - new Date(a.periodEnd).getTime());
+
+    if (realProduction.length === 0) return null;
+
+    const latest = realProduction[0];
+    const mwh = parseFloat(latest.productionMwh);
+    const periodStart = new Date(latest.periodStart);
+    const periodEnd = new Date(latest.periodEnd);
+    const hoursInPeriod = (periodEnd.getTime() - periodStart.getTime()) / (1000 * 60 * 60);
+    const avgKw = (mwh * 1000) / Math.max(1, hoursInPeriod);
+
+    const hour = new Date().getUTCHours();
+    let timeOfDayFactor = 0;
+    if (hour >= 6 && hour <= 20) {
+      timeOfDayFactor = Math.sin(Math.PI * (hour - 6) / 14);
+    }
+
+    const grossKw = avgKw * (timeOfDayFactor / 0.3);
+
+    return {
+      grossKw: Math.min(capacityKw, Math.max(0, Number(grossKw.toFixed(4)))),
+      source: latest.source,
+    };
+  } catch {
+    return null;
+  }
 }
 
 export async function runSgtHandshake(
@@ -89,12 +146,37 @@ export async function runSgtHandshake(
     telemetrySources.push("Synthetic Solar Estimate (Solcast unavailable)");
   }
 
-  const utilityShadowResult = getNetMeterShadow(capacityKw, skyResult.pvEstimateKw);
-  telemetrySources.push("Utility Shadow (simulated net meter)");
+  const hasRealData = await hasRealScadaData(projectId);
+  let grossWh: number;
+  let qualityFlag: string;
+  let netWhValue: string;
 
-  const reconciledSolarKw =
-    utilityShadowResult.consumptionKw - utilityShadowResult.netMeterKw;
-  const syntheticGrossWh = (reconciledSolarKw / 4) * 1000;
+  if (hasRealData) {
+    const meterReading = await getLatestMeterReading(projectId, capacityKw);
+    if (meterReading) {
+      grossWh = (meterReading.grossKw / 4) * 1000;
+      qualityFlag = "METERED";
+      netWhValue = "0.00";
+      telemetrySources.push(`Real SCADA Data (${meterReading.source})`);
+      console.log(`📊 [SGT Handshake] Using real meter data: ${meterReading.grossKw.toFixed(2)} kW from ${meterReading.source}`);
+    } else {
+      const utilityShadowResult = getNetMeterShadow(capacityKw, skyResult.pvEstimateKw);
+      telemetrySources.push("Utility Shadow (simulated net meter)");
+      const reconciledSolarKw = utilityShadowResult.consumptionKw - utilityShadowResult.netMeterKw;
+      grossWh = (reconciledSolarKw / 4) * 1000;
+      qualityFlag = solcastSource === "SOLCAST" ? "OK" : "SYNTHETIC_FALLBACK";
+      netWhValue = ((utilityShadowResult.netMeterKw / 4) * 1000).toFixed(2);
+    }
+  } else {
+    const utilityShadowResult = getNetMeterShadow(capacityKw, skyResult.pvEstimateKw);
+    telemetrySources.push("Utility Shadow (simulated net meter)");
+    const reconciledSolarKw = utilityShadowResult.consumptionKw - utilityShadowResult.netMeterKw;
+    grossWh = (reconciledSolarKw / 4) * 1000;
+    qualityFlag = solcastSource === "SOLCAST" ? "OK" : "SYNTHETIC_FALLBACK";
+    netWhValue = ((utilityShadowResult.netMeterKw / 4) * 1000).toFixed(2);
+  }
+
+  const utilityShadowResult = getNetMeterShadow(capacityKw, skyResult.pvEstimateKw);
 
   const now = new Date();
   const intervalStart = new Date(now);
@@ -107,29 +189,29 @@ export async function runSgtHandshake(
       meterId: activeMeter.id,
       intervalStart,
       intervalEnd,
-      netWh: ((utilityShadowResult.netMeterKw / 4) * 1000).toFixed(2),
+      netWh: netWhValue,
       expectedGrossWh: ((skyResult.pvEstimateKw / 4) * 1000).toFixed(2),
-      syntheticGrossWh: syntheticGrossWh.toFixed(2),
+      syntheticGrossWh: grossWh.toFixed(2),
       irradianceWm2: (
         skyResult.pvEstimateKw > 0
           ? ((skyResult.pvEstimateKw / capacityKw) * 1000).toFixed(4)
           : "0.0000"
       ),
-      source: solcastSource === "SOLCAST" ? "SOLCAST" : "CALCULATED",
-      qualityFlag: solcastSource === "SOLCAST" ? "OK" : "SYNTHETIC_FALLBACK",
+      source: hasRealData ? "SCADA" : (solcastSource === "SOLCAST" ? "SOLCAST" : "CALCULATED"),
+      qualityFlag,
     })
     .returning();
 
   console.log(
-    `✅ [SGT Handshake] Interval #${inserted.id} created: ${syntheticGrossWh.toFixed(2)} Wh synthetic gross`,
+    `✅ [SGT Handshake] Interval #${inserted.id} created: ${grossWh.toFixed(2)} Wh gross (${qualityFlag})`,
   );
-  console.log("Utility Shadow Integrated: SGT Loop Closed.");
+  console.log(hasRealData ? "Real SCADA Data Integrated: SGT Loop Closed." : "Utility Shadow Integrated: SGT Loop Closed.");
 
   return {
     projectId: project.id,
     projectName: project.name,
     intervalId: inserted.id,
-    syntheticGrossWh: Number(syntheticGrossWh.toFixed(2)),
+    syntheticGrossWh: Number(grossWh.toFixed(2)),
     skyOracle: {
       pvEstimateKw: skyResult.pvEstimateKw,
       timestamp: skyResult.timestamp,

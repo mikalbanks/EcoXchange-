@@ -11,9 +11,11 @@ import { generateROIPrediction, type ProjectFinancialData } from "./lib/ai-predi
 import * as scadaService from "./lib/scada-service";
 import { settleProject } from "./services/settle-project";
 import { runSgtHandshake } from "./services/sgt-handshake";
+import { csvConnector } from "./services/scada-connector";
 import { db } from "./db";
 import { accounts as accountsTable, transactions as txTable, postings as postingsTable } from "@shared/schema";
 import { eq, sql as dsql } from "drizzle-orm";
+import multer from "multer";
 
 const SessionStore = MemoryStore(session);
 const SESSION_SECRET = process.env.SESSION_SECRET || crypto.randomBytes(32).toString('hex');
@@ -1082,6 +1084,129 @@ export async function registerRoutes(
     }
   });
 
+  // ─── CSV Upload ──────────────────────────────────────────────────
+
+  const upload = multer({ storage: multer.memoryStorage(), limits: { fileSize: 50 * 1024 * 1024 } });
+
+  app.post("/api/operations/csv-upload/preview", requireRole("ADMIN", "DEVELOPER"), upload.single("file"), async (req: any, res) => {
+    try {
+      if (!req.file) return res.status(400).json({ message: "No file uploaded" });
+      const result = csvConnector.parseUpload(req.file.buffer, req.file.originalname);
+      res.json({
+        success: result.success,
+        fieldMapping: result.fieldMapping,
+        validation: result.validation,
+        errors: result.errors,
+        sampleRows: result.records.slice(0, 5).map(r => ({
+          timestamp: r.timestamp.toISOString(),
+          productionKwh: r.productionKwh,
+          capacityFactor: r.capacityFactor,
+        })),
+      });
+    } catch (err: unknown) {
+      console.error("CSV preview error:", err);
+      const msg = err instanceof Error ? err.message : "Failed to parse CSV";
+      res.status(500).json({ message: msg });
+    }
+  });
+
+  app.post("/api/operations/csv-upload/ingest", requireRole("ADMIN", "DEVELOPER"), upload.single("file"), async (req: any, res) => {
+    try {
+      if (!req.file) return res.status(400).json({ message: "No file uploaded" });
+      const projectId = req.body.projectId;
+      if (!projectId) return res.status(400).json({ message: "projectId is required" });
+
+      const project = await storage.getProject(projectId);
+      if (!project) return res.status(404).json({ message: "Project not found" });
+
+      if (req.user.role === "DEVELOPER" && project.developerId !== req.user.id) {
+        return res.status(403).json({ message: "Forbidden" });
+      }
+
+      const result = csvConnector.parseUpload(req.file.buffer, req.file.originalname);
+      if (!result.success || result.records.length === 0) {
+        return res.status(400).json({ message: "CSV parse failed", errors: result.errors });
+      }
+
+      const replaceExisting = req.body.replaceExisting === "true";
+      if (replaceExisting) {
+        await storage.deleteProductionByProject(projectId);
+      }
+
+      const capacityMw = parseFloat(project.capacityMW || "0");
+
+      const sortedRecords = [...result.records].sort((a, b) => a.timestamp.getTime() - b.timestamp.getTime());
+      let granularity: "daily" | "monthly" = "monthly";
+      if (sortedRecords.length >= 2) {
+        const gap = sortedRecords[1].timestamp.getTime() - sortedRecords[0].timestamp.getTime();
+        granularity = gap < 15 * 24 * 60 * 60 * 1000 ? "daily" : "monthly";
+      }
+
+      const insertRecords = sortedRecords.map(r => {
+        const periodStart = new Date(r.timestamp);
+        let periodEnd: Date;
+        if (granularity === "daily") {
+          periodEnd = new Date(periodStart);
+          periodEnd.setUTCDate(periodEnd.getUTCDate() + 1);
+        } else {
+          periodEnd = new Date(Date.UTC(periodStart.getUTCFullYear(), periodStart.getUTCMonth() + 1, 1));
+        }
+
+        const productionMwh = r.productionKwh / 1000;
+        const hoursInPeriod = (periodEnd.getTime() - periodStart.getTime()) / (1000 * 60 * 60);
+        const cf = capacityMw > 0 && hoursInPeriod > 0
+          ? (productionMwh / (capacityMw * hoursInPeriod)).toFixed(4)
+          : r.capacityFactor?.toFixed(4) || null;
+
+        return {
+          projectId,
+          periodStart,
+          periodEnd,
+          productionMwh: productionMwh.toFixed(2),
+          capacityFactor: cf,
+          source: "CSV_UPLOAD",
+        };
+      });
+
+      const created = await storage.bulkCreateProduction(insertRecords);
+
+      const dataSources = await storage.getScadaDataSourcesByProject(projectId);
+      const csvSource = dataSources.find(s => s.sourceType === "CSV_UPLOAD");
+      if (csvSource) {
+        await storage.updateScadaDataSource(csvSource.id, {
+          status: "ACTIVE",
+          dataQuality: "MEDIUM",
+          lastSyncAt: new Date(),
+          recordCount: (csvSource.recordCount || 0) + created.length,
+        });
+      } else {
+        await storage.createScadaDataSource({
+          projectId,
+          sourceType: "CSV_UPLOAD",
+          providerName: "CSV Import",
+          status: "ACTIVE",
+          dataQuality: "MEDIUM",
+          lastSyncAt: new Date(),
+          recordCount: created.length,
+          connectorId: null,
+          configJson: null,
+          notes: `Uploaded from ${req.file.originalname}`,
+        });
+      }
+
+      res.json({
+        success: true,
+        recordsIngested: created.length,
+        validation: result.validation,
+        projectId,
+      });
+    } catch (err: unknown) {
+      console.error("CSV ingest error:", err);
+      const msg = err instanceof Error ? err.message : "Failed to ingest CSV";
+      res.status(500).json({ message: msg });
+    }
+  });
+
   // ─── AI Financial Prediction ──────────────────────────────────────
   app.post("/api/projects/:id/ai-prediction", requireAuth, async (req: any, res) => {
     try {
@@ -1340,11 +1465,32 @@ export async function registerRoutes(
     }
   });
 
-  app.post("/api/backtest/run", requireRole("ADMIN"), async (_req: any, res) => {
+  app.post("/api/backtest/run", requireRole("ADMIN"), async (req: any, res) => {
     try {
       const { runBacktest, clearBacktestCache } = await import("./services/backtest-engine");
       clearBacktestCache();
-      const report = await runBacktest();
+
+      const { projectId, meterDataSource } = req.body || {};
+      let config;
+      if (projectId && meterDataSource === "stored") {
+        const project = await storage.getProject(projectId);
+        if (project) {
+          config = {
+            siteId: project.id,
+            siteName: project.name,
+            latitude: parseFloat(project.latitude || "32.8476"),
+            longitude: parseFloat(project.longitude || "-115.5695"),
+            capacityKw: parseFloat(project.capacityKw || "0"),
+            arrayType: "fixed",
+            startDate: "2023-06-01",
+            endDate: "2024-05-31",
+            projectId: project.id,
+            meterDataSource: "stored" as const,
+          };
+        }
+      }
+
+      const report = await runBacktest(config);
       res.json({
         site: report.site,
         statistics: report.statistics,

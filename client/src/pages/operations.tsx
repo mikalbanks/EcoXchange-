@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
+import { queryClient } from "@/lib/queryClient";
 import { DashboardLayout } from "@/components/dashboard-layout";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -135,7 +136,7 @@ const DEMO_INGESTION_LOG: IngestionEvent[] = [
   },
 ];
 
-function DataSourcesTab() {
+function DataSourcesTab({ onSwitchToUpload }: { onSwitchToUpload?: () => void }) {
   const { data, isLoading } = useQuery<ProjectDataSources[]>({
     queryKey: ["/api/operations/data-sources"],
     queryFn: async () => {
@@ -143,16 +144,31 @@ function DataSourcesTab() {
       if (!res.ok) throw new Error("Failed to fetch data sources");
       return res.json();
     },
-    staleTime: 60000,
+    staleTime: 30000,
   });
+
+  const hasRealData = data?.some(({ sources }) =>
+    sources.some(s => s.sourceType === "CSV_UPLOAD" || s.sourceType === "CONNECTOR")
+  ) ?? false;
+
+  const totalRecords = data?.reduce((sum, { sources }) =>
+    sum + sources.reduce((s, ds) => s + (ds.recordCount || 0), 0), 0
+  ) ?? 0;
 
   return (
     <div className="space-y-4">
       <div className="flex items-center justify-between">
         <p className="text-sm text-muted-foreground">Connected SCADA data sources across all projects</p>
-        <Badge variant="outline" className="text-xs gap-1">
-          <Info className="h-3 w-3" /> Demo Data
-        </Badge>
+        {!hasRealData && (
+          <Badge variant="outline" className="text-xs gap-1">
+            <Info className="h-3 w-3" /> Simulated Sources
+          </Badge>
+        )}
+        {hasRealData && (
+          <Badge variant="outline" className="text-xs gap-1 border-emerald-500/30 text-emerald-400">
+            <CheckCircle className="h-3 w-3" /> {totalRecords} Records Ingested
+          </Badge>
+        )}
       </div>
 
       {isLoading ? (
@@ -176,9 +192,14 @@ function DataSourcesTab() {
               <CardContent className="pt-6">
                 <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
                   <div className="flex items-start gap-4">
-                    <div className="flex items-center justify-center w-10 h-10 rounded-lg bg-primary/10 text-primary shrink-0">
+                    <div className={`flex items-center justify-center w-10 h-10 rounded-lg shrink-0 ${
+                      ds.sourceType === "CSV_UPLOAD" ? "bg-blue-500/10 text-blue-400" :
+                      ds.sourceType === "SGT_VERIFIED" ? "bg-primary/10 text-primary" :
+                      "bg-muted text-muted-foreground"
+                    }`}>
                       {ds.sourceType === "SGT_VERIFIED" ? <Shield className="h-5 w-5" /> :
                        ds.sourceType === "CSV_UPLOAD" ? <FileUp className="h-5 w-5" /> :
+                       ds.sourceType === "CONNECTOR" ? <PlugZap className="h-5 w-5" /> :
                        <Database className="h-5 w-5" />}
                     </div>
                     <div>
@@ -186,6 +207,11 @@ function DataSourcesTab() {
                         <h4 className="font-medium text-sm" data-testid={`text-ds-name-${ds.id}`}>{project.name}</h4>
                         <QualityBadge quality={ds.dataQuality} />
                         <StatusBadge status={ds.status} />
+                        {ds.sourceType === "CSV_UPLOAD" && (
+                          <span className="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-medium bg-blue-500/10 text-blue-400 border border-blue-500/20">
+                            Real Data
+                          </span>
+                        )}
                       </div>
                       <p className="text-xs text-muted-foreground mb-1">{ds.providerName} &middot; {ds.sourceType.replace(/_/g, " ")}</p>
                       {ds.notes && <p className="text-xs text-muted-foreground/70 max-w-lg">{ds.notes}</p>}
@@ -202,6 +228,18 @@ function DataSourcesTab() {
                       </p>
                       <p>Last Sync</p>
                     </div>
+                    {ds.sourceType === "CSV_UPLOAD" && onSwitchToUpload && (
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        className="text-xs"
+                        onClick={onSwitchToUpload}
+                        data-testid={`button-reupload-${ds.id}`}
+                      >
+                        <RefreshCw className="h-3 w-3 mr-1" />
+                        Re-upload
+                      </Button>
+                    )}
                   </div>
                 </div>
               </CardContent>
@@ -230,37 +268,99 @@ function StatusBadge({ status }: { status: string }) {
   return <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-medium bg-muted text-muted-foreground border border-border"><AlertTriangle className="h-2.5 w-2.5" /> {status}</span>;
 }
 
+interface CsvPreviewData {
+  success: boolean;
+  fieldMapping: Array<{ csvColumn: string; mapsTo: string | null; status: "mapped" | "skipped" }>;
+  validation: {
+    totalRows: number;
+    validRows: number;
+    skippedRows: number;
+    dateRange: { start: string; end: string } | null;
+    gapsDetected: number;
+    duplicatesDetected: number;
+    unit: string;
+  };
+  errors: string[];
+  sampleRows: Array<{ timestamp: string; productionKwh: number; capacityFactor?: number }>;
+}
+
 function CsvUploadTab() {
   const { toast } = useToast();
-  const [selectedFile, setSelectedFile] = useState<string | null>(null);
-  const [showPreview, setShowPreview] = useState(false);
+  const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [rejectedFile, setRejectedFile] = useState<string | null>(null);
+  const [preview, setPreview] = useState<CsvPreviewData | null>(null);
+  const [previewLoading, setPreviewLoading] = useState(false);
+  const [ingesting, setIngesting] = useState(false);
+  const [selectedProjectId, setSelectedProjectId] = useState<string>("proj1");
 
-  const ALLOWED_EXTENSIONS = [".csv", ".xlsx"];
+  const { data: projectList } = useQuery<Array<{ id: string; name: string; technology: string; capacityMW: string | null }>>({
+    queryKey: ["/api/projects/all-for-upload"],
+    queryFn: async () => {
+      const dsRes = await fetch("/api/operations/data-sources", { credentials: "include" });
+      if (!dsRes.ok) return [];
+      const dsList: ProjectDataSources[] = await dsRes.json();
+      const seen = new Set<string>();
+      const projects: Array<{ id: string; name: string; technology: string; capacityMW: string | null }> = [];
+      for (const d of dsList) {
+        if (!seen.has(d.project.id)) { seen.add(d.project.id); projects.push(d.project); }
+      }
+      return projects;
+    },
+    staleTime: 60000,
+  });
+
+  const allProjects = projectList || [];
+
+  const ALLOWED_EXTENSIONS = [".csv"];
 
   function isValidFile(filename: string): boolean {
     return ALLOWED_EXTENSIONS.some((ext) => filename.toLowerCase().endsWith(ext));
   }
 
-  function handleFileSelect(filename: string) {
+  async function handleFileSelected(file: File) {
     setRejectedFile(null);
-    if (!isValidFile(filename)) {
-      setRejectedFile(filename);
+    setPreview(null);
+
+    if (!isValidFile(file.name)) {
+      setRejectedFile(file.name);
       setSelectedFile(null);
-      setShowPreview(false);
-      toast({
-        title: "Invalid File Type",
-        description: `"${filename}" is not a supported format. Please upload a .csv or .xlsx file.`,
-        variant: "destructive",
-      });
+      toast({ title: "Invalid File Type", description: `"${file.name}" is not a supported format. Please upload a .csv file.`, variant: "destructive" });
       return;
     }
-    setSelectedFile(filename);
-    setShowPreview(true);
+
+    setSelectedFile(file);
+    setPreviewLoading(true);
+
+    try {
+      const formData = new FormData();
+      formData.append("file", file);
+      const res = await fetch("/api/operations/csv-upload/preview", { method: "POST", body: formData, credentials: "include" });
+      if (!res.ok) {
+        const err = await res.json();
+        throw new Error(err.message || "Preview failed");
+      }
+      const data: CsvPreviewData = await res.json();
+      setPreview(data);
+      if (!data.success) {
+        toast({ title: "Parse Issues", description: data.errors.join("; "), variant: "destructive" });
+      }
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : "Failed to preview CSV";
+      toast({ title: "Preview Failed", description: msg, variant: "destructive" });
+    } finally {
+      setPreviewLoading(false);
+    }
   }
 
   function handleBrowseClick() {
-    handleFileSelect("production_data_q4_2025.csv");
+    const input = document.createElement("input");
+    input.type = "file";
+    input.accept = ".csv";
+    input.onchange = (e) => {
+      const file = (e.target as HTMLInputElement).files?.[0];
+      if (file) handleFileSelected(file);
+    };
+    input.click();
   }
 
   function handleDrop(e: React.DragEvent) {
@@ -268,32 +368,64 @@ function CsvUploadTab() {
     e.currentTarget.classList.remove("border-primary/50");
     const files = e.dataTransfer?.files;
     if (files && files.length > 0) {
-      handleFileSelect(files[0].name);
-    } else {
-      handleFileSelect("production_data_q4_2025.csv");
+      handleFileSelected(files[0]);
     }
   }
 
-  function handleUpload() {
-    toast({
-      title: "Upload Simulated",
-      description: "In production, this CSV would be parsed, validated, and ingested into the SCADA pipeline. This is a demo placeholder.",
-    });
-    setSelectedFile(null);
-    setShowPreview(false);
+  async function handleIngest() {
+    if (!selectedFile || !preview?.success) return;
+    setIngesting(true);
+    try {
+      const formData = new FormData();
+      formData.append("file", selectedFile);
+      formData.append("projectId", selectedProjectId);
+      formData.append("replaceExisting", "false");
+      const res = await fetch("/api/operations/csv-upload/ingest", { method: "POST", body: formData, credentials: "include" });
+      if (!res.ok) {
+        const err = await res.json();
+        throw new Error(err.message || "Ingestion failed");
+      }
+      const data = await res.json();
+      toast({ title: "Data Ingested", description: `${data.recordsIngested} records imported successfully.` });
+      setSelectedFile(null);
+      setPreview(null);
+      queryClient.invalidateQueries({ queryKey: ["/api/operations/data-sources"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/projects/all-for-upload"] });
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : "Failed to ingest CSV";
+      toast({ title: "Ingestion Failed", description: msg, variant: "destructive" });
+    } finally {
+      setIngesting(false);
+    }
   }
 
   return (
     <div className="space-y-4">
       <div className="flex items-center justify-between">
-        <p className="text-sm text-muted-foreground">Upload CSV production data for manual ingestion</p>
-        <Badge variant="outline" className="text-xs gap-1">
-          <Info className="h-3 w-3" /> Demo / Prototype
-        </Badge>
+        <p className="text-sm text-muted-foreground">Upload CSV production data for ingestion into the SCADA pipeline</p>
       </div>
 
       <Card>
         <CardContent className="pt-6">
+          <div className="mb-4">
+            <label className="text-xs font-medium text-muted-foreground mb-1.5 block">Target Project</label>
+            <select
+              className="w-full max-w-xs bg-background border border-border rounded-md px-3 py-2 text-sm"
+              value={selectedProjectId}
+              onChange={(e) => setSelectedProjectId(e.target.value)}
+              data-testid="select-csv-project"
+            >
+              {allProjects.length > 0 ? (
+                allProjects.map(p => <option key={p.id} value={p.id}>{p.name} ({p.capacityMW} MW)</option>)
+              ) : (
+                <>
+                  <option value="proj1">Imperial Valley Solar I (12 MW)</option>
+                  <option value="proj3">Lancaster Sun Ranch (25 MW)</option>
+                </>
+              )}
+            </select>
+          </div>
+
           <div
             className="border-2 border-dashed border-border rounded-lg p-8 text-center cursor-pointer hover:border-primary/50 transition-colors"
             onClick={handleBrowseClick}
@@ -304,15 +436,15 @@ function CsvUploadTab() {
           >
             <Upload className="h-10 w-10 text-muted-foreground mx-auto mb-3 opacity-40" />
             <p className="text-sm font-medium mb-1">
-              {selectedFile ? selectedFile : "Drop CSV file here or click to browse"}
+              {selectedFile ? selectedFile.name : "Drop CSV file here or click to browse"}
             </p>
             <p className="text-xs text-muted-foreground">
-              Supported formats: .csv, .xlsx &middot; Max size: 50MB
+              Supported format: .csv &middot; Max size: 50MB
             </p>
             {selectedFile && (
               <div className="mt-3 inline-flex items-center gap-2 px-3 py-1.5 bg-primary/10 rounded-md">
                 <FileCheck className="h-4 w-4 text-primary" />
-                <span className="text-xs font-medium text-primary">{selectedFile}</span>
+                <span className="text-xs font-medium text-primary">{selectedFile.name}</span>
               </div>
             )}
             {rejectedFile && (
@@ -325,7 +457,11 @@ function CsvUploadTab() {
         </CardContent>
       </Card>
 
-      {showPreview && (
+      {previewLoading && (
+        <Card><CardContent className="pt-6"><div className="flex items-center gap-3 text-sm text-muted-foreground"><RefreshCw className="h-4 w-4 animate-spin" /> Parsing CSV...</div></CardContent></Card>
+      )}
+
+      {preview && !previewLoading && (
         <Card>
           <CardHeader className="pb-3">
             <CardTitle className="text-base flex items-center gap-2">
@@ -334,24 +470,39 @@ function CsvUploadTab() {
             </CardTitle>
           </CardHeader>
           <CardContent>
+            {preview.validation.dateRange && (
+              <div className="mb-4 grid grid-cols-2 md:grid-cols-4 gap-3 text-xs">
+                <div className="bg-muted/30 rounded-md p-2.5">
+                  <p className="text-muted-foreground">Valid Rows</p>
+                  <p className="font-medium text-foreground text-sm" data-testid="text-csv-valid-rows">{preview.validation.validRows}</p>
+                </div>
+                <div className="bg-muted/30 rounded-md p-2.5">
+                  <p className="text-muted-foreground">Date Range</p>
+                  <p className="font-medium text-foreground text-sm" data-testid="text-csv-date-range">{preview.validation.dateRange.start} → {preview.validation.dateRange.end}</p>
+                </div>
+                <div className="bg-muted/30 rounded-md p-2.5">
+                  <p className="text-muted-foreground">Gaps Detected</p>
+                  <p className="font-medium text-foreground text-sm" data-testid="text-csv-gaps">{preview.validation.gapsDetected}</p>
+                </div>
+                <div className="bg-muted/30 rounded-md p-2.5">
+                  <p className="text-muted-foreground">Skipped / Duplicates</p>
+                  <p className="font-medium text-foreground text-sm">{preview.validation.skippedRows} / {preview.validation.duplicatesDetected}</p>
+                </div>
+              </div>
+            )}
+
             <div className="space-y-3" data-testid="csv-field-mapping">
               <div className="grid grid-cols-3 gap-3 text-xs font-medium text-muted-foreground border-b border-border pb-2">
                 <span>CSV Column</span>
                 <span>Maps To</span>
                 <span>Status</span>
               </div>
-              {[
-                { csv: "date", maps: "periodStart", ok: true },
-                { csv: "production_kwh", maps: "productionMwh (÷1000)", ok: true },
-                { csv: "capacity_factor", maps: "capacityFactor", ok: true },
-                { csv: "inverter_efficiency", maps: "(unmapped)", ok: false },
-                { csv: "ambient_temp_c", maps: "(unmapped)", ok: false },
-              ].map((field, i) => (
+              {preview.fieldMapping.map((field, i) => (
                 <div key={i} className="grid grid-cols-3 gap-3 text-xs items-center">
-                  <span className="font-mono text-foreground">{field.csv}</span>
-                  <span className={field.ok ? "text-foreground" : "text-muted-foreground"}>{field.maps}</span>
+                  <span className="font-mono text-foreground">{field.csvColumn}</span>
+                  <span className={field.status === "mapped" ? "text-foreground" : "text-muted-foreground"}>{field.mapsTo || "(unmapped)"}</span>
                   <span>
-                    {field.ok ? (
+                    {field.status === "mapped" ? (
                       <span className="inline-flex items-center gap-1 text-emerald-400"><CheckCircle className="h-3 w-3" /> Mapped</span>
                     ) : (
                       <span className="inline-flex items-center gap-1 text-yellow-400"><AlertTriangle className="h-3 w-3" /> Skipped</span>
@@ -360,12 +511,19 @@ function CsvUploadTab() {
                 </div>
               ))}
             </div>
+
+            {preview.errors.length > 0 && (
+              <div className="mt-3 p-3 bg-red-500/10 rounded-md text-xs text-red-400" data-testid="text-csv-errors">
+                {preview.errors.map((e, i) => <p key={i}>{e}</p>)}
+              </div>
+            )}
+
             <div className="mt-4 flex items-center gap-3">
-              <Button size="sm" onClick={handleUpload} data-testid="button-csv-upload">
-                <Upload className="h-3.5 w-3.5 mr-1.5" />
-                Ingest Data
+              <Button size="sm" onClick={handleIngest} disabled={!preview.success || ingesting} data-testid="button-csv-upload">
+                {ingesting ? <RefreshCw className="h-3.5 w-3.5 mr-1.5 animate-spin" /> : <Upload className="h-3.5 w-3.5 mr-1.5" />}
+                {ingesting ? "Ingesting..." : `Ingest ${preview.validation.validRows} Records`}
               </Button>
-              <Button size="sm" variant="outline" onClick={() => { setSelectedFile(null); setShowPreview(false); }} data-testid="button-csv-cancel">
+              <Button size="sm" variant="outline" onClick={() => { setSelectedFile(null); setPreview(null); }} data-testid="button-csv-cancel">
                 Cancel
               </Button>
             </div>
@@ -943,6 +1101,8 @@ function formatRelativeTime(iso: string): string {
 }
 
 export default function OperationsPage() {
+  const [activeTab, setActiveTab] = useState("sources");
+
   return (
     <DashboardLayout
       title="SCADA Operations"
@@ -960,7 +1120,7 @@ export default function OperationsPage() {
       <PublishMetricsSection />
 
       <div className="mt-6">
-        <Tabs defaultValue="sources" className="w-full">
+        <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
           <TabsList className="w-full justify-start" data-testid="tabs-operations">
             <TabsTrigger value="sources" className="gap-1.5" data-testid="tab-sources">
               <Database className="h-3.5 w-3.5" /> Data Sources
@@ -981,7 +1141,7 @@ export default function OperationsPage() {
 
           <div className="mt-4">
             <TabsContent value="sources">
-              <DataSourcesTab />
+              <DataSourcesTab onSwitchToUpload={() => setActiveTab("upload")} />
             </TabsContent>
             <TabsContent value="upload">
               <CsvUploadTab />

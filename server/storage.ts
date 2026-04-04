@@ -75,6 +75,8 @@ export interface IStorage {
 
   getProductionByProject(projectId: string): Promise<EnergyProduction[]>;
   createProduction(prod: InsertEnergyProduction): Promise<EnergyProduction>;
+  bulkCreateProduction(records: InsertEnergyProduction[]): Promise<EnergyProduction[]>;
+  deleteProductionByProject(projectId: string): Promise<number>;
 
   getRevenueByProject(projectId: string): Promise<RevenueRecord[]>;
   createRevenue(rev: InsertRevenueRecord): Promise<RevenueRecord>;
@@ -1066,6 +1068,25 @@ export class MemStorage implements IStorage {
     };
     this.productionRecords.set(id, newProd);
     return newProd;
+  }
+
+  async bulkCreateProduction(records: InsertEnergyProduction[]): Promise<EnergyProduction[]> {
+    const results: EnergyProduction[] = [];
+    for (const prod of records) {
+      results.push(await this.createProduction(prod));
+    }
+    return results;
+  }
+
+  async deleteProductionByProject(projectId: string): Promise<number> {
+    let count = 0;
+    for (const [id, prod] of this.productionRecords) {
+      if (prod.projectId === projectId) {
+        this.productionRecords.delete(id);
+        count++;
+      }
+    }
+    return count;
   }
 
   // ─── Revenue Records ─────────────────────────────────────────
