@@ -389,7 +389,8 @@ function CsvUploadTab() {
         throw new Error(err.message || "Ingestion failed");
       }
       const data = await res.json();
-      toast({ title: "Data Ingested", description: `${data.recordsIngested} records imported successfully.` });
+      const dupeMsg = data.skippedDuplicates > 0 ? ` (${data.skippedDuplicates} duplicates skipped)` : "";
+      toast({ title: "Data Ingested", description: `${data.recordsIngested} records imported successfully${dupeMsg}.` });
       setSelectedFile(null);
       setPreview(null);
       queryClient.invalidateQueries({ queryKey: ["/api/operations/data-sources"] });

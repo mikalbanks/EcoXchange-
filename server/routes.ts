@@ -1143,7 +1143,18 @@ export async function registerRoutes(
         "CSV_UPLOAD"
       );
 
-      const insertRecords = normalized.map(n => ({
+      let deduped = normalized;
+      if (!replaceExisting) {
+        const existing = await storage.getProductionByProject(projectId);
+        const existingKeys = new Set(existing.map(e =>
+          `${new Date(e.periodStart).toISOString()}|${e.source}`
+        ));
+        deduped = normalized.filter(n =>
+          !existingKeys.has(`${n.periodStart.toISOString()}|CSV_UPLOAD`)
+        );
+      }
+
+      const insertRecords = deduped.map(n => ({
         projectId,
         periodStart: n.periodStart,
         periodEnd: n.periodEnd,
@@ -1153,8 +1164,12 @@ export async function registerRoutes(
       }));
 
       const created = await storage.bulkCreateProduction(insertRecords);
+      const skippedDupes = normalized.length - deduped.length;
 
       const assessedQuality = csvConnector.assessDataQuality(result.validation);
+
+      const allProjectProduction = await storage.getProductionByProject(projectId);
+      const csvRecordCount = allProjectProduction.filter(p => p.source === "CSV_UPLOAD").length;
 
       const dataSources = await storage.getScadaDataSourcesByProject(projectId);
       const csvSource = dataSources.find(s => s.sourceType === "CSV_UPLOAD");
@@ -1163,7 +1178,7 @@ export async function registerRoutes(
           status: "ACTIVE",
           dataQuality: assessedQuality,
           lastSyncAt: new Date(),
-          recordCount: (csvSource.recordCount || 0) + created.length,
+          recordCount: csvRecordCount,
         });
       } else {
         await storage.createScadaDataSource({
@@ -1173,7 +1188,7 @@ export async function registerRoutes(
           status: "ACTIVE",
           dataQuality: assessedQuality,
           lastSyncAt: new Date(),
-          recordCount: created.length,
+          recordCount: csvRecordCount,
           connectorId: null,
           configJson: null,
           notes: `Uploaded from ${req.file.originalname} (${result.detectedGranularity} granularity, ${result.validation.coveragePercent}% coverage)`,
@@ -1183,6 +1198,7 @@ export async function registerRoutes(
       res.json({
         success: true,
         recordsIngested: created.length,
+        skippedDuplicates: skippedDupes,
         validation: result.validation,
         projectId,
       });
