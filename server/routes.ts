@@ -1175,7 +1175,7 @@ export async function registerRoutes(
         const net = gross - opex;
         await storage.createRevenue({
           projectId,
-          ppaId: null,
+          ppaId: `ppa-${projectId}-default`,
           productionId: prod.id,
           periodStart: prod.periodStart,
           periodEnd: prod.periodEnd,
@@ -1501,15 +1501,12 @@ export async function registerRoutes(
           let endDate = "2024-05-31";
 
           if (meterDataSource === "stored") {
-            const dateRange = await db.execute(dsql`
-              SELECT MIN(period_start) as min_date, MAX(period_end) as max_date
-              FROM energy_production
-              WHERE project_id = ${projectId}
-            `);
-            const row = dateRange.rows?.[0];
-            if (row?.min_date && row?.max_date) {
-              startDate = new Date(row.min_date as string).toISOString().split("T")[0];
-              endDate = new Date(row.max_date as string).toISOString().split("T")[0];
+            const storedProduction = await storage.getProductionByProject(projectId);
+            if (storedProduction.length > 0) {
+              const dates = storedProduction.map(p => p.periodStart.getTime());
+              const endDates = storedProduction.map(p => p.periodEnd.getTime());
+              startDate = new Date(Math.min(...dates)).toISOString().split("T")[0];
+              endDate = new Date(Math.max(...endDates)).toISOString().split("T")[0];
             }
           }
 
