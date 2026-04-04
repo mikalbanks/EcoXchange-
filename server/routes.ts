@@ -871,7 +871,7 @@ export async function registerRoutes(
     return res.status(403).json({ message: "Access denied" });
   };
 
-  const FEATURED_PROJECT_IDS = new Set(["proj3"]);
+  const FEATURED_PROJECT_IDS = new Set(["proj1", "proj3"]);
 
   app.get("/api/public/projects/:id/scada/summary", async (req: any, res) => {
     try {
