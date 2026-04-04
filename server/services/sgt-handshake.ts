@@ -61,33 +61,27 @@ async function hasRealScadaData(projectId: string): Promise<boolean> {
   }
 }
 
-async function getLatestMeterReading(projectId: string, capacityKw: number): Promise<{ grossKw: number; source: string } | null> {
+async function getLatestMeterReading(projectId: string, capacityKw: number): Promise<{ grossKw: number; source: string; granularity: string; periodCoverage: string } | null> {
   try {
-    const production = await storage.getProductionByProject(projectId);
-    const realProduction = production
-      .filter(p => p.source === "CSV_UPLOAD" || p.source === "SCADA")
-      .sort((a, b) => new Date(b.periodEnd).getTime() - new Date(a.periodEnd).getTime());
+    const { csvConnector } = await import("./scada-connector");
+    const now = new Date();
+    const lookback = new Date(now);
+    lookback.setDate(lookback.getDate() - METERED_FRESHNESS_DAYS);
 
-    if (realProduction.length === 0) return null;
+    const intervals = await csvConnector.fetchIntervals(projectId, lookback, now);
+    if (intervals.length === 0) return null;
 
-    const latest = realProduction[0];
-    const mwh = parseFloat(latest.productionMwh);
-    const periodStart = new Date(latest.periodStart);
-    const periodEnd = new Date(latest.periodEnd);
-    const hoursInPeriod = (periodEnd.getTime() - periodStart.getTime()) / (1000 * 60 * 60);
-    const avgKw = (mwh * 1000) / Math.max(1, hoursInPeriod);
+    intervals.sort((a, b) => b.periodEnd.getTime() - a.periodEnd.getTime());
+    const latest = intervals[0];
 
-    const hour = new Date().getUTCHours();
-    let timeOfDayFactor = 0;
-    if (hour >= 6 && hour <= 20) {
-      timeOfDayFactor = Math.sin(Math.PI * (hour - 6) / 14);
-    }
-
-    const grossKw = avgKw * (timeOfDayFactor / 0.3);
+    const hoursInPeriod = (latest.periodEnd.getTime() - latest.periodStart.getTime()) / (1000 * 60 * 60);
+    const avgKw = (latest.productionMwh * 1000) / Math.max(0.25, hoursInPeriod);
 
     return {
-      grossKw: Math.min(capacityKw, Math.max(0, Number(grossKw.toFixed(4)))),
+      grossKw: Math.min(capacityKw, Math.max(0, Number(avgKw.toFixed(4)))),
       source: latest.source,
+      granularity: latest.granularity,
+      periodCoverage: `${latest.periodStart.toISOString().slice(0, 10)} to ${latest.periodEnd.toISOString().slice(0, 10)}`,
     };
   } catch {
     return null;
@@ -155,10 +149,11 @@ export async function runSgtHandshake(
     const meterReading = await getLatestMeterReading(projectId, capacityKw);
     if (meterReading) {
       grossWh = (meterReading.grossKw / 4) * 1000;
-      qualityFlag = "METERED";
+      const isHighFidelity = meterReading.granularity === "15min" || meterReading.granularity === "hourly";
+      qualityFlag = isHighFidelity ? "METERED" : "METERED_AGGREGATE";
       netWhValue = "0.00";
-      telemetrySources.push(`Real SCADA Data (${meterReading.source})`);
-      console.log(`📊 [SGT Handshake] Using real meter data: ${meterReading.grossKw.toFixed(2)} kW from ${meterReading.source}`);
+      telemetrySources.push(`Real SCADA Data (${meterReading.source}, ${meterReading.granularity} granularity, ${meterReading.periodCoverage})`);
+      console.log(`📊 [SGT Handshake] Using real meter data: ${meterReading.grossKw.toFixed(2)} kW from ${meterReading.source} (${meterReading.granularity})`);
     } else {
       const utilityShadowResult = getNetMeterShadow(capacityKw, skyResult.pvEstimateKw);
       telemetrySources.push("Utility Shadow (simulated net meter)");

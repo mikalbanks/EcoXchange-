@@ -1,9 +1,20 @@
 import { parse } from "csv-parse/sync";
 
+export type IntervalGranularity = "15min" | "hourly" | "daily" | "monthly";
+
 export interface ScadaInterval {
   timestamp: Date;
   productionKwh: number;
   capacityFactor?: number;
+}
+
+export interface NormalizedInterval {
+  periodStart: Date;
+  periodEnd: Date;
+  productionMwh: number;
+  capacityFactor: number | null;
+  granularity: IntervalGranularity;
+  source: string;
 }
 
 export interface CsvParseResult {
@@ -12,6 +23,7 @@ export interface CsvParseResult {
   fieldMapping: FieldMapping[];
   validation: CsvValidation;
   errors: string[];
+  detectedGranularity: IntervalGranularity;
 }
 
 export interface FieldMapping {
@@ -28,12 +40,17 @@ export interface CsvValidation {
   gapsDetected: number;
   duplicatesDetected: number;
   unit: "kwh" | "mwh";
+  granularity: IntervalGranularity;
+  coveragePercent: number;
 }
 
 export interface IScadaConnector {
   readonly name: string;
   readonly slug: string;
   parseUpload(fileBuffer: Buffer, filename: string): CsvParseResult;
+  normalizeToSchema(records: ScadaInterval[], granularity: IntervalGranularity, capacityMw: number, source: string): NormalizedInterval[];
+  fetchIntervals(projectId: string, startDate: Date, endDate: Date): Promise<NormalizedInterval[]>;
+  assessDataQuality(validation: CsvValidation): "HIGH" | "MEDIUM" | "LOW";
 }
 
 const DATE_PATTERNS = [
@@ -92,12 +109,83 @@ function detectCapacityFactorColumn(headers: string[]): string | null {
   return null;
 }
 
+export function detectGranularity(records: ScadaInterval[]): IntervalGranularity {
+  if (records.length < 2) return "monthly";
+
+  const gaps: number[] = [];
+  for (let i = 1; i < Math.min(records.length, 20); i++) {
+    gaps.push(records[i].timestamp.getTime() - records[i - 1].timestamp.getTime());
+  }
+  gaps.sort((a, b) => a - b);
+  const medianGapMs = gaps[Math.floor(gaps.length / 2)];
+
+  const MINUTE = 60 * 1000;
+  const HOUR = 60 * MINUTE;
+  const DAY = 24 * HOUR;
+
+  if (medianGapMs <= 20 * MINUTE) return "15min";
+  if (medianGapMs <= 2 * HOUR) return "hourly";
+  if (medianGapMs <= 7 * DAY) return "daily";
+  return "monthly";
+}
+
+function computePeriodEnd(start: Date, granularity: IntervalGranularity): Date {
+  const end = new Date(start);
+  switch (granularity) {
+    case "15min":
+      end.setUTCMinutes(end.getUTCMinutes() + 15);
+      break;
+    case "hourly":
+      end.setUTCHours(end.getUTCHours() + 1);
+      break;
+    case "daily":
+      end.setUTCDate(end.getUTCDate() + 1);
+      break;
+    case "monthly":
+      end.setUTCMonth(end.getUTCMonth() + 1);
+      if (end.getUTCDate() !== 1) end.setUTCDate(1);
+      break;
+  }
+  return end;
+}
+
+function computeCoveragePct(records: ScadaInterval[], granularity: IntervalGranularity): number {
+  if (records.length < 2) return 100;
+  const start = records[0].timestamp.getTime();
+  const end = records[records.length - 1].timestamp.getTime();
+  const spanMs = end - start;
+  if (spanMs <= 0) return 100;
+
+  const MINUTE = 60 * 1000;
+  const HOUR = 60 * MINUTE;
+  const DAY = 24 * HOUR;
+
+  let expectedIntervalMs: number;
+  switch (granularity) {
+    case "15min": expectedIntervalMs = 15 * MINUTE; break;
+    case "hourly": expectedIntervalMs = HOUR; break;
+    case "daily": expectedIntervalMs = DAY; break;
+    case "monthly": expectedIntervalMs = 30 * DAY; break;
+  }
+
+  const expectedCount = Math.floor(spanMs / expectedIntervalMs) + 1;
+  return Math.min(100, Math.round((records.length / expectedCount) * 100));
+}
+
 export class CsvConnector implements IScadaConnector {
   readonly name = "CSV Upload";
   readonly slug = "csv-upload";
 
   parseUpload(fileBuffer: Buffer, filename: string): CsvParseResult {
     const errors: string[] = [];
+    const emptyResult = (errs: string[], totalRows = 0): CsvParseResult => ({
+      success: false,
+      records: [],
+      fieldMapping: [],
+      validation: { totalRows, validRows: 0, skippedRows: totalRows, dateRange: null, gapsDetected: 0, duplicatesDetected: 0, unit: "kwh", granularity: "monthly", coveragePercent: 0 },
+      errors: errs,
+      detectedGranularity: "monthly",
+    });
 
     let rawRecords: Record<string, string>[];
     try {
@@ -110,23 +198,11 @@ export class CsvConnector implements IScadaConnector {
       });
     } catch (e: unknown) {
       const msg = e instanceof Error ? e.message : String(e);
-      return {
-        success: false,
-        records: [],
-        fieldMapping: [],
-        validation: { totalRows: 0, validRows: 0, skippedRows: 0, dateRange: null, gapsDetected: 0, duplicatesDetected: 0, unit: "kwh" },
-        errors: [`Failed to parse CSV: ${msg}`],
-      };
+      return emptyResult([`Failed to parse CSV: ${msg}`]);
     }
 
     if (rawRecords.length === 0) {
-      return {
-        success: false,
-        records: [],
-        fieldMapping: [],
-        validation: { totalRows: 0, validRows: 0, skippedRows: 0, dateRange: null, gapsDetected: 0, duplicatesDetected: 0, unit: "kwh" },
-        errors: ["CSV file is empty or has no data rows"],
-      };
+      return emptyResult(["CSV file is empty or has no data rows"]);
     }
 
     const headers = Object.keys(rawRecords[0]);
@@ -156,8 +232,9 @@ export class CsvConnector implements IScadaConnector {
         success: false,
         records: [],
         fieldMapping,
-        validation: { totalRows: rawRecords.length, validRows: 0, skippedRows: rawRecords.length, dateRange: null, gapsDetected: 0, duplicatesDetected: 0, unit: prodCol?.unit || "kwh" },
+        validation: { totalRows: rawRecords.length, validRows: 0, skippedRows: rawRecords.length, dateRange: null, gapsDetected: 0, duplicatesDetected: 0, unit: prodCol?.unit || "kwh", granularity: "monthly", coveragePercent: 0 },
         errors,
+        detectedGranularity: "monthly",
       };
     }
 
@@ -204,6 +281,8 @@ export class CsvConnector implements IScadaConnector {
 
     records.sort((a, b) => a.timestamp.getTime() - b.timestamp.getTime());
 
+    const granularity = detectGranularity(records);
+
     let gapsDetected = 0;
     if (records.length > 1) {
       const intervals = records.map((r, i) => i > 0 ? r.timestamp.getTime() - records[i - 1].timestamp.getTime() : 0).filter(d => d > 0);
@@ -220,6 +299,8 @@ export class CsvConnector implements IScadaConnector {
       end: records[records.length - 1].timestamp.toISOString().slice(0, 10),
     } : null;
 
+    const coveragePercent = computeCoveragePct(records, granularity);
+
     return {
       success: records.length > 0,
       records,
@@ -232,9 +313,77 @@ export class CsvConnector implements IScadaConnector {
         gapsDetected,
         duplicatesDetected,
         unit: prodCol!.unit,
+        granularity,
+        coveragePercent,
       },
       errors: records.length === 0 ? ["No valid records after parsing"] : [],
+      detectedGranularity: granularity,
     };
+  }
+
+  normalizeToSchema(records: ScadaInterval[], granularity: IntervalGranularity, capacityMw: number, source: string): NormalizedInterval[] {
+    return records.map(r => {
+      const periodStart = new Date(r.timestamp);
+      const periodEnd = computePeriodEnd(periodStart, granularity);
+      const productionMwh = r.productionKwh / 1000;
+      const hoursInPeriod = (periodEnd.getTime() - periodStart.getTime()) / (1000 * 60 * 60);
+      const cf = capacityMw > 0 && hoursInPeriod > 0
+        ? productionMwh / (capacityMw * hoursInPeriod)
+        : null;
+
+      return {
+        periodStart,
+        periodEnd,
+        productionMwh,
+        capacityFactor: cf !== null ? Number(cf.toFixed(6)) : (r.capacityFactor ?? null),
+        granularity,
+        source,
+      };
+    });
+  }
+
+  async fetchIntervals(projectId: string, startDate: Date, endDate: Date): Promise<NormalizedInterval[]> {
+    const { storage } = await import("../storage");
+    const production = await storage.getProductionByProject(projectId);
+    const filtered = production.filter(p => {
+      if (p.source !== "CSV_UPLOAD" && p.source !== "SCADA" && p.source !== "MANUAL") return false;
+      const ps = new Date(p.periodStart);
+      const pe = new Date(p.periodEnd);
+      return pe > startDate && ps < endDate;
+    });
+
+    return filtered.map(p => {
+      const periodStart = new Date(p.periodStart);
+      const periodEnd = new Date(p.periodEnd);
+      const durationMs = periodEnd.getTime() - periodStart.getTime();
+      const HOUR = 60 * 60 * 1000;
+      const DAY = 24 * HOUR;
+
+      let granularity: IntervalGranularity;
+      if (durationMs <= 20 * 60 * 1000) granularity = "15min";
+      else if (durationMs <= 2 * HOUR) granularity = "hourly";
+      else if (durationMs <= 2 * DAY) granularity = "daily";
+      else granularity = "monthly";
+
+      return {
+        periodStart,
+        periodEnd,
+        productionMwh: parseFloat(p.productionMwh),
+        capacityFactor: p.capacityFactor ? parseFloat(p.capacityFactor) : null,
+        granularity,
+        source: p.source,
+      };
+    });
+  }
+
+  assessDataQuality(validation: CsvValidation): "HIGH" | "MEDIUM" | "LOW" {
+    const { validRows, skippedRows, gapsDetected, duplicatesDetected, coveragePercent } = validation;
+    const totalIssues = skippedRows + gapsDetected + duplicatesDetected;
+    const issueRate = validRows > 0 ? totalIssues / validRows : 1;
+
+    if (coveragePercent >= 95 && issueRate < 0.02 && gapsDetected === 0) return "HIGH";
+    if (coveragePercent >= 80 && issueRate < 0.1 && gapsDetected <= 3) return "MEDIUM";
+    return "LOW";
   }
 }
 

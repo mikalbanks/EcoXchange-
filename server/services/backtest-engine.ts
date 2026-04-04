@@ -1,5 +1,4 @@
 import axios from "axios";
-import { storage } from "../storage";
 
 export type MeterDataSource = "synthetic" | "stored";
 
@@ -342,51 +341,49 @@ function calculateStatistics(intervals: BacktestInterval[], config: BacktestSite
 
 async function loadStoredMeterData(projectId: string, config: BacktestSiteConfig): Promise<Map<string, number> | null> {
   try {
-    const production = await storage.getProductionByProject(projectId);
-    if (production.length === 0) return null;
-
+    const { csvConnector } = await import("./scada-connector");
     const windowStart = new Date(config.startDate);
     const windowEnd = new Date(config.endDate);
 
-    const csvSource = production.filter(p => {
-      if (p.source !== "CSV_UPLOAD" && p.source !== "SCADA" && p.source !== "MANUAL") return false;
-      const ps = new Date(p.periodStart);
-      const pe = new Date(p.periodEnd);
-      return pe > windowStart && ps < windowEnd;
-    });
-    if (csvSource.length === 0) return null;
+    const intervals = await csvConnector.fetchIntervals(projectId, windowStart, windowEnd);
+    if (intervals.length === 0) return null;
 
     const meterMap = new Map<string, number>();
-    for (const rec of csvSource) {
-      const mwh = parseFloat(rec.productionMwh);
-      const periodStart = new Date(rec.periodStart);
-      const periodEnd = new Date(rec.periodEnd);
-      const daysInPeriod = Math.max(1, (periodEnd.getTime() - periodStart.getTime()) / (1000 * 60 * 60 * 24));
-      const dailyMwh = mwh / daysInPeriod;
 
-      for (let d = new Date(periodStart); d < periodEnd; d.setUTCDate(d.getUTCDate() + 1)) {
-        const dayOfYear = Math.floor((d.getTime() - new Date(d.getUTCFullYear(), 0, 0).getTime()) / 86400000);
-        for (let interval = 0; interval < 96; interval++) {
-          const hour = interval * 0.25;
-          const ts = new Date(d);
-          ts.setUTCHours(Math.floor(hour), (hour % 1) * 60, 0, 0);
+    for (const interval of intervals) {
+      if (interval.granularity === "15min" || interval.granularity === "hourly") {
+        const kw = (interval.productionMwh * 1000) / (interval.granularity === "15min" ? 0.25 : 1);
+        meterMap.set(interval.periodStart.toISOString(), Math.max(0, Number(kw.toFixed(2))));
+      } else {
+        const periodMs = interval.periodEnd.getTime() - interval.periodStart.getTime();
+        const daysInPeriod = Math.max(1, periodMs / (1000 * 60 * 60 * 24));
+        const dailyMwh = interval.productionMwh / daysInPeriod;
 
-          const elev = solarElevation(dayOfYear, hour, config.latitude);
-          if (elev <= 2) {
-            meterMap.set(ts.toISOString(), 0);
-            continue;
+        for (let d = new Date(interval.periodStart); d < interval.periodEnd && d < windowEnd; d = new Date(d.getTime() + 86400000)) {
+          if (d < windowStart) continue;
+          const dayOfYear = Math.floor((d.getTime() - new Date(d.getUTCFullYear(), 0, 0).getTime()) / 86400000);
+          for (let q = 0; q < 96; q++) {
+            const hour = q * 0.25;
+            const ts = new Date(d);
+            ts.setUTCHours(Math.floor(hour), (hour % 1) * 60, 0, 0);
+
+            const elev = solarElevation(dayOfYear, hour, config.latitude);
+            if (elev <= 2) {
+              meterMap.set(ts.toISOString(), 0);
+              continue;
+            }
+
+            const elevNorm = Math.sin(elev * Math.PI / 180);
+            const totalElevNormForDay = Array.from({ length: 96 }, (_, i) => {
+              const h = i * 0.25;
+              const e = solarElevation(dayOfYear, h, config.latitude);
+              return e > 2 ? Math.sin(e * Math.PI / 180) : 0;
+            }).reduce((a, b) => a + b, 0);
+
+            const intervalMwh = totalElevNormForDay > 0 ? dailyMwh * (elevNorm / totalElevNormForDay) : 0;
+            const intervalKw = (intervalMwh * 1000) / 0.25;
+            meterMap.set(ts.toISOString(), Math.max(0, Number(intervalKw.toFixed(2))));
           }
-
-          const elevNorm = Math.sin(elev * Math.PI / 180);
-          const totalElevNormForDay = Array.from({ length: 96 }, (_, i) => {
-            const h = i * 0.25;
-            const e = solarElevation(dayOfYear, h, config.latitude);
-            return e > 2 ? Math.sin(e * Math.PI / 180) : 0;
-          }).reduce((a, b) => a + b, 0);
-
-          const intervalMwh = totalElevNormForDay > 0 ? dailyMwh * (elevNorm / totalElevNormForDay) : 0;
-          const intervalKw = (intervalMwh * 1000) / 0.25;
-          meterMap.set(ts.toISOString(), Math.max(0, Number(intervalKw.toFixed(2))));
         }
       }
     }

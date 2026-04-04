@@ -1097,6 +1097,7 @@ export async function registerRoutes(
         fieldMapping: result.fieldMapping,
         validation: result.validation,
         errors: result.errors,
+        detectedGranularity: result.detectedGranularity,
         sampleRows: result.records.slice(0, 5).map(r => ({
           timestamp: r.timestamp.toISOString(),
           productionKwh: r.productionKwh,
@@ -1135,47 +1136,32 @@ export async function registerRoutes(
 
       const capacityMw = parseFloat(project.capacityMW || "0");
 
-      const sortedRecords = [...result.records].sort((a, b) => a.timestamp.getTime() - b.timestamp.getTime());
-      let granularity: "daily" | "monthly" = "monthly";
-      if (sortedRecords.length >= 2) {
-        const gap = sortedRecords[1].timestamp.getTime() - sortedRecords[0].timestamp.getTime();
-        granularity = gap < 15 * 24 * 60 * 60 * 1000 ? "daily" : "monthly";
-      }
+      const normalized = csvConnector.normalizeToSchema(
+        result.records,
+        result.detectedGranularity,
+        capacityMw,
+        "CSV_UPLOAD"
+      );
 
-      const insertRecords = sortedRecords.map(r => {
-        const periodStart = new Date(r.timestamp);
-        let periodEnd: Date;
-        if (granularity === "daily") {
-          periodEnd = new Date(periodStart);
-          periodEnd.setUTCDate(periodEnd.getUTCDate() + 1);
-        } else {
-          periodEnd = new Date(Date.UTC(periodStart.getUTCFullYear(), periodStart.getUTCMonth() + 1, 1));
-        }
-
-        const productionMwh = r.productionKwh / 1000;
-        const hoursInPeriod = (periodEnd.getTime() - periodStart.getTime()) / (1000 * 60 * 60);
-        const cf = capacityMw > 0 && hoursInPeriod > 0
-          ? (productionMwh / (capacityMw * hoursInPeriod)).toFixed(4)
-          : r.capacityFactor?.toFixed(4) || null;
-
-        return {
-          projectId,
-          periodStart,
-          periodEnd,
-          productionMwh: productionMwh.toFixed(2),
-          capacityFactor: cf,
-          source: "CSV_UPLOAD",
-        };
-      });
+      const insertRecords = normalized.map(n => ({
+        projectId,
+        periodStart: n.periodStart,
+        periodEnd: n.periodEnd,
+        productionMwh: n.productionMwh.toFixed(6),
+        capacityFactor: n.capacityFactor?.toFixed(6) || null,
+        source: "CSV_UPLOAD",
+      }));
 
       const created = await storage.bulkCreateProduction(insertRecords);
+
+      const assessedQuality = csvConnector.assessDataQuality(result.validation);
 
       const dataSources = await storage.getScadaDataSourcesByProject(projectId);
       const csvSource = dataSources.find(s => s.sourceType === "CSV_UPLOAD");
       if (csvSource) {
         await storage.updateScadaDataSource(csvSource.id, {
           status: "ACTIVE",
-          dataQuality: "MEDIUM",
+          dataQuality: assessedQuality,
           lastSyncAt: new Date(),
           recordCount: (csvSource.recordCount || 0) + created.length,
         });
@@ -1185,12 +1171,12 @@ export async function registerRoutes(
           sourceType: "CSV_UPLOAD",
           providerName: "CSV Import",
           status: "ACTIVE",
-          dataQuality: "MEDIUM",
+          dataQuality: assessedQuality,
           lastSyncAt: new Date(),
           recordCount: created.length,
           connectorId: null,
           configJson: null,
-          notes: `Uploaded from ${req.file.originalname}`,
+          notes: `Uploaded from ${req.file.originalname} (${result.detectedGranularity} granularity, ${result.validation.coveragePercent}% coverage)`,
         });
       }
 

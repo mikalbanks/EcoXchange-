@@ -279,8 +279,11 @@ interface CsvPreviewData {
     gapsDetected: number;
     duplicatesDetected: number;
     unit: string;
+    granularity: string;
+    coveragePercent: number;
   };
   errors: string[];
+  detectedGranularity: string;
   sampleRows: Array<{ timestamp: string; productionKwh: number; capacityFactor?: number }>;
 }
 
@@ -470,26 +473,30 @@ function CsvUploadTab() {
             </CardTitle>
           </CardHeader>
           <CardContent>
-            {preview.validation.dateRange && (
-              <div className="mb-4 grid grid-cols-2 md:grid-cols-4 gap-3 text-xs">
-                <div className="bg-muted/30 rounded-md p-2.5">
-                  <p className="text-muted-foreground">Valid Rows</p>
-                  <p className="font-medium text-foreground text-sm" data-testid="text-csv-valid-rows">{preview.validation.validRows}</p>
-                </div>
+            <div className="mb-4 grid grid-cols-2 md:grid-cols-5 gap-3 text-xs">
+              <div className="bg-muted/30 rounded-md p-2.5">
+                <p className="text-muted-foreground">Valid Rows</p>
+                <p className="font-medium text-foreground text-sm" data-testid="text-csv-valid-rows">{preview.validation.validRows}</p>
+              </div>
+              {preview.validation.dateRange && (
                 <div className="bg-muted/30 rounded-md p-2.5">
                   <p className="text-muted-foreground">Date Range</p>
                   <p className="font-medium text-foreground text-sm" data-testid="text-csv-date-range">{preview.validation.dateRange.start} → {preview.validation.dateRange.end}</p>
                 </div>
-                <div className="bg-muted/30 rounded-md p-2.5">
-                  <p className="text-muted-foreground">Gaps Detected</p>
-                  <p className="font-medium text-foreground text-sm" data-testid="text-csv-gaps">{preview.validation.gapsDetected}</p>
-                </div>
-                <div className="bg-muted/30 rounded-md p-2.5">
-                  <p className="text-muted-foreground">Skipped / Duplicates</p>
-                  <p className="font-medium text-foreground text-sm">{preview.validation.skippedRows} / {preview.validation.duplicatesDetected}</p>
-                </div>
+              )}
+              <div className="bg-muted/30 rounded-md p-2.5">
+                <p className="text-muted-foreground">Granularity</p>
+                <p className="font-medium text-foreground text-sm" data-testid="text-csv-granularity">{preview.detectedGranularity}</p>
               </div>
-            )}
+              <div className="bg-muted/30 rounded-md p-2.5">
+                <p className="text-muted-foreground">Coverage</p>
+                <p className="font-medium text-foreground text-sm" data-testid="text-csv-coverage">{preview.validation.coveragePercent}%</p>
+              </div>
+              <div className="bg-muted/30 rounded-md p-2.5">
+                <p className="text-muted-foreground">Gaps / Duplicates</p>
+                <p className="font-medium text-foreground text-sm">{preview.validation.gapsDetected} / {preview.validation.duplicatesDetected}</p>
+              </div>
+            </div>
 
             <div className="space-y-3" data-testid="csv-field-mapping">
               <div className="grid grid-cols-3 gap-3 text-xs font-medium text-muted-foreground border-b border-border pb-2">
