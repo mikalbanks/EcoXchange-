@@ -2,13 +2,18 @@ import { Header } from "@/components/header";
 import { ScadaSummaryCards, ProductionChart, ForecastChart, ForecastVsActualChart, RevenueBridgeWaterfall, DistributionWaterfall, HealthBadge } from "@/components/scada";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Link } from "wouter";
+import { Link, useParams } from "wouter";
 import { useQuery } from "@tanstack/react-query";
 import { Skeleton } from "@/components/ui/skeleton";
 import { ProvenancePanel, type ScadaProvenance } from "@/components/scada/provenance-panel";
 import { Sun, MapPin, Zap, ArrowRight, BarChart3 } from "lucide-react";
 
-const FEATURED_PROJECT_ID = "proj3";
+const DEFAULT_PROJECT_ID = "proj3";
+
+const PROJECT_INFO: Record<string, { name: string; location: string; capacity: string; type: string }> = {
+  proj1: { name: "Imperial Valley Solar I", location: "California, Imperial Valley", capacity: "12 MW", type: "Fixed-Tilt Solar" },
+  proj3: { name: "Lancaster Sun Ranch", location: "California, Los Angeles", capacity: "25 MW", type: "Single-Axis Tracking Solar" },
+};
 
 interface ScadaSummary {
   totalProductionMwh: number;
@@ -23,10 +28,14 @@ interface ScadaSummary {
 }
 
 export default function PerformancePage() {
+  const params = useParams<{ projectId?: string }>();
+  const projectId = params.projectId || DEFAULT_PROJECT_ID;
+  const projectInfo = PROJECT_INFO[projectId] || PROJECT_INFO[DEFAULT_PROJECT_ID];
+
   const { data: summary, isLoading } = useQuery<ScadaSummary>({
-    queryKey: ["/api/public/projects", FEATURED_PROJECT_ID, "scada", "summary"],
+    queryKey: ["/api/public/projects", projectId, "scada", "summary"],
     queryFn: async () => {
-      const res = await fetch(`/api/public/projects/${FEATURED_PROJECT_ID}/scada/summary`, { credentials: "include" });
+      const res = await fetch(`/api/public/projects/${projectId}/scada/summary`, { credentials: "include" });
       if (!res.ok) throw new Error("Failed to load");
       return res.json();
     },
@@ -64,16 +73,16 @@ export default function PerformancePage() {
                   <Sun className="h-6 w-6" />
                 </div>
                 <div>
-                  <CardTitle className="text-xl" data-testid="text-featured-project-name">Lancaster Sun Ranch</CardTitle>
+                  <CardTitle className="text-xl" data-testid="text-featured-project-name">{projectInfo.name}</CardTitle>
                   <div className="flex items-center gap-3 text-sm text-muted-foreground mt-1">
-                    <span className="flex items-center gap-1"><MapPin className="h-3.5 w-3.5" /> California, Los Angeles</span>
-                    <span className="flex items-center gap-1"><Zap className="h-3.5 w-3.5" /> 25 MW</span>
-                    <span>Single-Axis Tracking Solar</span>
+                    <span className="flex items-center gap-1"><MapPin className="h-3.5 w-3.5" /> {projectInfo.location}</span>
+                    <span className="flex items-center gap-1"><Zap className="h-3.5 w-3.5" /> {projectInfo.capacity}</span>
+                    <span>{projectInfo.type}</span>
                   </div>
                 </div>
               </div>
               <div className="flex items-center gap-3">
-                <HealthBadge projectId={FEATURED_PROJECT_ID} size="md" usePublicApi />
+                <HealthBadge projectId={projectId} size="md" usePublicApi />
                 <Link href="/auth/signup?role=investor">
                   <Button size="sm" className="gap-1" data-testid="button-invest-featured">
                     Invest <ArrowRight className="h-3.5 w-3.5" />
@@ -86,24 +95,24 @@ export default function PerformancePage() {
       </section>
 
       <section className="container mx-auto px-4 pb-8">
-        <ScadaSummaryCards projectId={FEATURED_PROJECT_ID} showProvenance usePublicApi />
+        <ScadaSummaryCards projectId={projectId} showProvenance usePublicApi />
       </section>
 
       <section className="container mx-auto px-4 pb-8">
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-          <ProductionChart projectId={FEATURED_PROJECT_ID} showProvenance usePublicApi />
-          <ForecastChart projectId={FEATURED_PROJECT_ID} showProvenance usePublicApi />
+          <ProductionChart projectId={projectId} showProvenance usePublicApi />
+          <ForecastChart projectId={projectId} showProvenance usePublicApi />
         </div>
       </section>
 
       <section className="container mx-auto px-4 pb-8">
-        <ForecastVsActualChart projectId={FEATURED_PROJECT_ID} showProvenance usePublicApi />
+        <ForecastVsActualChart projectId={projectId} showProvenance usePublicApi />
       </section>
 
       <section className="container mx-auto px-4 pb-8">
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-          <RevenueBridgeWaterfall projectId={FEATURED_PROJECT_ID} showProvenance usePublicApi />
-          <DistributionWaterfall projectId={FEATURED_PROJECT_ID} showProvenance usePublicApi />
+          <RevenueBridgeWaterfall projectId={projectId} showProvenance usePublicApi />
+          <DistributionWaterfall projectId={projectId} showProvenance usePublicApi />
         </div>
       </section>
 

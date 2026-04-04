@@ -112,6 +112,7 @@ function Router() {
       <Route path="/auth/signup" component={SignupPage} />
       <Route path="/yield-simulation" component={YieldSimulationPage} />
 
+      <Route path="/performance/:projectId" component={PerformancePage} />
       <Route path="/performance" component={PerformancePage} />
       <Route path="/backtest-report" component={BacktestReportPage} />
       <Route path="/privacy" component={PrivacyPolicy} />

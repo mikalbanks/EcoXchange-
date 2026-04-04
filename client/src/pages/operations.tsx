@@ -522,7 +522,7 @@ function CsvUploadTab() {
       queryClient.invalidateQueries({ queryKey: ["/api/operations/data-sources"] });
       queryClient.invalidateQueries({ queryKey: ["/api/projects/all-for-upload"] });
       queryClient.invalidateQueries({ queryKey: ["/api/public/backtest/report"] });
-      queryClient.invalidateQueries({ queryKey: ["/api/performance"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/public/projects", selectedProjectId] });
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : "Failed to ingest CSV";
       toast({ title: "Ingestion Failed", description: msg, variant: "destructive" });
