@@ -1098,6 +1098,8 @@ export async function registerRoutes(
         validation: result.validation,
         errors: result.errors,
         detectedGranularity: result.detectedGranularity,
+        detectedFormat: result.detectedFormat,
+        formatLabel: result.formatLabel,
         sampleRows: result.records.slice(0, 5).map(r => ({
           timestamp: r.timestamp.toISOString(),
           productionKwh: r.productionKwh,

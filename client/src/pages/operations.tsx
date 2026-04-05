@@ -288,6 +288,8 @@ interface CsvPreviewData {
   };
   errors: string[];
   detectedGranularity: string;
+  detectedFormat?: string;
+  formatLabel?: string;
   sampleRows: Array<{ timestamp: string; productionKwh: number; capacityFactor?: number }>;
 }
 
@@ -599,6 +601,12 @@ function CsvUploadTab() {
             <CardTitle className="text-base flex items-center gap-2">
               <FileText className="h-4 w-4" />
               Field Mapping Preview
+              {preview.detectedFormat && preview.detectedFormat !== "standard" && (
+                <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-medium bg-blue-500/10 text-blue-400 border border-blue-500/20" data-testid="badge-detected-format">
+                  <Zap className="h-3 w-3" />
+                  {preview.formatLabel}
+                </span>
+              )}
             </CardTitle>
           </CardHeader>
           <CardContent>
@@ -674,10 +682,10 @@ function CsvUploadTab() {
           <div className="flex items-start gap-3">
             <Info className="h-4 w-4 text-muted-foreground shrink-0 mt-0.5" />
             <div className="text-xs text-muted-foreground space-y-1">
-              <p className="font-medium text-foreground">CSV Requirements</p>
-              <p>Required columns: <span className="font-mono">date</span>, <span className="font-mono">production_kwh</span> or <span className="font-mono">production_mwh</span></p>
-              <p>Optional columns: <span className="font-mono">capacity_factor</span>, <span className="font-mono">inverter_efficiency</span>, <span className="font-mono">ambient_temp_c</span></p>
-              <p>Date format: YYYY-MM-DD or MM/DD/YYYY. One row per reporting period (monthly or daily).</p>
+              <p className="font-medium text-foreground">Supported CSV Formats</p>
+              <p><span className="font-medium text-foreground/80">Standard:</span> Columns <span className="font-mono">date</span>, <span className="font-mono">production_kwh</span> or <span className="font-mono">production_mwh</span>. Optional: <span className="font-mono">capacity_factor</span></p>
+              <p><span className="font-medium text-foreground/80">PVDAQ / Power:</span> Columns <span className="font-mono">timestamp</span> or <span className="font-mono">measdatetime</span>, <span className="font-mono">ac_power</span> or <span className="font-mono">meter_power</span> (kW). Power is auto-converted to energy (kWh).</p>
+              <p>Date formats: YYYY-MM-DD, MM/DD/YYYY, or ISO 8601. Any interval granularity (15-min, hourly, daily, monthly).</p>
             </div>
           </div>
         </CardContent>

@@ -2,6 +2,8 @@ import { parse } from "csv-parse/sync";
 
 export type IntervalGranularity = "15min" | "hourly" | "daily" | "monthly";
 
+export type DetectedFormat = "standard" | "pvdaq_ac_power" | "pvdaq_meter" | "power_generic";
+
 export interface ScadaInterval {
   timestamp: Date;
   productionKwh: number;
@@ -24,6 +26,8 @@ export interface CsvParseResult {
   validation: CsvValidation;
   errors: string[];
   detectedGranularity: IntervalGranularity;
+  detectedFormat: DetectedFormat;
+  formatLabel: string;
 }
 
 export interface FieldMapping {
@@ -70,16 +74,35 @@ function parseDate(value: string): Date | null {
     return isNaN(d.getTime()) ? null : d;
   }
 
+  const mmddyyyyTime = trimmed.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})\s+(\d{1,2}):(\d{2})(?::(\d{2}))?$/);
+  if (mmddyyyyTime) {
+    const [, mm, dd, yyyy, hh, min, sec] = mmddyyyyTime;
+    const d = new Date(`${yyyy}-${mm.padStart(2, "0")}-${dd.padStart(2, "0")}T${hh.padStart(2, "0")}:${min}:${(sec || "00")}Z`);
+    return isNaN(d.getTime()) ? null : d;
+  }
+
   const d = new Date(trimmed);
   if (!isNaN(d.getTime())) return d;
 
   return null;
 }
 
+function normalizeHeader(h: string): string {
+  return h.toLowerCase().replace(/[^a-z0-9]/g, "_").replace(/_+/g, "_").replace(/^_|_$/g, "");
+}
+
+function headerContainsAny(normalized: string, tokens: string[]): boolean {
+  return tokens.some(t => normalized.includes(t));
+}
+
 function detectDateColumn(headers: string[]): string | null {
-  const dateKeywords = ["date", "timestamp", "time", "period", "datetime", "period_start", "periodstart"];
+  const exactKeywords = ["date", "timestamp", "time", "period", "datetime", "period_start", "periodstart", "measdatetime", "meas_datetime", "measured_on", "measure_date"];
   for (const h of headers) {
-    if (dateKeywords.includes(h.toLowerCase().trim())) return h;
+    if (exactKeywords.includes(normalizeHeader(h))) return h;
+  }
+  for (const h of headers) {
+    const norm = normalizeHeader(h);
+    if (headerContainsAny(norm, ["date", "time", "measured"])) return h;
   }
   return null;
 }
@@ -100,12 +123,56 @@ function detectProductionColumn(headers: string[]): { column: string; unit: "kwh
   return null;
 }
 
+interface PowerColumnResult {
+  column: string;
+  format: DetectedFormat;
+  formatLabel: string;
+}
+
+function detectPowerColumn(headers: string[]): PowerColumnResult | null {
+  const normalized = headers.map(h => normalizeHeader(h));
+
+  for (let i = 0; i < normalized.length; i++) {
+    const n = normalized[i];
+    if (n.includes("ac_power") || n.includes("acpower") || n === "pac" || n === "p_ac" ||
+        n.includes("inverter_power") || (n.includes("ac") && n.includes("power"))) {
+      return { column: headers[i], format: "pvdaq_ac_power", formatLabel: "PVDAQ AC Power (kW → kWh)" };
+    }
+  }
+
+  for (let i = 0; i < normalized.length; i++) {
+    const n = normalized[i];
+    if (n.includes("meter_power") || n.includes("meterpower") || n.includes("meter_ac") ||
+        n.includes("grid_power") || n.includes("export_power") || n.includes("net_power") ||
+        n.includes("measured_power") || (n.includes("meter") && n.includes("kw"))) {
+      return { column: headers[i], format: "pvdaq_meter", formatLabel: "PVDAQ Meter Power (kW → kWh)" };
+    }
+  }
+
+  for (let i = 0; i < normalized.length; i++) {
+    const n = normalized[i];
+    if (n === "power" || n === "power_kw" || n === "output_kw" ||
+        n.includes("gen_power") || n.includes("generation_kw")) {
+      return { column: headers[i], format: "power_generic", formatLabel: "Power Data (kW → kWh)" };
+    }
+  }
+
+  return null;
+}
+
 function detectCapacityFactorColumn(headers: string[]): string | null {
   const keywords = ["capacity_factor", "capacityfactor", "cf", "cap_factor"];
   const lower = headers.map(h => h.toLowerCase().trim());
   for (let i = 0; i < lower.length; i++) {
     if (keywords.includes(lower[i])) return headers[i];
   }
+  return null;
+}
+
+function detectPvdaqFormatFromFilename(filename: string): DetectedFormat | null {
+  const lower = filename.toLowerCase();
+  if (lower.includes("ac_power")) return "pvdaq_ac_power";
+  if (lower.includes("meter_data") || lower.includes("meter_pf")) return "pvdaq_meter";
   return null;
 }
 
@@ -172,6 +239,15 @@ function computeCoveragePct(records: ScadaInterval[], granularity: IntervalGranu
   return Math.min(100, Math.round((records.length / expectedCount) * 100));
 }
 
+function granularityToHours(granularity: IntervalGranularity): number {
+  switch (granularity) {
+    case "15min": return 0.25;
+    case "hourly": return 1;
+    case "daily": return 24;
+    case "monthly": return 24 * 30;
+  }
+}
+
 export class CsvConnector implements IScadaConnector {
   readonly name = "CSV Upload";
   readonly slug = "csv-upload";
@@ -185,6 +261,8 @@ export class CsvConnector implements IScadaConnector {
       validation: { totalRows, validRows: 0, skippedRows: totalRows, dateRange: null, gapsDetected: 0, duplicatesDetected: 0, unit: "kwh", granularity: "monthly", coveragePercent: 0 },
       errors: errs,
       detectedGranularity: "monthly",
+      detectedFormat: "standard",
+      formatLabel: "Standard CSV",
     });
 
     let rawRecords: Record<string, string>[];
@@ -208,19 +286,37 @@ export class CsvConnector implements IScadaConnector {
     const headers = Object.keys(rawRecords[0]);
     const dateCol = detectDateColumn(headers);
     const prodCol = detectProductionColumn(headers);
+    const powerCol = !prodCol ? detectPowerColumn(headers) : null;
     const cfCol = detectCapacityFactorColumn(headers);
 
-    if (!dateCol) {
-      errors.push("No date/timestamp column detected. Expected column named: date, timestamp, time, period, or datetime");
-    }
-    if (!prodCol) {
-      errors.push("No production column detected. Expected column named: production_kwh, production_mwh, kwh, mwh, or production");
+    const isPowerMode = !prodCol && !!powerCol;
+    const filenameHint = detectPvdaqFormatFromFilename(filename);
+    let detectedFormat: DetectedFormat = "standard";
+    let formatLabel = "Standard CSV";
+
+    if (isPowerMode && powerCol) {
+      detectedFormat = powerCol.format;
+      formatLabel = powerCol.formatLabel;
+    } else if (filenameHint && !prodCol) {
+      detectedFormat = filenameHint;
+      formatLabel = filenameHint === "pvdaq_ac_power" ? "PVDAQ AC Power (kW → kWh)" : "PVDAQ Meter Power (kW → kWh)";
     }
 
+    if (!dateCol) {
+      errors.push("No date/timestamp column detected. Expected column named: date, timestamp, time, period, datetime, or measdatetime");
+    }
+    if (!prodCol && !powerCol) {
+      errors.push("No production or power column detected. Expected: production_kwh, production_mwh, kwh, mwh, ac_power, meter_power, or power_kw");
+    }
+
+    const valueCol = prodCol ? prodCol.column : powerCol?.column;
     const fieldMapping: FieldMapping[] = headers.map(h => {
       if (dateCol && h === dateCol) return { csvColumn: h, mapsTo: "periodStart", status: "mapped" as const };
-      if (prodCol && h === prodCol.column) {
-        const label = prodCol.unit === "mwh" ? "productionMwh" : "productionMwh (÷1000)";
+      if (valueCol && h === valueCol) {
+        if (isPowerMode) {
+          return { csvColumn: h, mapsTo: "productionKwh (kW→kWh)", status: "mapped" as const };
+        }
+        const label = prodCol!.unit === "mwh" ? "productionMwh" : "productionMwh (÷1000)";
         return { csvColumn: h, mapsTo: label, status: "mapped" as const };
       }
       if (cfCol && h === cfCol) return { csvColumn: h, mapsTo: "capacityFactor", status: "mapped" as const };
@@ -235,6 +331,8 @@ export class CsvConnector implements IScadaConnector {
         validation: { totalRows: rawRecords.length, validRows: 0, skippedRows: rawRecords.length, dateRange: null, gapsDetected: 0, duplicatesDetected: 0, unit: prodCol?.unit || "kwh", granularity: "monthly", coveragePercent: 0 },
         errors,
         detectedGranularity: "monthly",
+        detectedFormat,
+        formatLabel,
       };
     }
 
@@ -246,7 +344,7 @@ export class CsvConnector implements IScadaConnector {
     for (let i = 0; i < rawRecords.length; i++) {
       const row = rawRecords[i];
       const dateVal = row[dateCol!];
-      const prodVal = row[prodCol!.column];
+      const rawVal = row[valueCol!];
 
       const date = parseDate(dateVal);
       if (!date) {
@@ -254,8 +352,13 @@ export class CsvConnector implements IScadaConnector {
         continue;
       }
 
-      const prodNum = parseFloat(prodVal);
-      if (isNaN(prodNum) || prodNum < 0) {
+      const numVal = parseFloat(rawVal);
+      if (isNaN(numVal)) {
+        skippedRows++;
+        continue;
+      }
+
+      if (numVal < 0 && !isPowerMode) {
         skippedRows++;
         continue;
       }
@@ -268,7 +371,13 @@ export class CsvConnector implements IScadaConnector {
       }
       seenTimestamps.add(tsKey);
 
-      const productionKwh = prodCol!.unit === "mwh" ? prodNum * 1000 : prodNum;
+      let productionKwh: number;
+      const absVal = isPowerMode ? Math.abs(numVal) : numVal;
+      if (isPowerMode) {
+        productionKwh = absVal;
+      } else {
+        productionKwh = prodCol!.unit === "mwh" ? absVal * 1000 : absVal;
+      }
 
       let capacityFactor: number | undefined;
       if (cfCol && row[cfCol]) {
@@ -282,6 +391,25 @@ export class CsvConnector implements IScadaConnector {
     records.sort((a, b) => a.timestamp.getTime() - b.timestamp.getTime());
 
     const granularity = detectGranularity(records);
+
+    if (isPowerMode && records.length > 1) {
+      const deltas: number[] = [];
+      for (let i = 1; i < records.length; i++) {
+        const diffMs = records[i].timestamp.getTime() - records[i - 1].timestamp.getTime();
+        if (diffMs > 0) deltas.push(diffMs);
+      }
+      const medianDeltaMs = deltas.length > 0
+        ? deltas.sort((a, b) => a - b)[Math.floor(deltas.length / 2)]
+        : granularityToHours(granularity) * 3600000;
+      const intervalHours = medianDeltaMs / 3600000;
+
+      for (let i = 0; i < records.length; i++) {
+        records[i].productionKwh = records[i].productionKwh * intervalHours;
+      }
+    } else if (isPowerMode && records.length === 1) {
+      const hoursPerInterval = granularityToHours(granularity);
+      records[0].productionKwh = records[0].productionKwh * hoursPerInterval;
+    }
 
     let gapsDetected = 0;
     if (records.length > 1) {
@@ -312,12 +440,14 @@ export class CsvConnector implements IScadaConnector {
         dateRange,
         gapsDetected,
         duplicatesDetected,
-        unit: prodCol!.unit,
+        unit: "kwh",
         granularity,
         coveragePercent,
       },
       errors: records.length === 0 ? ["No valid records after parsing"] : [],
       detectedGranularity: granularity,
+      detectedFormat,
+      formatLabel,
     };
   }
 
