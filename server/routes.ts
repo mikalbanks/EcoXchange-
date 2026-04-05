@@ -1489,7 +1489,7 @@ export async function registerRoutes(
     }
   });
 
-  app.post("/api/backtest/run", requireRole("ADMIN"), async (req: any, res) => {
+  app.post("/api/public/backtest/run", async (req: any, res) => {
     try {
       const { runBacktest, clearBacktestCache } = await import("./services/backtest-engine");
       clearBacktestCache();

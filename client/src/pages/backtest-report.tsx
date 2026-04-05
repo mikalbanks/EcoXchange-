@@ -223,7 +223,7 @@ export default function BacktestReportPage() {
 
   const runBacktestMutation = useMutation({
     mutationFn: async ({ projectId, meterDataSource }: { projectId: string; meterDataSource: string }) => {
-      const res = await fetch("/api/backtest/run", {
+      const res = await fetch("/api/public/backtest/run", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         credentials: "include",
