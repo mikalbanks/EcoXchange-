@@ -134,18 +134,18 @@ function detectPowerColumn(headers: string[]): PowerColumnResult | null {
 
   for (let i = 0; i < normalized.length; i++) {
     const n = normalized[i];
-    if (n.includes("ac_power") || n.includes("acpower") || n === "pac" || n === "p_ac" ||
-        n.includes("inverter_power") || (n.includes("ac") && n.includes("power"))) {
-      return { column: headers[i], format: "pvdaq_ac_power", formatLabel: "PVDAQ AC Power (kW → kWh)" };
+    if (n.includes("meter_power") || n.includes("meterpower") || n.includes("meter_ac") ||
+        n.includes("grid_power") || n.includes("export_power") || n.includes("net_power") ||
+        n.includes("measured_power") || (n.includes("meter") && n.includes("kw"))) {
+      return { column: headers[i], format: "pvdaq_meter", formatLabel: "PVDAQ Meter Power (kW → kWh)" };
     }
   }
 
   for (let i = 0; i < normalized.length; i++) {
     const n = normalized[i];
-    if (n.includes("meter_power") || n.includes("meterpower") || n.includes("meter_ac") ||
-        n.includes("grid_power") || n.includes("export_power") || n.includes("net_power") ||
-        n.includes("measured_power") || (n.includes("meter") && n.includes("kw"))) {
-      return { column: headers[i], format: "pvdaq_meter", formatLabel: "PVDAQ Meter Power (kW → kWh)" };
+    if (n.includes("ac_power") || n.includes("acpower") || n === "pac" || n === "p_ac" ||
+        n.includes("inverter_power") || (n.includes("ac") && n.includes("power"))) {
+      return { column: headers[i], format: "pvdaq_ac_power", formatLabel: "PVDAQ AC Power (kW → kWh)" };
     }
   }
 
@@ -358,9 +358,11 @@ export class CsvConnector implements IScadaConnector {
         continue;
       }
 
-      if (numVal < 0 && !isPowerMode) {
-        skippedRows++;
-        continue;
+      if (numVal < 0) {
+        if (!isPowerMode) {
+          skippedRows++;
+          continue;
+        }
       }
 
       const tsKey = date.toISOString();
@@ -372,11 +374,11 @@ export class CsvConnector implements IScadaConnector {
       seenTimestamps.add(tsKey);
 
       let productionKwh: number;
-      const absVal = isPowerMode ? Math.abs(numVal) : numVal;
+      const clampedVal = isPowerMode ? Math.max(0, numVal) : numVal;
       if (isPowerMode) {
-        productionKwh = absVal;
+        productionKwh = clampedVal;
       } else {
-        productionKwh = prodCol!.unit === "mwh" ? absVal * 1000 : absVal;
+        productionKwh = prodCol!.unit === "mwh" ? clampedVal * 1000 : clampedVal;
       }
 
       let capacityFactor: number | undefined;
