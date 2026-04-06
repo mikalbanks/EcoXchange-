@@ -45,7 +45,7 @@ export interface BacktestStatistics {
   };
 }
 
-export type SatelliteSource = "SOLCAST_HISTORICAL" | "SYNTHETIC_FALLBACK";
+export type SatelliteSource = "SOLCAST_HISTORICAL" | "SOLCAST_ESTIMATED_ACTUALS" | "SYNTHETIC_FALLBACK";
 
 export interface BacktestReport {
   site: BacktestSiteConfig;
@@ -208,7 +208,7 @@ async function fetchSolcastHistoric(
             start: chunk.start,
             end: chunk.end,
             period: "PT15M",
-            array_type: config.arrayType === "tracking" ? "horizontal_single_axis" : "fixed",
+            array_type: config.arrayType === "horizontal_single_axis" ? "horizontal_single_axis" : "fixed",
             format: "json",
           },
           headers: { Authorization: `Bearer ${apiKey}` },
@@ -234,19 +234,12 @@ async function fetchSolcastHistoric(
     } catch (error: unknown) {
       if (axios.isAxiosError(error)) {
         const status = error.response?.status;
-        console.log(`      ⚠️ Chunk ${i + 1} failed (HTTP ${status})`);
-        if (status === 429) {
-          console.log(`   ⚠️ Rate limit hit, stopping historic fetch`);
-          break;
-        }
-        if (status === 401 || status === 402 || status === 403) {
-          console.log(`   ⚠️ Historic endpoint not available (HTTP ${status}), trying fallback...`);
-          return null;
-        }
+        console.log(`      ⚠️ Chunk ${i + 1} failed (HTTP ${status}), aborting historic fetch`);
       } else {
         const msg = error instanceof Error ? error.message : String(error);
-        console.log(`      ⚠️ Chunk ${i + 1} error: ${msg}`);
+        console.log(`      ⚠️ Chunk ${i + 1} error: ${msg}, aborting historic fetch`);
       }
+      return null;
     }
   }
 
@@ -310,10 +303,15 @@ async function fetchSolcastEstimatedActuals(
   }
 }
 
+interface SolcastResult {
+  data: Map<string, number>;
+  source: SatelliteSource;
+}
+
 async function fetchSolcastHistoricalSeries(
   config: BacktestSiteConfig,
   timestamps: string[],
-): Promise<Map<string, number> | null> {
+): Promise<SolcastResult | null> {
   const SOLCAST_API_KEY = process.env.SOLCAST_API_KEY;
   if (!SOLCAST_API_KEY) {
     console.log(`   ⚠️ SOLCAST_API_KEY not configured, using synthetic satellite model`);
@@ -328,14 +326,14 @@ async function fetchSolcastHistoricalSeries(
     const { matchedCount, coveragePct } = evaluateCoverage(historicResult, timestamps);
     if (coveragePct >= 10) {
       console.log(`   ✅ Using Solcast historic data: ${matchedCount}/${timestamps.length} intervals (${coveragePct.toFixed(1)}% daylight coverage)`);
-      return historicResult;
+      return { data: historicResult, source: "SOLCAST_HISTORICAL" };
     }
     console.log(`   ⚠️ Historic data coverage too low (${coveragePct.toFixed(1)}%), trying estimated_actuals...`);
   }
 
   const estimatedResult = await fetchSolcastEstimatedActuals(config, SOLCAST_API_KEY, timestamps);
   if (estimatedResult) {
-    return estimatedResult;
+    return { data: estimatedResult, source: "SOLCAST_ESTIMATED_ACTUALS" };
   }
 
   console.log(`   ⚠️ All Solcast endpoints exhausted, falling back to synthetic satellite model`);
@@ -554,14 +552,14 @@ export async function runBacktest(config?: BacktestSiteConfig): Promise<Backtest
 
   const solcastSeries = await fetchSolcastHistoricalSeries(site, allTimestamps);
   if (solcastSeries) {
-    satelliteSource = "SOLCAST_HISTORICAL";
-    satelliteData = solcastSeries;
+    satelliteSource = solcastSeries.source;
+    satelliteData = solcastSeries.data;
     for (const ts of allTimestamps) {
       if (!satelliteData.has(ts)) {
         satelliteData.set(ts, 0);
       }
     }
-    console.log(`   ✅ Using Solcast historical data as satellite truth (${satelliteData.size} intervals)`);
+    console.log(`   ✅ Using ${solcastSeries.source} as satellite truth (${satelliteData.size} intervals)`);
   } else {
     satelliteData = generateSyntheticSatelliteEstimates(site);
     console.log(`   ✅ Using synthetic satellite model as fallback (${satelliteData.size} intervals)`);
