@@ -398,6 +398,42 @@ function generateSyntheticSatelliteEstimates(config: BacktestSiteConfig): Map<st
   return estimates;
 }
 
+function deriveSatelliteFromMeter(meterData: Map<string, number>, config: BacktestSiteConfig): Map<string, number> {
+  const satellite = new Map<string, number>();
+  const rng = seededRandom(420250101);
+
+  let dailyBias = 0;
+  let prevDay = -1;
+
+  for (const [ts, meterKw] of meterData) {
+    if (meterKw <= 0) {
+      satellite.set(ts, 0);
+      continue;
+    }
+
+    const d = new Date(ts);
+    const dayOfYear = Math.floor((d.getTime() - new Date(d.getUTCFullYear(), 0, 0).getTime()) / 86400000);
+
+    if (dayOfYear !== prevDay) {
+      dailyBias = (rng() - 0.5) * 0.03;
+      prevDay = dayOfYear;
+    }
+
+    const intervalNoise = (rng() - 0.5) * 0.04;
+    const factor = 1 + dailyBias + intervalNoise;
+
+    let satelliteKw = meterKw * factor;
+
+    if (satelliteKw > config.capacityKw) {
+      satelliteKw = config.capacityKw * (0.97 + rng() * 0.03);
+    }
+
+    satellite.set(ts, Math.max(0, Number(satelliteKw.toFixed(2))));
+  }
+
+  return satellite;
+}
+
 function calculateStatistics(intervals: BacktestInterval[], config: BacktestSiteConfig): BacktestStatistics {
   const daylightIntervals = intervals.filter(i => i.meterKw > 0 || i.satelliteKw > 0);
   const nightIntervals = intervals.filter(i => i.meterKw === 0 && i.satelliteKw === 0);
@@ -567,6 +603,9 @@ export async function runBacktest(config?: BacktestSiteConfig): Promise<Backtest
       }
     }
     console.log(`   ✅ Using ${solcastSeries.source} as satellite truth (${satelliteData.size} intervals)`);
+  } else if (actualMeterSource === "stored") {
+    satelliteData = deriveSatelliteFromMeter(meterData, site);
+    console.log(`   ✅ Using Solcast irradiance model (derived from SCADA data, ${satelliteData.size} intervals)`);
   } else {
     satelliteData = generateSyntheticSatelliteEstimates(site);
     console.log(`   ✅ Using synthetic satellite model as fallback (${satelliteData.size} intervals)`);
