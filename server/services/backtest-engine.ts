@@ -475,9 +475,16 @@ async function loadStoredMeterData(projectId: string, config: BacktestSiteConfig
     const meterMap = new Map<string, number>();
 
     for (const interval of intervals) {
-      if (interval.granularity === "15min" || interval.granularity === "hourly") {
-        const kw = (interval.productionMwh * 1000) / (interval.granularity === "15min" ? 0.25 : 1);
+      if (interval.granularity === "15min") {
+        const kw = (interval.productionMwh * 1000) / 0.25;
         meterMap.set(interval.periodStart.toISOString(), Math.max(0, Number(kw.toFixed(2))));
+      } else if (interval.granularity === "hourly") {
+        const kw = (interval.productionMwh * 1000) / 1;
+        const hourStart = interval.periodStart;
+        for (let q = 0; q < 4; q++) {
+          const ts = new Date(hourStart.getTime() + q * 15 * 60 * 1000);
+          meterMap.set(ts.toISOString(), Math.max(0, Number(kw.toFixed(2))));
+        }
       } else {
         const periodMs = interval.periodEnd.getTime() - interval.periodStart.getTime();
         const daysInPeriod = Math.max(1, periodMs / (1000 * 60 * 60 * 24));
@@ -630,9 +637,39 @@ let cachedReport: BacktestReport | null = null;
 
 export async function getCachedBacktestReport(): Promise<BacktestReport> {
   if (!cachedReport) {
-    cachedReport = await runBacktest();
+    const { storage } = await import("../storage");
+    const project = await storage.getProject("proj1");
+    if (project) {
+      const storedProduction = await storage.getProductionByProject("proj1");
+      if (storedProduction.length > 0) {
+        const dates = storedProduction.map(p => p.periodStart.getTime());
+        const endDates = storedProduction.map(p => p.periodEnd.getTime());
+        const startDate = new Date(Math.min(...dates)).toISOString().split("T")[0];
+        const endDate = new Date(Math.max(...endDates)).toISOString().split("T")[0];
+        cachedReport = await runBacktest({
+          siteId: project.id,
+          siteName: project.name,
+          latitude: parseFloat(project.latitude || "32.8476"),
+          longitude: parseFloat(project.longitude || "-115.5695"),
+          capacityKw: parseFloat(project.capacityKw || "12000"),
+          arrayType: "fixed",
+          startDate,
+          endDate,
+          projectId: project.id,
+          meterDataSource: "stored",
+        });
+      } else {
+        cachedReport = await runBacktest();
+      }
+    } else {
+      cachedReport = await runBacktest();
+    }
   }
   return cachedReport;
+}
+
+export function setCachedBacktestReport(report: BacktestReport): void {
+  cachedReport = report;
 }
 
 export function clearBacktestCache(): void {

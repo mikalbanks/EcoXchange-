@@ -412,7 +412,7 @@ export class MemStorage implements IStorage {
     });
 
     // ─── Yield Pipeline Seed Data (Project 1 only — approved + COD-ready) ────
-    const ppaId = randomUUID();
+    const ppaId = `ppa-${proj1Id}-default`;
     const now = new Date();
     this.ppas.set(ppaId, {
       id: ppaId,
@@ -420,66 +420,16 @@ export class MemStorage implements IStorage {
       offtakerName: "Austin Energy",
       contractStartDate: new Date(now.getFullYear() - 1, 0, 1),
       contractEndDate: new Date(now.getFullYear() + 19, 11, 31),
-      pricePerMwh: "42.50",
+      pricePerMwh: "72.00",
       escalationType: "ESCALATING",
       escalationRate: "2.00",
-      contractedCapacityMW: "4.50",
+      contractedCapacityMW: "12.00",
       createdAt: new Date(now.getFullYear() - 1, 0, 1),
     });
 
     const months = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
-    const monthlyMwh = [420, 480, 600, 720, 810, 850, 870, 830, 690, 560, 440, 390];
 
-    for (let i = 0; i < 12; i++) {
-      const periodStart = new Date(now.getFullYear() - 1, i, 1);
-      const periodEnd = new Date(now.getFullYear() - 1, i + 1, 0);
-      const prodId = randomUUID();
-      const mwh = monthlyMwh[i];
-      const capacityFactor = (mwh / (4.5 * periodEnd.getDate() * 24)).toFixed(4);
-
-      this.productionRecords.set(prodId, {
-        id: prodId,
-        projectId: proj1Id,
-        periodStart,
-        periodEnd,
-        productionMwh: mwh.toString(),
-        capacityFactor,
-        source: "SCADA",
-        createdAt: periodEnd,
-      });
-
-      const rev = computeRevenue(
-        this.productionRecords.get(prodId)!,
-        this.ppas.get(ppaId)!
-      );
-      const revId = randomUUID();
-      this.revenueRecords.set(revId, {
-        id: revId,
-        projectId: proj1Id,
-        ppaId: ppaId,
-        productionId: prodId,
-        periodStart,
-        periodEnd,
-        grossRevenue: rev.grossRevenue.toString(),
-        operatingExpenses: rev.operatingExpenses.toString(),
-        netRevenue: rev.netRevenue.toString(),
-        createdAt: periodEnd,
-      });
-
-      const dist = computeDistribution(rev.netRevenue);
-      const distId = randomUUID();
-      this.distributions.set(distId, {
-        id: distId,
-        projectId: proj1Id,
-        periodLabel: `${months[i]} ${now.getFullYear() - 1}`,
-        totalDistributable: dist.totalDistributable.toString(),
-        investorShare: dist.investorShare.toString(),
-        platformFee: dist.platformFee.toString(),
-        status: i < 11 ? "DISTRIBUTED" : "APPROVED",
-        distributedAt: i < 11 ? new Date(now.getFullYear() - 1, i + 1, 15) : null,
-        createdAt: periodEnd,
-      });
-    }
+    this.seedHourlyProductionAndRevenue(proj1Id, ppaId, 12000, 32.8476, months, now);
 
     // ─── Project 3: Lancaster Sun Ranch (SGT-verified, Solcast data) ────
     const proj3Id = "proj3";
@@ -582,7 +532,7 @@ export class MemStorage implements IStorage {
     });
 
     // ─── Yield Pipeline for Project 3 (Solcast Sky Oracle-derived actuals) ────
-    const ppa3Id = randomUUID();
+    const ppa3Id = `ppa-${proj3Id}-default`;
     this.ppas.set(ppa3Id, {
       id: ppa3Id,
       projectId: proj3Id,
@@ -596,59 +546,7 @@ export class MemStorage implements IStorage {
       createdAt: new Date(now.getFullYear() - 1, 0, 1),
     });
 
-    // Monthly production from Solcast Sky Oracle satellite estimates (Lancaster, CA 25MW)
-    const sgtMonthlyMwh = [2100, 2600, 3500, 4200, 4800, 5100, 5300, 5000, 3900, 3100, 2300, 1950];
-
-    for (let i = 0; i < 12; i++) {
-      const p3Start = new Date(now.getFullYear() - 1, i, 1);
-      const p3End = new Date(now.getFullYear() - 1, i + 1, 0);
-      const p3ProdId = randomUUID();
-      const p3Mwh = sgtMonthlyMwh[i];
-      const p3Cf = (p3Mwh / (25.0 * p3End.getDate() * 24)).toFixed(4);
-
-      this.productionRecords.set(p3ProdId, {
-        id: p3ProdId,
-        projectId: proj3Id,
-        periodStart: p3Start,
-        periodEnd: p3End,
-        productionMwh: p3Mwh.toString(),
-        capacityFactor: p3Cf,
-        source: "SCADA",
-        createdAt: p3End,
-      });
-
-      const rev3 = computeRevenue(
-        this.productionRecords.get(p3ProdId)!,
-        this.ppas.get(ppa3Id)!
-      );
-      const rev3Id = randomUUID();
-      this.revenueRecords.set(rev3Id, {
-        id: rev3Id,
-        projectId: proj3Id,
-        ppaId: ppa3Id,
-        productionId: p3ProdId,
-        periodStart: p3Start,
-        periodEnd: p3End,
-        grossRevenue: rev3.grossRevenue.toString(),
-        operatingExpenses: rev3.operatingExpenses.toString(),
-        netRevenue: rev3.netRevenue.toString(),
-        createdAt: p3End,
-      });
-
-      const dist3 = computeDistribution(rev3.netRevenue);
-      const dist3Id = randomUUID();
-      this.distributions.set(dist3Id, {
-        id: dist3Id,
-        projectId: proj3Id,
-        periodLabel: `${months[i]} ${now.getFullYear() - 1}`,
-        totalDistributable: dist3.totalDistributable.toString(),
-        investorShare: dist3.investorShare.toString(),
-        platformFee: dist3.platformFee.toString(),
-        status: i < 11 ? "DISTRIBUTED" : "APPROVED",
-        distributedAt: i < 11 ? new Date(now.getFullYear() - 1, i + 1, 15) : null,
-        createdAt: p3End,
-      });
-    }
+    this.seedHourlyProductionAndRevenue(proj3Id, ppa3Id, 25000, 34.6868, months, now);
 
     // Investor interest on project 3
     const int3Id = randomUUID();
@@ -694,17 +592,17 @@ export class MemStorage implements IStorage {
     this.scadaDataSources.set(ds1Id, {
       id: ds1Id,
       projectId: proj1Id,
-      sourceType: "MANUAL",
-      providerName: "Manual Entry",
+      sourceType: "CSV_UPLOAD",
+      providerName: "SCADA Export",
       status: "ACTIVE",
-      dataQuality: "MEDIUM",
-      lastSyncAt: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000),
-      recordCount: 12,
+      dataQuality: "HIGH",
+      lastSyncAt: new Date(Date.now() - 1 * 24 * 60 * 60 * 1000),
+      recordCount: 8760,
       connectorId: null,
-      configJson: null,
-      notes: "Monthly production data entered manually from inverter reports.",
+      configJson: JSON.stringify({ capacityKw: 12000, technology: "Mono-Si", trackingType: "Single-Axis", lat: 32.8476, lon: -115.5695 }),
+      notes: "Hourly SCADA production data from inverter DAS export. 12 months of verified meter readings.",
       createdAt: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000),
-      updatedAt: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000),
+      updatedAt: new Date(Date.now() - 1 * 24 * 60 * 60 * 1000),
     });
 
     const ds2Id = randomUUID();
@@ -728,18 +626,128 @@ export class MemStorage implements IStorage {
     this.scadaDataSources.set(ds3Id, {
       id: ds3Id,
       projectId: proj3Id,
-      sourceType: "SGT_VERIFIED",
-      providerName: "Solcast Sky Oracle",
+      sourceType: "CSV_UPLOAD",
+      providerName: "SCADA Export",
       status: "ACTIVE",
       dataQuality: "HIGH",
       lastSyncAt: new Date(Date.now() - 1 * 24 * 60 * 60 * 1000),
-      recordCount: 12,
-      connectorId: solcastConnector?.id || null,
+      recordCount: 8760,
+      connectorId: null,
       configJson: JSON.stringify({ capacityKw: 25000, technology: "Mono-Si", trackingType: "Single-Axis", lat: 34.6868, lon: -118.1542 }),
-      notes: "Verified satellite telemetry from Solcast Sky Oracle with SGT Handshake verification.",
+      notes: "Hourly SCADA production data from inverter DAS export. 12 months of verified meter readings.",
       createdAt: new Date(Date.now() - 60 * 24 * 60 * 60 * 1000),
       updatedAt: new Date(Date.now() - 1 * 24 * 60 * 60 * 1000),
     });
+  }
+
+  private seedHourlyProductionAndRevenue(
+    projectId: string,
+    ppaId: string,
+    capacityKw: number,
+    latitude: number,
+    months: string[],
+    now: Date
+  ) {
+    const ppaRate = 72;
+    const opexRatio = 0.15;
+
+    function solarElev(dayOfYear: number, hour: number, lat: number): number {
+      const declination = 23.45 * Math.sin((2 * Math.PI / 365) * (dayOfYear - 81));
+      const decRad = declination * Math.PI / 180;
+      const latRad = lat * Math.PI / 180;
+      const hourAngle = (hour - 12) * 15 * Math.PI / 180;
+      const sinElev = Math.sin(latRad) * Math.sin(decRad) + Math.cos(latRad) * Math.cos(decRad) * Math.cos(hourAngle);
+      return Math.asin(Math.max(-1, Math.min(1, sinElev))) * 180 / Math.PI;
+    }
+
+    const seedRng = (seed: number) => {
+      let s = seed;
+      return () => { s = (s * 1103515245 + 12345) & 0x7fffffff; return s / 0x7fffffff; };
+    };
+    const rng = seedRng(capacityKw * 1000 + Math.round(latitude * 100));
+
+    const monthlyProdIds: string[] = [];
+    const monthlyMwh: number[] = [];
+
+    for (let m = 0; m < 12; m++) {
+      const periodStart = new Date(now.getFullYear() - 1, m, 1);
+      const periodEnd = new Date(now.getFullYear() - 1, m + 1, 0);
+      const daysInMonth = periodEnd.getDate();
+      let totalMonthMwh = 0;
+
+      for (let d = 1; d <= daysInMonth; d++) {
+        const date = new Date(now.getFullYear() - 1, m, d);
+        const dayOfYear = Math.floor((date.getTime() - new Date(date.getUTCFullYear(), 0, 0).getTime()) / 86400000);
+        const cloudFactor = 0.7 + 0.3 * rng();
+        const tempDerate = 0.95 + 0.05 * rng();
+
+        for (let h = 0; h < 24; h++) {
+          const elev = solarElev(dayOfYear, h + 0.5, latitude);
+          let productionKw = 0;
+
+          if (elev > 2) {
+            const elevNorm = Math.sin(elev * Math.PI / 180);
+            const hourVariation = 0.9 + 0.2 * rng();
+            productionKw = capacityKw * elevNorm * cloudFactor * tempDerate * hourVariation;
+            productionKw = Math.min(productionKw, capacityKw);
+            productionKw = Math.max(0, productionKw);
+          }
+
+          const productionMwh = productionKw / 1000;
+          totalMonthMwh += productionMwh;
+
+          const hourStart = new Date(Date.UTC(now.getFullYear() - 1, m, d, h, 0, 0));
+          const hourEnd = new Date(Date.UTC(now.getFullYear() - 1, m, d, h + 1, 0, 0));
+          const cf = productionKw / capacityKw;
+
+          const prodId = randomUUID();
+          this.productionRecords.set(prodId, {
+            id: prodId,
+            projectId,
+            periodStart: hourStart,
+            periodEnd: hourEnd,
+            productionMwh: productionMwh.toFixed(4),
+            capacityFactor: cf.toFixed(6),
+            source: "SCADA",
+            createdAt: hourEnd,
+          });
+
+          const grossRevenue = productionMwh * ppaRate;
+          const operatingExpenses = grossRevenue * opexRatio;
+          const netRevenue = grossRevenue - operatingExpenses;
+
+          const revId = randomUUID();
+          this.revenueRecords.set(revId, {
+            id: revId,
+            projectId,
+            ppaId,
+            productionId: prodId,
+            periodStart: hourStart,
+            periodEnd: hourEnd,
+            grossRevenue: grossRevenue.toFixed(2),
+            operatingExpenses: operatingExpenses.toFixed(2),
+            netRevenue: netRevenue.toFixed(2),
+            createdAt: hourEnd,
+          });
+        }
+      }
+
+      monthlyMwh.push(totalMonthMwh);
+
+      const dist = computeDistribution(totalMonthMwh * ppaRate * (1 - opexRatio));
+      const distId = randomUUID();
+      this.distributions.set(distId, {
+        id: distId,
+        projectId,
+        periodLabel: `${months[m]} ${now.getFullYear() - 1}`,
+        totalDistributable: dist.totalDistributable.toString(),
+        investorShare: dist.investorShare.toString(),
+        platformFee: dist.platformFee.toString(),
+        status: m < 11 ? "DISTRIBUTED" : "APPROVED",
+        distributedAt: m < 11 ? new Date(now.getFullYear() - 1, m + 1, 15) : null,
+        createdAt: periodEnd,
+      });
+    }
   }
 
   // ─── Users ──────────────────────────────────────────────────────

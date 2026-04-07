@@ -1491,7 +1491,7 @@ export async function registerRoutes(
 
   app.post("/api/public/backtest/run", async (req: any, res) => {
     try {
-      const { runBacktest, clearBacktestCache } = await import("./services/backtest-engine");
+      const { runBacktest, clearBacktestCache, setCachedBacktestReport } = await import("./services/backtest-engine");
       clearBacktestCache();
 
       const { projectId, meterDataSource } = req.body || {};
@@ -1502,14 +1502,16 @@ export async function registerRoutes(
           let startDate = "2023-06-01";
           let endDate = "2024-05-31";
 
-          if (meterDataSource === "stored") {
-            const storedProduction = await storage.getProductionByProject(projectId);
-            if (storedProduction.length > 0) {
-              const dates = storedProduction.map(p => p.periodStart.getTime());
-              const endDates = storedProduction.map(p => p.periodEnd.getTime());
-              startDate = new Date(Math.min(...dates)).toISOString().split("T")[0];
-              endDate = new Date(Math.max(...endDates)).toISOString().split("T")[0];
-            }
+          const storedProduction = await storage.getProductionByProject(projectId);
+          const hasStoredData = storedProduction.length > 0;
+
+          const effectiveMeterSource = meterDataSource || (hasStoredData ? "stored" : "synthetic");
+
+          if (effectiveMeterSource === "stored" && hasStoredData) {
+            const dates = storedProduction.map(p => p.periodStart.getTime());
+            const endDates = storedProduction.map(p => p.periodEnd.getTime());
+            startDate = new Date(Math.min(...dates)).toISOString().split("T")[0];
+            endDate = new Date(Math.max(...endDates)).toISOString().split("T")[0];
           }
 
           config = {
@@ -1521,12 +1523,13 @@ export async function registerRoutes(
             arrayType: "fixed",
             startDate,
             endDate,
-            ...(meterDataSource === "stored" ? { projectId: project.id, meterDataSource: "stored" as const } : {}),
+            ...(effectiveMeterSource === "stored" ? { projectId: project.id, meterDataSource: "stored" as const } : {}),
           };
         }
       }
 
       const report = await runBacktest(config);
+      setCachedBacktestReport(report);
       res.json({
         site: report.site,
         statistics: report.statistics,
@@ -1539,6 +1542,19 @@ export async function registerRoutes(
     } catch (error: any) {
       console.error("Backtest run error:", error);
       res.status(500).json({ message: error.message || "Failed to run backtest" });
+    }
+  });
+
+  app.get("/api/public/backtest/has-stored-data", async (req, res) => {
+    try {
+      const projectId = req.query.projectId as string;
+      if (!projectId) {
+        return res.json({ hasStoredData: false });
+      }
+      const production = await storage.getProductionByProject(projectId);
+      res.json({ hasStoredData: production.length > 0, recordCount: production.length });
+    } catch (error: any) {
+      res.json({ hasStoredData: false });
     }
   });
 
