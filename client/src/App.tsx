@@ -74,6 +74,7 @@ import YieldSimulationPage from "@/pages/yield-simulation";
 import PerformancePage from "@/pages/performance";
 import OperationsPage from "@/pages/operations";
 import BacktestReportPage from "@/pages/backtest-report";
+import InvestmentDashboard from "@/pages/investments";
 
 function ProtectedRoute({ 
   children, 
@@ -190,6 +191,8 @@ function Router() {
           <OperationsPage />
         </ProtectedRoute>
       </Route>
+
+      <Route path="/investments" component={InvestmentDashboard} />
 
       <Route component={NotFound} />
     </Switch>
