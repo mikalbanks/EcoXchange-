@@ -12,6 +12,7 @@ import * as scadaService from "./lib/scada-service";
 import { settleProject } from "./services/settle-project";
 import { runSgtHandshake } from "./services/sgt-handshake";
 import { csvConnector } from "./services/scada-connector";
+import { validateProjectAgainstEia923, type ValidationResult } from "./lib/validator";
 import { db } from "./db";
 import { accounts as accountsTable, transactions as txTable, postings as postingsTable } from "@shared/schema";
 import { eq, sql as dsql } from "drizzle-orm";
@@ -703,6 +704,44 @@ export async function registerRoutes(
       logs: enrichedLogs,
       developer: developer ? { name: developer.name, orgName: developer.orgName, email: developer.email } : null,
     });
+  });
+
+  // ─── Institutional Validation (Admin) ─────────────────────────────────────
+
+  app.post("/api/admin/projects/:id/validate", requireRole("ADMIN"), async (req: any, res) => {
+    try {
+      const projectId = req.params.id;
+      const project = await storage.getProject(projectId);
+      if (!project) return res.status(404).json({ message: "Project not found" });
+
+      const lat = project.latitude ? Number(project.latitude) : null;
+      const lon = project.longitude ? Number(project.longitude) : null;
+      const capacityKw = Number(project.capacityKw || 0);
+
+      if (!lat || !lon || Number.isNaN(lat) || Number.isNaN(lon)) {
+        return res.status(400).json({ message: "Project is missing valid latitude/longitude" });
+      }
+      if (!capacityKw || Number.isNaN(capacityKw) || capacityKw <= 0) {
+        return res.status(400).json({ message: "Project is missing valid capacityKw" });
+      }
+
+      const result: ValidationResult = await validateProjectAgainstEia923(project.id);
+
+      await storage.updateProject(project.id, {
+        eiaActualMwh: result.actualMonthlyMwh.at(-1)?.mwh?.toFixed(3) ?? null,
+        validationConfidence: result.validationConfidencePct.toFixed(2),
+      });
+
+      res.json({
+        projectName: project.name,
+        ...result,
+        validationConfidence: result.validationConfidencePct,
+        dataFidelity: "4km (NLR)",
+      });
+    } catch (error: any) {
+      console.error("Institutional validation error:", error);
+      res.status(500).json({ message: error.message || "Validation failed" });
+    }
   });
 
   // Admin actions: approve/reject/request-changes

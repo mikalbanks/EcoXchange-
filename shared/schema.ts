@@ -176,6 +176,9 @@ export const projects = pgTable("projects", {
   monthlyDebtService: decimal("monthly_debt_service", { precision: 15, scale: 2 }).default("0"),
   monthlyOpex: decimal("monthly_opex", { precision: 15, scale: 2 }).default("0"),
   reserveRate: decimal("reserve_rate", { precision: 5, scale: 4 }).default("0"),
+  sgtScoreNrel: decimal("sgt_score_nrel", { precision: 6, scale: 4 }),
+  eiaActualMwh: decimal("eia_actual_mwh", { precision: 14, scale: 3 }),
+  validationConfidence: decimal("validation_confidence", { precision: 6, scale: 2 }),
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
 });

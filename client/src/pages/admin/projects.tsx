@@ -32,6 +32,7 @@ interface AdminProject {
   county: string;
   capacityMW: string | null;
   status: string;
+  validationConfidence?: string | null;
   developerName: string;
   developerOrg: string | null;
   readinessScore: {
@@ -137,6 +138,8 @@ export default function AdminProjects() {
                   <TableHead>State</TableHead>
                   <TableHead>MW</TableHead>
                   <TableHead>Stage</TableHead>
+                  <TableHead>Data Fidelity</TableHead>
+                  <TableHead>Validation</TableHead>
                   <TableHead>Status</TableHead>
                   <TableHead>Readiness</TableHead>
                 </TableRow>
@@ -177,6 +180,20 @@ export default function AdminProjects() {
                     </TableCell>
                     <TableCell className="text-muted-foreground">
                       {project.stage.replace(/_/g, " ")}
+                    </TableCell>
+                    <TableCell>
+                      <span className="text-xs px-2 py-1 rounded-md border border-primary/30 bg-primary/10 text-primary">
+                        Data Fidelity: 4km (NLR)
+                      </span>
+                    </TableCell>
+                    <TableCell className="text-muted-foreground">
+                      {project.validationConfidence ? (
+                        <span className="text-xs" data-testid={`text-validation-confidence-${project.id}`}>
+                          {Number(project.validationConfidence).toFixed(1)}%
+                        </span>
+                      ) : (
+                        <span className="text-xs text-muted-foreground">N/A</span>
+                      )}
                     </TableCell>
                     <TableCell>
                       <StatusBadge status={project.status} type="project" />

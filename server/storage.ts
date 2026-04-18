@@ -221,6 +221,9 @@ export class MemStorage implements IStorage {
       monthlyDebtService: "22000.00",
       monthlyOpex: "8500.00",
       reserveRate: "0.05",
+      sgtScoreNrel: null,
+      eiaActualMwh: null,
+      validationConfidence: null,
       createdAt: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000),
       updatedAt: new Date(),
     });
@@ -328,6 +331,9 @@ export class MemStorage implements IStorage {
       monthlyDebtService: "0",
       monthlyOpex: "0",
       reserveRate: "0",
+      sgtScoreNrel: null,
+      eiaActualMwh: null,
+      validationConfidence: null,
       createdAt: new Date(Date.now() - 14 * 24 * 60 * 60 * 1000),
       updatedAt: new Date(),
     });
@@ -457,6 +463,9 @@ export class MemStorage implements IStorage {
       monthlyDebtService: "48000.00",
       monthlyOpex: "18500.00",
       reserveRate: "0.04",
+      sgtScoreNrel: null,
+      eiaActualMwh: null,
+      validationConfidence: null,
       createdAt: new Date(Date.now() - 60 * 24 * 60 * 60 * 1000),
       updatedAt: new Date(),
     });
@@ -832,6 +841,9 @@ export class MemStorage implements IStorage {
       monthlyDebtService: project.monthlyDebtService || "0",
       monthlyOpex: project.monthlyOpex || "0",
       reserveRate: project.reserveRate || "0",
+      sgtScoreNrel: project.sgtScoreNrel || null,
+      eiaActualMwh: project.eiaActualMwh || null,
+      validationConfidence: project.validationConfidence || null,
       createdAt: new Date(),
       updatedAt: new Date(),
     };
