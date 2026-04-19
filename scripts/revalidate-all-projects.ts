@@ -1,5 +1,6 @@
 /**
- * Re-run institutional validation for all projects with coordinates (live NREL vs EIA).
+ * Re-run institutional validation for all projects with coordinates (NREL NSRDB vs EIA),
+ * and refresh Live Yield (financial_apy_pct) from NSRDB annual kWh × market PPA / CapEx.
  *
  *   npx tsx scripts/revalidate-all-projects.ts
  *

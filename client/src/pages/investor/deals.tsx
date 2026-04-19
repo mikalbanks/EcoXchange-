@@ -27,7 +27,10 @@ import {
   Filter,
   X,
   Activity,
+  Info,
 } from "lucide-react";
+import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
+import { LEVELTEN_P25_Q1_2026_USD_PER_MWH } from "@/lib/institutional-market";
 
 interface ScadaQuickData {
   totalProductionMwh: number;
@@ -114,6 +117,8 @@ interface DealProject {
   county: string;
   capacityMW: string | null;
   offtakerType: string;
+  financialApyPct?: string | null;
+  marketPpaBenchmarkUsdPerMwh?: string | null;
   readinessScore?: {
     score: number;
     rating: string;
@@ -368,6 +373,33 @@ export default function InvestorDeals() {
                   </div>
 
                   <ScadaQuickMetrics projectId={deal.id} />
+
+                  <div className="flex items-center justify-between text-sm pt-1 border-t border-border/60">
+                    <span className="text-muted-foreground flex items-center gap-1">
+                      Live Yield
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <button
+                            type="button"
+                            className="inline-flex text-muted-foreground hover:text-foreground"
+                            aria-label="Market reference"
+                            data-testid={`button-market-ref-${deal.id}`}
+                          >
+                            <Info className="h-3.5 w-3.5" />
+                          </button>
+                        </TooltipTrigger>
+                        <TooltipContent className="max-w-xs text-xs">
+                          Market reference: LevelTen Q1 2026 P25 benchmark (${LEVELTEN_P25_Q1_2026_USD_PER_MWH.toFixed(2)}/MWh).
+                          California projects without a fixed PPA use NP-15 / SP-15 hub proxies (override via CAISO_NP15_USD_PER_MWH / CAISO_SP15_USD_PER_MWH).
+                        </TooltipContent>
+                      </Tooltip>
+                    </span>
+                    <span className="font-mono font-medium text-primary" data-testid={`text-live-yield-${deal.id}`}>
+                      {deal.financialApyPct != null && deal.financialApyPct !== ""
+                        ? `${Number(deal.financialApyPct).toFixed(2)}%`
+                        : "—"}
+                    </span>
+                  </div>
 
                   <div className="border-t border-border pt-3 space-y-1.5">
                     {deal.capitalStack?.totalCapex && (

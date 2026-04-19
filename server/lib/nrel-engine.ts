@@ -1,4 +1,5 @@
 import axios from "axios";
+import { resolveMarketPpaUsdPerKwh, type MarketPpaResolution } from "./market-rates";
 
 export type NlrNsrdbDataset = "nsrdb-GOES-aggregated-v4-0-0-download";
 
@@ -204,6 +205,138 @@ export function aggregateMonthlyGhiKwhPerM2(
     byMonth.set(key, (byMonth.get(key) || 0) + add);
   }
   return byMonth;
+}
+
+const DEFAULT_PERFORMANCE_RATIO = 0.2;
+
+export function monthRangeUtc(monthsBack: number): { start: string; end: string; nsrdbYear: number } {
+  const now = new Date();
+  const end = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), 1));
+  const start = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth() - monthsBack + 1, 1));
+  const startStr = `${start.getUTCFullYear()}-${String(start.getUTCMonth() + 1).padStart(2, "0")}`;
+  const endStr = `${end.getUTCFullYear()}-${String(end.getUTCMonth() + 1).padStart(2, "0")}`;
+  const nsrdbYear = end.getUTCFullYear();
+  return { start: startStr, end: endStr, nsrdbYear };
+}
+
+/**
+ * NLR-verified monthly modeled MWh from NSRDB GHI × capacity × PR (institutional production proxy).
+ */
+export async function getNrelModeledMonthlyMwh(
+  latitude: number,
+  longitude: number,
+  capacityMw: number,
+  monthsBack: number,
+  performanceRatio: number = DEFAULT_PERFORMANCE_RATIO,
+): Promise<Map<string, number>> {
+  const { start, end, nsrdbYear } = monthRangeUtc(monthsBack);
+  const ts = await fetchNsrdbTimeSeries4km(latitude, longitude, { year: nsrdbYear });
+  const monthlyGhi = aggregateMonthlyGhiKwhPerM2(ts.rows, ts.intervalMinutes);
+  const out = new Map<string, number>();
+  for (const [period, ghiKwhM2] of monthlyGhi) {
+    if (period < start || period > end) continue;
+    const mwh = ghiKwhM2 * capacityMw * 1000 * performanceRatio;
+    out.set(period, Number(mwh.toFixed(3)));
+  }
+  return out;
+}
+
+export async function computeAnnualKwhNsrdb(
+  latitude: number,
+  longitude: number,
+  capacityMw: number,
+  performanceRatio: number = DEFAULT_PERFORMANCE_RATIO,
+): Promise<number> {
+  const modeled = await getNrelModeledMonthlyMwh(latitude, longitude, capacityMw, 12, performanceRatio);
+  let sumKwh = 0;
+  for (const mwh of modeled.values()) {
+    sumKwh += mwh * 1000;
+  }
+  return Number(sumKwh.toFixed(0));
+}
+
+export interface FinancialApyInputs {
+  annualKwh: number;
+  marketPpaUsdPerKwh: number;
+  annualOmUsd: number;
+  assetCapexUsd: number;
+}
+
+/**
+ * Financial APY = ((Annual kWh × Market PPA $/kWh) − Annual O&M) / Asset CapEx
+ */
+export function computeFinancialApy(inputs: FinancialApyInputs): number | null {
+  const { annualKwh, marketPpaUsdPerKwh, annualOmUsd, assetCapexUsd } = inputs;
+  if (!Number.isFinite(annualKwh) || annualKwh <= 0) return null;
+  if (!Number.isFinite(marketPpaUsdPerKwh) || marketPpaUsdPerKwh <= 0) return null;
+  if (!Number.isFinite(assetCapexUsd) || assetCapexUsd <= 0) return null;
+  const gross = annualKwh * marketPpaUsdPerKwh;
+  const net = gross - (Number.isFinite(annualOmUsd) ? annualOmUsd : 0);
+  if (net <= 0) return null;
+  return net / assetCapexUsd;
+}
+
+export interface InstitutionalYieldResult {
+  annualKwhNsrdb: number;
+  financialApy: number | null;
+  financialApyPct: number | null;
+  marketPpa: MarketPpaResolution;
+  assetCapexUsd: number;
+  annualOmUsd: number;
+}
+
+/**
+ * Full institutional yield stack: NSRDB annual kWh, market PPA resolution, APY vs CapEx.
+ */
+export async function computeInstitutionalYieldForProject(params: {
+  state: string;
+  latitude?: number | string | null;
+  longitude?: number | string | null;
+  capacityMw: number;
+  fixedPpaRatePerKwh?: string | number | null;
+  monthlyOpexUsd?: string | number | null;
+  totalCapexUsd?: string | number | null;
+  performanceRatio?: number;
+}): Promise<InstitutionalYieldResult | null> {
+  const capMw = params.capacityMw;
+  if (!Number.isFinite(capMw) || capMw <= 0) return null;
+
+  const lat = Number(params.latitude);
+  const lon = Number(params.longitude);
+  if (!Number.isFinite(lat) || !Number.isFinite(lon)) return null;
+
+  const marketPpa = resolveMarketPpaUsdPerKwh({
+    state: params.state,
+    latitude: lat,
+    longitude: lon,
+    fixedPpaRatePerKwh: params.fixedPpaRatePerKwh,
+  });
+
+  const pr = params.performanceRatio ?? DEFAULT_PERFORMANCE_RATIO;
+  const annualKwhNsrdb = await computeAnnualKwhNsrdb(lat, lon, capMw, pr);
+
+  const monthlyOm = Number(params.monthlyOpexUsd ?? 0);
+  const annualOmUsd = Number.isFinite(monthlyOm) ? monthlyOm * 12 : 0;
+
+  const fromStack = Number(params.totalCapexUsd);
+  const assetCapexUsd =
+    Number.isFinite(fromStack) && fromStack > 0 ? fromStack : capMw * 1_000_000;
+
+  const financialApy = computeFinancialApy({
+    annualKwh: annualKwhNsrdb,
+    marketPpaUsdPerKwh: marketPpa.usdPerKwh,
+    annualOmUsd,
+    assetCapexUsd,
+  });
+
+  return {
+    annualKwhNsrdb,
+    financialApy,
+    financialApyPct: financialApy != null ? financialApy * 100 : null,
+    marketPpa,
+    assetCapexUsd,
+    annualOmUsd,
+  };
 }
 
 export async function computeSgtScoreFromNsrdbTruth(

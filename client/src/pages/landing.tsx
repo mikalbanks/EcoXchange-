@@ -515,8 +515,8 @@ export default function LandingPage() {
                       <span className="font-medium" data-testid="text-sample-min-investment">$25,000</span>
                     </div>
                     <div className="flex justify-between py-2 border-b border-border/50">
-                      <span className="text-muted-foreground">Expected Yield (IRR)</span>
-                      <span className="font-medium text-primary" data-testid="text-sample-irr">8.5%</span>
+                      <span className="text-muted-foreground">Live Yield (institutional)</span>
+                      <span className="font-medium text-primary" data-testid="text-sample-irr">NLR-based</span>
                     </div>
                     <div className="flex justify-between py-2 border-b border-border/50">
                       <span className="text-muted-foreground">Yield Basis</span>

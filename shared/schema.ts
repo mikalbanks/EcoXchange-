@@ -182,6 +182,12 @@ export const projects = pgTable("projects", {
   eiaPlantCode: text("eia_plant_code"),
   eiaGeneratorId: text("eia_generator_id"),
   eiaReferencePlantName: text("eia_reference_plant_name"),
+  /** Institutional: ((annual kWh × market PPA) − annual O&M) / asset CapEx, from NSRDB + market-rates */
+  financialApyPct: decimal("financial_apy_pct", { precision: 8, scale: 4 }),
+  /** How market PPA $/kWh was resolved (e.g. FIXED_PPA, CAISO_NP15_SPOT_PROXY) */
+  marketPpaSource: text("market_ppa_source"),
+  /** LevelTen / desk benchmark used for tooltip (USD/MWh) */
+  marketPpaBenchmarkUsdPerMwh: decimal("market_ppa_benchmark_usd_per_mwh", { precision: 10, scale: 4 }),
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
 });

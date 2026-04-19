@@ -1,7 +1,11 @@
 import { db } from "../db";
 import { projects, type Project } from "@shared/schema";
-import { eq } from "drizzle-orm";
-import { fetchNsrdbTimeSeries4km, aggregateMonthlyGhiKwhPerM2, computeSgtScoreFromNsrdbTruth } from "./nrel-engine";
+import { eq, sql } from "drizzle-orm";
+import {
+  computeSgtScoreFromNsrdbTruth,
+  getNrelModeledMonthlyMwh,
+  computeInstitutionalYieldForProject,
+} from "./nrel-engine";
 import { fetchFacilityFuelMonthlyGeneration } from "./eia-client";
 import { storage } from "../storage";
 
@@ -19,6 +23,9 @@ export interface ValidationResult {
   validationConfidencePct: number;
   eiaReferencePlantName: string | null;
   sgtScoreNrel: number | null;
+  financialApyPct: number | null;
+  marketPpaSource: string | null;
+  marketPpaBenchmarkUsdPerMwh: number | null;
   notes: string[];
 }
 
@@ -76,32 +83,19 @@ async function persistValidationFields(
     sgtScoreNrel?: string | null;
     eiaActualMwh?: string | null;
     validationConfidence?: string | null;
+    financialApyPct?: string | null;
+    marketPpaSource?: string | null;
+    marketPpaBenchmarkUsdPerMwh?: string | null;
   },
 ): Promise<void> {
   if (process.env.DATABASE_URL) {
-    await db.update(projects).set(updates).where(eq(projects.id, projectId));
+    await db
+      .update(projects)
+      .set({ ...updates, updatedAt: sql`now()` })
+      .where(eq(projects.id, projectId));
   } else {
     await storage.updateProject(projectId, updates as Partial<Project>);
   }
-}
-
-async function getNrelModeledMonthlyMwh(
-  latitude: number,
-  longitude: number,
-  capacityMw: number,
-  monthsBack: number,
-  performanceRatio: number,
-): Promise<Map<string, number>> {
-  const { start, end, nsrdbYear } = monthRangeUtc(monthsBack);
-  const ts = await fetchNsrdbTimeSeries4km(latitude, longitude, { year: nsrdbYear });
-  const monthlyGhi = aggregateMonthlyGhiKwhPerM2(ts.rows, ts.intervalMinutes);
-  const out = new Map<string, number>();
-  for (const [period, ghiKwhM2] of monthlyGhi) {
-    if (period < start || period > end) continue;
-    const mwh = ghiKwhM2 * capacityMw * 1000 * performanceRatio;
-    out.set(period, Number(mwh.toFixed(3)));
-  }
-  return out;
 }
 
 export async function queryEiaFacilityFuelMonthlyMwh(
@@ -199,10 +193,45 @@ export async function validateProjectAgainstEia923(projectId: string): Promise<V
 
   const lastActual = actualRows.length > 0 ? actualRows[actualRows.length - 1].mwh : null;
 
+  let financialApyPct: number | null = null;
+  let marketPpaSource: string | null = null;
+  let marketPpaBenchmarkUsdPerMwh: number | null = null;
+
+  if (Number.isFinite(lat) && Number.isFinite(lon) && Number.isFinite(capacityMwResolved) && process.env.NREL_API_KEY) {
+    try {
+      const stack = await storage.getCapitalStack(project.id);
+      const totalCapex = stack?.totalCapex != null ? String(stack.totalCapex) : undefined;
+      const yieldResult = await computeInstitutionalYieldForProject({
+        state: project.state,
+        latitude: project.latitude,
+        longitude: project.longitude,
+        capacityMw: capacityMwResolved,
+        fixedPpaRatePerKwh: project.ppaRate,
+        monthlyOpexUsd: project.monthlyOpex,
+        totalCapexUsd: totalCapex,
+        performanceRatio: DEFAULT_PR,
+      });
+      if (yieldResult) {
+        financialApyPct = yieldResult.financialApyPct;
+        marketPpaSource = yieldResult.marketPpa.source;
+        marketPpaBenchmarkUsdPerMwh = yieldResult.marketPpa.benchmarkUsdPerMwh;
+      }
+    } catch (e: unknown) {
+      const msg = e instanceof Error ? e.message : String(e);
+      notes.push(`Institutional yield computation failed: ${msg}`);
+    }
+  } else if (!process.env.NREL_API_KEY) {
+    notes.push("NREL_API_KEY not set; financial APY not computed.");
+  }
+
   await persistValidationFields(project.id, {
     sgtScoreNrel: sgtScoreNrel != null ? String(sgtScoreNrel) : project.sgtScoreNrel,
     eiaActualMwh: lastActual != null ? lastActual.toFixed(3) : project.eiaActualMwh,
     validationConfidence: confidence.toFixed(2),
+    financialApyPct: financialApyPct != null ? financialApyPct.toFixed(4) : null,
+    marketPpaSource,
+    marketPpaBenchmarkUsdPerMwh:
+      marketPpaBenchmarkUsdPerMwh != null ? marketPpaBenchmarkUsdPerMwh.toFixed(4) : null,
   });
 
   return {
@@ -213,6 +242,9 @@ export async function validateProjectAgainstEia923(projectId: string): Promise<V
     validationConfidencePct: Number(confidence.toFixed(2)),
     eiaReferencePlantName: project.eiaReferencePlantName ?? null,
     sgtScoreNrel,
+    financialApyPct,
+    marketPpaSource,
+    marketPpaBenchmarkUsdPerMwh,
     notes,
   };
 }

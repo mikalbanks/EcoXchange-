@@ -717,12 +717,15 @@ export async function registerRoutes(
       const lat = project.latitude ? Number(project.latitude) : null;
       const lon = project.longitude ? Number(project.longitude) : null;
       const capacityKw = Number(project.capacityKw || 0);
+      const capacityMw = Number(project.capacityMW || 0);
+      const hasCapacity =
+        (Number.isFinite(capacityKw) && capacityKw > 0) || (Number.isFinite(capacityMw) && capacityMw > 0);
 
       if (!lat || !lon || Number.isNaN(lat) || Number.isNaN(lon)) {
         return res.status(400).json({ message: "Project is missing valid latitude/longitude" });
       }
-      if (!capacityKw || Number.isNaN(capacityKw) || capacityKw <= 0) {
-        return res.status(400).json({ message: "Project is missing valid capacityKw" });
+      if (!hasCapacity) {
+        return res.status(400).json({ message: "Project is missing valid capacity (kW or MW)" });
       }
 
       const result: ValidationResult = await validateProjectAgainstEia923(project.id);

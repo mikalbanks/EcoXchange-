@@ -34,6 +34,7 @@ interface DeveloperProject {
   county: string;
   capacityMW: string | null;
   status: string;
+  financialApyPct?: string | null;
   validationConfidence?: string | null;
   readinessScore?: {
     score: number;
@@ -176,6 +177,11 @@ export default function DeveloperDashboard() {
                       <span>{project.technology.replace("_", " ")}</span>
                       <span>{project.state}, {project.county}</span>
                       {project.capacityMW && <span>{project.capacityMW} MW</span>}
+                      {project.financialApyPct != null && project.financialApyPct !== "" && (
+                        <span className="text-xs font-mono text-primary" data-testid={`text-live-yield-${project.id}`}>
+                          Live Yield: {Number(project.financialApyPct).toFixed(2)}%
+                        </span>
+                      )}
                       {project.validationConfidence && (
                         <span className="text-xs text-muted-foreground">
                           Validation Confidence: {Number(project.validationConfidence).toFixed(1)}%
