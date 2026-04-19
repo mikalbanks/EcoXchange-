@@ -1,9 +1,15 @@
 import OpenAI from "openai";
 
-const openai = new OpenAI({
-  apiKey: process.env.AI_INTEGRATIONS_OPENAI_API_KEY,
-  baseURL: process.env.AI_INTEGRATIONS_OPENAI_BASE_URL,
-});
+function getOpenAI(): OpenAI {
+  const apiKey = process.env.AI_INTEGRATIONS_OPENAI_API_KEY || process.env.OPENAI_API_KEY;
+  if (!apiKey) {
+    throw new Error("AI_INTEGRATIONS_OPENAI_API_KEY or OPENAI_API_KEY is not configured");
+  }
+  return new OpenAI({
+    apiKey,
+    baseURL: process.env.AI_INTEGRATIONS_OPENAI_BASE_URL,
+  });
+}
 
 export interface ProjectFinancialData {
   projectName: string;
@@ -39,6 +45,7 @@ export interface AIPrediction {
 
 export async function generateROIPrediction(data: ProjectFinancialData): Promise<AIPrediction> {
   const prompt = buildPrompt(data);
+  const openai = getOpenAI();
 
   const response = await openai.chat.completions.create({
     model: "gpt-5-mini",
