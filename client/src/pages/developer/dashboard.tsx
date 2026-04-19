@@ -16,6 +16,7 @@ import {
   Plus,
   ArrowRight,
 } from "lucide-react";
+import { InstitutionalProjectMetrics } from "@/components/institutional-project-metrics";
 
 interface DeveloperStats {
   totalProjects: number;
@@ -169,25 +170,19 @@ export default function DeveloperDashboard() {
                       {project.readinessScore && (
                         <StatusBadge status={project.readinessScore.rating} type="readiness" />
                       )}
-                      <span className="inline-flex items-center rounded-full border border-primary/30 bg-primary/10 px-2 py-0.5 text-xs text-primary">
-                        Data Fidelity: 4km (NLR)
-                      </span>
                     </div>
                     <div className="flex flex-wrap items-center gap-4 text-sm text-muted-foreground">
                       <span>{project.technology.replace("_", " ")}</span>
                       <span>{project.state}, {project.county}</span>
                       {project.capacityMW && <span>{project.capacityMW} MW</span>}
-                      {project.financialApyPct != null && project.financialApyPct !== "" && (
-                        <span className="text-xs font-mono text-primary" data-testid={`text-live-yield-${project.id}`}>
-                          Live Yield: {Number(project.financialApyPct).toFixed(2)}%
-                        </span>
-                      )}
-                      {project.validationConfidence && (
-                        <span className="text-xs text-muted-foreground">
-                          Validation Confidence: {Number(project.validationConfidence).toFixed(1)}%
-                        </span>
-                      )}
                     </div>
+                    <InstitutionalProjectMetrics
+                      variant="compact"
+                      className="mt-2"
+                      testIdPrefix={project.id}
+                      validationConfidence={project.validationConfidence}
+                      financialApyPct={project.financialApyPct}
+                    />
                   </div>
                   <div className="flex items-center gap-4 text-sm text-muted-foreground shrink-0 ml-4">
                     {project.missingCount > 0 && (
