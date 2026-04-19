@@ -21,6 +21,10 @@ Set these in the environment where Cursor launches MCP servers:
 - `SUPABASE_PROJECT_REF`
 - `SUPABASE_DB_URL`
 
+Quick-start template:
+
+- Copy `.env.mcp.example` and fill your real values.
+
 > No secrets are committed in this repo. `.cursor/mcp.json` uses env placeholders only.
 
 ---
