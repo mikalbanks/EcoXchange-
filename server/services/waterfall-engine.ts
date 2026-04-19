@@ -10,6 +10,7 @@ import {
   type Account,
 } from "@shared/schema";
 import { eq, sql, and, isNull, inArray, gte, lte } from "drizzle-orm";
+import { resolveMarketPpaUsdPerKwh } from "../lib/market-rates";
 
 export interface WaterfallTier {
   accountCode: string;
@@ -129,9 +130,16 @@ export async function settleIntervals(
     throw new Error(`Project not found: ${projectId}`);
   }
 
-  const ppaRatePerKwh = Number(project.ppaRate || 0);
+  const fixedPpa = Number(project.ppaRate || 0);
+  const market = resolveMarketPpaUsdPerKwh({
+    state: project.state,
+    latitude: project.latitude,
+    longitude: project.longitude,
+    fixedPpaRatePerKwh: Number.isFinite(fixedPpa) && fixedPpa > 0 ? fixedPpa : null,
+  });
+  const ppaRatePerKwh = market.usdPerKwh;
   if (ppaRatePerKwh <= 0) {
-    throw new Error(`Project ${projectId} has no PPA rate configured`);
+    throw new Error(`Project ${projectId} has no resolvable PPA rate (fixed or market)`);
   }
 
   const projectAccounts = await db

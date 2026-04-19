@@ -56,8 +56,8 @@ function isCalifornia(state: string): boolean {
  */
 export function resolveMarketPpaUsdPerKwh(params: {
   state: string;
-  latitude?: number | null;
-  longitude?: number | null;
+  latitude?: number | string | null;
+  longitude?: number | string | null;
   fixedPpaRatePerKwh?: string | number | null;
 }): MarketPpaResolution {
   const fixed = Number(params.fixedPpaRatePerKwh);
