@@ -24,6 +24,8 @@ Thumbs.db
 # Editor directories
 .vscode/
 .idea/
+.cursor/*
+!.cursor/mcp.json
 
 # TypeScript incremental build
 *.tsbuildinfo
