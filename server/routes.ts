@@ -727,16 +727,16 @@ export async function registerRoutes(
 
       const result: ValidationResult = await validateProjectAgainstEia923(project.id);
 
-      await storage.updateProject(project.id, {
-        eiaActualMwh: result.actualMonthlyMwh.at(-1)?.mwh?.toFixed(3) ?? null,
-        validationConfidence: result.validationConfidencePct.toFixed(2),
-      });
+      const updated = await storage.getProject(project.id);
 
       res.json({
         projectName: project.name,
         ...result,
         validationConfidence: result.validationConfidencePct,
         dataFidelity: "4km (NLR)",
+        eiaPlantCode: updated?.eiaPlantCode ?? null,
+        eiaGeneratorId: updated?.eiaGeneratorId ?? null,
+        eiaReferencePlantName: result.eiaReferencePlantName ?? updated?.eiaReferencePlantName ?? null,
       });
     } catch (error: any) {
       console.error("Institutional validation error:", error);

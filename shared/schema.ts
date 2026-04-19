@@ -179,6 +179,9 @@ export const projects = pgTable("projects", {
   sgtScoreNrel: decimal("sgt_score_nrel", { precision: 6, scale: 4 }),
   eiaActualMwh: decimal("eia_actual_mwh", { precision: 14, scale: 3 }),
   validationConfidence: decimal("validation_confidence", { precision: 6, scale: 2 }),
+  eiaPlantCode: text("eia_plant_code"),
+  eiaGeneratorId: text("eia_generator_id"),
+  eiaReferencePlantName: text("eia_reference_plant_name"),
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
 });

@@ -211,6 +211,12 @@ export default function AdminProjectReview() {
                 ? `${validationConfidencePct.toFixed(0)}%`
                 : "N/A"}
             </span>
+            {project.eiaReferencePlantName && (
+              <span className="text-xs text-muted-foreground max-w-[280px] truncate" title={project.eiaReferencePlantName}>
+                EIA ref: {project.eiaReferencePlantName}
+                {project.eiaPlantCode ? ` (${project.eiaPlantCode})` : ""}
+              </span>
+            )}
           </div>
           <Link href={`/admin/projects/${id}/export`}>
             <Button variant="outline" className="gap-2" data-testid="button-export-packet">

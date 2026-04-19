@@ -224,6 +224,9 @@ export class MemStorage implements IStorage {
       sgtScoreNrel: null,
       eiaActualMwh: null,
       validationConfidence: null,
+      eiaPlantCode: null,
+      eiaGeneratorId: null,
+      eiaReferencePlantName: null,
       createdAt: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000),
       updatedAt: new Date(),
     });
@@ -334,6 +337,9 @@ export class MemStorage implements IStorage {
       sgtScoreNrel: null,
       eiaActualMwh: null,
       validationConfidence: null,
+      eiaPlantCode: null,
+      eiaGeneratorId: null,
+      eiaReferencePlantName: null,
       createdAt: new Date(Date.now() - 14 * 24 * 60 * 60 * 1000),
       updatedAt: new Date(),
     });
@@ -466,6 +472,9 @@ export class MemStorage implements IStorage {
       sgtScoreNrel: null,
       eiaActualMwh: null,
       validationConfidence: null,
+      eiaPlantCode: null,
+      eiaGeneratorId: null,
+      eiaReferencePlantName: null,
       createdAt: new Date(Date.now() - 60 * 24 * 60 * 60 * 1000),
       updatedAt: new Date(),
     });
@@ -844,6 +853,9 @@ export class MemStorage implements IStorage {
       sgtScoreNrel: project.sgtScoreNrel || null,
       eiaActualMwh: project.eiaActualMwh || null,
       validationConfidence: project.validationConfidence || null,
+      eiaPlantCode: project.eiaPlantCode || null,
+      eiaGeneratorId: project.eiaGeneratorId || null,
+      eiaReferencePlantName: project.eiaReferencePlantName || null,
       createdAt: new Date(),
       updatedAt: new Date(),
     };

@@ -186,6 +186,26 @@ export interface SgtNrelScoreResult {
   sgtScoreNrel: number; // 0..1
 }
 
+/** Sum GHI kWh/m² for each calendar month (UTC) from parsed NSRDB rows. */
+export function aggregateMonthlyGhiKwhPerM2(
+  rows: NsrdbTimeSeriesRow[],
+  intervalMinutes: number,
+): Map<string, number> {
+  const byMonth = new Map<string, number>();
+  for (const r of rows) {
+    const t = Date.parse(r.timestampUtc);
+    if (!Number.isFinite(t)) continue;
+    const d = new Date(t);
+    const key = `${d.getUTCFullYear()}-${String(d.getUTCMonth() + 1).padStart(2, "0")}`;
+    const ghi = r.ghiWm2;
+    if (ghi == null || !Number.isFinite(ghi) || ghi < 0) continue;
+    const hours = intervalMinutes / 60;
+    const add = (ghi * hours) / 1000;
+    byMonth.set(key, (byMonth.get(key) || 0) + add);
+  }
+  return byMonth;
+}
+
 export async function computeSgtScoreFromNsrdbTruth(
   latitude: number,
   longitude: number,
