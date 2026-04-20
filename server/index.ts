@@ -1,3 +1,9 @@
+import { config as loadEnv } from "dotenv";
+
+// Load .env then .env.local so local secrets override defaults (gitignored).
+loadEnv();
+loadEnv({ path: ".env.local", override: true });
+
 import express, { type Request, Response, NextFunction } from "express";
 import { registerRoutes } from "./routes";
 import { serveStatic } from "./static";
