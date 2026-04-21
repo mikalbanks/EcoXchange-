@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
+import { catalogOfferings } from "@shared/catalog-projects";
 import { queryClient } from "@/lib/queryClient";
 import { DashboardLayout } from "@/components/dashboard-layout";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -39,6 +40,8 @@ import {
   ChevronUp,
   ExternalLink,
 } from "lucide-react";
+
+const DEFAULT_OPS_PROJECT_ID = catalogOfferings(25)[0]?.slug ?? "";
 
 interface OperationsDataSource {
   id: string;
@@ -91,18 +94,18 @@ const DEMO_INGESTION_LOG: IngestionEvent[] = [
   {
     id: "evt-1",
     timestamp: new Date(Date.now() - 1 * 24 * 60 * 60 * 1000).toISOString(),
-    source: "SGT Handshake (Solcast + Utility Shadow)",
-    project: "Lancaster Sun Ranch",
+    source: "SGT Handshake (modeled solar + Utility Shadow)",
+    project: "Mesquite Sky Solar I",
     records: 96,
     status: "SUCCESS",
-    qualityChecks: ["Sky Oracle telemetry verified", "Utility Shadow reconciled", "SGT interval validated", "Waterfall settlement complete"],
-    message: "Full SGT pipeline executed. 96 intervals generated via Sky Oracle satellite data + Utility Shadow net metering. Waterfall settlement distributed to all accounts.",
+    qualityChecks: ["Modeled solar reference aligned", "Utility Shadow reconciled", "SGT interval validated", "Waterfall settlement complete"],
+    message: "Full SGT pipeline executed. 96 intervals generated from modeled solar reference plus Utility Shadow net metering. Waterfall settlement distributed to all accounts.",
   },
   {
     id: "evt-2",
     timestamp: new Date(Date.now() - 3 * 24 * 60 * 60 * 1000).toISOString(),
     source: "Manual Entry",
-    project: "Imperial Valley Solar I",
+    project: "Imperial Galaxy Solar",
     records: 12,
     status: "WARNING",
     qualityChecks: ["Schema validation passed", "Range check: 2 outliers flagged", "Completeness: 100%"],
@@ -112,17 +115,17 @@ const DEMO_INGESTION_LOG: IngestionEvent[] = [
     id: "evt-3",
     timestamp: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString(),
     source: "Utility Shadow (Net Meter Sim)",
-    project: "Imperial Valley Solar I",
+    project: "Imperial Galaxy Solar",
     records: 96,
     status: "SUCCESS",
-    qualityChecks: ["Consumption ratio calibrated (2% utility-scale)", "Noise band ±5% applied", "Net meter reconciled with Sky Oracle"],
-    message: "Utility Shadow simulation completed for 12MW utility-scale project. Net meter data generated with 2% self-consumption ratio.",
+    qualityChecks: ["Consumption ratio calibrated (2% utility-scale)", "Noise band ±5% applied", "Net meter reconciled with modeled solar"],
+    message: "Utility Shadow simulation completed for utility-scale project. Net meter data generated with 2% self-consumption ratio.",
   },
   {
     id: "evt-4",
     timestamp: new Date(Date.now() - 14 * 24 * 60 * 60 * 1000).toISOString(),
     source: "Waterfall Engine",
-    project: "Lancaster Sun Ranch",
+    project: "Lancaster Ridge Solar",
     records: 30,
     status: "SUCCESS",
     qualityChecks: ["Double-entry balanced", "REVENUE_CLEARING debited", "All 5 tiers credited", "FOR UPDATE SKIP LOCKED acquired"],
@@ -131,12 +134,12 @@ const DEMO_INGESTION_LOG: IngestionEvent[] = [
   {
     id: "evt-5",
     timestamp: new Date(Date.now() - 21 * 24 * 60 * 60 * 1000).toISOString(),
-    source: "Sky Oracle (Solcast Satellite)",
+    source: "Sky Oracle (modeled)",
     project: "Pecos Flat Solar Farm",
     records: 48,
     status: "SUCCESS",
-    qualityChecks: ["Satellite PV estimate received", "Irradiance cross-check passed", "Capacity factor within expected range", "GPS coordinates validated"],
-    message: "Sky Oracle satellite sweep for Pecos County, TX. 48 half-hour PV power estimates ingested from Solcast world_pv_power endpoint (5.5MW capacity).",
+    qualityChecks: ["Modeled PV estimate received", "Irradiance cross-check passed", "Capacity factor within expected range", "GPS coordinates validated"],
+    message: "Sky Oracle modeled sweep for Pecos County, TX. 48 half-hour PV power estimates generated for pipeline QA (pre-NTP asset).",
   },
 ];
 
@@ -347,7 +350,7 @@ function DemoGuideCard({ onSwitchTab }: { onSwitchTab?: (tab: string) => void })
     { num: 2, label: "View Data Sources", desc: "Verify ingested data quality and status", tab: "sources" },
     { num: 3, label: "Run SGT Handshake", desc: "Validate satellite vs meter data", tab: "sgt-pipeline" },
     { num: 4, label: "Run Waterfall Settlement", desc: "Distribute revenue across tiers", tab: "sgt-pipeline" },
-    { num: 5, label: "View Performance", desc: "See production charts and yield dashboard", href: "/performance/proj1" },
+    { num: 5, label: "View Performance", desc: "See production charts and yield dashboard", href: DEFAULT_OPS_PROJECT_ID ? `/performance/${DEFAULT_OPS_PROJECT_ID}` : "/performance" },
     { num: 6, label: "View Backtest Report", desc: "Review SGT validation results", href: "/backtest-report" },
     { num: 7, label: "Download PDF", desc: "Export investor-ready report", href: "/backtest-report" },
   ];
@@ -422,7 +425,7 @@ function CsvUploadTab() {
   const [preview, setPreview] = useState<CsvPreviewData | null>(null);
   const [previewLoading, setPreviewLoading] = useState(false);
   const [ingesting, setIngesting] = useState(false);
-  const [selectedProjectId, setSelectedProjectId] = useState<string>("proj1");
+  const [selectedProjectId, setSelectedProjectId] = useState<string>(DEFAULT_OPS_PROJECT_ID);
 
   const { data: projectList } = useQuery<Array<{ id: string; name: string; technology: string; capacityMW: string | null }>>({
     queryKey: ["/api/projects/all-for-upload"],
@@ -553,8 +556,9 @@ function CsvUploadTab() {
                 allProjects.map(p => <option key={p.id} value={p.id}>{p.name} ({p.capacityMW} MW)</option>)
               ) : (
                 <>
-                  <option value="proj1">Imperial Valley Solar I (12 MW)</option>
-                  <option value="proj3">Lancaster Sun Ranch (25 MW)</option>
+                  {catalogOfferings(25).slice(0, 2).map((p) => (
+                    <option key={p.slug} value={p.slug}>{p.name} ({p.capacityMW} MW)</option>
+                  ))}
                 </>
               )}
             </select>
@@ -755,11 +759,11 @@ function ConnectorsTab() {
               <div className="flex items-start justify-between mb-3">
                 <div className="flex items-center gap-3">
                   <div className="flex items-center justify-center w-10 h-10 rounded-lg bg-muted text-muted-foreground">
-                    {connector.slug === "solcast-sky-oracle" ? <Shield className="h-5 w-5 text-primary" /> :
-                     connector.slug === "enphase" ? <Zap className="h-5 w-5 text-orange-400" /> :
-                     connector.slug === "solaredge" ? <Zap className="h-5 w-5 text-red-400" /> :
-                     connector.slug === "alsoenergy" ? <Server className="h-5 w-5 text-blue-400" /> :
-                     connector.slug === "power-factors" ? <Activity className="h-5 w-5 text-cyan-400" /> :
+                    {connector.status === "AVAILABLE" ? <Shield className="h-5 w-5 text-primary" /> :
+                     connector.slug.includes("enphase") ? <Zap className="h-5 w-5 text-orange-400" /> :
+                     connector.slug.includes("solaredge") ? <Zap className="h-5 w-5 text-red-400" /> :
+                     connector.slug.includes("also") ? <Server className="h-5 w-5 text-blue-400" /> :
+                     connector.slug.includes("power") ? <Activity className="h-5 w-5 text-cyan-400" /> :
                      <Link2 className="h-5 w-5" />}
                   </div>
                   <div>
@@ -956,7 +960,6 @@ interface PipelineProject {
 interface PipelineStatus {
   pipelineVersion: string;
   totalProjects: number;
-  solcastConnected: boolean;
   utilityShadowActive: boolean;
   projects: PipelineProject[];
 }
@@ -966,7 +969,7 @@ const PIPELINE_STAGE_META: Record<string, { label: string; icon: typeof Satellit
   utilityShadow: { label: "Utility Shadow", icon: PlugZap },
   sgtHandshake: { label: "SGT Handshake", icon: Workflow },
   waterfallEngine: { label: "Waterfall Engine", icon: Landmark },
-  securitizeBridge: { label: "Securitize Bridge", icon: Coins },
+  securitizeBridge: { label: "Distribution bridge", icon: Coins },
 };
 
 function PipelineStatusBadge({ status }: { status: string }) {

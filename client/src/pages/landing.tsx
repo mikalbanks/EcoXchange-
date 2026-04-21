@@ -6,6 +6,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { HealthBadge } from "@/components/scada";
+import { catalogOfferings } from "@shared/catalog-projects";
 import { 
   Sun, 
   Wind, 
@@ -54,16 +55,22 @@ function formatCompact(num: number): string {
   return `$${num.toFixed(0)}`;
 }
 
+const FEATURED_PROJECT = catalogOfferings(25)[0];
+
 function FeaturedProjectSection() {
+  const featuredId = FEATURED_PROJECT?.slug ?? "";
   const { data, isLoading } = useQuery<ScadaSummaryData>({
-    queryKey: ["/api/public/projects", "proj3", "scada", "summary"],
+    queryKey: ["/api/public/projects", featuredId, "scada", "summary"],
     queryFn: async () => {
-      const res = await fetch("/api/public/projects/proj3/scada/summary", { credentials: "include" });
+      const res = await fetch(`/api/public/projects/${featuredId}/scada/summary`, { credentials: "include" });
       if (!res.ok) throw new Error("Failed");
       return res.json();
     },
+    enabled: !!featuredId,
     staleTime: 120000,
   });
+
+  if (!FEATURED_PROJECT) return null;
 
   return (
     <section className="py-20">
@@ -75,7 +82,7 @@ function FeaturedProjectSection() {
           </div>
           <h2 className="text-3xl font-bold mb-4" data-testid="text-featured-title">Featured Project</h2>
           <p className="text-muted-foreground max-w-2xl mx-auto">
-            Real-time production data from Solcast Sky Oracle-verified solar installations
+            Live production and revenue metrics from site SCADA, reconciled through the SGT engine
           </p>
         </div>
 
@@ -88,15 +95,15 @@ function FeaturedProjectSection() {
                   <Sun className="h-6 w-6" />
                 </div>
                 <div>
-                  <h3 className="text-xl font-bold" data-testid="text-featured-name">Lancaster Sun Ranch</h3>
+                  <h3 className="text-xl font-bold" data-testid="text-featured-name">{FEATURED_PROJECT.name}</h3>
                   <div className="flex items-center gap-3 text-sm text-muted-foreground mt-0.5">
-                    <span className="flex items-center gap-1"><MapPin className="h-3 w-3" /> California</span>
-                    <span className="flex items-center gap-1"><Zap className="h-3 w-3" /> 25 MW</span>
+                    <span className="flex items-center gap-1"><MapPin className="h-3 w-3" /> {FEATURED_PROJECT.state}</span>
+                    <span className="flex items-center gap-1"><Zap className="h-3 w-3" /> {FEATURED_PROJECT.capacityMW} MW</span>
                   </div>
                 </div>
               </div>
               <div className="flex items-center gap-2">
-                <HealthBadge projectId="proj3" size="md" usePublicApi />
+                <HealthBadge projectId={featuredId} size="md" usePublicApi />
               </div>
             </div>
 
@@ -133,7 +140,7 @@ function FeaturedProjectSection() {
                     </Badge>
                     <span>{data.provenance.providerName || data.provenance.sourceType.replace(/_/g, " ")}</span>
                   </div>
-                  <Link href="/performance">
+                  <Link href={`/performance/${featuredId}`}>
                     <Button variant="outline" size="sm" className="gap-1" data-testid="button-view-performance">
                       View Full Performance <ArrowRight className="h-3.5 w-3.5" />
                     </Button>
@@ -169,7 +176,6 @@ interface PipelineProject {
 interface PipelineStatus {
   pipelineVersion: string;
   totalProjects: number;
-  solcastConnected: boolean;
   utilityShadowActive: boolean;
   projects: PipelineProject[];
 }
@@ -195,11 +201,11 @@ function StatusDot({ status }: { status: string }) {
 }
 
 const PIPELINE_STAGES = [
-  { key: "skyOracle", label: "Sky Oracle", desc: "Satellite PV telemetry from Solcast — real-time solar irradiance and power estimates for any GPS coordinate" },
+  { key: "skyOracle", label: "Sky Oracle", desc: "Modeled solar irradiance and expected AC output for the asset location — used as the satellite reference in SGT" },
   { key: "utilityShadow", label: "Utility Shadow", desc: "Simulated net meter data scaling consumption by project size — C&I vs utility-scale profiles with realistic noise" },
-  { key: "sgtHandshake", label: "SGT Handshake", desc: "Reconciles satellite solar estimates with net meter readings to produce verified 15-minute SGT intervals" },
+  { key: "sgtHandshake", label: "SGT Handshake", desc: "Reconciles modeled solar with metered production to produce verified 15-minute SGT intervals" },
   { key: "waterfallEngine", label: "Waterfall Engine", desc: "Double-entry ledger distributing daily revenue through debt service, OpEx, reserves, platform fee, and investor yield" },
-  { key: "securitizeBridge", label: "Securitize Bridge", desc: "RWA protocol bridge for on-chain yield distribution to tokenized security holders" },
+  { key: "securitizeBridge", label: "Distribution bridge", desc: "Tokenized distribution rail for investor cash flows (mock in this environment)" },
 ];
 
 function SgtPipelineSection() {

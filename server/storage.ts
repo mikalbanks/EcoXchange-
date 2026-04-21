@@ -115,6 +115,7 @@ export interface IStorage {
 }
 
 import { computeReadiness, generateChecklist, computeCapitalStack, computeRevenue, computeDistribution } from "./scoring-engine";
+import { catalogProjectsAtLeast1Mw, catalogOfferings } from "@shared/catalog-projects";
 export { computeReadiness, generateChecklist, computeCapitalStack, computeRevenue, computeDistribution };
 
 // ─── MemStorage ──────────────────────────────────────────────────────────────
@@ -195,449 +196,229 @@ export class MemStorage implements IStorage {
       createdAt: new Date(),
     });
 
-    // GREEN project
-    const proj1Id = "proj1";
-    this.projects.set(proj1Id, {
-      id: proj1Id,
-      developerId: devId,
-      name: "Imperial Valley Solar I",
-      technology: "SOLAR",
-      stage: "NTP",
-      country: "US",
-      state: "California",
-      county: "Imperial",
-      latitude: "32.8476",
-      longitude: "-115.5695",
-      capacityMW: "12.00",
-      capacityKw: "12000",
-      status: "APPROVED",
-      summary: "A 12MW utility-scale solar project in Imperial Valley, CA with executed IA and approved permits. Single-axis tracking on 80 acres of leased agricultural land. Ready for construction financing.",
-      offtakerType: "UTILITY",
-      interconnectionStatus: "IA_EXECUTED",
-      permittingStatus: "APPROVED",
-      siteControlStatus: "LEASE",
-      feocAttested: true,
-      ppaRate: "0.0450",
-      monthlyDebtService: "22000.00",
-      monthlyOpex: "8500.00",
-      reserveRate: "0.05",
-      createdAt: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000),
-      updatedAt: new Date(),
-    });
-
-    const cs1Id = randomUUID();
-    this.capitalStacks.set(proj1Id, {
-      id: cs1Id,
-      projectId: proj1Id,
-      totalCapex: "13800000",
-      taxCreditType: "ITC",
-      taxCreditEstimated: "4140000",
-      taxCreditTransferabilityReady: true,
-      equityNeeded: "9660000",
-      debtPlaceholder: "0",
-      notes: "30% ITC eligible. Transferability confirmed.",
-    });
-
-    // Generate checklist for project 1
-    const checklist1 = generateChecklist(this.projects.get(proj1Id)!);
-    for (const item of checklist1) {
-      const itemId = randomUUID();
-      this.checklistItems.set(itemId, {
-        id: itemId,
-        projectId: proj1Id,
-        key: item.key,
-        label: item.label,
-        required: item.required,
-        status: "UPLOADED",
-        notes: null,
-      });
-    }
-
-    // Sample documents for project 1
-    const docTypes = ["SITE_CONTROL", "INTERCONNECTION", "PERMITS", "FINANCIAL_MODEL", "FEOC_ATTESTATION", "EPC"];
-    const docNames = ["lease_agreement.pdf", "ia_execution_notice.pdf", "county_permit_approval.pdf", "financial_model_v3.xlsx", "feoc_attestation_signed.pdf", "epc_term_sheet.pdf"];
-    for (let i = 0; i < docTypes.length; i++) {
-      const docId = randomUUID();
-      this.documents.set(docId, {
-        id: docId,
-        projectId: proj1Id,
-        type: docTypes[i],
-        filename: docNames[i],
-        filePath: `/uploads/${proj1Id}/${docNames[i]}`,
-        uploadedBy: devId,
-        createdAt: new Date(Date.now() - 20 * 24 * 60 * 60 * 1000),
-      });
-    }
-
-    // Compute readiness AFTER creating docs and checklist
-    const score1 = computeReadiness(
-      this.projects.get(proj1Id)!,
-      Array.from(this.documents.values()).filter(d => d.projectId === proj1Id),
-      Array.from(this.checklistItems.values()).filter(c => c.projectId === proj1Id),
-      this.capitalStacks.get(proj1Id)
-    );
-    const rs1Id = randomUUID();
-    this.readinessScores.set(proj1Id, {
-      id: rs1Id,
-      projectId: proj1Id,
-      score: score1.score,
-      rating: score1.rating,
-      reasons: JSON.stringify(score1.reasons),
-      flags: JSON.stringify(score1.flags),
-      overriddenByAdmin: false,
-      overrideNotes: null,
-    });
-
-    // Sample investor interest on project 1
-    const int1Id = randomUUID();
-    this.interests.set(int1Id, {
-      id: int1Id,
-      projectId: proj1Id,
-      investorId: investorId,
-      amountIntent: "500000",
-      structurePreference: "EQUITY",
-      timeline: "IMMEDIATE",
-      message: "Interested in an equity position. Our fund focuses on community solar in ERCOT. Would like to discuss tax credit transfer terms.",
-      status: "SUBMITTED",
-      createdAt: new Date(Date.now() - 5 * 24 * 60 * 60 * 1000),
-    });
-
-    // RED project
-    const proj2Id = "proj2";
-    this.projects.set(proj2Id, {
-      id: proj2Id,
-      developerId: devId,
-      name: "Pecos Flat Solar Farm",
-      technology: "SOLAR_STORAGE",
-      stage: "PRE_NTP",
-      country: "US",
-      state: "Texas",
-      county: "Pecos",
-      latitude: "31.4237",
-      longitude: "-103.4925",
-      capacityMW: "5.50",
-      capacityKw: "5500",
-      status: "SUBMITTED",
-      summary: "A 5.5MW solar + storage project in Pecos County, TX. Early stage with LOI on 40 acres of ranch land. Seeking development partners.",
-      offtakerType: "COMMUNITY_SOLAR",
-      interconnectionStatus: "APPLIED",
-      permittingStatus: "IN_PROGRESS",
-      siteControlStatus: "LOI",
-      feocAttested: false,
-      ppaRate: "0",
-      monthlyDebtService: "0",
-      monthlyOpex: "0",
-      reserveRate: "0",
-      createdAt: new Date(Date.now() - 14 * 24 * 60 * 60 * 1000),
-      updatedAt: new Date(),
-    });
-
-    const cs2Id = randomUUID();
-    this.capitalStacks.set(proj2Id, {
-      id: cs2Id,
-      projectId: proj2Id,
-      totalCapex: "6100000",
-      taxCreditType: "ITC",
-      taxCreditEstimated: "1830000",
-      taxCreditTransferabilityReady: false,
-      equityNeeded: "4270000",
-      debtPlaceholder: "0",
-      notes: null,
-    });
-
-    const checklist2 = generateChecklist(this.projects.get(proj2Id)!);
-    const uploadedKeys2 = ["interconnection", "financial_model"];
-    for (const item of checklist2) {
-      const itemId = randomUUID();
-      this.checklistItems.set(itemId, {
-        id: itemId,
-        projectId: proj2Id,
-        key: item.key,
-        label: item.label,
-        required: item.required,
-        status: uploadedKeys2.includes(item.key) ? "UPLOADED" : "MISSING",
-        notes: null,
-      });
-    }
-
-    // Some docs for project 2
-    const doc2aId = randomUUID();
-    this.documents.set(doc2aId, {
-      id: doc2aId,
-      projectId: proj2Id,
-      type: "INTERCONNECTION",
-      filename: "interconnection_app_receipt.pdf",
-      filePath: `/uploads/${proj2Id}/interconnection_app_receipt.pdf`,
-      uploadedBy: devId,
-      createdAt: new Date(Date.now() - 10 * 24 * 60 * 60 * 1000),
-    });
-    const doc2bId = randomUUID();
-    this.documents.set(doc2bId, {
-      id: doc2bId,
-      projectId: proj2Id,
-      type: "FINANCIAL_MODEL",
-      filename: "desert_sun_proforma.xlsx",
-      filePath: `/uploads/${proj2Id}/desert_sun_proforma.xlsx`,
-      uploadedBy: devId,
-      createdAt: new Date(Date.now() - 10 * 24 * 60 * 60 * 1000),
-    });
-
-    const score2 = computeReadiness(
-      this.projects.get(proj2Id)!,
-      Array.from(this.documents.values()).filter(d => d.projectId === proj2Id),
-      Array.from(this.checklistItems.values()).filter(c => c.projectId === proj2Id),
-      this.capitalStacks.get(proj2Id)
-    );
-    const rs2Id = randomUUID();
-    this.readinessScores.set(proj2Id, {
-      id: rs2Id,
-      projectId: proj2Id,
-      score: score2.score,
-      rating: score2.rating,
-      reasons: JSON.stringify(score2.reasons),
-      flags: JSON.stringify(score2.flags),
-      overriddenByAdmin: false,
-      overrideNotes: null,
-    });
-
-    // Approval log for project 1
-    const log1Id = randomUUID();
-    this.approvalLogs.set(log1Id, {
-      id: log1Id,
-      projectId: proj1Id,
-      adminId: adminId,
-      action: "APPROVE",
-      notes: "Project meets all requirements for investor visibility.",
-      createdAt: new Date(Date.now() - 15 * 24 * 60 * 60 * 1000),
-    });
-
-    // ─── Yield Pipeline Seed Data (Project 1 only — approved + COD-ready) ────
-    const ppaId = `ppa-${proj1Id}-default`;
+    const offeringSlugs = new Set(catalogOfferings(25).map((r) => r.slug));
+    const catalogRows = catalogProjectsAtLeast1Mw();
     const now = new Date();
-    this.ppas.set(ppaId, {
-      id: ppaId,
-      projectId: proj1Id,
-      offtakerName: "Austin Energy",
-      contractStartDate: new Date(now.getFullYear() - 1, 0, 1),
-      contractEndDate: new Date(now.getFullYear() + 19, 11, 31),
-      pricePerMwh: "72.00",
-      escalationType: "ESCALATING",
-      escalationRate: "2.00",
-      contractedCapacityMW: "12.00",
-      createdAt: new Date(now.getFullYear() - 1, 0, 1),
-    });
-
     const months = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
 
-    this.seedHourlyProductionAndRevenue(proj1Id, ppaId, 12000, 32.8476, months, now);
+    for (const row of catalogRows) {
+      const projectId = row.slug;
+      const capacityMwNum = parseFloat(row.capacityMW || "0");
+      const capacityKwStr = (capacityMwNum * 1000).toFixed(0);
+      const isApprovedOffering = offeringSlugs.has(projectId);
 
-    // ─── Project 3: Lancaster Sun Ranch (SGT-verified, Solcast data) ────
-    const proj3Id = "proj3";
-    this.projects.set(proj3Id, {
-      id: proj3Id,
-      developerId: devId,
-      name: "Lancaster Sun Ranch",
-      technology: "SOLAR",
-      stage: "COD",
-      country: "US",
-      state: "California",
-      county: "Los Angeles",
-      latitude: "34.6868",
-      longitude: "-118.1542",
-      capacityMW: "25.00",
-      capacityKw: "25000",
-      status: "APPROVED",
-      summary: "A 25MW single-axis tracking solar facility in Lancaster, CA with verified SCADA production history. Utility PPA with Southern California Edison. Returns derived from Solcast Sky Oracle satellite telemetry with SGT Handshake verification.",
-      offtakerType: "UTILITY",
-      interconnectionStatus: "IA_EXECUTED",
-      permittingStatus: "APPROVED",
-      siteControlStatus: "OWNED",
-      feocAttested: true,
-      ppaRate: "0.0420",
-      monthlyDebtService: "48000.00",
-      monthlyOpex: "18500.00",
-      reserveRate: "0.04",
-      createdAt: new Date(Date.now() - 60 * 24 * 60 * 60 * 1000),
-      updatedAt: new Date(),
-    });
-
-    const cs3Id = randomUUID();
-    this.capitalStacks.set(proj3Id, {
-      id: cs3Id,
-      projectId: proj3Id,
-      totalCapex: "31250000",
-      taxCreditType: "ITC",
-      taxCreditEstimated: "9375000",
-      taxCreditTransferabilityReady: true,
-      equityNeeded: "21875000",
-      debtPlaceholder: "0",
-      notes: "30% ITC eligible. Operational asset with verified production history. Transferability confirmed.",
-    });
-
-    const checklist3 = generateChecklist(this.projects.get(proj3Id)!);
-    for (const item of checklist3) {
-      const itemId3 = randomUUID();
-      this.checklistItems.set(itemId3, {
-        id: itemId3,
-        projectId: proj3Id,
-        key: item.key,
-        label: item.label,
-        required: item.required,
-        status: "UPLOADED",
-        notes: null,
+      this.projects.set(projectId, {
+        id: projectId,
+        developerId: devId,
+        name: row.name,
+        technology: row.technology,
+        stage: row.stage,
+        country: "US",
+        state: row.state,
+        county: row.county,
+        latitude: row.latitude,
+        longitude: row.longitude,
+        capacityMW: row.capacityMW,
+        capacityKw: capacityKwStr,
+        status: isApprovedOffering ? "APPROVED" : "SUBMITTED",
+        summary: row.summary,
+        offtakerType: row.offtakerType,
+        interconnectionStatus: row.interconnectionStatus,
+        permittingStatus: row.permittingStatus,
+        siteControlStatus: row.siteControlStatus,
+        feocAttested: row.feocAttested,
+        ppaRate: row.ppaRate,
+        monthlyDebtService: row.monthlyDebtService,
+        monthlyOpex: row.monthlyOpex,
+        reserveRate: row.reserveRate,
+        createdAt: new Date(Date.now() - 20 * 24 * 60 * 60 * 1000),
+        updatedAt: new Date(),
       });
-    }
 
-    const doc3Types = ["SITE_CONTROL", "INTERCONNECTION", "PERMITS", "FINANCIAL_MODEL", "FEOC_ATTESTATION", "EPC", "PPA"];
-    const doc3Names = ["deed_of_trust.pdf", "ia_executed_sce.pdf", "la_county_permit.pdf", "financial_model_v4.xlsx", "feoc_attestation_signed.pdf", "epc_completion_cert.pdf", "ppa_sce_energy.pdf"];
-    for (let i = 0; i < doc3Types.length; i++) {
-      const docId3 = randomUUID();
-      this.documents.set(docId3, {
-        id: docId3,
-        projectId: proj3Id,
-        type: doc3Types[i],
-        filename: doc3Names[i],
-        filePath: `/uploads/${proj3Id}/${doc3Names[i]}`,
-        uploadedBy: devId,
-        createdAt: new Date(Date.now() - 45 * 24 * 60 * 60 * 1000),
+      const csId = randomUUID();
+      this.capitalStacks.set(projectId, {
+        id: csId,
+        projectId,
+        totalCapex: row.totalCapex,
+        taxCreditType: row.taxCreditType,
+        taxCreditEstimated: row.taxCreditEstimated,
+        taxCreditTransferabilityReady: row.taxCreditTransferabilityReady,
+        equityNeeded: row.equityNeeded,
+        debtPlaceholder: "0",
+        notes: row.capitalNotes,
       });
-    }
 
-    const score3 = computeReadiness(
-      this.projects.get(proj3Id)!,
-      Array.from(this.documents.values()).filter(d => d.projectId === proj3Id),
-      Array.from(this.checklistItems.values()).filter(c => c.projectId === proj3Id),
-      this.capitalStacks.get(proj3Id)
-    );
-    const rs3Id = randomUUID();
-    this.readinessScores.set(proj3Id, {
-      id: rs3Id,
-      projectId: proj3Id,
-      score: score3.score,
-      rating: score3.rating,
-      reasons: JSON.stringify(score3.reasons),
-      flags: JSON.stringify(score3.flags),
-      overriddenByAdmin: false,
-      overrideNotes: null,
-    });
+      const checklistDefs = generateChecklist(this.projects.get(projectId)!);
+      const uploadedKeys = isApprovedOffering
+        ? checklistDefs.map((c) => c.key)
+        : ["interconnection", "financial_model", "site_control"];
 
-    const log3Id = randomUUID();
-    this.approvalLogs.set(log3Id, {
-      id: log3Id,
-      projectId: proj3Id,
-      adminId: adminId,
-      action: "APPROVE",
-      notes: "Operational asset with verified Solcast Sky Oracle production data. Approved for investor visibility.",
-      createdAt: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000),
-    });
+      for (const item of checklistDefs) {
+        const itemId = randomUUID();
+        this.checklistItems.set(itemId, {
+          id: itemId,
+          projectId,
+          key: item.key,
+          label: item.label,
+          required: item.required,
+          status: uploadedKeys.includes(item.key) ? "UPLOADED" : "MISSING",
+          notes: null,
+        });
+      }
 
-    // ─── Yield Pipeline for Project 3 (Solcast Sky Oracle-derived actuals) ────
-    const ppa3Id = `ppa-${proj3Id}-default`;
-    this.ppas.set(ppa3Id, {
-      id: ppa3Id,
-      projectId: proj3Id,
-      offtakerName: "Southern California Edison",
-      contractStartDate: new Date(now.getFullYear() - 1, 0, 1),
-      contractEndDate: new Date(now.getFullYear() + 19, 11, 31),
-      pricePerMwh: "72.00",
-      escalationType: "ESCALATING",
-      escalationRate: "1.50",
-      contractedCapacityMW: "25.00",
-      createdAt: new Date(now.getFullYear() - 1, 0, 1),
-    });
+      if (isApprovedOffering) {
+        const docTypes = ["SITE_CONTROL", "INTERCONNECTION", "PERMITS", "FINANCIAL_MODEL", "FEOC_ATTESTATION", "EPC", "PPA"];
+        const docNames = docTypes.map((t) => `${projectId}_${t.toLowerCase()}.pdf`);
+        for (let i = 0; i < docTypes.length; i++) {
+          const docId = randomUUID();
+          this.documents.set(docId, {
+            id: docId,
+            projectId,
+            type: docTypes[i],
+            filename: docNames[i],
+            filePath: `/uploads/${projectId}/${docNames[i]}`,
+            uploadedBy: devId,
+            createdAt: new Date(Date.now() - 18 * 24 * 60 * 60 * 1000),
+          });
+        }
+      } else {
+        const docA = randomUUID();
+        this.documents.set(docA, {
+          id: docA,
+          projectId,
+          type: "INTERCONNECTION",
+          filename: `${projectId}_interconnection.pdf`,
+          filePath: `/uploads/${projectId}/interconnection.pdf`,
+          uploadedBy: devId,
+          createdAt: new Date(Date.now() - 10 * 24 * 60 * 60 * 1000),
+        });
+      }
 
-    this.seedHourlyProductionAndRevenue(proj3Id, ppa3Id, 25000, 34.6868, months, now);
+      const score = computeReadiness(
+        this.projects.get(projectId)!,
+        Array.from(this.documents.values()).filter((d) => d.projectId === projectId),
+        Array.from(this.checklistItems.values()).filter((c) => c.projectId === projectId),
+        this.capitalStacks.get(projectId),
+      );
+      const rsId = randomUUID();
+      this.readinessScores.set(projectId, {
+        id: rsId,
+        projectId,
+        score: score.score,
+        rating: score.rating,
+        reasons: JSON.stringify(score.reasons),
+        flags: JSON.stringify(score.flags),
+        overriddenByAdmin: false,
+        overrideNotes: null,
+      });
 
-    // Investor interest on project 3
-    const int3Id = randomUUID();
-    this.interests.set(int3Id, {
-      id: int3Id,
-      projectId: proj3Id,
-      investorId: investorId,
-      amountIntent: "750000",
-      structurePreference: "EQUITY",
-      timeline: "IMMEDIATE",
-      message: "Strong interest in the verified production profile. Solcast-verified satellite telemetry gives us confidence in the yield projections. Requesting data room access.",
-      status: "SUBMITTED",
-      createdAt: new Date(Date.now() - 3 * 24 * 60 * 60 * 1000),
-    });
-
-    // ─── SCADA Connector Placeholders ────────────────────────────────
-    const connectors = [
-      { name: "AlsoEnergy", slug: "alsoenergy", description: "Enterprise-grade solar monitoring and asset management platform. Supports utility-scale and C&I portfolios.", status: "COMING_SOON", supportedTechnologies: "SOLAR,SOLAR_STORAGE" },
-      { name: "Enphase", slug: "enphase", description: "Microinverter-based monitoring for residential and small commercial solar installations.", status: "COMING_SOON", supportedTechnologies: "SOLAR" },
-      { name: "SolarEdge", slug: "solaredge", description: "Power optimizer and inverter monitoring platform for residential, C&I, and utility-scale systems.", status: "COMING_SOON", supportedTechnologies: "SOLAR,SOLAR_STORAGE" },
-      { name: "Solcast Sky Oracle", slug: "solcast-sky-oracle", description: "Satellite-derived solar irradiance and estimated actuals from Solcast Advanced PV Power API for SGT verification.", status: "AVAILABLE", supportedTechnologies: "SOLAR,SOLAR_STORAGE" },
-      { name: "Power Factors", slug: "power-factors", description: "Asset performance management for utility-scale renewables including solar, wind, and storage.", status: "COMING_SOON", supportedTechnologies: "SOLAR,SOLAR_STORAGE" },
-    ];
-    for (const c of connectors) {
-      const cId = randomUUID();
-      this.scadaConnectors.set(cId, {
-        id: cId,
-        name: c.name,
-        slug: c.slug,
-        description: c.description,
-        status: c.status,
-        logoUrl: null,
-        supportedTechnologies: c.supportedTechnologies,
-        configSchema: null,
+      const meterId = randomUUID();
+      this.metersMap.set(meterId, {
+        id: meterId,
+        projectId,
+        meterType: "NET",
+        provider: "UTILITY_API",
+        providerUid: `METER_${projectId.toUpperCase().replace(/-/g, "_")}`,
+        name: "Main revenue meter",
+        timezone: "America/Los_Angeles",
+        isActive: true,
         createdAt: new Date(),
+        updatedAt: new Date(),
       });
+
+      if (isApprovedOffering) {
+        const logId = randomUUID();
+        this.approvalLogs.set(logId, {
+          id: logId,
+          projectId,
+          adminId,
+          action: "APPROVE",
+          notes: "Listed offering — data room complete for investor visibility.",
+          createdAt: new Date(Date.now() - 12 * 24 * 60 * 60 * 1000),
+        });
+
+        const ppaId = `ppa-${projectId}-default`;
+        this.ppas.set(ppaId, {
+          id: ppaId,
+          projectId,
+          offtakerName: row.offtakerName,
+          contractStartDate: new Date(now.getFullYear() - 1, 0, 1),
+          contractEndDate: new Date(now.getFullYear() + 19, 11, 31),
+          pricePerMwh: row.pricePerMwh,
+          escalationType: row.escalationType,
+          escalationRate: row.escalationRate,
+          contractedCapacityMW: row.capacityMW,
+          createdAt: new Date(now.getFullYear() - 1, 0, 1),
+        });
+
+        const capacityKw = parseFloat(capacityKwStr);
+        const lat = parseFloat(row.latitude);
+        this.seedHourlyProductionAndRevenue(
+          projectId,
+          ppaId,
+          capacityKw,
+          lat,
+          months,
+          now,
+          parseFloat(row.pricePerMwh),
+        );
+
+        const dsId = randomUUID();
+        this.scadaDataSources.set(dsId, {
+          id: dsId,
+          projectId,
+          sourceType: "CSV_UPLOAD",
+          providerName: "SCADA Export",
+          status: "ACTIVE",
+          dataQuality: "HIGH",
+          lastSyncAt: new Date(Date.now() - 1 * 24 * 60 * 60 * 1000),
+          recordCount: 8760,
+          connectorId: null,
+          configJson: JSON.stringify({
+            capacityKw,
+            technology: row.technology,
+            lat: parseFloat(row.latitude),
+            lon: parseFloat(row.longitude),
+          }),
+          notes: "Hourly production from site SCADA export — used for SGT settlement views.",
+          createdAt: new Date(Date.now() - 25 * 24 * 60 * 60 * 1000),
+          updatedAt: new Date(Date.now() - 1 * 24 * 60 * 60 * 1000),
+        });
+      } else {
+        const dsId = randomUUID();
+        this.scadaDataSources.set(dsId, {
+          id: dsId,
+          projectId,
+          sourceType: "CSV_UPLOAD",
+          providerName: "CSV Import",
+          status: "PENDING",
+          dataQuality: "UNKNOWN",
+          lastSyncAt: null,
+          recordCount: 0,
+          connectorId: null,
+          configJson: null,
+          notes: "Awaiting production upload.",
+          createdAt: new Date(Date.now() - 8 * 24 * 60 * 60 * 1000),
+          updatedAt: new Date(Date.now() - 8 * 24 * 60 * 60 * 1000),
+        });
+      }
     }
 
-    const solcastConnector = Array.from(this.scadaConnectors.values()).find(c => c.slug === "solcast-sky-oracle");
-
-    // ─── SCADA Data Sources per Project ──────────────────────────────
-    const ds1Id = randomUUID();
-    this.scadaDataSources.set(ds1Id, {
-      id: ds1Id,
-      projectId: proj1Id,
-      sourceType: "CSV_UPLOAD",
-      providerName: "SCADA Export",
-      status: "ACTIVE",
-      dataQuality: "HIGH",
-      lastSyncAt: new Date(Date.now() - 1 * 24 * 60 * 60 * 1000),
-      recordCount: 8760,
-      connectorId: null,
-      configJson: JSON.stringify({ capacityKw: 12000, technology: "Mono-Si", trackingType: "Single-Axis", lat: 32.8476, lon: -115.5695 }),
-      notes: "Hourly SCADA production data from inverter DAS export. 12 months of verified meter readings.",
-      createdAt: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000),
-      updatedAt: new Date(Date.now() - 1 * 24 * 60 * 60 * 1000),
-    });
-
-    const ds2Id = randomUUID();
-    this.scadaDataSources.set(ds2Id, {
-      id: ds2Id,
-      projectId: proj2Id,
-      sourceType: "CSV_UPLOAD",
-      providerName: "CSV Import",
-      status: "PENDING",
-      dataQuality: "UNKNOWN",
-      lastSyncAt: null,
-      recordCount: 0,
-      connectorId: null,
-      configJson: null,
-      notes: "Awaiting initial production data upload. Project is pre-NTP.",
-      createdAt: new Date(Date.now() - 14 * 24 * 60 * 60 * 1000),
-      updatedAt: new Date(Date.now() - 14 * 24 * 60 * 60 * 1000),
-    });
-
-    const ds3Id = randomUUID();
-    this.scadaDataSources.set(ds3Id, {
-      id: ds3Id,
-      projectId: proj3Id,
-      sourceType: "CSV_UPLOAD",
-      providerName: "SCADA Export",
-      status: "ACTIVE",
-      dataQuality: "HIGH",
-      lastSyncAt: new Date(Date.now() - 1 * 24 * 60 * 60 * 1000),
-      recordCount: 8760,
-      connectorId: null,
-      configJson: JSON.stringify({ capacityKw: 25000, technology: "Mono-Si", trackingType: "Single-Axis", lat: 34.6868, lon: -118.1542 }),
-      notes: "Hourly SCADA production data from inverter DAS export. 12 months of verified meter readings.",
-      createdAt: new Date(Date.now() - 60 * 24 * 60 * 60 * 1000),
-      updatedAt: new Date(Date.now() - 1 * 24 * 60 * 60 * 1000),
-    });
+    const firstOffering = catalogOfferings(25)[0];
+    if (firstOffering) {
+      const intId = randomUUID();
+      this.interests.set(intId, {
+        id: intId,
+        projectId: firstOffering.slug,
+        investorId,
+        amountIntent: "500000",
+        structurePreference: "EQUITY",
+        timeline: "IMMEDIATE",
+        message: "Interested in allocation on this offering.",
+        status: "SUBMITTED",
+        createdAt: new Date(Date.now() - 4 * 24 * 60 * 60 * 1000),
+      });
+    }
   }
 
   private seedHourlyProductionAndRevenue(
@@ -646,9 +427,10 @@ export class MemStorage implements IStorage {
     capacityKw: number,
     latitude: number,
     months: string[],
-    now: Date
+    now: Date,
+    ppaRatePerMwh: number,
   ) {
-    const ppaRate = 72;
+    const ppaRate = ppaRatePerMwh;
     const opexRatio = 0.15;
 
     function solarElev(dayOfYear: number, hour: number, lat: number): number {
@@ -1088,7 +870,7 @@ export class MemStorage implements IStorage {
 
   async deleteProductionByProject(projectId: string): Promise<number> {
     let count = 0;
-    for (const [id, prod] of this.productionRecords) {
+    for (const [id, prod] of Array.from(this.productionRecords.entries())) {
       if (prod.projectId === projectId) {
         this.productionRecords.delete(id);
         count++;

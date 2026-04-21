@@ -134,7 +134,7 @@ function formatCurrency(value: string | number | null): string {
 
 export default function InvestorDeals() {
   const [stateFilter, setStateFilter] = useState<string>("all");
-  const [minMW, setMinMW] = useState<string>("");
+  const [minMW, setMinMW] = useState<string>("1");
   const [maxMW, setMaxMW] = useState<string>("");
   const [stageFilter, setStageFilter] = useState<string>("all");
   const [ratingFilter, setRatingFilter] = useState<string>("all");
@@ -354,7 +354,7 @@ export default function InvestorDeals() {
                   <div className="flex flex-wrap items-center gap-3 text-sm text-muted-foreground">
                     <span className="flex items-center gap-1">
                       <MapPin className="h-3.5 w-3.5" />
-                      {deal.state}
+                      {deal.county}, {deal.state}
                     </span>
                     <span className="flex items-center gap-1">
                       <Zap className="h-3.5 w-3.5" />
@@ -365,6 +365,9 @@ export default function InvestorDeals() {
                   <div className="flex flex-wrap items-center gap-3 text-sm text-muted-foreground">
                     <span>{deal.technology.replace(/_/g, " ")}</span>
                     <span>{deal.stage.replace(/_/g, " ")}</span>
+                    <span className="text-xs border border-border/60 rounded px-1.5 py-0.5">
+                      {deal.offtakerType.replace(/_/g, " ")}
+                    </span>
                   </div>
 
                   <ScadaQuickMetrics projectId={deal.id} />

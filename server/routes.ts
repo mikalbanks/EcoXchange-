@@ -12,6 +12,7 @@ import * as scadaService from "./lib/scada-service";
 import { settleProject } from "./services/settle-project";
 import { runSgtHandshake } from "./services/sgt-handshake";
 import { csvConnector } from "./services/scada-connector";
+import { catalogOfferings } from "@shared/catalog-projects";
 import { db } from "./db";
 import { accounts as accountsTable, transactions as txTable, postings as postingsTable } from "@shared/schema";
 import { eq, sql as dsql } from "drizzle-orm";
@@ -518,7 +519,10 @@ export async function registerRoutes(
 
   // Browse approved projects (deal list)
   app.get("/api/investor/deals", requireRole("INVESTOR"), async (req: any, res) => {
-    const projects = await storage.getProjectsByStatus("APPROVED");
+    const projects = (await storage.getProjectsByStatus("APPROVED")).filter((p) => {
+      const mw = parseFloat(p.capacityMW || "0");
+      return !Number.isNaN(mw) && mw >= 1;
+    });
     const result = await Promise.all(
       projects.map(async (p) => {
         const score = await storage.getReadinessScore(p.id);
@@ -871,7 +875,11 @@ export async function registerRoutes(
     return res.status(403).json({ message: "Access denied" });
   };
 
-  const FEATURED_PROJECT_IDS = new Set(["proj1", "proj3"]);
+  const FEATURED_PROJECT_IDS = new Set(
+    catalogOfferings(25)
+      .slice(0, 2)
+      .map((r) => r.slug),
+  );
 
   app.get("/api/public/projects/:id/scada/summary", async (req: any, res) => {
     try {
@@ -1304,12 +1312,14 @@ export async function registerRoutes(
   app.get("/api/public/sgt-pipeline-status", async (_req, res) => {
     try {
       const allProjects = await storage.getAllProjects();
-      const approvedProjects = allProjects.filter(p => p.status === "APPROVED");
+      const approvedProjects = allProjects.filter((p) => {
+        const mw = parseFloat(p.capacityMW || "0");
+        return p.status === "APPROVED" && !Number.isNaN(mw) && mw >= 1;
+      });
 
       const projectStatuses = [];
       for (const project of approvedProjects) {
         const capacityKw = Number(project.capacityKw || 0);
-        const hasSolcastKey = !!process.env.SOLCAST_API_KEY;
         const hasCoords = !!(project.latitude && project.longitude);
 
         const projectAccounts = await db
@@ -1327,11 +1337,11 @@ export async function registerRoutes(
           latitude: project.latitude,
           longitude: project.longitude,
           pipeline: {
-            skyOracle: { status: hasSolcastKey && hasCoords ? "CONNECTED" : "STANDBY", provider: "Solcast Satellite API" },
+            skyOracle: { status: hasCoords ? "ACTIVE" : "STANDBY", provider: "EcoXchange SGT irradiance model" },
             utilityShadow: { status: "ACTIVE", provider: "Utility Shadow v2026.1" },
-            sgtHandshake: { status: hasSolcastKey ? "READY" : "FALLBACK_MODE", provider: "SGT Handshake Orchestrator" },
+            sgtHandshake: { status: "READY", provider: "SGT Handshake Orchestrator" },
             waterfallEngine: { status: hasWaterfallAccounts ? "CONFIGURED" : "PENDING_SETUP", provider: "Double-Entry Waterfall Engine" },
-            securitizeBridge: { status: "MOCK", provider: "Securitize RWA Protocol (Mock)" },
+            securitizeBridge: { status: "MOCK", provider: "RWA distribution (mock)" },
           },
         });
       }
@@ -1339,7 +1349,6 @@ export async function registerRoutes(
       res.json({
         pipelineVersion: "v2026.1",
         totalProjects: approvedProjects.length,
-        solcastConnected: !!process.env.SOLCAST_API_KEY,
         utilityShadowActive: true,
         projects: projectStatuses,
       });

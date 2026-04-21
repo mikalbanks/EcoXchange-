@@ -1,5 +1,3 @@
-import axios from "axios";
-
 export type MeterDataSource = "synthetic" | "stored";
 
 export interface BacktestSiteConfig {
@@ -45,7 +43,7 @@ export interface BacktestStatistics {
   };
 }
 
-export type SatelliteSource = "SOLCAST_HISTORICAL" | "SOLCAST_ESTIMATED_ACTUALS" | "SYNTHETIC_FALLBACK";
+export type SatelliteSource = "SGT_IRRADIANCE_MODEL" | "SYNTHETIC_FALLBACK";
 
 export interface BacktestReport {
   site: BacktestSiteConfig;
@@ -143,203 +141,6 @@ function generatePvdaqProduction(config: BacktestSiteConfig): Map<string, number
   return production;
 }
 
-function generate31DayChunks(startDate: string, endDate: string): Array<{ start: string; end: string }> {
-  const chunks: Array<{ start: string; end: string }> = [];
-  const end = new Date(endDate + "T23:59:59Z");
-  let cursor = new Date(startDate + "T00:00:00Z");
-
-  while (cursor < end) {
-    const chunkEnd = new Date(cursor.getTime() + 31 * 24 * 60 * 60 * 1000);
-    const actualEnd = chunkEnd > end ? end : chunkEnd;
-    chunks.push({
-      start: cursor.toISOString().replace(".000Z", "Z"),
-      end: actualEnd.toISOString().replace(".000Z", "Z"),
-    });
-    cursor = new Date(chunkEnd.getTime());
-  }
-
-  return chunks;
-}
-
-function parseSolcastRecords(records: any[]): Map<string, number> {
-  const solcastMap = new Map<string, number>();
-  for (const record of records) {
-    const periodEnd = new Date(record.period_end);
-    const periodStart = new Date(periodEnd.getTime() - 15 * 60 * 1000);
-    const periodKey = periodStart.toISOString();
-    solcastMap.set(periodKey, record.pv_estimate ?? 0);
-  }
-  return solcastMap;
-}
-
-function evaluateCoverage(solcastMap: Map<string, number>, timestamps: string[]): { matchedCount: number; coveragePct: number } {
-  const daylightTimestamps = timestamps.filter(t => {
-    const h = new Date(t).getUTCHours();
-    return h >= 5 && h <= 20;
-  });
-  const matchedCount = daylightTimestamps.filter(t => solcastMap.has(t)).length;
-  const coveragePct = daylightTimestamps.length > 0
-    ? Math.min(100, (matchedCount / daylightTimestamps.length) * 100)
-    : 0;
-  return { matchedCount, coveragePct };
-}
-
-async function fetchSolcastHistoric(
-  config: BacktestSiteConfig,
-  apiKey: string,
-): Promise<Map<string, number> | null> {
-  const chunks = generate31DayChunks(config.startDate, config.endDate);
-  console.log(`   🛰️ Fetching Solcast historic data: ${chunks.length} chunk(s) for ${config.startDate} → ${config.endDate}`);
-
-  const solcastMap = new Map<string, number>();
-  let totalRecords = 0;
-
-  for (let i = 0; i < chunks.length; i++) {
-    const chunk = chunks[i];
-    try {
-      console.log(`   🛰️ Chunk ${i + 1}/${chunks.length}: ${chunk.start} → ${chunk.end}`);
-      const response = await axios.get(
-        "https://api.solcast.com.au/data/historic/rooftop_pv_power",
-        {
-          params: {
-            latitude: config.latitude,
-            longitude: config.longitude,
-            capacity: config.capacityKw,
-            start: chunk.start,
-            end: chunk.end,
-            period: "PT15M",
-            array_type: config.arrayType === "horizontal_single_axis" ? "horizontal_single_axis" : "fixed",
-            format: "json",
-          },
-          headers: { Authorization: `Bearer ${apiKey}` },
-          timeout: 30000,
-        },
-      );
-
-      const records = response.data?.estimated_actuals || [];
-      if (records.length > 0) {
-        const chunkMap = parseSolcastRecords(records);
-        for (const [k, v] of chunkMap) {
-          solcastMap.set(k, v);
-        }
-        totalRecords += records.length;
-        console.log(`      ✅ ${records.length} records retrieved`);
-      } else {
-        console.log(`      ⚠️ No records for this chunk`);
-      }
-
-      if (i < chunks.length - 1) {
-        await new Promise(r => setTimeout(r, 500));
-      }
-    } catch (error: unknown) {
-      if (axios.isAxiosError(error)) {
-        const status = error.response?.status;
-        console.log(`      ⚠️ Chunk ${i + 1} failed (HTTP ${status}), aborting historic fetch`);
-      } else {
-        const msg = error instanceof Error ? error.message : String(error);
-        console.log(`      ⚠️ Chunk ${i + 1} error: ${msg}, aborting historic fetch`);
-      }
-      return null;
-    }
-  }
-
-  if (totalRecords === 0) {
-    console.log(`   ⚠️ Solcast historic returned no data`);
-    return null;
-  }
-
-  console.log(`   🛰️ Solcast historic total: ${totalRecords} records across ${chunks.length} chunks`);
-  return solcastMap;
-}
-
-async function fetchSolcastEstimatedActuals(
-  config: BacktestSiteConfig,
-  apiKey: string,
-  timestamps: string[],
-): Promise<Map<string, number> | null> {
-  try {
-    console.log(`   🛰️ Trying Solcast estimated_actuals (recent ~7 days)...`);
-    const response = await axios.get(
-      "https://api.solcast.com.au/world_pv_power/estimated_actuals",
-      {
-        params: {
-          latitude: config.latitude,
-          longitude: config.longitude,
-          capacity: config.capacityKw,
-          period: "PT15M",
-          format: "json",
-          hours: 168,
-        },
-        headers: { Authorization: `Bearer ${apiKey}` },
-        timeout: 20000,
-      },
-    );
-
-    const actuals = response.data?.estimated_actuals;
-    if (!actuals || actuals.length === 0) {
-      console.log(`   ⚠️ Solcast estimated_actuals returned no data`);
-      return null;
-    }
-
-    console.log(`   🛰️ Solcast estimated_actuals: ${actuals.length} records`);
-    const solcastMap = parseSolcastRecords(actuals);
-
-    const { matchedCount, coveragePct } = evaluateCoverage(solcastMap, timestamps);
-    if (coveragePct < 10) {
-      console.log(`   ⚠️ estimated_actuals coverage too low (${coveragePct.toFixed(1)}%), period outside ~7-day window`);
-      return null;
-    }
-
-    console.log(`   ✅ estimated_actuals matched ${matchedCount}/${timestamps.length} intervals (${coveragePct.toFixed(1)}% daylight)`);
-    return solcastMap;
-  } catch (error: unknown) {
-    if (axios.isAxiosError(error)) {
-      console.log(`   ⚠️ estimated_actuals failed (HTTP ${error.response?.status})`);
-    } else {
-      const msg = error instanceof Error ? error.message : String(error);
-      console.log(`   ⚠️ estimated_actuals error: ${msg}`);
-    }
-    return null;
-  }
-}
-
-interface SolcastResult {
-  data: Map<string, number>;
-  source: SatelliteSource;
-}
-
-async function fetchSolcastHistoricalSeries(
-  config: BacktestSiteConfig,
-  timestamps: string[],
-): Promise<SolcastResult | null> {
-  const SOLCAST_API_KEY = process.env.SOLCAST_API_KEY;
-  if (!SOLCAST_API_KEY) {
-    console.log(`   ⚠️ SOLCAST_API_KEY not configured, using synthetic satellite model`);
-    return null;
-  }
-
-  console.log(`   🛰️ Solcast satellite data fetch for ${config.capacityKw} kW at ${config.latitude}, ${config.longitude}`);
-  console.log(`   🛰️ Date range: ${config.startDate} → ${config.endDate}`);
-
-  const historicResult = await fetchSolcastHistoric(config, SOLCAST_API_KEY);
-  if (historicResult) {
-    const { matchedCount, coveragePct } = evaluateCoverage(historicResult, timestamps);
-    if (coveragePct >= 10) {
-      console.log(`   ✅ Using Solcast historic data: ${matchedCount}/${timestamps.length} intervals (${coveragePct.toFixed(1)}% daylight coverage)`);
-      return { data: historicResult, source: "SOLCAST_HISTORICAL" };
-    }
-    console.log(`   ⚠️ Historic data coverage too low (${coveragePct.toFixed(1)}%), trying estimated_actuals...`);
-  }
-
-  const estimatedResult = await fetchSolcastEstimatedActuals(config, SOLCAST_API_KEY, timestamps);
-  if (estimatedResult) {
-    return { data: estimatedResult, source: "SOLCAST_ESTIMATED_ACTUALS" };
-  }
-
-  console.log(`   ⚠️ All Solcast endpoints exhausted, falling back to synthetic satellite model`);
-  return null;
-}
-
 function generateSyntheticSatelliteEstimates(config: BacktestSiteConfig): Map<string, number> {
   const estimates = new Map<string, number>();
   const rng = seededRandom(720230601);
@@ -405,7 +206,7 @@ function deriveSatelliteFromMeter(meterData: Map<string, number>, config: Backte
   let dailyBias = 0;
   let prevDay = -1;
 
-  for (const [ts, meterKw] of meterData) {
+  for (const [ts, meterKw] of Array.from(meterData.entries())) {
     if (meterKw <= 0) {
       satellite.set(ts, 0);
       continue;
@@ -590,29 +391,27 @@ export async function runBacktest(config?: BacktestSiteConfig): Promise<Backtest
   }
 
   const allTimestamps = Array.from(meterData.keys());
-  let satelliteSource: SatelliteSource = "SYNTHETIC_FALLBACK";
+  let satelliteSource: SatelliteSource;
   let satelliteData: Map<string, number>;
 
-  const solcastSeries = await fetchSolcastHistoricalSeries(site, allTimestamps);
-  if (solcastSeries) {
-    satelliteSource = solcastSeries.source;
-    satelliteData = solcastSeries.data;
-    for (const ts of allTimestamps) {
-      if (!satelliteData.has(ts)) {
-        satelliteData.set(ts, 0);
-      }
-    }
-    console.log(`   ✅ Using ${solcastSeries.source} as satellite truth (${satelliteData.size} intervals)`);
-  } else if (actualMeterSource === "stored") {
+  if (actualMeterSource === "stored") {
     satelliteData = deriveSatelliteFromMeter(meterData, site);
-    console.log(`   ✅ Using Solcast irradiance model (derived from SCADA data, ${satelliteData.size} intervals)`);
+    satelliteSource = "SGT_IRRADIANCE_MODEL";
+    console.log(`   ✅ Using SGT irradiance model derived from meter data (${satelliteData.size} intervals)`);
   } else {
     satelliteData = generateSyntheticSatelliteEstimates(site);
-    console.log(`   ✅ Using synthetic satellite model as fallback (${satelliteData.size} intervals)`);
+    satelliteSource = "SYNTHETIC_FALLBACK";
+    console.log(`   ✅ Using synthetic satellite model (${satelliteData.size} intervals)`);
+  }
+
+  for (const ts of allTimestamps) {
+    if (!satelliteData.has(ts)) {
+      satelliteData.set(ts, 0);
+    }
   }
 
   const intervals: BacktestInterval[] = [];
-  for (const [timestamp, meterKw] of meterData) {
+  for (const [timestamp, meterKw] of Array.from(meterData.entries())) {
     const satelliteKw = satelliteData.get(timestamp) || 0;
     const deltaKw = Math.abs(satelliteKw - meterKw);
     const deltaPct = site.capacityKw > 0 ? (deltaKw / site.capacityKw) * 100 : 0;
@@ -677,9 +476,11 @@ let cachedReport: BacktestReport | null = null;
 export async function getCachedBacktestReport(): Promise<BacktestReport> {
   if (!cachedReport) {
     const { storage } = await import("../storage");
-    const project = await storage.getProject("proj1");
+    const { catalogOfferings } = await import("@shared/catalog-projects");
+    const defaultProjectId = catalogOfferings(25)[0]?.slug ?? "mesquite-sky-1";
+    const project = await storage.getProject(defaultProjectId);
     if (project) {
-      const storedProduction = await storage.getProductionByProject("proj1");
+      const storedProduction = await storage.getProductionByProject(defaultProjectId);
       if (storedProduction.length > 0) {
         const dates = storedProduction.map(p => p.periodStart.getTime());
         const endDates = storedProduction.map(p => p.periodEnd.getTime());

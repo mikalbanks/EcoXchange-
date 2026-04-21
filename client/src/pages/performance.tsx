@@ -7,13 +7,22 @@ import { useQuery } from "@tanstack/react-query";
 import { Skeleton } from "@/components/ui/skeleton";
 import { ProvenancePanel, type ScadaProvenance } from "@/components/scada/provenance-panel";
 import { Sun, MapPin, Zap, ArrowRight, BarChart3 } from "lucide-react";
+import { catalogOfferings } from "@shared/catalog-projects";
 
-const DEFAULT_PROJECT_ID = "proj3";
+const DEFAULT_PROJECT_ID = catalogOfferings(25)[0]?.slug ?? "";
 
-const PROJECT_INFO: Record<string, { name: string; location: string; capacity: string; type: string }> = {
-  proj1: { name: "Imperial Valley Solar I", location: "California, Imperial Valley", capacity: "12 MW", type: "Fixed-Tilt Solar" },
-  proj3: { name: "Lancaster Sun Ranch", location: "California, Los Angeles", capacity: "25 MW", type: "Single-Axis Tracking Solar" },
-};
+function projectInfoFromCatalog(projectId: string) {
+  const row = catalogOfferings(25).find((r) => r.slug === projectId);
+  if (!row) {
+    return { name: "Project", location: "", capacity: "", type: "" };
+  }
+  return {
+    name: row.name,
+    location: `${row.state}, ${row.county}`,
+    capacity: `${row.capacityMW} MW`,
+    type: row.technology.replace(/_/g, " "),
+  };
+}
 
 interface ScadaSummary {
   totalProductionMwh: number;
@@ -30,7 +39,7 @@ interface ScadaSummary {
 export default function PerformancePage() {
   const params = useParams<{ projectId?: string }>();
   const projectId = params.projectId || DEFAULT_PROJECT_ID;
-  const projectInfo = PROJECT_INFO[projectId] || PROJECT_INFO[DEFAULT_PROJECT_ID];
+  const projectInfo = projectInfoFromCatalog(projectId);
 
   const { data: summary, isLoading } = useQuery<ScadaSummary>({
     queryKey: ["/api/public/projects", projectId, "scada", "summary"],
@@ -58,7 +67,7 @@ export default function PerformancePage() {
               Project Performance
             </h1>
             <p className="text-lg text-muted-foreground max-w-2xl mx-auto" data-testid="text-performance-subtitle">
-              Real-time SCADA telemetry powered by the SGT Pipeline — Solcast Sky Oracle satellite data, Utility Shadow net metering, and double-entry waterfall settlement.
+              Real-time SCADA telemetry powered by the SGT pipeline — modeled solar reference, utility shadow net metering, and double-entry waterfall settlement.
             </p>
           </div>
         </div>
