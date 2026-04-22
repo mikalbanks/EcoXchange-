@@ -86,7 +86,14 @@ function MiniBar({ value, max, colorClass }: { value: number; max: number; color
   );
 }
 
-export function YieldDashboard({ projectId }: { projectId: string }) {
+export function YieldDashboard({
+  projectId,
+  hideOfftakerLabel,
+}: {
+  projectId: string;
+  /** When true, hides offtaker/counterparty line in modeled PPA terms (auction listings). */
+  hideOfftakerLabel?: boolean;
+}) {
   const { data, isLoading } = useQuery<YieldData>({
     queryKey: [`/api/projects/${projectId}/yield`],
     enabled: !!projectId,
@@ -279,17 +286,19 @@ export function YieldDashboard({ projectId }: { projectId: string }) {
           <CardHeader className="pb-2">
             <CardTitle className="text-base flex items-center gap-2">
               <FileText className="h-4 w-4" />
-              PPA Terms
+              {hideOfftakerLabel ? "Modeled economics" : "PPA Terms"}
             </CardTitle>
           </CardHeader>
           <CardContent>
             {ppas.map((ppa) => (
               <div key={ppa.id} className="space-y-2" data-testid={`ppa-${ppa.id}`}>
                 <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 text-sm">
+                  {!hideOfftakerLabel && (
                   <div>
                     <span className="text-xs text-muted-foreground">Offtaker</span>
                     <p className="font-medium" data-testid="text-ppa-offtaker">{ppa.offtakerName}</p>
                   </div>
+                  )}
                   <div>
                     <span className="text-xs text-muted-foreground">Price</span>
                     <p className="font-medium" data-testid="text-ppa-price">${ppa.pricePerMwh}/MWh</p>

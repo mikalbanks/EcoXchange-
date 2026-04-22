@@ -27,6 +27,8 @@ import {
   Filter,
   X,
   Activity,
+  ExternalLink,
+  TrendingUp,
 } from "lucide-react";
 
 interface ScadaQuickData {
@@ -98,13 +100,6 @@ const RATING_OPTIONS = [
   { value: "RED", label: "Red" },
 ];
 
-const OFFTAKER_OPTIONS = [
-  { value: "C_AND_I", label: "C&I" },
-  { value: "COMMUNITY_SOLAR", label: "Community Solar" },
-  { value: "UTILITY", label: "Utility" },
-  { value: "MERCHANT", label: "Merchant" },
-];
-
 interface DealProject {
   id: string;
   name: string;
@@ -124,6 +119,21 @@ interface DealProject {
   };
   totalInterest: number;
   interestCount: number;
+  hideOfftakerInInvestorUi?: boolean;
+  listingUrl?: string | null;
+  auctionListing?: {
+    bidStatus: string | null;
+    statusOutcome: string | null;
+    winningBid: string | null;
+    closingInformation: string | null;
+  } | null;
+  yieldProjectionIllustrative?: {
+    minimumTicketUsd: number;
+    modeledEquityUsd: number;
+    estimatedAnnualIncomeUsd: number;
+    yieldPct: number;
+    disclaimer: string;
+  } | null;
 }
 
 function formatCurrency(value: string | number | null): string {
@@ -138,7 +148,6 @@ export default function InvestorDeals() {
   const [maxMW, setMaxMW] = useState<string>("");
   const [stageFilter, setStageFilter] = useState<string>("all");
   const [ratingFilter, setRatingFilter] = useState<string>("all");
-  const [offtakerFilter, setOfftakerFilter] = useState<string>("all");
 
   const { data: deals, isLoading, error } = useQuery<DealProject[]>({
     queryKey: ["/api/investor/deals"],
@@ -150,7 +159,6 @@ export default function InvestorDeals() {
       if (stateFilter !== "all" && deal.state !== stateFilter) return false;
       if (stageFilter !== "all" && deal.stage !== stageFilter) return false;
       if (ratingFilter !== "all" && deal.readinessScore?.rating !== ratingFilter) return false;
-      if (offtakerFilter !== "all" && deal.offtakerType !== offtakerFilter) return false;
       if (minMW) {
         const mw = parseFloat(deal.capacityMW || "0");
         if (mw < parseFloat(minMW)) return false;
@@ -161,9 +169,9 @@ export default function InvestorDeals() {
       }
       return true;
     });
-  }, [deals, stateFilter, minMW, maxMW, stageFilter, ratingFilter, offtakerFilter]);
+  }, [deals, stateFilter, minMW, maxMW, stageFilter, ratingFilter]);
 
-  const hasActiveFilters = stateFilter !== "all" || minMW || maxMW || stageFilter !== "all" || ratingFilter !== "all" || offtakerFilter !== "all";
+  const hasActiveFilters = stateFilter !== "all" || minMW || maxMW || stageFilter !== "all" || ratingFilter !== "all";
 
   function clearFilters() {
     setStateFilter("all");
@@ -171,7 +179,6 @@ export default function InvestorDeals() {
     setMaxMW("");
     setStageFilter("all");
     setRatingFilter("all");
-    setOfftakerFilter("all");
   }
 
   return (
@@ -206,7 +213,7 @@ export default function InvestorDeals() {
           )}
         </CardHeader>
         <CardContent>
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-6 gap-3">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3">
             <div>
               <label className="text-xs text-muted-foreground mb-1 block">State</label>
               <Select value={stateFilter} onValueChange={setStateFilter}>
@@ -274,20 +281,6 @@ export default function InvestorDeals() {
               </Select>
             </div>
 
-            <div>
-              <label className="text-xs text-muted-foreground mb-1 block">Offtaker</label>
-              <Select value={offtakerFilter} onValueChange={setOfftakerFilter}>
-                <SelectTrigger data-testid="select-offtaker-filter">
-                  <SelectValue placeholder="All Types" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">All Types</SelectItem>
-                  {OFFTAKER_OPTIONS.map((opt) => (
-                    <SelectItem key={opt.value} value={opt.value}>{opt.label}</SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
           </div>
         </CardContent>
       </Card>
@@ -365,10 +358,45 @@ export default function InvestorDeals() {
                   <div className="flex flex-wrap items-center gap-3 text-sm text-muted-foreground">
                     <span>{deal.technology.replace(/_/g, " ")}</span>
                     <span>{deal.stage.replace(/_/g, " ")}</span>
-                    <span className="text-xs border border-border/60 rounded px-1.5 py-0.5">
-                      {deal.offtakerType.replace(/_/g, " ")}
-                    </span>
+                    {!deal.hideOfftakerInInvestorUi && (
+                      <span className="text-xs border border-border/60 rounded px-1.5 py-0.5">
+                        {deal.offtakerType.replace(/_/g, " ")}
+                      </span>
+                    )}
                   </div>
+
+                  {deal.yieldProjectionIllustrative && (
+                    <div className="rounded-md border border-primary/25 bg-primary/5 px-3 py-2 text-sm">
+                      <div className="flex items-center gap-1.5 font-medium text-primary mb-0.5">
+                        <TrendingUp className="h-3.5 w-3.5" />
+                        Illustrative yield (SGT model)
+                      </div>
+                      <div className="flex flex-wrap items-baseline justify-between gap-2">
+                        <span className="text-muted-foreground text-xs">
+                          At ${deal.yieldProjectionIllustrative.minimumTicketUsd.toLocaleString()} ticket
+                        </span>
+                        <span className="font-semibold tabular-nums">
+                          ~{deal.yieldProjectionIllustrative.yieldPct.toFixed(1)}% / yr
+                        </span>
+                      </div>
+                      <p className="text-[11px] text-muted-foreground mt-1 leading-snug">
+                        {deal.yieldProjectionIllustrative.disclaimer}
+                      </p>
+                    </div>
+                  )}
+
+                  {deal.listingUrl && (
+                    <a
+                      href={deal.listingUrl}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="inline-flex items-center gap-1 text-xs text-primary hover:underline"
+                      onClick={(e) => e.stopPropagation()}
+                    >
+                      <ExternalLink className="h-3 w-3" />
+                      Source listing &amp; bid details
+                    </a>
+                  )}
 
                   <ScadaQuickMetrics projectId={deal.id} />
 
@@ -383,7 +411,7 @@ export default function InvestorDeals() {
                     )}
                     {deal.capitalStack?.equityNeeded && (
                       <div className="flex items-center justify-between text-sm">
-                        <span className="text-muted-foreground">Min Investment</span>
+                        <span className="text-muted-foreground">Modeled equity stack</span>
                         <span className="font-medium" data-testid={`text-deal-equity-${deal.id}`}>
                           {formatCurrency(deal.capitalStack.equityNeeded)}
                         </span>

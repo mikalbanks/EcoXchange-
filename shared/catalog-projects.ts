@@ -29,3 +29,7 @@ export function catalogOfferings(limit = 25): CatalogProjectRow[] {
     })
     .slice(0, limit);
 }
+
+export function catalogProjectBySlug(slug: string): CatalogProjectRow | undefined {
+  return CATALOG_PROJECTS.find((p) => p.slug === slug);
+}

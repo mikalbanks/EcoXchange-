@@ -338,10 +338,12 @@ export class MemStorage implements IStorage {
         });
 
         const ppaId = `ppa-${projectId}-default`;
+        const modeledOfftakerLabel =
+          row.offtakerName.trim().length > 0 ? row.offtakerName : "Modeled energy revenue (SGT)";
         this.ppas.set(ppaId, {
           id: ppaId,
           projectId,
-          offtakerName: row.offtakerName,
+          offtakerName: modeledOfftakerLabel,
           contractStartDate: new Date(now.getFullYear() - 1, 0, 1),
           contractEndDate: new Date(now.getFullYear() + 19, 11, 31),
           pricePerMwh: row.pricePerMwh,

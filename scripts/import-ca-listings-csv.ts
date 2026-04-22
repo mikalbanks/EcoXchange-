@@ -199,6 +199,12 @@ function getFirst(row: Record<string, string>, keys: string[]): string | undefin
   return undefined;
 }
 
+function extractFirstHttpUrl(s: string | undefined): string | null {
+  if (!s?.trim()) return null;
+  const m = s.match(/https?:\/\/[^\s"'<>]+/i);
+  return m?.[0] ?? null;
+}
+
 function parseLatLonPair(s: string | undefined): { lat: number; lon: number } | null {
   if (!s?.includes(",")) return null;
   const parts = s.split(",").map((p) => p.trim());
@@ -261,14 +267,16 @@ function csvRowToCatalog(row: Record<string, string>, index: number): CatalogPro
   const bs = getFirst(row, ["bid_status"]);
   const so = getFirst(row, ["status_outcome"]);
   const wb = getFirst(row, ["winning_bid"]);
-  const wbd = getFirst(row, ["winning_bidder"]);
   const ci = getFirst(row, ["closing_information"]);
   if (bs) auctionParts.push(`Bid status: ${bs}`);
   if (so) auctionParts.push(`Outcome: ${so}`);
   if (wb) auctionParts.push(`Winning bid: ${wb}`);
-  if (wbd) auctionParts.push(`Bidder: ${wbd}`);
   if (ci) auctionParts.push(`Closing: ${ci}`);
   const auctionFooter = auctionParts.length ? `\n${auctionParts.join(". ")}.` : "";
+
+  const listingUrlExplicit = extractFirstHttpUrl(getFirst(row, ["listing_url", "url", "link", "listing_link"]));
+  const listingUrlFromClosing = extractFirstHttpUrl(ci);
+  const listingUrl = listingUrlExplicit ?? listingUrlFromClosing;
 
   const summary =
     getFirst(row, ["summary", "description", "notes", "comments"]) ??
@@ -283,13 +291,13 @@ function csvRowToCatalog(row: Record<string, string>, index: number): CatalogPro
   const escalationRate =
     escalationNum !== null ? fmtMoney(escalationNum > 1 ? escalationNum : escalationNum * 100) : "0";
 
-  const inferredStage =
+  const inferredStage: CatalogStage =
     inferStageFromAuction(row) ??
     parseStage(getFirst(row, ["stage", "phase", "status_stage"]));
 
-  const inferredPermitting =
+  const inferredPermitting: CatalogProjectRow["permittingStatus"] =
     inferPermittingFromOutcome(row) ??
-    parseEnum(getFirst(row, ["permitting_status", "permits"]), [
+    parseEnum<CatalogProjectRow["permittingStatus"]>(getFirst(row, ["permitting_status", "permits"]), [
       "APPROVED",
       "IN_PROGRESS",
       "SUBMITTED",
@@ -313,7 +321,8 @@ function csvRowToCatalog(row: Record<string, string>, index: number): CatalogPro
     latitude: fmtCoord(lat),
     longitude: fmtCoord(lng),
     capacityMW,
-    offtakerType: parseOfftaker(getFirst(row, ["offtaker_type", "offtaker", "buyer_type"])),
+    // Auction listings do not imply a contracted utility offtaker; hide in investor UI via hideOfftakerInInvestorUi.
+    offtakerType: "MERCHANT",
     interconnectionStatus: parseEnum(getFirst(row, ["interconnection_status", "interconnection"]), [
       "IA_EXECUTED",
       "APPLIED",
@@ -342,10 +351,16 @@ function csvRowToCatalog(row: Record<string, string>, index: number): CatalogPro
     equityNeeded,
     capitalNotes: capitalNotesCombined,
     offtakerName:
-      getFirst(row, ["offtaker_name", "counterparty", "utility", "winning_bidder"]) ?? "TBD",
+      getFirst(row, ["offtaker_name", "counterparty", "utility"]) ?? "Not disclosed",
     pricePerMwh,
     escalationType,
     escalationRate,
+    listingUrl: listingUrl ?? null,
+    hideOfftakerInInvestorUi: true,
+    auctionBidStatus: bs ?? null,
+    auctionStatusOutcome: so ?? null,
+    auctionWinningBid: wb ?? null,
+    auctionClosingInformation: ci ?? null,
   };
 }
 
@@ -392,6 +407,12 @@ function emitTs(rows: CatalogProjectRow[]): string {
     lines.push(`    pricePerMwh: ${escapeString(r.pricePerMwh)},`);
     lines.push(`    escalationType: ${escapeString(r.escalationType)},`);
     lines.push(`    escalationRate: ${escapeString(r.escalationRate)},`);
+    if (r.listingUrl != null && r.listingUrl !== "") lines.push(`    listingUrl: ${escapeString(r.listingUrl)},`);
+    if (r.hideOfftakerInInvestorUi === true) lines.push(`    hideOfftakerInInvestorUi: true,`);
+    if (r.auctionBidStatus != null && r.auctionBidStatus !== "") lines.push(`    auctionBidStatus: ${escapeString(r.auctionBidStatus)},`);
+    if (r.auctionStatusOutcome != null && r.auctionStatusOutcome !== "") lines.push(`    auctionStatusOutcome: ${escapeString(r.auctionStatusOutcome)},`);
+    if (r.auctionWinningBid != null && r.auctionWinningBid !== "") lines.push(`    auctionWinningBid: ${escapeString(r.auctionWinningBid)},`);
+    if (r.auctionClosingInformation != null && r.auctionClosingInformation !== "") lines.push(`    auctionClosingInformation: ${escapeString(r.auctionClosingInformation)},`);
     lines.push(`  },`);
   }
 

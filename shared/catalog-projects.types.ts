@@ -31,4 +31,13 @@ export interface CatalogProjectRow {
   pricePerMwh: string;
   escalationType: "FIXED" | "ESCALATING";
   escalationRate: string;
+  /** Public auction / listing page where bidders can verify asset and bid outcome (optional). */
+  listingUrl?: string | null;
+  /** When true, investor UI omits offtaker / counterparty fields (auction-style listings). */
+  hideOfftakerInInvestorUi?: boolean;
+  /** Copied from auction CSV when present (optional structured display). */
+  auctionBidStatus?: string | null;
+  auctionStatusOutcome?: string | null;
+  auctionWinningBid?: string | null;
+  auctionClosingInformation?: string | null;
 }
