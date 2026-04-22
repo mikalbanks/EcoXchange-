@@ -506,35 +506,37 @@ export default function LandingPage() {
                       className="h-10 w-auto"
                     />
                     <div>
-                      <p className="font-semibold">Sample Offering</p>
-                      <p className="text-sm text-muted-foreground">Imperial Valley Solar I</p>
+                      <p className="font-semibold">Market Snapshot</p>
+                      <p className="text-sm text-muted-foreground">Live listing from project catalog</p>
                     </div>
                   </div>
                   
                   <div className="space-y-4">
                     <div className="flex justify-between py-2 border-b border-border/50">
                       <span className="text-muted-foreground">Target Raise</span>
-                      <span className="font-medium" data-testid="text-sample-target-raise">$13,800,000</span>
+                      <span className="font-medium" data-testid="text-sample-target-raise">
+                        {FEATURED_PROJECT ? `$${Number(FEATURED_PROJECT.totalCapex || 0).toLocaleString()}` : "$0"}
+                      </span>
                     </div>
                     <div className="flex justify-between py-2 border-b border-border/50">
                       <span className="text-muted-foreground">Min Investment</span>
-                      <span className="font-medium" data-testid="text-sample-min-investment">$25,000</span>
+                      <span className="font-medium" data-testid="text-sample-min-investment">$10,000</span>
                     </div>
                     <div className="flex justify-between py-2 border-b border-border/50">
-                      <span className="text-muted-foreground">Expected Yield (IRR)</span>
-                      <span className="font-medium text-primary" data-testid="text-sample-irr">8.5%</span>
+                      <span className="text-muted-foreground">Illustrative Yield Basis</span>
+                      <span className="font-medium text-primary" data-testid="text-sample-irr">SGT modeled distributions</span>
                     </div>
                     <div className="flex justify-between py-2 border-b border-border/50">
-                      <span className="text-muted-foreground">Yield Basis</span>
-                      <span className="font-medium">Solar PPA Revenue</span>
+                      <span className="text-muted-foreground">Capacity</span>
+                      <span className="font-medium">{FEATURED_PROJECT?.capacityMW ?? "N/A"} MW</span>
                     </div>
                     <div className="flex justify-between py-2 border-b border-border/50">
-                      <span className="text-muted-foreground">Distribution</span>
-                      <span className="font-medium">Quarterly</span>
+                      <span className="text-muted-foreground">Location</span>
+                      <span className="font-medium">{FEATURED_PROJECT ? `${FEATURED_PROJECT.county}, ${FEATURED_PROJECT.state}` : "N/A"}</span>
                     </div>
                     <div className="flex justify-between py-2">
-                      <span className="text-muted-foreground">Security Type</span>
-                      <span className="font-medium">Revenue-Share Token</span>
+                      <span className="text-muted-foreground">Detail View</span>
+                      <span className="font-medium">Stock-style project quote</span>
                     </div>
                   </div>
 
@@ -544,9 +546,11 @@ export default function LandingPage() {
                     </p>
                   </div>
                   
-                  <Button className="w-full mt-4" disabled>
-                    View Offering Details
-                  </Button>
+                  <Link href="/market">
+                    <Button className="w-full mt-4" data-testid="button-view-market">
+                      Open Marketplace
+                    </Button>
+                  </Link>
                 </CardContent>
               </Card>
             </div>

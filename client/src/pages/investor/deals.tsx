@@ -171,6 +171,15 @@ export default function InvestorDeals() {
     });
   }, [deals, stateFilter, minMW, maxMW, stageFilter, ratingFilter]);
 
+  const rankedDeals = useMemo(() => {
+    return [...filteredDeals].sort((a, b) => {
+      const ya = a.yieldProjectionIllustrative?.yieldPct ?? -1;
+      const yb = b.yieldProjectionIllustrative?.yieldPct ?? -1;
+      if (yb !== ya) return yb - ya;
+      return a.name.localeCompare(b.name);
+    });
+  }, [filteredDeals]);
+
   const hasActiveFilters = stateFilter !== "all" || minMW || maxMW || stageFilter !== "all" || ratingFilter !== "all";
 
   function clearFilters() {
@@ -184,7 +193,7 @@ export default function InvestorDeals() {
   return (
     <DashboardLayout
       title="Browse Offerings"
-      description="Explore approved digital securities offerings backed by renewable energy"
+      description="Stock-style discovery for renewable projects with quick diligence and modeled yield views"
       breadcrumbs={[
         { label: "Overview", href: "/investor" },
         { label: "Offerings" },
@@ -285,6 +294,39 @@ export default function InvestorDeals() {
         </CardContent>
       </Card>
 
+      {!isLoading && rankedDeals.length > 0 && (
+        <Card className="mb-6">
+          <CardContent className="py-4">
+            <div className="flex flex-wrap items-center justify-between gap-2">
+              <div>
+                <p className="text-sm font-medium">Top offers by estimated yield</p>
+                <p className="text-xs text-muted-foreground">
+                  Ranked by SGT modeled annualized yield for a $10,000 ticket.
+                </p>
+              </div>
+              <div className="text-xs text-muted-foreground">
+                {rankedDeals.filter((d) => !!d.yieldProjectionIllustrative).length} projects with modeled yield
+              </div>
+            </div>
+            <div className="mt-3 grid grid-cols-1 sm:grid-cols-3 gap-2">
+              {rankedDeals
+                .filter((d) => !!d.yieldProjectionIllustrative)
+                .slice(0, 3)
+                .map((deal) => (
+                  <Link key={`yield-top-${deal.id}`} href={`/investor/deals/${deal.id}`}>
+                    <a className="rounded-md border border-border/60 px-3 py-2 hover:bg-muted/40 transition-colors">
+                      <div className="text-xs text-muted-foreground truncate">{deal.name}</div>
+                      <div className="text-sm font-semibold tabular-nums">
+                        ~{deal.yieldProjectionIllustrative!.yieldPct.toFixed(2)}% / yr
+                      </div>
+                    </a>
+                  </Link>
+                ))}
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
       {isLoading ? (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
           {[...Array(6)].map((_, i) => (
@@ -305,7 +347,7 @@ export default function InvestorDeals() {
             <p className="text-destructive" data-testid="text-error-message">Failed to load deals</p>
           </CardContent>
         </Card>
-      ) : !filteredDeals.length ? (
+      ) : !rankedDeals.length ? (
         <Card>
           <CardContent>
             <EmptyState
@@ -324,7 +366,7 @@ export default function InvestorDeals() {
         </Card>
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-          {filteredDeals.map((deal) => (
+          {rankedDeals.map((deal) => (
             <Link key={deal.id} href={`/investor/deals/${deal.id}`}>
               <Card
                 className="hover-elevate cursor-pointer h-full"

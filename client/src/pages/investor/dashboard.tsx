@@ -16,7 +16,21 @@ import {
   Calendar,
   MapPin,
   ArrowRight,
+  TrendingUp,
 } from "lucide-react";
+
+interface MarketSnapshotProject {
+  id: string;
+  name: string;
+  state: string;
+  capacityMW: string | null;
+  listingUrl?: string | null;
+  yieldProjectionIllustrative?: {
+    minimumTicketUsd: number;
+    estimatedAnnualIncomeUsd: number;
+    yieldPct: number;
+  } | null;
+}
 
 interface InvestorInterest {
   id: string;
@@ -56,6 +70,9 @@ function formatTimeline(timeline: string): string {
 
 export default function InvestorDashboard() {
   const { user } = useAuth();
+  const { data: marketSnapshot } = useQuery<MarketSnapshotProject[]>({
+    queryKey: ["/api/public/market/projects"],
+  });
 
   const { data: interests, isLoading, error } = useQuery<InvestorInterest[]>({
     queryKey: ["/api/investor/interests"],
@@ -86,6 +103,45 @@ export default function InvestorDashboard() {
       <div className="mb-6">
         <IdentityVerificationCard />
       </div>
+
+      <Card className="mb-6">
+        <CardHeader className="flex flex-row items-center justify-between gap-2">
+          <CardTitle className="text-lg">Market Snapshot</CardTitle>
+          <Link href="/market">
+            <Button variant="ghost" size="sm" className="gap-1" data-testid="button-open-public-market">
+              Open Public Market
+              <ArrowRight className="h-4 w-4" />
+            </Button>
+          </Link>
+        </CardHeader>
+        <CardContent>
+          {!marketSnapshot?.length ? (
+            <p className="text-sm text-muted-foreground">No market data yet.</p>
+          ) : (
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+              {marketSnapshot.slice(0, 3).map((p) => (
+                <Link key={p.id} href={`/investor/deals/${p.id}`}>
+                  <div
+                    className="rounded-lg border border-border p-3 hover:bg-muted/30 transition-colors cursor-pointer"
+                    data-testid={`card-market-snapshot-${p.id}`}
+                  >
+                    <p className="font-medium text-sm">{p.name}</p>
+                    <p className="text-xs text-muted-foreground mt-0.5">
+                      {p.state} · {p.capacityMW || "N/A"} MW
+                    </p>
+                    {p.yieldProjectionIllustrative && (
+                      <p className="text-xs mt-2 flex items-center gap-1 text-primary">
+                        <TrendingUp className="h-3.5 w-3.5" />
+                        ~{p.yieldProjectionIllustrative.yieldPct.toFixed(1)}% at ${p.yieldProjectionIllustrative.minimumTicketUsd.toLocaleString()}
+                      </p>
+                    )}
+                  </div>
+                </Link>
+              ))}
+            </div>
+          )}
+        </CardContent>
+      </Card>
 
       <Card>
         <CardHeader className="flex flex-row items-center justify-between gap-2">
