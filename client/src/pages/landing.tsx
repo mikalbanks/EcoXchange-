@@ -174,6 +174,29 @@ interface PipelineStatus {
   projects: PipelineProject[];
 }
 
+interface PublicSgtProject {
+  projectId: string;
+  projectName: string;
+  state: string;
+  county: string;
+  technology: string;
+  capacityMW: number;
+  health: string;
+  sgtEstimated: {
+    trailing12MonthRevenue: number;
+    annualizedProductionMwh: number;
+    avgCapacityFactor: number;
+    next12MonthProductionMwh: number;
+    next12MonthRevenueUsd: number;
+  };
+}
+
+interface PublicSgtProjectsResponse {
+  generatedAt: string;
+  projectCount: number;
+  projects: PublicSgtProject[];
+}
+
 function PipelineStageIcon({ stage }: { stage: string }) {
   switch (stage) {
     case "skyOracle": return <Satellite className="h-5 w-5" />;
@@ -292,6 +315,83 @@ function SgtPipelineSection() {
             </Card>
           )}
         </div>
+      </div>
+    </section>
+  );
+}
+
+function PublicProjectMetricsSection() {
+  const { data, isLoading } = useQuery<PublicSgtProjectsResponse>({
+    queryKey: ["/api/public/projects/sgt-metrics"],
+    queryFn: async () => {
+      const res = await fetch("/api/public/projects/sgt-metrics");
+      if (!res.ok) throw new Error("Failed");
+      return res.json();
+    },
+    staleTime: 120000,
+  });
+
+  return (
+    <section className="py-20">
+      <div className="container mx-auto px-4">
+        <div className="text-center mb-12">
+          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-primary/10 border border-primary/20 mb-4">
+            <BarChart3 className="h-3.5 w-3.5 text-primary" />
+            <span className="text-sm font-medium text-primary">SGT Estimated Metrics</span>
+          </div>
+          <h2 className="text-3xl font-bold mb-4">Live Projects From Our Database</h2>
+          <p className="text-muted-foreground max-w-2xl mx-auto">
+            Approved projects with SGT-derived production and revenue estimates.
+          </p>
+        </div>
+
+        {isLoading ? (
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            {[...Array(2)].map((_, i) => <Skeleton key={i} className="h-52 w-full rounded-lg" />)}
+          </div>
+        ) : data && data.projects.length > 0 ? (
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 max-w-5xl mx-auto">
+            {data.projects.map((project) => (
+              <Card key={project.projectId} data-testid={`card-public-project-${project.projectId}`}>
+                <CardContent className="pt-5 pb-4">
+                  <div className="flex items-start justify-between mb-3 gap-3">
+                    <div>
+                      <h4 className="font-semibold text-base">{project.projectName}</h4>
+                      <p className="text-xs text-muted-foreground">
+                        {project.state}, {project.county} · {project.capacityMW} MW · {project.technology.replace(/_/g, " ")}
+                      </p>
+                    </div>
+                    <Badge variant="outline" className="text-[10px]">{project.health}</Badge>
+                  </div>
+                  <div className="grid grid-cols-2 gap-3 text-sm">
+                    <div className="rounded-lg bg-muted/30 p-3">
+                      <p className="text-xs text-muted-foreground">Next 12m Revenue</p>
+                      <p className="font-semibold">{formatCompact(project.sgtEstimated.next12MonthRevenueUsd)}</p>
+                    </div>
+                    <div className="rounded-lg bg-muted/30 p-3">
+                      <p className="text-xs text-muted-foreground">Next 12m Production</p>
+                      <p className="font-semibold">{project.sgtEstimated.next12MonthProductionMwh.toLocaleString()} MWh</p>
+                    </div>
+                    <div className="rounded-lg bg-muted/30 p-3">
+                      <p className="text-xs text-muted-foreground">Trailing 12m Revenue</p>
+                      <p className="font-semibold">{formatCompact(project.sgtEstimated.trailing12MonthRevenue)}</p>
+                    </div>
+                    <div className="rounded-lg bg-muted/30 p-3">
+                      <p className="text-xs text-muted-foreground">Avg Capacity Factor</p>
+                      <p className="font-semibold">{(project.sgtEstimated.avgCapacityFactor * 100).toFixed(1)}%</p>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            ))}
+          </div>
+        ) : (
+          <Card>
+            <CardContent className="py-8 text-center text-sm text-muted-foreground">
+              <p>No approved projects with SGT metrics are available yet.</p>
+            </CardContent>
+          </Card>
+        )}
       </div>
     </section>
   );
@@ -457,6 +557,9 @@ export default function LandingPage() {
 
       {/* Featured Project — Live SCADA */}
       <FeaturedProjectSection />
+
+      {/* Public DB-backed project metrics */}
+      <PublicProjectMetricsSection />
 
       {/* Sample Offering + Features */}
       <section className="py-20">

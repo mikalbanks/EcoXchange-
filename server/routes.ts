@@ -873,6 +873,56 @@ export async function registerRoutes(
 
   const FEATURED_PROJECT_IDS = new Set(["proj1", "proj3"]);
 
+  app.get("/api/public/projects/sgt-metrics", async (_req, res) => {
+    try {
+      const projects = await storage.getProjectsByStatus("APPROVED");
+      const projectMetrics = await Promise.all(
+        projects.map(async (project) => {
+          const [summary, forecast, health] = await Promise.all([
+            scadaService.getProjectSummary(project.id),
+            scadaService.getForecast(project.id),
+            scadaService.getHealthStatus(project.id),
+          ]);
+
+          const twelveMonthEstimateMwh = forecast
+            ? forecast.months.reduce((sum, month) => sum + month.forecastMwh, 0)
+            : 0;
+          const twelveMonthEstimateRevenue = forecast
+            ? forecast.months.reduce((sum, month) => sum + month.forecastRevenue, 0)
+            : 0;
+
+          return {
+            projectId: project.id,
+            projectName: project.name,
+            state: project.state,
+            county: project.county,
+            technology: project.technology,
+            capacityMW: Number(project.capacityMW || 0),
+            status: project.status,
+            health: health?.overall || "NO_DATA",
+            sgtEstimated: {
+              trailing12MonthRevenue: summary?.trailing12MonthRevenue || 0,
+              annualizedProductionMwh: summary?.annualizedProductionMwh || 0,
+              avgCapacityFactor: summary?.avgCapacityFactor || 0,
+              next12MonthProductionMwh: Math.round(twelveMonthEstimateMwh * 100) / 100,
+              next12MonthRevenueUsd: Math.round(twelveMonthEstimateRevenue * 100) / 100,
+            },
+            provenance: summary?.provenance || null,
+          };
+        }),
+      );
+
+      res.json({
+        generatedAt: new Date().toISOString(),
+        projectCount: projectMetrics.length,
+        projects: projectMetrics,
+      });
+    } catch (err) {
+      console.error("Public SGT metrics error:", err);
+      res.status(500).json({ message: "Failed to fetch public project SGT metrics" });
+    }
+  });
+
   app.get("/api/public/projects/:id/scada/summary", async (req: any, res) => {
     try {
       if (!FEATURED_PROJECT_IDS.has(req.params.id)) return res.status(404).json({ message: "Not found" });

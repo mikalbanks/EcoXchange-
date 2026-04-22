@@ -108,6 +108,12 @@ function Router() {
   return (
     <Switch>
       <Route path="/" component={LandingPage} />
+      <Route path="/login">
+        <Redirect to="/auth/login" />
+      </Route>
+      <Route path="/signup">
+        <Redirect to="/auth/signup" />
+      </Route>
       <Route path="/auth/login" component={LoginPage} />
       <Route path="/auth/signup" component={SignupPage} />
       <Route path="/yield-simulation" component={YieldSimulationPage} />
