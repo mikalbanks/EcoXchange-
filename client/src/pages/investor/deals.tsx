@@ -29,6 +29,7 @@ import {
   Activity,
   ExternalLink,
   TrendingUp,
+  Sparkles,
 } from "lucide-react";
 
 interface ScadaQuickData {
@@ -205,6 +206,22 @@ export default function InvestorDeals() {
           <p className="text-sm text-yellow-500" data-testid="text-terms-banner">
             Securities offered are asset-backed and yield-generating. All investments are subject to KYC/AML verification. Secondary trading is simulated in Phase 1. Only accredited investors may currently participate.
           </p>
+        </CardContent>
+      </Card>
+
+      <Card className="mb-6 border-primary/40 bg-primary/5">
+        <CardContent className="p-4">
+          <div className="flex items-start gap-3">
+            <Sparkles className="h-5 w-5 text-primary mt-0.5 shrink-0" />
+            <div className="space-y-1">
+              <p className="text-sm font-medium">What changed in this UX</p>
+              <ul className="text-xs text-muted-foreground list-disc pl-4 space-y-0.5">
+                <li>Projects are ranked by <strong>SGT modeled yield</strong> and surfaced in a top-yield strip.</li>
+                <li>Cards now show <strong>source listing links</strong> for bid details where available.</li>
+                <li>Offtaker details are hidden for auction-style rows, with focus on diligence + yield.</li>
+              </ul>
+            </div>
+          </div>
         </CardContent>
       </Card>
 

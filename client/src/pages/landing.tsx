@@ -304,6 +304,7 @@ function SgtPipelineSection() {
 }
 
 export default function LandingPage() {
+  const listingSnapshot = catalogOfferings(25).slice(0, 6);
   return (
     <div className="min-h-screen bg-gradient-dark-green">
       <Header />
@@ -347,6 +348,51 @@ export default function LandingPage() {
                 </Button>
               </Link>
             </div>
+          </div>
+        </div>
+      </section>
+
+      {/* CA Listings Snapshot */}
+      <section className="py-14 border-t border-border/40">
+        <div className="container mx-auto px-4">
+          <div className="flex flex-wrap items-end justify-between gap-4 mb-6">
+            <div>
+              <h2 className="text-2xl font-bold" data-testid="text-listings-snapshot-title">
+                CA Listings Snapshot
+              </h2>
+              <p className="text-sm text-muted-foreground">
+                Marketplace is now seeded from your imported project set with surface diligence and SGT-model yield context.
+              </p>
+            </div>
+            <Link href="/market">
+              <Button size="sm" className="gap-1" data-testid="button-open-market-snapshot">
+                Open full marketplace
+                <ArrowRight className="h-3.5 w-3.5" />
+              </Button>
+            </Link>
+          </div>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
+            {listingSnapshot.map((p) => (
+              <Card key={p.slug}>
+                <CardContent className="pt-4 space-y-2">
+                  <div className="flex items-center justify-between gap-2">
+                    <p className="font-medium text-sm truncate">{p.name}</p>
+                    <Badge variant="outline" className="text-[10px]">SGT</Badge>
+                  </div>
+                  <div className="text-xs text-muted-foreground flex items-center gap-3">
+                    <span className="flex items-center gap-1"><MapPin className="h-3 w-3" />{p.county}, {p.state}</span>
+                    <span className="flex items-center gap-1"><Zap className="h-3 w-3" />{p.capacityMW} MW</span>
+                  </div>
+                  <div className="pt-1">
+                    <Link href={`/market/${p.slug}`}>
+                      <Button variant="outline" size="sm" className="w-full text-xs" data-testid={`button-open-market-${p.slug}`}>
+                        View quote-style diligence
+                      </Button>
+                    </Link>
+                  </div>
+                </CardContent>
+              </Card>
+            ))}
           </div>
         </div>
       </section>
