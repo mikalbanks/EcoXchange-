@@ -912,12 +912,25 @@ export async function registerRoutes(
 
   const getInstitutionalApprovedProjects = async () => {
     const projects = await storage.getProjectsByStatus("APPROVED");
-    return projects.filter((project) => {
+    const institutionalProjects = projects.filter((project) => {
       const capacityMw = Number(project.capacityMW || 0);
       if (capacityMw < INSTITUTIONAL_MIN_CAPACITY_MW) return false;
       if (EXCLUDED_PLACEHOLDER_PROJECT_NAMES.has(project.name)) return false;
       return true;
     });
+    console.info(
+      "[InstitutionalInventory]",
+      JSON.stringify({
+        minCapacityMw: INSTITUTIONAL_MIN_CAPACITY_MW,
+        count: institutionalProjects.length,
+        projects: institutionalProjects.map((project) => ({
+          id: project.id,
+          name: project.name,
+          capacityMW: Number(project.capacityMW || 0),
+        })),
+      }),
+    );
+    return institutionalProjects;
   };
 
   const getFeaturedInstitutionalProject = async () => {
