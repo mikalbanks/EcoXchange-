@@ -905,10 +905,19 @@ export async function registerRoutes(
 
   const INSTITUTIONAL_MIN_CAPACITY_MW = 1;
   const INSTITUTIONAL_PPA_REFERENCE_MWH = 64.49;
+  const EXCLUDED_PLACEHOLDER_PROJECT_NAMES = new Set([
+    "Imperial Valley Solar I",
+    "Lancaster Sun Ranch",
+  ]);
 
   const getInstitutionalApprovedProjects = async () => {
     const projects = await storage.getProjectsByStatus("APPROVED");
-    return projects.filter((project) => Number(project.capacityMW || 0) >= INSTITUTIONAL_MIN_CAPACITY_MW);
+    return projects.filter((project) => {
+      const capacityMw = Number(project.capacityMW || 0);
+      if (capacityMw < INSTITUTIONAL_MIN_CAPACITY_MW) return false;
+      if (EXCLUDED_PLACEHOLDER_PROJECT_NAMES.has(project.name)) return false;
+      return true;
+    });
   };
 
   const getFeaturedInstitutionalProject = async () => {
