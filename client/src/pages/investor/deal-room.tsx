@@ -48,11 +48,27 @@ import {
   Send,
   Info,
   TrendingUp,
+  ExternalLink,
 } from "lucide-react";
 
 type InterestFormValues = z.infer<typeof investorInterestFormSchema>;
 
 interface DealRoomData {
+  hideOfftakerInInvestorUi?: boolean;
+  listingUrl?: string | null;
+  auctionListing?: {
+    bidStatus: string | null;
+    statusOutcome: string | null;
+    winningBid: string | null;
+    closingInformation: string | null;
+  } | null;
+  yieldProjectionIllustrative?: {
+    minimumTicketUsd: number;
+    modeledEquityUsd: number;
+    estimatedAnnualIncomeUsd: number;
+    yieldPct: number;
+    disclaimer: string;
+  } | null;
   project: {
     id: string;
     name: string;
@@ -265,7 +281,19 @@ export default function InvestorDealRoom() {
     );
   }
 
-  const { project, readinessScore, capitalStack, documents, checklist, developer, myInterest } = data;
+  const {
+    project,
+    readinessScore,
+    capitalStack,
+    documents,
+    checklist,
+    developer,
+    myInterest,
+    hideOfftakerInInvestorUi,
+    listingUrl,
+    auctionListing,
+    yieldProjectionIllustrative,
+  } = data;
   const totalCapex = parseFloat(capitalStack?.totalCapex || "0") || 0;
   const taxCreditEstimated = parseFloat(capitalStack?.taxCreditEstimated || "0") || 0;
   const equityNeeded = parseFloat(capitalStack?.equityNeeded || "0") || 0;
@@ -328,10 +356,12 @@ export default function InvestorDealRoom() {
                     {project.capacityMW || "N/A"} MW
                   </p>
                 </div>
-                <div>
-                  <span className="text-sm text-muted-foreground">Offtaker Type</span>
-                  <p className="font-medium" data-testid="text-project-offtaker">{project.offtakerType.replace(/_/g, " ")}</p>
-                </div>
+                {!hideOfftakerInInvestorUi && (
+                  <div>
+                    <span className="text-sm text-muted-foreground">Offtaker Type</span>
+                    <p className="font-medium" data-testid="text-project-offtaker">{project.offtakerType.replace(/_/g, " ")}</p>
+                  </div>
+                )}
                 {developer && (
                   <div>
                     <span className="text-sm text-muted-foreground">Developer</span>
@@ -349,8 +379,78 @@ export default function InvestorDealRoom() {
                 <p className="mt-1 text-sm" data-testid="text-project-summary">{project.summary}</p>
               </div>
             )}
+            {(listingUrl || auctionListing?.bidStatus || auctionListing?.statusOutcome || auctionListing?.winningBid || auctionListing?.closingInformation) && (
+              <div className="mt-4 pt-4 border-t border-border space-y-2">
+                <span className="text-sm text-muted-foreground">Auction / listing reference</span>
+                {auctionListing?.bidStatus && (
+                  <p className="text-sm"><span className="text-muted-foreground">Bid status:</span> {auctionListing.bidStatus}</p>
+                )}
+                {auctionListing?.statusOutcome && (
+                  <p className="text-sm"><span className="text-muted-foreground">Outcome:</span> {auctionListing.statusOutcome}</p>
+                )}
+                {auctionListing?.winningBid && (
+                  <p className="text-sm"><span className="text-muted-foreground">Winning bid:</span> {auctionListing.winningBid}</p>
+                )}
+                {auctionListing?.closingInformation && (
+                  <p className="text-sm"><span className="text-muted-foreground">Closing:</span> {auctionListing.closingInformation}</p>
+                )}
+                {listingUrl && (
+                  <a
+                    href={listingUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="inline-flex items-center gap-1 text-sm text-primary hover:underline"
+                  >
+                    <ExternalLink className="h-3.5 w-3.5" />
+                    Open official listing for asset &amp; bid details
+                  </a>
+                )}
+                {!listingUrl && (
+                  <p className="text-xs text-muted-foreground">
+                    Add a URL in the catalog import (column <code className="text-[11px]">listing_url</code> or a link in Closing Information) to deep-link the live listing.
+                  </p>
+                )}
+              </div>
+            )}
           </CardContent>
         </Card>
+
+        {yieldProjectionIllustrative && (
+          <Card>
+            <CardHeader>
+              <CardTitle className="text-lg flex items-center gap-2">
+                <TrendingUp className="h-4 w-4" />
+                Illustrative earnings (SGT model)
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-3 text-sm">
+              <p className="text-muted-foreground">
+                Estimated cash flow to investors at a <strong>${yieldProjectionIllustrative.minimumTicketUsd.toLocaleString()}</strong> minimum ticket,
+                scaled from trailing modeled distributions vs. modeled equity in the capital stack (same engine as SCADA settlement views).
+              </p>
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                <div className="rounded-md border border-border p-3">
+                  <span className="text-xs text-muted-foreground block">Illustrative yield</span>
+                  <span className="text-2xl font-semibold tabular-nums">~{yieldProjectionIllustrative.yieldPct.toFixed(2)}%</span>
+                  <span className="text-xs text-muted-foreground">annualized</span>
+                </div>
+                <div className="rounded-md border border-border p-3">
+                  <span className="text-xs text-muted-foreground block">Est. annual income (modeled)</span>
+                  <span className="font-medium tabular-nums">
+                    ${yieldProjectionIllustrative.estimatedAnnualIncomeUsd.toLocaleString("en-US", { maximumFractionDigits: 0 })}
+                  </span>
+                </div>
+                <div className="rounded-md border border-border p-3">
+                  <span className="text-xs text-muted-foreground block">Modeled equity stack</span>
+                  <span className="font-medium tabular-nums">
+                    ${yieldProjectionIllustrative.modeledEquityUsd.toLocaleString("en-US", { maximumFractionDigits: 0 })}
+                  </span>
+                </div>
+              </div>
+              <p className="text-xs text-muted-foreground leading-snug">{yieldProjectionIllustrative.disclaimer}</p>
+            </CardContent>
+          </Card>
+        )}
 
         {readinessScore && (
           <Card>
@@ -453,7 +553,7 @@ export default function InvestorDealRoom() {
             <TrendingUp className="h-4 w-4" />
             Yield Performance
           </h3>
-          <YieldDashboard projectId={id!} />
+          <YieldDashboard projectId={id!} hideOfftakerLabel={!!hideOfftakerInInvestorUi} />
         </div>
 
         <div>

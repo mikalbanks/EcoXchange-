@@ -12,7 +12,12 @@ import * as scadaService from "./lib/scada-service";
 import { settleProject } from "./services/settle-project";
 import { runSgtHandshake } from "./services/sgt-handshake";
 import { csvConnector } from "./services/scada-connector";
-import { catalogOfferings } from "@shared/catalog-projects";
+import { catalogOfferings, catalogProjectBySlug } from "@shared/catalog-projects";
+import {
+  estimateYieldAtMinimumTicketUsd,
+  sumAnnualInvestorShareUsd,
+  MIN_YIELD_DISPLAY_INVESTMENT_USD,
+} from "@shared/catalog-yield";
 import { db } from "./db";
 import { accounts as accountsTable, transactions as txTable, postings as postingsTable } from "@shared/schema";
 import { eq, sql as dsql } from "drizzle-orm";
@@ -529,6 +534,17 @@ export async function registerRoutes(
         const capitalStack = await storage.getCapitalStack(p.id);
         const interests = await storage.getInterestsByProject(p.id);
         const totalInterest = interests.reduce((sum, i) => sum + (Number(i.amountIntent) || 0), 0);
+
+        const catalogMeta = catalogProjectBySlug(p.id);
+        const dists = await storage.getDistributionsByProject(p.id);
+        const annualInvestorShare = sumAnnualInvestorShareUsd(dists);
+        const equityStack = parseFloat(capitalStack?.equityNeeded || "0");
+        const yieldProjection = estimateYieldAtMinimumTicketUsd({
+          equityStackUsd: equityStack,
+          annualInvestorDistributionsUsd: annualInvestorShare,
+          minimumTicketUsd: MIN_YIELD_DISPLAY_INVESTMENT_USD,
+        });
+
         return {
           ...p,
           readinessScore: score ? { score: score.score, rating: score.rating } : null,
@@ -540,10 +556,155 @@ export async function registerRoutes(
           } : null,
           totalInterest,
           interestCount: interests.length,
+          hideOfftakerInInvestorUi: catalogMeta?.hideOfftakerInInvestorUi ?? false,
+          listingUrl: catalogMeta?.listingUrl ?? null,
+          auctionListing: catalogMeta
+            ? {
+              bidStatus: catalogMeta.auctionBidStatus ?? null,
+              statusOutcome: catalogMeta.auctionStatusOutcome ?? null,
+              winningBid: catalogMeta.auctionWinningBid ?? null,
+              closingInformation: catalogMeta.auctionClosingInformation ?? null,
+            }
+            : null,
+          yieldProjectionIllustrative: yieldProjection
+            ? {
+              minimumTicketUsd: yieldProjection.minimumTicketUsd,
+              modeledEquityUsd: yieldProjection.modeledEquityUsd,
+              estimatedAnnualIncomeUsd: yieldProjection.estimatedAnnualIncomeUsd,
+              yieldPct: yieldProjection.yieldPct,
+              disclaimer:
+                "Illustrative only: scales trailing SGT-modeled investor distributions by a $10,000 ticket vs. modeled equity in the capital stack. Not an offer of returns.",
+            }
+            : null,
         };
       })
     );
     res.json(result);
+  });
+
+  app.get("/api/public/market/projects", async (_req: any, res) => {
+    const projects = (await storage.getProjectsByStatus("APPROVED")).filter((p) => {
+      const mw = parseFloat(p.capacityMW || "0");
+      return !Number.isNaN(mw) && mw >= 1;
+    });
+
+    const result = await Promise.all(
+      projects.map(async (p) => {
+        const score = await storage.getReadinessScore(p.id);
+        const capitalStack = await storage.getCapitalStack(p.id);
+        const catalogMeta = catalogProjectBySlug(p.id);
+        const dists = await storage.getDistributionsByProject(p.id);
+        const annualInvestorShare = sumAnnualInvestorShareUsd(dists);
+        const equityStack = parseFloat(capitalStack?.equityNeeded || "0");
+        const yieldProjection = estimateYieldAtMinimumTicketUsd({
+          equityStackUsd: equityStack,
+          annualInvestorDistributionsUsd: annualInvestorShare,
+          minimumTicketUsd: MIN_YIELD_DISPLAY_INVESTMENT_USD,
+        });
+
+        return {
+          id: p.id,
+          name: p.name,
+          technology: p.technology,
+          stage: p.stage,
+          state: p.state,
+          county: p.county,
+          capacityMW: p.capacityMW,
+          summary: p.summary,
+          readinessScore: score ? { score: score.score, rating: score.rating } : null,
+          capitalStack: capitalStack
+            ? {
+                totalCapex: capitalStack.totalCapex,
+                equityNeeded: capitalStack.equityNeeded,
+              }
+            : null,
+          hideOfftakerInInvestorUi: catalogMeta?.hideOfftakerInInvestorUi ?? false,
+          listingUrl: catalogMeta?.listingUrl ?? null,
+          auctionListing: catalogMeta
+            ? {
+                bidStatus: catalogMeta.auctionBidStatus ?? null,
+                statusOutcome: catalogMeta.auctionStatusOutcome ?? null,
+                winningBid: catalogMeta.auctionWinningBid ?? null,
+                closingInformation: catalogMeta.auctionClosingInformation ?? null,
+              }
+            : null,
+          yieldProjectionIllustrative: yieldProjection
+            ? {
+                minimumTicketUsd: yieldProjection.minimumTicketUsd,
+                modeledEquityUsd: yieldProjection.modeledEquityUsd,
+                estimatedAnnualIncomeUsd: yieldProjection.estimatedAnnualIncomeUsd,
+                yieldPct: yieldProjection.yieldPct,
+                disclaimer:
+                  "Illustrative only: scales trailing SGT-modeled investor distributions by a $10,000 ticket vs. modeled equity in the capital stack. Not an offer of returns.",
+              }
+            : null,
+        };
+      }),
+    );
+    res.json(result);
+  });
+
+  app.get("/api/public/market/projects/:id", async (req: any, res) => {
+    const project = await storage.getProject(req.params.id);
+    if (!project || project.status !== "APPROVED") {
+      return res.status(404).json({ message: "Project not found" });
+    }
+
+    const score = await storage.getReadinessScore(project.id);
+    const capitalStack = await storage.getCapitalStack(project.id);
+    const documents = await storage.getDocumentsByProject(project.id);
+    const checklist = await storage.getChecklistByProject(project.id);
+    const catalogMeta = catalogProjectBySlug(project.id);
+    const dists = await storage.getDistributionsByProject(project.id);
+    const annualInvestorShare = sumAnnualInvestorShareUsd(dists);
+    const equityStack = parseFloat(capitalStack?.equityNeeded || "0");
+    const yieldProjection = estimateYieldAtMinimumTicketUsd({
+      equityStackUsd: equityStack,
+      annualInvestorDistributionsUsd: annualInvestorShare,
+      minimumTicketUsd: MIN_YIELD_DISPLAY_INVESTMENT_USD,
+    });
+
+    res.json({
+      project,
+      readinessScore: score
+        ? {
+            ...score,
+            reasons: safeJsonParse(score.reasons, []),
+            flags: safeJsonParse(score.flags, {}),
+          }
+        : null,
+      capitalStack,
+      // Surface-level due diligence payload for public users.
+      dueDiligence: {
+        documentCount: documents.length,
+        checklist: checklist.map((c) => ({
+          key: c.key,
+          label: c.label,
+          status: c.status,
+          required: c.required,
+        })),
+      },
+      hideOfftakerInInvestorUi: catalogMeta?.hideOfftakerInInvestorUi ?? false,
+      listingUrl: catalogMeta?.listingUrl ?? null,
+      auctionListing: catalogMeta
+        ? {
+            bidStatus: catalogMeta.auctionBidStatus ?? null,
+            statusOutcome: catalogMeta.auctionStatusOutcome ?? null,
+            winningBid: catalogMeta.auctionWinningBid ?? null,
+            closingInformation: catalogMeta.auctionClosingInformation ?? null,
+          }
+        : null,
+      yieldProjectionIllustrative: yieldProjection
+        ? {
+            minimumTicketUsd: yieldProjection.minimumTicketUsd,
+            modeledEquityUsd: yieldProjection.modeledEquityUsd,
+            estimatedAnnualIncomeUsd: yieldProjection.estimatedAnnualIncomeUsd,
+            yieldPct: yieldProjection.yieldPct,
+            disclaimer:
+              "Illustrative only: scales trailing SGT-modeled investor distributions by a $10,000 ticket vs. modeled equity in the capital stack. Not an offer of returns.",
+          }
+        : null,
+    });
   });
 
   // Deal room detail
@@ -561,6 +722,16 @@ export async function registerRoutes(
     const myInterests = await storage.getInterestsByInvestor(req.user.id);
     const myInterest = myInterests.find(i => i.projectId === project.id);
 
+    const catalogMeta = catalogProjectBySlug(project.id);
+    const dists = await storage.getDistributionsByProject(project.id);
+    const annualInvestorShare = sumAnnualInvestorShareUsd(dists);
+    const equityStack = parseFloat(capitalStack?.equityNeeded || "0");
+    const yieldProjection = estimateYieldAtMinimumTicketUsd({
+      equityStackUsd: equityStack,
+      annualInvestorDistributionsUsd: annualInvestorShare,
+      minimumTicketUsd: MIN_YIELD_DISPLAY_INVESTMENT_USD,
+    });
+
     res.json({
       project,
       readinessScore: score ? {
@@ -573,6 +744,26 @@ export async function registerRoutes(
       checklist,
       developer: developer ? { name: developer.name, orgName: developer.orgName } : null,
       myInterest: myInterest || null,
+      hideOfftakerInInvestorUi: catalogMeta?.hideOfftakerInInvestorUi ?? false,
+      listingUrl: catalogMeta?.listingUrl ?? null,
+      auctionListing: catalogMeta
+        ? {
+          bidStatus: catalogMeta.auctionBidStatus ?? null,
+          statusOutcome: catalogMeta.auctionStatusOutcome ?? null,
+          winningBid: catalogMeta.auctionWinningBid ?? null,
+          closingInformation: catalogMeta.auctionClosingInformation ?? null,
+        }
+        : null,
+      yieldProjectionIllustrative: yieldProjection
+        ? {
+          minimumTicketUsd: yieldProjection.minimumTicketUsd,
+          modeledEquityUsd: yieldProjection.modeledEquityUsd,
+          estimatedAnnualIncomeUsd: yieldProjection.estimatedAnnualIncomeUsd,
+          yieldPct: yieldProjection.yieldPct,
+          disclaimer:
+            "Illustrative only: scales trailing SGT-modeled investor distributions by a $10,000 ticket vs. modeled equity in the capital stack. Not an offer of returns.",
+        }
+        : null,
     });
   });
 

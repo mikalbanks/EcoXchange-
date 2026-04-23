@@ -27,6 +27,9 @@ import {
   Filter,
   X,
   Activity,
+  ExternalLink,
+  TrendingUp,
+  Sparkles,
 } from "lucide-react";
 
 interface ScadaQuickData {
@@ -98,13 +101,6 @@ const RATING_OPTIONS = [
   { value: "RED", label: "Red" },
 ];
 
-const OFFTAKER_OPTIONS = [
-  { value: "C_AND_I", label: "C&I" },
-  { value: "COMMUNITY_SOLAR", label: "Community Solar" },
-  { value: "UTILITY", label: "Utility" },
-  { value: "MERCHANT", label: "Merchant" },
-];
-
 interface DealProject {
   id: string;
   name: string;
@@ -124,6 +120,21 @@ interface DealProject {
   };
   totalInterest: number;
   interestCount: number;
+  hideOfftakerInInvestorUi?: boolean;
+  listingUrl?: string | null;
+  auctionListing?: {
+    bidStatus: string | null;
+    statusOutcome: string | null;
+    winningBid: string | null;
+    closingInformation: string | null;
+  } | null;
+  yieldProjectionIllustrative?: {
+    minimumTicketUsd: number;
+    modeledEquityUsd: number;
+    estimatedAnnualIncomeUsd: number;
+    yieldPct: number;
+    disclaimer: string;
+  } | null;
 }
 
 function formatCurrency(value: string | number | null): string {
@@ -138,7 +149,6 @@ export default function InvestorDeals() {
   const [maxMW, setMaxMW] = useState<string>("");
   const [stageFilter, setStageFilter] = useState<string>("all");
   const [ratingFilter, setRatingFilter] = useState<string>("all");
-  const [offtakerFilter, setOfftakerFilter] = useState<string>("all");
 
   const { data: deals, isLoading, error } = useQuery<DealProject[]>({
     queryKey: ["/api/investor/deals"],
@@ -150,7 +160,6 @@ export default function InvestorDeals() {
       if (stateFilter !== "all" && deal.state !== stateFilter) return false;
       if (stageFilter !== "all" && deal.stage !== stageFilter) return false;
       if (ratingFilter !== "all" && deal.readinessScore?.rating !== ratingFilter) return false;
-      if (offtakerFilter !== "all" && deal.offtakerType !== offtakerFilter) return false;
       if (minMW) {
         const mw = parseFloat(deal.capacityMW || "0");
         if (mw < parseFloat(minMW)) return false;
@@ -161,9 +170,18 @@ export default function InvestorDeals() {
       }
       return true;
     });
-  }, [deals, stateFilter, minMW, maxMW, stageFilter, ratingFilter, offtakerFilter]);
+  }, [deals, stateFilter, minMW, maxMW, stageFilter, ratingFilter]);
 
-  const hasActiveFilters = stateFilter !== "all" || minMW || maxMW || stageFilter !== "all" || ratingFilter !== "all" || offtakerFilter !== "all";
+  const rankedDeals = useMemo(() => {
+    return [...filteredDeals].sort((a, b) => {
+      const ya = a.yieldProjectionIllustrative?.yieldPct ?? -1;
+      const yb = b.yieldProjectionIllustrative?.yieldPct ?? -1;
+      if (yb !== ya) return yb - ya;
+      return a.name.localeCompare(b.name);
+    });
+  }, [filteredDeals]);
+
+  const hasActiveFilters = stateFilter !== "all" || minMW || maxMW || stageFilter !== "all" || ratingFilter !== "all";
 
   function clearFilters() {
     setStateFilter("all");
@@ -171,13 +189,12 @@ export default function InvestorDeals() {
     setMaxMW("");
     setStageFilter("all");
     setRatingFilter("all");
-    setOfftakerFilter("all");
   }
 
   return (
     <DashboardLayout
       title="Browse Offerings"
-      description="Explore approved digital securities offerings backed by renewable energy"
+      description="Stock-style discovery for renewable projects with quick diligence and modeled yield views"
       breadcrumbs={[
         { label: "Overview", href: "/investor" },
         { label: "Offerings" },
@@ -189,6 +206,22 @@ export default function InvestorDeals() {
           <p className="text-sm text-yellow-500" data-testid="text-terms-banner">
             Securities offered are asset-backed and yield-generating. All investments are subject to KYC/AML verification. Secondary trading is simulated in Phase 1. Only accredited investors may currently participate.
           </p>
+        </CardContent>
+      </Card>
+
+      <Card className="mb-6 border-primary/40 bg-primary/5">
+        <CardContent className="p-4">
+          <div className="flex items-start gap-3">
+            <Sparkles className="h-5 w-5 text-primary mt-0.5 shrink-0" />
+            <div className="space-y-1">
+              <p className="text-sm font-medium">What changed in this UX</p>
+              <ul className="text-xs text-muted-foreground list-disc pl-4 space-y-0.5">
+                <li>Projects are ranked by <strong>SGT modeled yield</strong> and surfaced in a top-yield strip.</li>
+                <li>Cards now show <strong>source listing links</strong> for bid details where available.</li>
+                <li>Offtaker details are hidden for auction-style rows, with focus on diligence + yield.</li>
+              </ul>
+            </div>
+          </div>
         </CardContent>
       </Card>
 
@@ -206,7 +239,7 @@ export default function InvestorDeals() {
           )}
         </CardHeader>
         <CardContent>
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-6 gap-3">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3">
             <div>
               <label className="text-xs text-muted-foreground mb-1 block">State</label>
               <Select value={stateFilter} onValueChange={setStateFilter}>
@@ -274,23 +307,42 @@ export default function InvestorDeals() {
               </Select>
             </div>
 
-            <div>
-              <label className="text-xs text-muted-foreground mb-1 block">Offtaker</label>
-              <Select value={offtakerFilter} onValueChange={setOfftakerFilter}>
-                <SelectTrigger data-testid="select-offtaker-filter">
-                  <SelectValue placeholder="All Types" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">All Types</SelectItem>
-                  {OFFTAKER_OPTIONS.map((opt) => (
-                    <SelectItem key={opt.value} value={opt.value}>{opt.label}</SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
           </div>
         </CardContent>
       </Card>
+
+      {!isLoading && rankedDeals.length > 0 && (
+        <Card className="mb-6">
+          <CardContent className="py-4">
+            <div className="flex flex-wrap items-center justify-between gap-2">
+              <div>
+                <p className="text-sm font-medium">Top offers by estimated yield</p>
+                <p className="text-xs text-muted-foreground">
+                  Ranked by SGT modeled annualized yield for a $10,000 ticket.
+                </p>
+              </div>
+              <div className="text-xs text-muted-foreground">
+                {rankedDeals.filter((d) => !!d.yieldProjectionIllustrative).length} projects with modeled yield
+              </div>
+            </div>
+            <div className="mt-3 grid grid-cols-1 sm:grid-cols-3 gap-2">
+              {rankedDeals
+                .filter((d) => !!d.yieldProjectionIllustrative)
+                .slice(0, 3)
+                .map((deal) => (
+                  <Link key={`yield-top-${deal.id}`} href={`/investor/deals/${deal.id}`}>
+                    <a className="rounded-md border border-border/60 px-3 py-2 hover:bg-muted/40 transition-colors">
+                      <div className="text-xs text-muted-foreground truncate">{deal.name}</div>
+                      <div className="text-sm font-semibold tabular-nums">
+                        ~{deal.yieldProjectionIllustrative!.yieldPct.toFixed(2)}% / yr
+                      </div>
+                    </a>
+                  </Link>
+                ))}
+            </div>
+          </CardContent>
+        </Card>
+      )}
 
       {isLoading ? (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
@@ -312,7 +364,7 @@ export default function InvestorDeals() {
             <p className="text-destructive" data-testid="text-error-message">Failed to load deals</p>
           </CardContent>
         </Card>
-      ) : !filteredDeals.length ? (
+      ) : !rankedDeals.length ? (
         <Card>
           <CardContent>
             <EmptyState
@@ -331,7 +383,7 @@ export default function InvestorDeals() {
         </Card>
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-          {filteredDeals.map((deal) => (
+          {rankedDeals.map((deal) => (
             <Link key={deal.id} href={`/investor/deals/${deal.id}`}>
               <Card
                 className="hover-elevate cursor-pointer h-full"
@@ -365,10 +417,45 @@ export default function InvestorDeals() {
                   <div className="flex flex-wrap items-center gap-3 text-sm text-muted-foreground">
                     <span>{deal.technology.replace(/_/g, " ")}</span>
                     <span>{deal.stage.replace(/_/g, " ")}</span>
-                    <span className="text-xs border border-border/60 rounded px-1.5 py-0.5">
-                      {deal.offtakerType.replace(/_/g, " ")}
-                    </span>
+                    {!deal.hideOfftakerInInvestorUi && (
+                      <span className="text-xs border border-border/60 rounded px-1.5 py-0.5">
+                        {deal.offtakerType.replace(/_/g, " ")}
+                      </span>
+                    )}
                   </div>
+
+                  {deal.yieldProjectionIllustrative && (
+                    <div className="rounded-md border border-primary/25 bg-primary/5 px-3 py-2 text-sm">
+                      <div className="flex items-center gap-1.5 font-medium text-primary mb-0.5">
+                        <TrendingUp className="h-3.5 w-3.5" />
+                        Illustrative yield (SGT model)
+                      </div>
+                      <div className="flex flex-wrap items-baseline justify-between gap-2">
+                        <span className="text-muted-foreground text-xs">
+                          At ${deal.yieldProjectionIllustrative.minimumTicketUsd.toLocaleString()} ticket
+                        </span>
+                        <span className="font-semibold tabular-nums">
+                          ~{deal.yieldProjectionIllustrative.yieldPct.toFixed(1)}% / yr
+                        </span>
+                      </div>
+                      <p className="text-[11px] text-muted-foreground mt-1 leading-snug">
+                        {deal.yieldProjectionIllustrative.disclaimer}
+                      </p>
+                    </div>
+                  )}
+
+                  {deal.listingUrl && (
+                    <a
+                      href={deal.listingUrl}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="inline-flex items-center gap-1 text-xs text-primary hover:underline"
+                      onClick={(e) => e.stopPropagation()}
+                    >
+                      <ExternalLink className="h-3 w-3" />
+                      Source listing &amp; bid details
+                    </a>
+                  )}
 
                   <ScadaQuickMetrics projectId={deal.id} />
 
@@ -383,7 +470,7 @@ export default function InvestorDeals() {
                     )}
                     {deal.capitalStack?.equityNeeded && (
                       <div className="flex items-center justify-between text-sm">
-                        <span className="text-muted-foreground">Min Investment</span>
+                        <span className="text-muted-foreground">Modeled equity stack</span>
                         <span className="font-medium" data-testid={`text-deal-equity-${deal.id}`}>
                           {formatCurrency(deal.capitalStack.equityNeeded)}
                         </span>
