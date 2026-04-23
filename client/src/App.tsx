@@ -51,6 +51,8 @@ class ErrorBoundary extends Component<
 
 import NotFound from "@/pages/not-found";
 import LandingPage from "@/pages/landing";
+import PublicMarketPage from "@/pages/market";
+import PublicMarketProjectPage from "@/pages/market-project";
 import LoginPage from "@/pages/auth/login";
 import SignupPage from "@/pages/auth/signup";
 
@@ -108,12 +110,8 @@ function Router() {
   return (
     <Switch>
       <Route path="/" component={LandingPage} />
-      <Route path="/login">
-        <Redirect to="/auth/login" />
-      </Route>
-      <Route path="/signup">
-        <Redirect to="/auth/signup" />
-      </Route>
+      <Route path="/market" component={PublicMarketPage} />
+      <Route path="/market/:id" component={PublicMarketProjectPage} />
       <Route path="/auth/login" component={LoginPage} />
       <Route path="/auth/signup" component={SignupPage} />
       <Route path="/yield-simulation" component={YieldSimulationPage} />

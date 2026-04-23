@@ -185,6 +185,9 @@ export default function AdminProjectReview() {
   if (!data) return null;
 
   const { project, readinessScore, capitalStack, checklist, documents, interests, logs, developer } = data;
+  const validationConfidencePct = project.validationConfidence != null
+    ? Number(project.validationConfidence)
+    : null;
 
   return (
     <DashboardLayout
@@ -197,6 +200,24 @@ export default function AdminProjectReview() {
       ]}
       actions={
         <div className="flex flex-wrap items-center gap-2">
+          <div className="flex flex-wrap items-center gap-2 mr-2">
+            <span className="text-xs text-muted-foreground">Data Fidelity</span>
+            <span className="text-xs font-medium px-2 py-1 rounded-md border border-primary/30 bg-primary/10 text-primary">
+              4km (NLR)
+            </span>
+            <span className="text-xs text-muted-foreground ml-2">Validation Confidence</span>
+            <span className="text-xs font-medium px-2 py-1 rounded-md border border-border bg-card/50">
+              {validationConfidencePct != null && !Number.isNaN(validationConfidencePct)
+                ? `${validationConfidencePct.toFixed(0)}%`
+                : "N/A"}
+            </span>
+            {project.eiaReferencePlantName && (
+              <span className="text-xs text-muted-foreground max-w-[280px] truncate" title={project.eiaReferencePlantName}>
+                EIA ref: {project.eiaReferencePlantName}
+                {project.eiaPlantCode ? ` (${project.eiaPlantCode})` : ""}
+              </span>
+            )}
+          </div>
           <Link href={`/admin/projects/${id}/export`}>
             <Button variant="outline" className="gap-2" data-testid="button-export-packet">
               <Printer className="h-4 w-4" />
