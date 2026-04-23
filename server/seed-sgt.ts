@@ -27,7 +27,7 @@ async function seed1MW() {
     permittingStatus: "APPROVED",
     siteControlStatus: "OWNED",
     feocAttested: true,
-    ppaRate: "0.0425",
+    ppaRate: "0",
     monthlyDebtService: "8500.00",
     monthlyOpex: "3200.00",
     reserveRate: "0.05",

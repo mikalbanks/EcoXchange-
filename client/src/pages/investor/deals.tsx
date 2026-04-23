@@ -28,6 +28,7 @@ import {
   X,
   Activity,
 } from "lucide-react";
+import { InstitutionalProjectMetrics } from "@/components/institutional-project-metrics";
 
 interface ScadaQuickData {
   totalProductionMwh: number;
@@ -114,6 +115,9 @@ interface DealProject {
   county: string;
   capacityMW: string | null;
   offtakerType: string;
+  validationConfidence?: string | null;
+  financialApyPct?: string | null;
+  marketPpaBenchmarkUsdPerMwh?: string | null;
   readinessScore?: {
     score: number;
     rating: string;
@@ -368,6 +372,14 @@ export default function InvestorDeals() {
                   </div>
 
                   <ScadaQuickMetrics projectId={deal.id} />
+
+                  <InstitutionalProjectMetrics
+                    variant="strip"
+                    className="pt-2 border-t border-border/60"
+                    testIdPrefix={deal.id}
+                    validationConfidence={deal.validationConfidence}
+                    financialApyPct={deal.financialApyPct}
+                  />
 
                   <div className="border-t border-border pt-3 space-y-1.5">
                     {deal.capitalStack?.totalCapex && (
