@@ -1,3 +1,4 @@
+import { useMemo } from "react";
 import { Header } from "@/components/header";
 import { ScadaSummaryCards, ProductionChart, ForecastChart, ForecastVsActualChart, RevenueBridgeWaterfall, DistributionWaterfall, HealthBadge } from "@/components/scada";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -7,13 +8,10 @@ import { useQuery } from "@tanstack/react-query";
 import { Skeleton } from "@/components/ui/skeleton";
 import { ProvenancePanel, type ScadaProvenance } from "@/components/scada/provenance-panel";
 import { Sun, MapPin, Zap, ArrowRight, BarChart3 } from "lucide-react";
+import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 
-const DEFAULT_PROJECT_ID = "proj3";
-
-const PROJECT_INFO: Record<string, { name: string; location: string; capacity: string; type: string }> = {
-  proj1: { name: "Imperial Valley Solar I", location: "California, Imperial Valley", capacity: "12 MW", type: "Fixed-Tilt Solar" },
-  proj3: { name: "Lancaster Sun Ranch", location: "California, Los Angeles", capacity: "25 MW", type: "Single-Axis Tracking Solar" },
-};
+const DEFAULT_PROJECT_ID = "";
+const LEVELTEN_Q1_2026_MARKET_REFERENCE_MWH = 64.49;
 
 interface ScadaSummary {
   totalProductionMwh: number;
@@ -27,10 +25,37 @@ interface ScadaSummary {
   provenance: ScadaProvenance;
 }
 
+interface PublicSgtProject {
+  projectId: string;
+  projectName: string;
+  state: string;
+  county: string;
+  technology: string;
+  capacityMW: number;
+}
+
+interface PublicSgtProjectsResponse {
+  projects: PublicSgtProject[];
+}
+
 export default function PerformancePage() {
   const params = useParams<{ projectId?: string }>();
-  const projectId = params.projectId || DEFAULT_PROJECT_ID;
-  const projectInfo = PROJECT_INFO[projectId] || PROJECT_INFO[DEFAULT_PROJECT_ID];
+  const { data: projectCatalog } = useQuery<PublicSgtProjectsResponse>({
+    queryKey: ["/api/public/projects/sgt-metrics"],
+    queryFn: async () => {
+      const res = await fetch("/api/public/projects/sgt-metrics", { credentials: "include" });
+      if (!res.ok) throw new Error("Failed to load project catalog");
+      return res.json();
+    },
+    staleTime: 60000,
+  });
+
+  const defaultProjectId = projectCatalog?.projects?.[0]?.projectId || DEFAULT_PROJECT_ID;
+  const projectId = params.projectId || defaultProjectId;
+  const projectInfo = useMemo(() => {
+    if (!projectCatalog?.projects?.length) return null;
+    return projectCatalog.projects.find((p) => p.projectId === projectId) || projectCatalog.projects[0];
+  }, [projectCatalog, projectId]);
 
   const { data: summary, isLoading } = useQuery<ScadaSummary>({
     queryKey: ["/api/public/projects", projectId, "scada", "summary"],
@@ -73,11 +98,11 @@ export default function PerformancePage() {
                   <Sun className="h-6 w-6" />
                 </div>
                 <div>
-                  <CardTitle className="text-xl" data-testid="text-featured-project-name">{projectInfo.name}</CardTitle>
+                  <CardTitle className="text-xl" data-testid="text-featured-project-name">{projectInfo?.projectName || "Institutional Project"}</CardTitle>
                   <div className="flex items-center gap-3 text-sm text-muted-foreground mt-1">
-                    <span className="flex items-center gap-1"><MapPin className="h-3.5 w-3.5" /> {projectInfo.location}</span>
-                    <span className="flex items-center gap-1"><Zap className="h-3.5 w-3.5" /> {projectInfo.capacity}</span>
-                    <span>{projectInfo.type}</span>
+                    <span className="flex items-center gap-1"><MapPin className="h-3.5 w-3.5" /> {projectInfo ? `${projectInfo.state}, ${projectInfo.county}` : "California"}</span>
+                    <span className="flex items-center gap-1"><Zap className="h-3.5 w-3.5" /> {projectInfo ? `${projectInfo.capacityMW.toFixed(2)} MW` : "N/A"}</span>
+                    <span>{projectInfo ? projectInfo.technology.replace(/_/g, " ") : "Solar"}</span>
                   </div>
                 </div>
               </div>
@@ -95,6 +120,28 @@ export default function PerformancePage() {
       </section>
 
       <section className="container mx-auto px-4 pb-8">
+        <div className="mb-3 flex flex-wrap items-center gap-4 text-xs text-muted-foreground">
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <span className="cursor-help underline decoration-dotted underline-offset-2">
+                PPA Rate
+              </span>
+            </TooltipTrigger>
+            <TooltipContent>
+              LevelTen Q1 2026 institutional benchmark: ${LEVELTEN_Q1_2026_MARKET_REFERENCE_MWH.toFixed(2)}/MWh.
+            </TooltipContent>
+          </Tooltip>
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <span className="cursor-help underline decoration-dotted underline-offset-2">
+                Market Reference
+              </span>
+            </TooltipTrigger>
+            <TooltipContent>
+              Market reference anchored to LevelTen Q1 2026 benchmark pricing (${LEVELTEN_Q1_2026_MARKET_REFERENCE_MWH.toFixed(2)}/MWh).
+            </TooltipContent>
+          </Tooltip>
+        </div>
         <ScadaSummaryCards projectId={projectId} showProvenance usePublicApi />
       </section>
 

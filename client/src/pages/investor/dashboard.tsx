@@ -17,6 +17,7 @@ import {
   MapPin,
   ArrowRight,
 } from "lucide-react";
+import { InstitutionalProjectMetrics } from "@/components/institutional-project-metrics";
 
 interface InvestorInterest {
   id: string;
@@ -27,6 +28,11 @@ interface InvestorInterest {
   timeline: string;
   status: string;
   createdAt: string;
+  projectMetrics?: {
+    avgCapacityFactor: number;
+    next12MonthProductionMwh: number;
+    next12MonthRevenueUsd: number;
+  };
 }
 
 function formatCurrency(value: string | number | null): string {
@@ -150,6 +156,11 @@ export default function InvestorDashboard() {
                       <span>{interest.structurePreference.replace(/_/g, " ")}</span>
                       <span>{formatTimeline(interest.timeline)}</span>
                     </div>
+                    {interest.projectMetrics && (
+                      <div className="mt-3">
+                        <InstitutionalProjectMetrics metrics={interest.projectMetrics} />
+                      </div>
+                    )}
                   </div>
                   <div className="flex items-center gap-2 text-sm text-muted-foreground shrink-0">
                     <Calendar className="h-3.5 w-3.5" />

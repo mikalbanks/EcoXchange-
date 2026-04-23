@@ -518,7 +518,8 @@ export async function registerRoutes(
 
   // Browse approved projects (deal list)
   app.get("/api/investor/deals", requireRole("INVESTOR"), async (req: any, res) => {
-    const projects = await storage.getProjectsByStatus("APPROVED");
+    const projects = (await storage.getProjectsByStatus("APPROVED"))
+      .filter((project) => Number(project.capacityMW || 0) >= 1);
     const result = await Promise.all(
       projects.map(async (p) => {
         const score = await storage.getReadinessScore(p.id);
@@ -545,7 +546,7 @@ export async function registerRoutes(
   // Deal room detail
   app.get("/api/investor/deals/:id", requireRole("INVESTOR"), async (req: any, res) => {
     const project = await storage.getProject(req.params.id);
-    if (!project || project.status !== "APPROVED") {
+    if (!project || project.status !== "APPROVED" || Number(project.capacityMW || 0) < 1) {
       return res.status(404).json({ message: "Deal not found" });
     }
     const score = await storage.getReadinessScore(project.id);
@@ -581,7 +582,7 @@ export async function registerRoutes(
 
       const data = investorInterestFormSchema.parse(req.body);
       const project = await storage.getProject(req.params.id);
-      if (!project || project.status !== "APPROVED") {
+      if (!project || project.status !== "APPROVED" || Number(project.capacityMW || 0) < 1) {
         return res.status(404).json({ message: "Deal not found" });
       }
 
@@ -611,13 +612,44 @@ export async function registerRoutes(
   // My interests
   app.get("/api/investor/interests", requireRole("INVESTOR"), async (req: any, res) => {
     const interests = await storage.getInterestsByInvestor(req.user.id);
+    const sgtMetrics = await (async () => {
+      const projects = await storage.getProjectsByStatus("APPROVED");
+      const eligibleProjects = projects.filter((project) => Number(project.capacityMW || 0) >= 1);
+      return Promise.all(
+        eligibleProjects.map(async (project) => {
+          const [summary, forecast] = await Promise.all([
+            scadaService.getProjectSummary(project.id),
+            scadaService.getForecast(project.id),
+          ]);
+          const next12MonthProductionMwh = forecast
+            ? forecast.months.reduce((sum, month) => sum + month.forecastMwh, 0)
+            : 0;
+          const next12MonthRevenueUsd = forecast
+            ? forecast.months.reduce((sum, month) => sum + month.forecastRevenue, 0)
+            : 0;
+          return {
+            projectId: project.id,
+            avgCapacityFactor: summary?.avgCapacityFactor || 0,
+            next12MonthProductionMwh: Math.round(next12MonthProductionMwh * 100) / 100,
+            next12MonthRevenueUsd: Math.round(next12MonthRevenueUsd * 100) / 100,
+          };
+        }),
+      );
+    })();
+    const metricsByProjectId = new Map(sgtMetrics.map((metrics) => [metrics.projectId, metrics]));
     const result = await Promise.all(
       interests.map(async (i) => {
         const project = await storage.getProject(i.projectId);
-        return { ...i, projectName: project?.name || "Unknown", projectState: project?.state || "" };
+        if (!project || Number(project.capacityMW || 0) < 1) return null;
+        return {
+          ...i,
+          projectName: project.name || "Unknown",
+          projectState: project.state || "",
+          projectMetrics: metricsByProjectId.get(project.id) || null,
+        };
       })
     );
-    res.json(result);
+    res.json(result.filter(Boolean));
   });
 
   // ═══ Admin Routes ═══
@@ -871,11 +903,50 @@ export async function registerRoutes(
     return res.status(403).json({ message: "Access denied" });
   };
 
-  const FEATURED_PROJECT_IDS = new Set(["proj1", "proj3"]);
+  const INSTITUTIONAL_MIN_CAPACITY_MW = 1;
+  const INSTITUTIONAL_PPA_REFERENCE_MWH = 64.49;
+  const EXCLUDED_PLACEHOLDER_PROJECT_NAMES = new Set([
+    "Imperial Valley Solar I",
+    "Lancaster Sun Ranch",
+  ]);
+
+  const getInstitutionalApprovedProjects = async () => {
+    const projects = await storage.getProjectsByStatus("APPROVED");
+    const institutionalProjects = projects.filter((project) => {
+      const capacityMw = Number(project.capacityMW || 0);
+      if (capacityMw < INSTITUTIONAL_MIN_CAPACITY_MW) return false;
+      if (EXCLUDED_PLACEHOLDER_PROJECT_NAMES.has(project.name)) return false;
+      return true;
+    });
+    console.info(
+      "[InstitutionalInventory]",
+      JSON.stringify({
+        minCapacityMw: INSTITUTIONAL_MIN_CAPACITY_MW,
+        count: institutionalProjects.length,
+        projects: institutionalProjects.map((project) => ({
+          id: project.id,
+          name: project.name,
+          capacityMW: Number(project.capacityMW || 0),
+        })),
+      }),
+    );
+    return institutionalProjects;
+  };
+
+  const getFeaturedInstitutionalProject = async () => {
+    const projects = await getInstitutionalApprovedProjects();
+    const preferred = projects.find(
+      (project) => project.name.includes("Parcel 233-001") && project.county === "Riverside",
+    );
+    if (preferred) return preferred;
+    return projects
+      .slice()
+      .sort((a, b) => Number(b.capacityMW || 0) - Number(a.capacityMW || 0))[0];
+  };
 
   app.get("/api/public/projects/sgt-metrics", async (_req, res) => {
     try {
-      const projects = await storage.getProjectsByStatus("APPROVED");
+      const projects = await getInstitutionalApprovedProjects();
       const projectMetrics = await Promise.all(
         projects.map(async (project) => {
           const [summary, forecast, health] = await Promise.all([
@@ -923,9 +994,27 @@ export async function registerRoutes(
     }
   });
 
+  app.get("/api/public/projects/featured", async (_req, res) => {
+    try {
+      const featured = await getFeaturedInstitutionalProject();
+      if (!featured) return res.status(404).json({ message: "No institutional projects found" });
+      res.json({
+        id: featured.id,
+        name: featured.name,
+        state: featured.state,
+        county: featured.county,
+        capacityMW: Number(featured.capacityMW || 0),
+      });
+    } catch (err) {
+      console.error("Public featured project error:", err);
+      res.status(500).json({ message: "Failed to fetch featured project" });
+    }
+  });
+
   app.get("/api/public/projects/:id/scada/summary", async (req: any, res) => {
     try {
-      if (!FEATURED_PROJECT_IDS.has(req.params.id)) return res.status(404).json({ message: "Not found" });
+      const featured = await getFeaturedInstitutionalProject();
+      if (!featured || req.params.id !== featured.id) return res.status(404).json({ message: "Not found" });
       const result = await scadaService.getProjectSummary(req.params.id);
       if (!result) return res.status(404).json({ message: "Not found" });
       res.json(result);
@@ -936,7 +1025,8 @@ export async function registerRoutes(
 
   app.get("/api/public/projects/:id/scada/health", async (req: any, res) => {
     try {
-      if (!FEATURED_PROJECT_IDS.has(req.params.id)) return res.status(404).json({ message: "Not found" });
+      const featured = await getFeaturedInstitutionalProject();
+      if (!featured || req.params.id !== featured.id) return res.status(404).json({ message: "Not found" });
       const result = await scadaService.getHealthStatus(req.params.id);
       if (!result) return res.status(404).json({ message: "Not found" });
       res.json(result);
@@ -947,7 +1037,8 @@ export async function registerRoutes(
 
   app.get("/api/public/projects/:id/scada/monthly", async (req: any, res) => {
     try {
-      if (!FEATURED_PROJECT_IDS.has(req.params.id)) return res.status(404).json({ message: "Not found" });
+      const featured = await getFeaturedInstitutionalProject();
+      if (!featured || req.params.id !== featured.id) return res.status(404).json({ message: "Not found" });
       const result = await scadaService.getMonthlyHistory(req.params.id);
       if (!result) return res.status(404).json({ message: "Not found" });
       res.json(result);
@@ -958,7 +1049,8 @@ export async function registerRoutes(
 
   app.get("/api/public/projects/:id/scada/forecast", async (req: any, res) => {
     try {
-      if (!FEATURED_PROJECT_IDS.has(req.params.id)) return res.status(404).json({ message: "Not found" });
+      const featured = await getFeaturedInstitutionalProject();
+      if (!featured || req.params.id !== featured.id) return res.status(404).json({ message: "Not found" });
       const result = await scadaService.getForecast(req.params.id);
       if (!result) return res.status(404).json({ message: "Not found" });
       res.json(result);
@@ -969,7 +1061,8 @@ export async function registerRoutes(
 
   app.get("/api/public/projects/:id/scada/revenue-bridge", async (req: any, res) => {
     try {
-      if (!FEATURED_PROJECT_IDS.has(req.params.id)) return res.status(404).json({ message: "Not found" });
+      const featured = await getFeaturedInstitutionalProject();
+      if (!featured || req.params.id !== featured.id) return res.status(404).json({ message: "Not found" });
       const result = await scadaService.getRevenueBridge(req.params.id);
       if (!result) return res.status(404).json({ message: "Not found" });
       res.json(result);
@@ -980,7 +1073,8 @@ export async function registerRoutes(
 
   app.get("/api/public/projects/:id/scada/distributions", async (req: any, res) => {
     try {
-      if (!FEATURED_PROJECT_IDS.has(req.params.id)) return res.status(404).json({ message: "Not found" });
+      const featured = await getFeaturedInstitutionalProject();
+      if (!featured || req.params.id !== featured.id) return res.status(404).json({ message: "Not found" });
       const result = await scadaService.getDistributions(req.params.id);
       if (!result) return res.status(404).json({ message: "Not found" });
       res.json(result);
@@ -1391,6 +1485,7 @@ export async function registerRoutes(
         totalProjects: approvedProjects.length,
         solcastConnected: !!process.env.SOLCAST_API_KEY,
         utilityShadowActive: true,
+        marketReferencePpaRateMwh: INSTITUTIONAL_PPA_REFERENCE_MWH,
         projects: projectStatuses,
       });
     } catch (err: any) {
