@@ -1,4 +1,9 @@
 import { randomUUID } from "crypto";
+
+/** Stable IDs so demo login always matches seeded projects (MemStorage). */
+const DEMO_ADMIN_ID = "00000000-0000-4000-8000-000000000001";
+const DEMO_DEVELOPER_ID = "00000000-0000-4000-8000-000000000002";
+const DEMO_INVESTOR_ID = "00000000-0000-4000-8000-000000000003";
 import bcrypt from "bcryptjs";
 import {
   type User, type InsertUser,
@@ -147,7 +152,7 @@ export class MemStorage implements IStorage {
   }
 
   private seedData() {
-    const adminId = randomUUID();
+    const adminId = DEMO_ADMIN_ID;
     this.users.set(adminId, {
       id: adminId,
       email: "admin@ecoxchange.demo",
@@ -163,7 +168,7 @@ export class MemStorage implements IStorage {
       createdAt: new Date(),
     });
 
-    const devId = randomUUID();
+    const devId = DEMO_DEVELOPER_ID;
     this.users.set(devId, {
       id: devId,
       email: "developer@ecoxchange.demo",
@@ -179,7 +184,7 @@ export class MemStorage implements IStorage {
       createdAt: new Date(),
     });
 
-    const investorId = randomUUID();
+    const investorId = DEMO_INVESTOR_ID;
     this.users.set(investorId, {
       id: investorId,
       email: "investor@ecoxchange.demo",
@@ -217,10 +222,19 @@ export class MemStorage implements IStorage {
       permittingStatus: "APPROVED",
       siteControlStatus: "LEASE",
       feocAttested: true,
-      ppaRate: "0.0450",
+      ppaRate: "0",
       monthlyDebtService: "22000.00",
       monthlyOpex: "8500.00",
       reserveRate: "0.05",
+      sgtScoreNrel: null,
+      eiaActualMwh: null,
+      validationConfidence: "88.50",
+      eiaPlantCode: null,
+      eiaGeneratorId: null,
+      eiaReferencePlantName: null,
+      financialApyPct: "8.4200",
+      marketPpaSource: "CAISO_SP15_SPOT_PROXY",
+      marketPpaBenchmarkUsdPerMwh: "64.4900",
       createdAt: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000),
       updatedAt: new Date(),
     });
@@ -328,6 +342,15 @@ export class MemStorage implements IStorage {
       monthlyDebtService: "0",
       monthlyOpex: "0",
       reserveRate: "0",
+      sgtScoreNrel: null,
+      eiaActualMwh: null,
+      validationConfidence: "62.00",
+      eiaPlantCode: null,
+      eiaGeneratorId: null,
+      eiaReferencePlantName: null,
+      financialApyPct: "6.9500",
+      marketPpaSource: "LEVELTEN_P25_PROXY",
+      marketPpaBenchmarkUsdPerMwh: "64.4900",
       createdAt: new Date(Date.now() - 14 * 24 * 60 * 60 * 1000),
       updatedAt: new Date(),
     });
@@ -453,10 +476,19 @@ export class MemStorage implements IStorage {
       permittingStatus: "APPROVED",
       siteControlStatus: "OWNED",
       feocAttested: true,
-      ppaRate: "0.0420",
+      ppaRate: "0",
       monthlyDebtService: "48000.00",
       monthlyOpex: "18500.00",
       reserveRate: "0.04",
+      sgtScoreNrel: null,
+      eiaActualMwh: null,
+      validationConfidence: "91.20",
+      eiaPlantCode: null,
+      eiaGeneratorId: null,
+      eiaReferencePlantName: null,
+      financialApyPct: "9.1800",
+      marketPpaSource: "CAISO_SP15_SPOT_PROXY",
+      marketPpaBenchmarkUsdPerMwh: "64.4900",
       createdAt: new Date(Date.now() - 60 * 24 * 60 * 60 * 1000),
       updatedAt: new Date(),
     });
@@ -638,6 +670,155 @@ export class MemStorage implements IStorage {
       createdAt: new Date(Date.now() - 60 * 24 * 60 * 60 * 1000),
       updatedAt: new Date(Date.now() - 1 * 24 * 60 * 60 * 1000),
     });
+
+    this.seedPipelinePortfolio(devId, adminId);
+  }
+
+  /**
+   * ~22 additional pipeline projects so demo lists show a full institutional queue (~25 total with proj1–3).
+   */
+  private seedPipelinePortfolio(devId: string, adminId: string) {
+    type Row = {
+      id: string;
+      name: string;
+      state: string;
+      county: string;
+      lat: string;
+      lon: string;
+      mw: number;
+      stage: string;
+      status: "APPROVED" | "SUBMITTED" | "IN_REVIEW";
+      tech?: string;
+    };
+
+    const rows: Row[] = [
+      { id: "proj4", name: "Mojave Crest Solar", state: "California", county: "San Bernardino", lat: "35.0123", lon: "-116.1024", mw: 18.5, stage: "NTP", status: "APPROVED" },
+      { id: "proj5", name: "Rio Grande PV East", state: "Texas", county: "El Paso", lat: "31.8200", lon: "-106.4200", mw: 14.0, stage: "CONSTRUCTION", status: "APPROVED" },
+      { id: "proj6", name: "Sonoran Fields I", state: "Arizona", county: "Maricopa", lat: "33.4500", lon: "-112.0900", mw: 22.0, stage: "COD", status: "APPROVED" },
+      { id: "proj7", name: "Silver State South", state: "Nevada", county: "Clark", lat: "36.0800", lon: "-115.0300", mw: 30.0, stage: "NTP", status: "APPROVED" },
+      { id: "proj8", name: "High Desert Community Solar", state: "California", county: "Kern", lat: "35.3700", lon: "-119.0200", mw: 4.8, stage: "PRE_NTP", status: "APPROVED" },
+      { id: "proj9", name: "Front Range Solar Park", state: "Colorado", county: "Weld", lat: "40.4200", lon: "-104.7000", mw: 75.0, stage: "CONSTRUCTION", status: "APPROVED" },
+      { id: "proj10", name: "Gulf Breeze Energy Center", state: "Florida", county: "Polk", lat: "28.0400", lon: "-81.9500", mw: 42.0, stage: "NTP", status: "APPROVED" },
+      { id: "proj11", name: "Piedmont Tracking Array", state: "North Carolina", county: "Chatham", lat: "35.7200", lon: "-79.1800", mw: 55.0, stage: "COD", status: "APPROVED" },
+      { id: "proj12", name: "Columbia River West", state: "Oregon", county: "Gilliam", lat: "45.6800", lon: "-120.2100", mw: 110.0, stage: "NTP", status: "APPROVED" },
+      { id: "proj13", name: "Ozark Ridge Solar", state: "Missouri", county: "Greene", lat: "37.2100", lon: "-93.2900", mw: 12.0, stage: "PRE_NTP", status: "SUBMITTED" },
+      { id: "proj14", name: "Sunbelt Logistics Rooftop", state: "Georgia", county: "Fulton", lat: "33.7500", lon: "-84.3900", mw: 3.2, stage: "COD", status: "APPROVED" },
+      { id: "proj15", name: "Wasatch View Solar", state: "Utah", county: "Millard", lat: "39.3300", lon: "-112.3100", mw: 80.0, stage: "CONSTRUCTION", status: "APPROVED" },
+      { id: "proj16", name: "Coastal Plain I", state: "South Carolina", county: "Darlington", lat: "34.1000", lon: "-79.8700", mw: 65.0, stage: "NTP", status: "APPROVED" },
+      { id: "proj17", name: "Mesilla Valley Array", state: "New Mexico", county: "Doña Ana", lat: "32.2700", lon: "-106.7500", mw: 50.0, stage: "PRE_NTP", status: "IN_REVIEW" },
+      { id: "proj18", name: "Badlands Solar Reserve", state: "North Dakota", county: "Mercer", lat: "47.0500", lon: "-101.8200", mw: 128.0, stage: "NTP", status: "APPROVED" },
+      { id: "proj19", name: "Bluegrass Prairie PV", state: "Kentucky", county: "Warren", lat: "36.9900", lon: "-86.4500", mw: 35.0, stage: "CONSTRUCTION", status: "APPROVED" },
+      { id: "proj20", name: "Sierra Foothills C&I", state: "California", county: "Placer", lat: "38.9000", lon: "-121.2500", mw: 6.5, stage: "COD", status: "APPROVED" },
+      { id: "proj21", name: "Red Mesa Community", state: "Arizona", county: "Apache", lat: "35.4800", lon: "-109.0600", mw: 4.5, stage: "PRE_NTP", status: "APPROVED" },
+      { id: "proj22", name: "Lone Star West Utility", state: "Texas", county: "Reeves", lat: "31.3000", lon: "-103.6900", mw: 200.0, stage: "CONSTRUCTION", status: "APPROVED" },
+      { id: "proj23", name: "Everglades Edge Solar", state: "Florida", county: "Miami-Dade", lat: "25.6100", lon: "-80.4300", mw: 48.0, stage: "NTP", status: "SUBMITTED" },
+      { id: "proj24", name: "Prairie Wind & Sun Hybrid", state: "Kansas", county: "Ford", lat: "37.7500", lon: "-99.6400", mw: 150.0, stage: "PRE_NTP", status: "IN_REVIEW", tech: "SOLAR_STORAGE" },
+      { id: "proj25", name: "Columbia Basin East", state: "Washington", county: "Grant", lat: "47.0700", lon: "-119.3100", mw: 95.0, stage: "NTP", status: "APPROVED" },
+    ];
+
+    let i = 0;
+    for (const r of rows) {
+      const mwStr = r.mw.toFixed(2);
+      const kwStr = String(Math.round(r.mw * 1000));
+      const apyBase = 7.2 + (i % 12) * 0.18;
+      const valConf = 78 + (i % 18);
+      const mppaSources = ["CAISO_NP15_SPOT_PROXY", "CAISO_SP15_SPOT_PROXY", "LEVELTEN_P25_PROXY"] as const;
+      const mppa = mppaSources[i % 3];
+
+      this.projects.set(r.id, {
+        id: r.id,
+        developerId: devId,
+        name: r.name,
+        technology: r.tech || "SOLAR",
+        stage: r.stage as Project["stage"],
+        country: "US",
+        state: r.state,
+        county: r.county,
+        latitude: r.lat,
+        longitude: r.lon,
+        capacityMW: mwStr,
+        capacityKw: kwStr,
+        status: r.status,
+        summary: `Institutional pipeline project (${r.state}). NSRDB 4km validation; market-based PPA reference where no fixed PPA is recorded.`,
+        offtakerType: i % 4 === 0 ? "UTILITY" : i % 4 === 1 ? "C_AND_I" : "COMMUNITY_SOLAR",
+        interconnectionStatus: r.stage === "COD" ? "IA_EXECUTED" : "STUDY",
+        permittingStatus: r.stage === "PRE_NTP" ? "IN_PROGRESS" : "APPROVED",
+        siteControlStatus: r.stage === "PRE_NTP" ? "LOI" : "LEASE",
+        feocAttested: true,
+        ppaRate: "0",
+        monthlyDebtService: String(Math.round(r.mw * 1800)),
+        monthlyOpex: String(Math.round(r.mw * 650)),
+        reserveRate: "0.05",
+        sgtScoreNrel: String((0.72 + (i % 20) * 0.008).toFixed(4)),
+        eiaActualMwh: null,
+        validationConfidence: String(valConf.toFixed(2)),
+        eiaPlantCode: null,
+        eiaGeneratorId: null,
+        eiaReferencePlantName: null,
+        financialApyPct: String(apyBase.toFixed(4)),
+        marketPpaSource: mppa,
+        marketPpaBenchmarkUsdPerMwh: "64.4900",
+        createdAt: new Date(Date.now() - (30 + i) * 24 * 60 * 60 * 1000),
+        updatedAt: new Date(),
+      });
+
+      const capex = Math.round(r.mw * 1_000_000 * 1.12);
+      const csId = randomUUID();
+      this.capitalStacks.set(r.id, {
+        id: csId,
+        projectId: r.id,
+        totalCapex: String(capex),
+        taxCreditType: "ITC",
+        taxCreditEstimated: String(Math.round(capex * 0.3)),
+        taxCreditTransferabilityReady: true,
+        equityNeeded: String(Math.round(capex * 0.35)),
+        debtPlaceholder: "0",
+        notes: "Demo capital stack for pipeline preview.",
+      });
+
+      const checklistDef = generateChecklist(this.projects.get(r.id)!);
+      for (const item of checklistDef) {
+        const itemId = randomUUID();
+        this.checklistItems.set(itemId, {
+          id: itemId,
+          projectId: r.id,
+          key: item.key,
+          label: item.label,
+          required: item.required,
+          status: "UPLOADED",
+          notes: null,
+        });
+      }
+
+      const docs = Array.from(this.documents.values()).filter((d) => d.projectId === r.id);
+      const checklistRows = Array.from(this.checklistItems.values()).filter((c) => c.projectId === r.id);
+      const scoreR = computeReadiness(this.projects.get(r.id)!, docs, checklistRows, this.capitalStacks.get(r.id));
+      const rsId = randomUUID();
+      this.readinessScores.set(r.id, {
+        id: rsId,
+        projectId: r.id,
+        score: scoreR.score,
+        rating: scoreR.rating,
+        reasons: JSON.stringify(scoreR.reasons),
+        flags: JSON.stringify(scoreR.flags),
+        overriddenByAdmin: false,
+        overrideNotes: null,
+      });
+
+      if (r.status === "APPROVED") {
+        const logId = randomUUID();
+        this.approvalLogs.set(logId, {
+          id: logId,
+          projectId: r.id,
+          adminId,
+          action: "APPROVE",
+          notes: "Seeded for institutional pipeline demo.",
+          createdAt: new Date(Date.now() - (20 + i) * 24 * 60 * 60 * 1000),
+        });
+      }
+
+      i++;
+    }
   }
 
   private seedHourlyProductionAndRevenue(
@@ -832,6 +1013,15 @@ export class MemStorage implements IStorage {
       monthlyDebtService: project.monthlyDebtService || "0",
       monthlyOpex: project.monthlyOpex || "0",
       reserveRate: project.reserveRate || "0",
+      sgtScoreNrel: project.sgtScoreNrel || null,
+      eiaActualMwh: project.eiaActualMwh || null,
+      validationConfidence: project.validationConfidence || null,
+      eiaPlantCode: project.eiaPlantCode || null,
+      eiaGeneratorId: project.eiaGeneratorId || null,
+      eiaReferencePlantName: project.eiaReferencePlantName || null,
+      financialApyPct: project.financialApyPct || null,
+      marketPpaSource: project.marketPpaSource || null,
+      marketPpaBenchmarkUsdPerMwh: project.marketPpaBenchmarkUsdPerMwh || null,
       createdAt: new Date(),
       updatedAt: new Date(),
     };

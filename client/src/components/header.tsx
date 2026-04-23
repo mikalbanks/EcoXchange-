@@ -19,7 +19,15 @@ export function Header() {
   const { user, logout, isLoading } = useAuth();
   const [location] = useLocation();
 
-  const isPublicPage = location === "/" || location === "/about" || location === "/compliance" || location === "/yield-simulation" || location === "/performance" || location === "/backtest-report";
+  const isPublicPage =
+    location === "/" ||
+    location === "/about" ||
+    location === "/compliance" ||
+    location === "/yield-simulation" ||
+    location === "/performance" ||
+    location === "/backtest-report" ||
+    location === "/market" ||
+    location.startsWith("/market/");
 
   return (
     <header className="sticky top-0 z-50 w-full border-b border-border/40 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
@@ -39,7 +47,7 @@ export function Header() {
               <Link href="/" className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors" data-testid="link-home">
                 Home
               </Link>
-              <Link href="/investor/deals" className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors" data-testid="link-offerings">
+              <Link href="/market" className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors" data-testid="link-offerings">
                 Marketplace
               </Link>
               <Link href="/performance" className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors" data-testid="link-performance">
@@ -72,7 +80,7 @@ export function Header() {
                     <Link href="/" className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors" data-testid="link-mobile-home">
                       Home
                     </Link>
-                    <Link href="/investor/deals" className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors" data-testid="link-mobile-marketplace">
+                    <Link href="/market" className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors" data-testid="link-mobile-marketplace">
                       Marketplace
                     </Link>
                     <Link href="/performance" className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors" data-testid="link-mobile-performance">
