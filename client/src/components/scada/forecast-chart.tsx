@@ -134,7 +134,8 @@ export function ForecastChart({ projectId, showProvenance = false, height = 280,
           </ResponsiveContainer>
         </div>
         <div className="flex items-center gap-4 mt-2 text-xs text-muted-foreground">
-          <span>PPA Rate: ${(data.assumptions.ppaRatePerKwh * 1000).toFixed(0)}/MWh</span>
+          <span>PPA Rate: ${(data.assumptions.ppaRatePerKwh * 1000).toFixed(2)}/MWh</span>
+          <span>Market Reference (LevelTen Q1 2026): $64.49/MWh</span>
           <span>Degradation: {(data.assumptions.degradationRateAnnual * 100).toFixed(1)}%/yr</span>
         </div>
         {showProvenance && <div className="mt-3"><ProvenancePanel provenance={data.provenance} compact /></div>}

@@ -17,6 +17,7 @@ import {
 } from "@/components/ui/select";
 import { useQuery as useScadaQuery } from "@tanstack/react-query";
 import { HealthBadge } from "@/components/scada";
+import { InstitutionalProjectMetrics } from "@/components/institutional-project-metrics";
 import {
   AlertTriangle,
   Search,
@@ -33,15 +34,26 @@ interface ScadaQuickData {
   totalProductionMwh: number;
   trailing12MonthRevenue: number;
   avgCapacityFactor: number;
+  next12MonthProductionMwh?: number;
+  next12MonthRevenueUsd?: number;
 }
 
 function ScadaQuickMetrics({ projectId }: { projectId: string }) {
   const { data } = useScadaQuery<ScadaQuickData>({
-    queryKey: ["/api/projects", projectId, "scada", "summary"],
+    queryKey: ["/api/public/projects/sgt-metrics"],
     queryFn: async () => {
-      const res = await fetch(`/api/projects/${projectId}/scada/summary`, { credentials: "include" });
+      const res = await fetch("/api/public/projects/sgt-metrics", { credentials: "include" });
       if (!res.ok) return null;
-      return res.json();
+      const payload = await res.json();
+      const project = payload?.projects?.find((p: any) => p.projectId === projectId);
+      if (!project) return null;
+      return {
+        totalProductionMwh: project.sgtEstimated?.annualizedProductionMwh ?? 0,
+        trailing12MonthRevenue: project.sgtEstimated?.trailing12MonthRevenue ?? 0,
+        avgCapacityFactor: project.sgtEstimated?.avgCapacityFactor ?? 0,
+        next12MonthProductionMwh: project.sgtEstimated?.next12MonthProductionMwh ?? 0,
+        next12MonthRevenueUsd: project.sgtEstimated?.next12MonthRevenueUsd ?? 0,
+      };
     },
     staleTime: 60000,
   });
@@ -74,6 +86,14 @@ function ScadaQuickMetrics({ projectId }: { projectId: string }) {
           </span>
         </div>
       </div>
+      <InstitutionalProjectMetrics
+        metrics={{
+          avgCapacityFactor: data.avgCapacityFactor,
+          next12MonthProductionMwh: data.next12MonthProductionMwh ?? 0,
+          next12MonthRevenueUsd: data.next12MonthRevenueUsd ?? 0,
+        }}
+        className="mt-2"
+      />
     </div>
   );
 }

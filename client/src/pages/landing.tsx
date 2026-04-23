@@ -33,6 +33,14 @@ import {
   Coins,
 } from "lucide-react";
 
+interface FeaturedProject {
+  id: string;
+  name: string;
+  state: string;
+  county: string;
+  capacityMW: number;
+}
+
 interface ScadaSummaryData {
   totalProductionMwh: number;
   totalGrossRevenue: number;
@@ -55,13 +63,26 @@ function formatCompact(num: number): string {
 }
 
 function FeaturedProjectSection() {
-  const { data, isLoading } = useQuery<ScadaSummaryData>({
-    queryKey: ["/api/public/projects", "proj3", "scada", "summary"],
+  const { data: featuredProject } = useQuery<FeaturedProject>({
+    queryKey: ["/api/public/projects/featured"],
     queryFn: async () => {
-      const res = await fetch("/api/public/projects/proj3/scada/summary", { credentials: "include" });
+      const res = await fetch("/api/public/projects/featured", { credentials: "include" });
       if (!res.ok) throw new Error("Failed");
       return res.json();
     },
+    staleTime: 120000,
+  });
+
+  const featuredProjectId = featuredProject?.id || "";
+
+  const { data, isLoading } = useQuery<ScadaSummaryData>({
+    queryKey: ["/api/public/projects", featuredProjectId, "scada", "summary"],
+    queryFn: async () => {
+      const res = await fetch(`/api/public/projects/${featuredProjectId}/scada/summary`, { credentials: "include" });
+      if (!res.ok) throw new Error("Failed");
+      return res.json();
+    },
+    enabled: !!featuredProjectId,
     staleTime: 120000,
   });
 
@@ -88,15 +109,21 @@ function FeaturedProjectSection() {
                   <Sun className="h-6 w-6" />
                 </div>
                 <div>
-                  <h3 className="text-xl font-bold" data-testid="text-featured-name">Lancaster Sun Ranch</h3>
+                  <h3 className="text-xl font-bold" data-testid="text-featured-name">
+                    {featuredProject?.name || "Featured Institutional Project"}
+                  </h3>
                   <div className="flex items-center gap-3 text-sm text-muted-foreground mt-0.5">
-                    <span className="flex items-center gap-1"><MapPin className="h-3 w-3" /> California</span>
-                    <span className="flex items-center gap-1"><Zap className="h-3 w-3" /> 25 MW</span>
+                    <span className="flex items-center gap-1">
+                      <MapPin className="h-3 w-3" /> {featuredProject?.county && featuredProject?.state ? `${featuredProject.county}, ${featuredProject.state}` : "California"}
+                    </span>
+                    <span className="flex items-center gap-1">
+                      <Zap className="h-3 w-3" /> {featuredProject ? `${featuredProject.capacityMW.toFixed(2)} MW` : "N/A"}
+                    </span>
                   </div>
                 </div>
               </div>
               <div className="flex items-center gap-2">
-                <HealthBadge projectId="proj3" size="md" usePublicApi />
+                {featuredProjectId ? <HealthBadge projectId={featuredProjectId} size="md" usePublicApi /> : null}
               </div>
             </div>
 
@@ -195,6 +222,7 @@ interface PublicSgtProjectsResponse {
   generatedAt: string;
   projectCount: number;
   projects: PublicSgtProject[];
+  featuredProjectId: string | null;
 }
 
 function PipelineStageIcon({ stage }: { stage: string }) {
@@ -341,7 +369,7 @@ function PublicProjectMetricsSection() {
           </div>
           <h2 className="text-3xl font-bold mb-4">Live Projects From Our Database</h2>
           <p className="text-muted-foreground max-w-2xl mx-auto">
-            Approved projects with SGT-derived production and revenue estimates.
+            Approved projects with institutional 1 MW+ filtering and SGT-derived production and revenue estimates.
           </p>
         </div>
 
@@ -361,7 +389,12 @@ function PublicProjectMetricsSection() {
                         {project.state}, {project.county} · {project.capacityMW} MW · {project.technology.replace(/_/g, " ")}
                       </p>
                     </div>
-                    <Badge variant="outline" className="text-[10px]">{project.health}</Badge>
+                    <div className="flex items-center gap-2">
+                      {data.featuredProjectId === project.projectId && (
+                        <Badge className="text-[10px]">Featured Asset</Badge>
+                      )}
+                      <Badge variant="outline" className="text-[10px]">{project.health}</Badge>
+                    </div>
                   </div>
                   <div className="grid grid-cols-2 gap-3 text-sm">
                     <div className="rounded-lg bg-muted/30 p-3">
