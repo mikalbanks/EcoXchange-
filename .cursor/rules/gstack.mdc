@@ -1,0 +1,42 @@
+---
+description: gstack skill pack — opinionated procedures for review, QA, design, ship, security audit, debugging, and planning. Read the relevant SKILL.md before performing the action.
+alwaysApply: false
+---
+
+# gstack Skills (vendored as submodule)
+
+This repo vendors [gstack](https://github.com/garrytan/gstack) at `.claude/skills/gstack/`. Each skill is a folder with a `SKILL.md` that defines the procedure. Cursor cannot natively execute Claude Code slash commands, so when a user asks for one of these workflows, **read the matching `SKILL.md` and follow it as a procedure**.
+
+After cloning, run `git submodule update --init --recursive` so the skill files exist on disk.
+
+## When the user asks for… read this file
+
+| User intent | Skill file |
+|-------------|------------|
+| "brainstorm this", "is this worth building", "office hours" | `.claude/skills/gstack/office-hours/SKILL.md` |
+| "review the architecture", "engineering review", "lock in the plan" | `.claude/skills/gstack/plan-eng-review/SKILL.md` |
+| "ceo review", strategic plan review | `.claude/skills/gstack/plan-ceo-review/SKILL.md` |
+| design / mock / "design review" / "design html" | `.claude/skills/gstack/design/SKILL.md`, `.claude/skills/gstack/design-html/SKILL.md`, `.claude/skills/gstack/design-review/SKILL.md` |
+| "debug this", "fix this bug", "root cause", stack traces | `.claude/skills/gstack/investigate/SKILL.md` |
+| "qa this", "test the site", "find bugs", "does this work" | `.claude/skills/gstack/qa/SKILL.md` |
+| "review this PR", "code review", "check my diff" | `.claude/skills/gstack/review/SKILL.md` |
+| "security audit", "threat model", "OWASP", "pentest review" | `.claude/skills/gstack/cso/SKILL.md` |
+| "health check", "code quality", "quality score" | `.claude/skills/gstack/health/SKILL.md` |
+| "ship", "deploy", "push to main", "create a PR" | `.claude/skills/gstack/ship/SKILL.md` |
+| "land and deploy" | `.claude/skills/gstack/land-and-deploy/SKILL.md` |
+| "devex review" | `.claude/skills/gstack/devex-review/SKILL.md` |
+| "save context" / "restore context" | `.claude/skills/gstack/context-save/SKILL.md`, `.claude/skills/gstack/context-restore/SKILL.md` |
+| "freeze edits to this folder" / "unfreeze" | `.claude/skills/gstack/freeze/SKILL.md`, `.claude/skills/gstack/unfreeze/SKILL.md` |
+| "what have we learned", project learnings | `.claude/skills/gstack/learn/SKILL.md` |
+| "retrospective" | `.claude/skills/gstack/retro/SKILL.md` |
+| "document this release" | `.claude/skills/gstack/document-release/SKILL.md` |
+| browser automation / pair another agent | `.claude/skills/gstack/browse/SKILL.md`, `.claude/skills/gstack/pair-agent/SKILL.md` |
+
+To see all skills: `ls .claude/skills/gstack/`. The full registry with descriptions is in `AGENTS.md` and `CLAUDE.md`.
+
+## EcoXchange guardrails
+
+- Develop on the assigned feature branch; do not push to `main` without explicit approval.
+- Do not edit files inside `.claude/skills/gstack/` — that is an upstream submodule.
+- For `cso`: prioritize Persona / OpenAI / Solcast keys, the Securitize mock-vs-real boundary, and the public `/api/public/backtest/*` surface.
+- For `qa` / `health`: golden paths are `/performance` and `/backtest-report`; do not regress the SCADA CSV upload at `/operations`.
