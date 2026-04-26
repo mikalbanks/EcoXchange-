@@ -30,6 +30,8 @@ import {
   Activity,
 } from "lucide-react";
 
+type UnderwritingRecommendation = "STRONG_BUY_CANDIDATE" | "INVESTIGATE_FURTHER" | "WATCHLIST_OR_REPRICE" | "EXCLUDE_SUBSCALE";
+
 interface ScadaQuickData {
   totalProductionMwh: number;
   trailing12MonthRevenue: number;
@@ -168,12 +170,60 @@ interface DealProject {
   };
   totalInterest: number;
   interestCount: number;
+  underwriting?: {
+    estCapacityFactorPct: number;
+    estYear1Mwh: number;
+    estYear1RevenueUsd: number;
+    estYear1NoiUsd: number;
+    estCapexUsd: number;
+    estProjectNpvUsd: number;
+    estYear1RoiPct: number;
+    telemetryConfidence: string;
+    listingLinkStatus: string;
+    recommendation: UnderwritingRecommendation;
+    diligenceLinks: {
+      listingUrl: string | null;
+      coordinatesQueryUrl: string | null;
+      countyAssessorUrl: string | null;
+      titleResearchHint: string;
+    };
+  };
 }
 
 function formatCurrency(value: string | number | null): string {
   if (!value) return "$0";
   const num = typeof value === "string" ? parseFloat(value) : value;
   return `$${num.toLocaleString("en-US", { minimumFractionDigits: 0, maximumFractionDigits: 0 })}`;
+}
+
+function recommendationLabel(value: UnderwritingRecommendation): string {
+  switch (value) {
+    case "STRONG_BUY_CANDIDATE":
+      return "Strong Buy Candidate";
+    case "INVESTIGATE_FURTHER":
+      return "Investigate Further";
+    case "WATCHLIST_OR_REPRICE":
+      return "Watchlist / Reprice";
+    case "EXCLUDE_SUBSCALE":
+      return "Exclude (Subscale)";
+    default:
+      return value;
+  }
+}
+
+function recommendationBadgeClass(value: UnderwritingRecommendation): string {
+  switch (value) {
+    case "STRONG_BUY_CANDIDATE":
+      return "bg-emerald-500/15 text-emerald-400 border-emerald-500/40";
+    case "INVESTIGATE_FURTHER":
+      return "bg-amber-500/15 text-amber-300 border-amber-500/40";
+    case "WATCHLIST_OR_REPRICE":
+      return "bg-blue-500/15 text-blue-300 border-blue-500/40";
+    case "EXCLUDE_SUBSCALE":
+      return "bg-red-500/15 text-red-300 border-red-500/40";
+    default:
+      return "bg-muted/40 text-muted-foreground border-border";
+  }
 }
 
 export default function InvestorDeals() {
@@ -412,6 +462,62 @@ export default function InvestorDeals() {
                   </div>
 
                   <ScadaQuickMetrics projectId={deal.id} />
+
+                  {deal.underwriting && (
+                    <div className="border-t border-border pt-3 space-y-2" data-testid={`underwriting-${deal.id}`}>
+                      <div className="flex flex-wrap items-center justify-between gap-2">
+                        <span className="text-xs font-medium text-primary">Institutional Underwriting</span>
+                        <span className={`text-[10px] px-2 py-0.5 rounded-full border ${recommendationBadgeClass(deal.underwriting.recommendation)}`}>
+                          {recommendationLabel(deal.underwriting.recommendation)}
+                        </span>
+                      </div>
+                      <div className="grid grid-cols-2 gap-2 text-xs">
+                        <div className="rounded-md bg-muted/25 p-2">
+                          <p className="text-muted-foreground">Year-1 ROI</p>
+                          <p className="font-semibold">{deal.underwriting.estYear1RoiPct.toFixed(2)}%</p>
+                        </div>
+                        <div className="rounded-md bg-muted/25 p-2">
+                          <p className="text-muted-foreground">Project NPV</p>
+                          <p className="font-semibold">{formatCurrency(deal.underwriting.estProjectNpvUsd)}</p>
+                        </div>
+                      </div>
+                      <div className="flex flex-wrap gap-2 text-[11px]">
+                        {deal.underwriting.diligenceLinks.listingUrl && (
+                          <a
+                            href={deal.underwriting.diligenceLinks.listingUrl}
+                            target="_blank"
+                            rel="noreferrer"
+                            className="underline text-primary"
+                            onClick={(e) => e.stopPropagation()}
+                          >
+                            Listing Source
+                          </a>
+                        )}
+                        {deal.underwriting.diligenceLinks.coordinatesQueryUrl && (
+                          <a
+                            href={deal.underwriting.diligenceLinks.coordinatesQueryUrl}
+                            target="_blank"
+                            rel="noreferrer"
+                            className="underline text-primary"
+                            onClick={(e) => e.stopPropagation()}
+                          >
+                            Site Coordinates
+                          </a>
+                        )}
+                        {deal.underwriting.diligenceLinks.countyAssessorUrl && (
+                          <a
+                            href={deal.underwriting.diligenceLinks.countyAssessorUrl}
+                            target="_blank"
+                            rel="noreferrer"
+                            className="underline text-primary"
+                            onClick={(e) => e.stopPropagation()}
+                          >
+                            County Assessor
+                          </a>
+                        )}
+                      </div>
+                    </div>
+                  )}
 
                   <div className="border-t border-border pt-3 space-y-1.5">
                     {deal.capitalStack?.totalCapex && (

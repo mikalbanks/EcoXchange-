@@ -525,6 +525,22 @@ export async function registerRoutes(
         const score = await storage.getReadinessScore(p.id);
         const capitalStack = await storage.getCapitalStack(p.id);
         const interests = await storage.getInterestsByProject(p.id);
+        const [summary, forecast] = await Promise.all([
+          scadaService.getProjectSummary(p.id),
+          scadaService.getForecast(p.id),
+        ]);
+        const next12MonthProductionMwh = forecast
+          ? forecast.months.reduce((sum, month) => sum + month.forecastMwh, 0)
+          : 0;
+        const next12MonthRevenueUsd = forecast
+          ? forecast.months.reduce((sum, month) => sum + month.forecastRevenue, 0)
+          : 0;
+        const underwriting = estimateUnderwriting(
+          p,
+          summary?.avgCapacityFactor || 0,
+          next12MonthRevenueUsd,
+          next12MonthProductionMwh,
+        );
         const totalInterest = interests.reduce((sum, i) => sum + (Number(i.amountIntent) || 0), 0);
         return {
           ...p,
@@ -535,6 +551,7 @@ export async function registerRoutes(
             taxCreditEstimated: capitalStack.taxCreditEstimated,
             taxCreditType: capitalStack.taxCreditType,
           } : null,
+          underwriting,
           totalInterest,
           interestCount: interests.length,
         };
@@ -909,6 +926,76 @@ export async function registerRoutes(
     "Imperial Valley Solar I",
     "Lancaster Sun Ranch",
   ]);
+  const UNDERWRITING_CAPEX_PER_MW = 1_150_000;
+  const UNDERWRITING_DISCOUNT_RATE = 0.09;
+  const UNDERWRITING_DEGRADATION = 0.005;
+  const UNDERWRITING_PROJECT_LIFE_YEARS = 25;
+
+  const countyLandRecordLinks: Record<string, string> = {
+    "Riverside": "https://www.rivcoacr.org/",
+    "San Bernardino": "https://arc.sbcounty.gov/",
+    "Kern": "https://kernpublicrecords.com/",
+    "Los Angeles": "https://assessor.lacounty.gov/",
+    "Imperial": "https://www.co.imperial.ca.us/assessor/",
+  };
+
+  const clamp = (value: number, min: number, max: number) => Math.min(max, Math.max(min, value));
+
+  const estimateUnderwriting = (project: any, avgCapacityFactor: number, next12MonthRevenueUsd: number, next12MonthProductionMwh: number) => {
+    const capacityMw = Number(project.capacityMW || 0);
+    const capex = capacityMw * UNDERWRITING_CAPEX_PER_MW;
+    const boundedCapacityFactor = clamp(avgCapacityFactor || 0.22, 0.12, 0.35);
+    const year1Mwh = capacityMw * 8760 * boundedCapacityFactor;
+
+    const ppaRatePerMwh = next12MonthProductionMwh > 0
+      ? next12MonthRevenueUsd / next12MonthProductionMwh
+      : INSTITUTIONAL_PPA_REFERENCE_MWH;
+    const year1Revenue = year1Mwh * ppaRatePerMwh;
+    const annualOpex = Number(project.monthlyOpex || 0) * 12;
+    const year1Noi = year1Revenue - annualOpex;
+
+    let discountedCashflows = 0;
+    for (let year = 1; year <= UNDERWRITING_PROJECT_LIFE_YEARS; year++) {
+      const degradedNoi = year1Noi * Math.pow(1 - UNDERWRITING_DEGRADATION, year - 1);
+      discountedCashflows += degradedNoi / Math.pow(1 + UNDERWRITING_DISCOUNT_RATE, year);
+    }
+    const npv = discountedCashflows - capex;
+    const roi = capex > 0 ? year1Noi / capex : 0;
+
+    let recommendation = "WATCHLIST_OR_REPRICE";
+    if (npv > 0 && roi >= 0.10 && boundedCapacityFactor >= 0.2) {
+      recommendation = "STRONG_BUY_CANDIDATE";
+    } else if (npv > 0 && roi >= 0.08) {
+      recommendation = "INVESTIGATE_FURTHER";
+    }
+
+    const lat = Number(project.latitude || 0);
+    const lon = Number(project.longitude || 0);
+    const hasCoordinates = Number.isFinite(lat) && Number.isFinite(lon) && lat !== 0 && lon !== 0;
+    const county = (project.county || "").trim();
+
+    return {
+      estimatedYear1Mwh: Math.round(year1Mwh * 10) / 10,
+      estimatedPpaRateMwh: Math.round(ppaRatePerMwh * 100) / 100,
+      estimatedYear1RevenueUsd: Math.round(year1Revenue),
+      estimatedYear1NoiUsd: Math.round(year1Noi),
+      estimatedCapexUsd: Math.round(capex),
+      estimatedNpvUsd: Math.round(npv),
+      estimatedYear1RoiPct: Math.round(roi * 10000) / 100,
+      recommendation,
+      diligenceLinks: {
+        projectMap: hasCoordinates ? `https://maps.google.com/?q=${lat},${lon}` : null,
+        countyLandRecords: countyLandRecordLinks[county] || null,
+      },
+      dueDiligenceChecklist: [
+        "Confirm APN/parcel boundary and title chain.",
+        "Validate lease/option/deed execution and term remaining.",
+        "Reconcile interconnection queue status with utility filings.",
+        "Verify permit status and jurisdictional constraints.",
+        "Re-underwrite production with independent resource model.",
+      ],
+    };
+  };
 
   const getInstitutionalApprovedProjects = async () => {
     const projects = await storage.getProjectsByStatus("APPROVED");
@@ -961,6 +1048,12 @@ export async function registerRoutes(
           const twelveMonthEstimateRevenue = forecast
             ? forecast.months.reduce((sum, month) => sum + month.forecastRevenue, 0)
             : 0;
+          const underwriting = estimateUnderwriting(
+            project,
+            summary?.avgCapacityFactor || 0,
+            twelveMonthEstimateRevenue,
+            twelveMonthEstimateMwh,
+          );
 
           return {
             projectId: project.id,
@@ -978,6 +1071,7 @@ export async function registerRoutes(
               next12MonthProductionMwh: Math.round(twelveMonthEstimateMwh * 100) / 100,
               next12MonthRevenueUsd: Math.round(twelveMonthEstimateRevenue * 100) / 100,
             },
+            underwriting,
             provenance: summary?.provenance || null,
           };
         }),
