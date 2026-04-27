@@ -46,3 +46,7 @@ The architecture is compliance-first, designed for future regulatory requirement
 - **SCADA Systems**: Integration with various SCADA and project monitoring systems for revenue ingestion.
 - **Securitize Bridge (Mock)**: Mock integration with Securitize RWA Protocol for institutional yield distribution.
 - **OpenAI**: Used for AI Financial Predictions.
+
+## Agent tooling
+
+- **gstack** ([garrytan/gstack](https://github.com/garrytan/gstack)): vendored as a git submodule at `.claude/skills/gstack`. Run `git submodule update --init --recursive` after cloning. See `CLAUDE.md`, `AGENTS.md`, and `.cursor/rules/gstack.mdc` for the skill registry and invocation rules.

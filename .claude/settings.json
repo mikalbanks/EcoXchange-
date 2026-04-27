@@ -1,0 +1,14 @@
+{
+  "hooks": {
+    "SessionStart": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "git submodule update --init --recursive .claude/skills/gstack >/dev/null 2>&1 || true"
+          }
+        ]
+      }
+    ]
+  }
+}
