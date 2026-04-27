@@ -133,7 +133,7 @@ export async function registerRoutes(
       ? (req.body as Record<string, unknown>)
       : {};
     try {
-      const run = internalAgentRegistry.runAgent(req.params.id, req.session.userId || null, context);
+      const run = await internalAgentRegistry.runAgent(req.params.id, req.session.userId || null, context);
       res.json(run);
     } catch (error: any) {
       if (error.message === "Agent not found") {
@@ -1647,7 +1647,7 @@ export async function registerRoutes(
     res.json({ agent, runs });
   });
 
-  app.post("/api/internal/agents/:id/run", requireRole("ADMIN"), (req: any, res) => {
+  app.post("/api/internal/agents/:id/run", requireRole("ADMIN"), async (req: any, res) => {
     const agent = internalAgentRegistry.getAgent(req.params.id);
     if (!agent) return res.status(404).json({ message: "Agent not found" });
 
@@ -1655,7 +1655,7 @@ export async function registerRoutes(
       ? (req.body as Record<string, unknown>)
       : {};
 
-    const run = internalAgentRegistry.runAgent(agent.id, req.user?.id ?? null, context);
+    const run = await internalAgentRegistry.runAgent(agent.id, req.user?.id ?? null, context);
     res.json(run);
   });
 
