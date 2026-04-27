@@ -176,6 +176,18 @@ export const projects = pgTable("projects", {
   monthlyDebtService: decimal("monthly_debt_service", { precision: 15, scale: 2 }).default("0"),
   monthlyOpex: decimal("monthly_opex", { precision: 15, scale: 2 }).default("0"),
   reserveRate: decimal("reserve_rate", { precision: 5, scale: 4 }).default("0"),
+  sgtScoreNrel: decimal("sgt_score_nrel", { precision: 6, scale: 4 }),
+  eiaActualMwh: decimal("eia_actual_mwh", { precision: 14, scale: 3 }),
+  validationConfidence: decimal("validation_confidence", { precision: 6, scale: 2 }),
+  eiaPlantCode: text("eia_plant_code"),
+  eiaGeneratorId: text("eia_generator_id"),
+  eiaReferencePlantName: text("eia_reference_plant_name"),
+  /** Institutional: ((annual kWh × market PPA) − annual O&M) / asset CapEx, from NSRDB + market-rates */
+  financialApyPct: decimal("financial_apy_pct", { precision: 8, scale: 4 }),
+  /** How market PPA $/kWh was resolved (e.g. FIXED_PPA, CAISO_NP15_SPOT_PROXY) */
+  marketPpaSource: text("market_ppa_source"),
+  /** LevelTen / desk benchmark used for tooltip (USD/MWh) */
+  marketPpaBenchmarkUsdPerMwh: decimal("market_ppa_benchmark_usd_per_mwh", { precision: 10, scale: 4 }),
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
 });

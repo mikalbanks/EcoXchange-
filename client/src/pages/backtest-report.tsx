@@ -72,6 +72,11 @@ interface BacktestReportData {
   engineVersion: string;
 }
 
+interface SourceDoc {
+  label: string;
+  details: string;
+}
+
 function ConfidenceGauge({ score }: { score: number }) {
   const radius = 80;
   const circumference = Math.PI * radius;
@@ -803,6 +808,54 @@ export default function BacktestReportPage() {
                 )}
               </p>
             </div>
+          </CardContent>
+        </Card>
+
+        <Card className="print:break-before-page print:border-gray-300 print:bg-white">
+          <CardHeader>
+            <CardTitle className="text-base">Data Sources & Documentation</CardTitle>
+          </CardHeader>
+          <CardContent>
+            {(() => {
+              const sources: SourceDoc[] = [
+                {
+                  label: "Project Metadata",
+                  details: `EcoXchange internal project registry (${site.siteId}), coordinates ${site.latitude} / ${site.longitude}, capacity ${site.capacityKw.toLocaleString()} kW.`,
+                },
+                {
+                  label: "Satellite Telemetry",
+                  details:
+                    report.satelliteSource === "SOLCAST_HISTORICAL"
+                      ? "Solcast Historical API (measured historical irradiance/production model)."
+                      : report.satelliteSource === "SOLCAST_ESTIMATED_ACTUALS"
+                        ? "Solcast Estimated Actuals API (satellite-derived actual irradiance estimate)."
+                        : "Solcast irradiance model fallback (modeled irradiance where direct historical endpoint is unavailable).",
+                },
+                {
+                  label: "Meter Ground Truth",
+                  details:
+                    report.meterDataSource === "stored"
+                      ? "EcoXchange SCADA ingested production records (stored meter telemetry)."
+                      : "Synthetic meter baseline modeled from site geometry, capacity, and production profile assumptions.",
+                },
+                {
+                  label: "Validation Method",
+                  details:
+                    "15-minute interval SGT handshake comparison; pass/fail at ±2% and ±5% tolerance bands; MAE and RMSE computed over daylight intervals.",
+                },
+              ];
+
+              return (
+                <div className="space-y-3">
+                  {sources.map((source) => (
+                    <div key={source.label} className="rounded-lg border border-border/60 p-3">
+                      <p className="text-sm font-semibold">{source.label}</p>
+                      <p className="text-sm text-muted-foreground mt-1">{source.details}</p>
+                    </div>
+                  ))}
+                </div>
+              );
+            })()}
           </CardContent>
         </Card>
 

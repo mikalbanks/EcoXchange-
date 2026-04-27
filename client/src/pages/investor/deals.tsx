@@ -17,6 +17,7 @@ import {
 } from "@/components/ui/select";
 import { useQuery as useScadaQuery } from "@tanstack/react-query";
 import { HealthBadge } from "@/components/scada";
+import { InstitutionalProjectMetrics } from "@/components/institutional-project-metrics";
 import {
   AlertTriangle,
   Search,
@@ -33,20 +34,55 @@ interface ScadaQuickData {
   totalProductionMwh: number;
   trailing12MonthRevenue: number;
   avgCapacityFactor: number;
+  next12MonthProductionMwh?: number;
+  next12MonthRevenueUsd?: number;
 }
 
 function ScadaQuickMetrics({ projectId }: { projectId: string }) {
   const { data } = useScadaQuery<ScadaQuickData>({
-    queryKey: ["/api/projects", projectId, "scada", "summary"],
+    queryKey: ["/api/public/projects/sgt-metrics"],
     queryFn: async () => {
-      const res = await fetch(`/api/projects/${projectId}/scada/summary`, { credentials: "include" });
-      if (!res.ok) return null;
-      return res.json();
+      const res = await fetch("/api/public/projects/sgt-metrics", { credentials: "include" });
+      if (!res.ok) {
+        return {
+          totalProductionMwh: 0,
+          trailing12MonthRevenue: 0,
+          avgCapacityFactor: 0,
+          next12MonthProductionMwh: 0,
+          next12MonthRevenueUsd: 0,
+        };
+      }
+      const payload = await res.json();
+      const project = payload?.projects?.find((p: any) => p.projectId === projectId);
+      if (!project) {
+        return {
+          totalProductionMwh: 0,
+          trailing12MonthRevenue: 0,
+          avgCapacityFactor: 0,
+          next12MonthProductionMwh: 0,
+          next12MonthRevenueUsd: 0,
+        };
+      }
+      return {
+        totalProductionMwh: project.sgtEstimated?.annualizedProductionMwh ?? 0,
+        trailing12MonthRevenue: project.sgtEstimated?.trailing12MonthRevenue ?? 0,
+        avgCapacityFactor: project.sgtEstimated?.avgCapacityFactor ?? 0,
+        next12MonthProductionMwh: project.sgtEstimated?.next12MonthProductionMwh ?? 0,
+        next12MonthRevenueUsd: project.sgtEstimated?.next12MonthRevenueUsd ?? 0,
+      };
     },
     staleTime: 60000,
   });
 
-  if (!data || data.totalProductionMwh === 0) return null;
+  if (!data) return null;
+
+  const totalProductionMwh = Number(data.totalProductionMwh ?? 0);
+  const trailing12MonthRevenue = Number(data.trailing12MonthRevenue ?? 0);
+  const avgCapacityFactor = Number(data.avgCapacityFactor ?? 0);
+  const next12MonthProductionMwh = Number(data.next12MonthProductionMwh ?? 0);
+  const next12MonthRevenueUsd = Number(data.next12MonthRevenueUsd ?? 0);
+
+  if (totalProductionMwh <= 0) return null;
 
   return (
     <div className="border-t border-border pt-2 space-y-1" data-testid={`scada-metrics-${projectId}`}>
@@ -58,22 +94,30 @@ function ScadaQuickMetrics({ projectId }: { projectId: string }) {
         <div>
           <span className="text-muted-foreground block">Production</span>
           <span className="font-medium" data-testid={`text-scada-prod-${projectId}`}>
-            {data.totalProductionMwh.toLocaleString()} MWh
+            {totalProductionMwh.toLocaleString()} MWh
           </span>
         </div>
         <div>
           <span className="text-muted-foreground block">Revenue</span>
           <span className="font-medium" data-testid={`text-scada-rev-${projectId}`}>
-            ${(data.trailing12MonthRevenue / 1000).toFixed(0)}K
+            ${(trailing12MonthRevenue / 1000).toFixed(0)}K
           </span>
         </div>
         <div>
           <span className="text-muted-foreground block">Cap Factor</span>
           <span className="font-medium" data-testid={`text-scada-cf-${projectId}`}>
-            {(data.avgCapacityFactor * 100).toFixed(1)}%
+            {(avgCapacityFactor * 100).toFixed(1)}%
           </span>
         </div>
       </div>
+      <InstitutionalProjectMetrics
+        metrics={{
+          avgCapacityFactor,
+          next12MonthProductionMwh,
+          next12MonthRevenueUsd,
+        }}
+        className="mt-2"
+      />
     </div>
   );
 }

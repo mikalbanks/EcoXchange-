@@ -9,7 +9,7 @@ export default defineConfig({
     react(),
     runtimeErrorOverlay(),
     VitePWA({
-      registerType: "prompt",
+      registerType: "autoUpdate",
       includeAssets: ["favicon.png", "apple-touch-icon.png", "brand/ecoxchange-logo.png"],
       manifest: {
         name: "EcoXchange - Clean Energy Market",
@@ -44,6 +44,9 @@ export default defineConfig({
         enabled: true,
       },
       workbox: {
+        skipWaiting: true,
+        clientsClaim: true,
+        cleanupOutdatedCaches: true,
         globPatterns: ["**/*.{js,css,html,ico,png,svg,woff,woff2}"],
         runtimeCaching: [
           {

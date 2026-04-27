@@ -5,9 +5,8 @@ import "./index.css";
 
 const updateSW = registerSW({
   onNeedRefresh() {
-    if (confirm("A new version of EcoXchange is available. Reload to update?")) {
-      updateSW(true);
-    }
+    // Always apply fresh assets so production users see latest UI updates.
+    updateSW(true);
   },
   onOfflineReady() {
     console.log("EcoXchange is ready for offline use.");
