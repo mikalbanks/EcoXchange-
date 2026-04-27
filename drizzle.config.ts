@@ -20,6 +20,7 @@ export default defineConfig({
     "data_room_checklist_items",
     "investor_interests",
     "project_approval_logs",
+    "admin_notifications",
     "ppas",
     "energy_production",
     "revenue_records",

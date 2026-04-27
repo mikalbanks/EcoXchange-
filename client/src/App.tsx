@@ -65,6 +65,7 @@ import InvestorDashboard from "@/pages/investor/dashboard";
 import InvestorDeals from "@/pages/investor/deals";
 import InvestorDealRoom from "@/pages/investor/deal-room";
 import InvestorInterests from "@/pages/investor/interests";
+import QueueTerminalPage from "@/pages/QueueTerminal";
 
 import AdminDashboard from "@/pages/admin/dashboard";
 import AdminProjects from "@/pages/admin/projects";
@@ -160,6 +161,11 @@ function Router() {
       <Route path="/investor/interests">
         <ProtectedRoute allowedRoles={["INVESTOR"]}>
           <InvestorInterests />
+        </ProtectedRoute>
+      </Route>
+      <Route path="/investor/live-queue">
+        <ProtectedRoute allowedRoles={["INVESTOR"]}>
+          <QueueTerminalPage />
         </ProtectedRoute>
       </Route>
 

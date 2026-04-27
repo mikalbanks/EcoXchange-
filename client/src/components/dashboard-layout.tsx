@@ -40,6 +40,7 @@ const developerNavItems = [
 const investorNavItems = [
   { title: "Overview", url: "/investor", icon: LayoutDashboard },
   { title: "Marketplace", url: "/investor/deals", icon: Search },
+  { title: "Live Queue", url: "/investor/live-queue", icon: Activity },
   { title: "My Investments", url: "/investor/interests", icon: TrendingUp },
   { title: "Performance", url: "/performance", icon: BarChart3 },
 ];

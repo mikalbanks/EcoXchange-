@@ -155,6 +155,14 @@ export type User = typeof users.$inferSelect;
 export const projects = pgTable("projects", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
   developerId: varchar("developer_id").notNull(),
+  queueId: text("queue_id").unique(),
+  source: text("source").notNull().default("MANUAL"),
+  externalDeveloperEntity: text("external_developer_entity"),
+  queueStatus: text("queue_status"),
+  queueSubmittedDate: timestamp("queue_submitted_date"),
+  proposedCod: timestamp("proposed_cod"),
+  daysInQueue: integer("days_in_queue"),
+  queueIso: text("queue_iso"),
   name: text("name").notNull(),
   technology: text("technology").notNull().default("SOLAR"),
   stage: text("stage").notNull().default("PRE_NTP"),
@@ -321,6 +329,26 @@ export const insertProjectApprovalLogSchema = createInsertSchema(projectApproval
 
 export type InsertProjectApprovalLog = z.infer<typeof insertProjectApprovalLogSchema>;
 export type ProjectApprovalLog = typeof projectApprovalLogs.$inferSelect;
+
+// ─── Admin Notifications ─────────────────────────────────────────────────────
+
+export const adminNotifications = pgTable("admin_notifications", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  type: text("type").notNull(),
+  title: text("title").notNull(),
+  message: text("message").notNull(),
+  projectId: varchar("project_id"),
+  payload: text("payload"),
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
+export const insertAdminNotificationSchema = createInsertSchema(adminNotifications).omit({
+  id: true,
+  createdAt: true,
+});
+
+export type InsertAdminNotification = z.infer<typeof insertAdminNotificationSchema>;
+export type AdminNotification = typeof adminNotifications.$inferSelect;
 
 // ─── PPAs (Power Purchase Agreements) ───────────────────────────────────────
 

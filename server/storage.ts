@@ -25,6 +25,7 @@ import {
   type Account, type InsertAccount,
   type Transaction, type InsertTransaction,
   type Posting, type InsertPosting,
+  type AdminNotification, type InsertAdminNotification,
 } from "@shared/schema";
 
 export function hashPassword(password: string): string {
@@ -44,6 +45,7 @@ export interface IStorage {
   getAllUsers(): Promise<User[]>;
 
   getProject(id: string): Promise<Project | undefined>;
+  getProjectByQueueId(queueId: string): Promise<Project | undefined>;
   getProjectsByDeveloper(developerId: string): Promise<Project[]>;
   createProject(project: InsertProject): Promise<Project>;
   updateProject(id: string, updates: Partial<Project>): Promise<Project | undefined>;
@@ -74,6 +76,9 @@ export interface IStorage {
 
   getApprovalLogs(projectId: string): Promise<ProjectApprovalLog[]>;
   createApprovalLog(log: InsertProjectApprovalLog): Promise<ProjectApprovalLog>;
+
+  getAdminNotifications(limit?: number): Promise<AdminNotification[]>;
+  createAdminNotification(notification: InsertAdminNotification): Promise<AdminNotification>;
 
   getPpasByProject(projectId: string): Promise<Ppa[]>;
   createPpa(ppa: InsertPpa): Promise<Ppa>;
@@ -133,6 +138,7 @@ export class MemStorage implements IStorage {
   private checklistItems: Map<string, DataRoomChecklistItem> = new Map();
   private interests: Map<string, InvestorInterest> = new Map();
   private approvalLogs: Map<string, ProjectApprovalLog> = new Map();
+  private adminNotifications: Map<string, AdminNotification> = new Map();
   private ppas: Map<string, Ppa> = new Map();
   private productionRecords: Map<string, EnergyProduction> = new Map();
   private revenueRecords: Map<string, RevenueRecord> = new Map();
@@ -205,6 +211,14 @@ export class MemStorage implements IStorage {
     this.projects.set(proj1Id, {
       id: proj1Id,
       developerId: devId,
+      queueId: null,
+      source: "MANUAL",
+      externalDeveloperEntity: null,
+      queueStatus: null,
+      queueSubmittedDate: null,
+      proposedCod: null,
+      daysInQueue: null,
+      queueIso: null,
       name: "Imperial Valley Solar I",
       technology: "SOLAR",
       stage: "NTP",
@@ -321,6 +335,14 @@ export class MemStorage implements IStorage {
     this.projects.set(proj2Id, {
       id: proj2Id,
       developerId: devId,
+      queueId: null,
+      source: "MANUAL",
+      externalDeveloperEntity: null,
+      queueStatus: null,
+      queueSubmittedDate: null,
+      proposedCod: null,
+      daysInQueue: null,
+      queueIso: null,
       name: "Pecos Flat Solar Farm",
       technology: "SOLAR_STORAGE",
       stage: "PRE_NTP",
@@ -459,6 +481,14 @@ export class MemStorage implements IStorage {
     this.projects.set(proj3Id, {
       id: proj3Id,
       developerId: devId,
+      queueId: null,
+      source: "MANUAL",
+      externalDeveloperEntity: null,
+      queueStatus: null,
+      queueSubmittedDate: null,
+      proposedCod: null,
+      daysInQueue: null,
+      queueIso: null,
       name: "Lancaster Sun Ranch",
       technology: "SOLAR",
       stage: "COD",
@@ -728,6 +758,14 @@ export class MemStorage implements IStorage {
       this.projects.set(r.id, {
         id: r.id,
         developerId: devId,
+        queueId: null,
+        source: "MANUAL",
+        externalDeveloperEntity: null,
+        queueStatus: null,
+        queueSubmittedDate: null,
+        proposedCod: null,
+        daysInQueue: null,
+        queueIso: null,
         name: r.name,
         technology: r.tech || "SOLAR",
         stage: r.stage as Project["stage"],
@@ -983,6 +1021,10 @@ export class MemStorage implements IStorage {
     return this.projects.get(id);
   }
 
+  async getProjectByQueueId(queueId: string): Promise<Project | undefined> {
+    return Array.from(this.projects.values()).find((p) => p.queueId === queueId);
+  }
+
   async getProjectsByDeveloper(developerId: string): Promise<Project[]> {
     return Array.from(this.projects.values()).filter(p => p.developerId === developerId);
   }
@@ -992,6 +1034,14 @@ export class MemStorage implements IStorage {
     const newProject: Project = {
       id,
       developerId: project.developerId,
+      queueId: project.queueId || null,
+      source: project.source || "MANUAL",
+      externalDeveloperEntity: project.externalDeveloperEntity || null,
+      queueStatus: project.queueStatus || null,
+      queueSubmittedDate: project.queueSubmittedDate || null,
+      proposedCod: project.proposedCod || null,
+      daysInQueue: project.daysInQueue ?? null,
+      queueIso: project.queueIso || null,
       name: project.name,
       technology: project.technology || "SOLAR",
       stage: project.stage || "PRE_NTP",
@@ -1219,6 +1269,29 @@ export class MemStorage implements IStorage {
     };
     this.approvalLogs.set(id, newLog);
     return newLog;
+  }
+
+  // ─── Admin Notifications ─────────────────────────────────────
+
+  async getAdminNotifications(limit: number = 50): Promise<AdminNotification[]> {
+    return Array.from(this.adminNotifications.values())
+      .sort((a, b) => new Date(b.createdAt!).getTime() - new Date(a.createdAt!).getTime())
+      .slice(0, Math.max(1, limit));
+  }
+
+  async createAdminNotification(notification: InsertAdminNotification): Promise<AdminNotification> {
+    const id = randomUUID();
+    const row: AdminNotification = {
+      id,
+      type: notification.type,
+      title: notification.title,
+      message: notification.message,
+      projectId: notification.projectId || null,
+      payload: notification.payload || null,
+      createdAt: new Date(),
+    };
+    this.adminNotifications.set(id, row);
+    return row;
   }
   // ─── PPAs ──────────────────────────────────────────────────────
 

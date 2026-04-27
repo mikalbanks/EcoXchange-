@@ -9,7 +9,8 @@
     "start": "NODE_ENV=production node dist/index.cjs",
     "check": "tsc",
     "catalog:import": "tsx scripts/import-ca-listings-csv.ts",
-    "db:push": "drizzle-kit push"
+    "db:push": "drizzle-kit push",
+    "grid:sync": "tsx scripts/sync-grid-leads.ts"
   },
   "dependencies": {
     "@hookform/resolvers": "^3.10.0",

@@ -13,6 +13,7 @@ import { settleProject } from "./services/settle-project";
 import { runSgtHandshake } from "./services/sgt-handshake";
 import { csvConnector } from "./services/scada-connector";
 import { validateProjectAgainstEia923, type ValidationResult } from "./lib/validator";
+import { getLiveQueueProjects, submitQueueBuyInterest } from "./lib/queue-sync";
 import { db } from "./db";
 import { accounts as accountsTable, transactions as txTable, postings as postingsTable } from "@shared/schema";
 import { eq, sql as dsql } from "drizzle-orm";
@@ -517,6 +518,42 @@ export async function registerRoutes(
 
   // ═══ Investor Routes ═══
 
+  app.get("/api/investor/live-queue", requireRole("INVESTOR"), async (_req: any, res) => {
+    try {
+      const rows = await getLiveQueueProjects();
+      res.json(rows);
+    } catch (error: any) {
+      console.error("Live queue fetch error:", error);
+      res.status(500).json({ message: error.message || "Failed to fetch live queue" });
+    }
+  });
+
+  app.post("/api/investor/live-queue/:id/buy-interest", requireRole("INVESTOR"), async (req: any, res) => {
+    try {
+      if (req.user.personaStatus !== "completed") {
+        return res.status(403).json({ message: "Identity verification required before submitting buy interest" });
+      }
+
+      const project = await storage.getProject(req.params.id);
+      if (!project || project.source !== "GRID_STATUS_LIVE") {
+        return res.status(404).json({ message: "Live queue project not found" });
+      }
+
+      const payload = req.body || {};
+      const message = payload.message ? String(payload.message) : null;
+
+      const result = await submitQueueBuyInterest({
+        projectId: project.id,
+        investorId: req.user.id,
+        message,
+      });
+      res.json(result);
+    } catch (error: any) {
+      console.error("Live queue buy interest error:", error);
+      res.status(500).json({ message: error.message || "Failed to submit buy interest" });
+    }
+  });
+
   // Browse approved projects (deal list)
   app.get("/api/investor/deals", requireRole("INVESTOR"), async (req: any, res) => {
     const projects = await storage.getProjectsByStatus("APPROVED");
@@ -622,6 +659,16 @@ export async function registerRoutes(
   });
 
   // ═══ Admin Routes ═══
+
+  app.get("/api/admin/notifications", requireRole("ADMIN"), async (_req: any, res) => {
+    try {
+      const notifications = await storage.getAdminNotifications(50);
+      res.json(notifications);
+    } catch (error: any) {
+      console.error("Admin notifications fetch error:", error);
+      res.status(500).json({ message: error.message || "Failed to fetch notifications" });
+    }
+  });
 
   // Admin stats
   app.get("/api/admin/stats", requireRole("ADMIN"), async (req: any, res) => {
