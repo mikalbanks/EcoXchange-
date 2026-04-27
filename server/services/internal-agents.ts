@@ -1,4 +1,6 @@
 import { randomUUID } from "crypto";
+import { readFile, writeFile, mkdir } from "fs/promises";
+import path from "path";
 import { storage } from "../storage";
 
 export type InternalAgentKey =
@@ -89,15 +91,18 @@ class InternalAgentRegistry {
   private agents = new Map<string, InternalAgent>();
   private runs = new Map<string, InternalAgentRun>();
   private seeded = false;
+  private readonly persistenceDir = path.resolve(process.cwd(), ".runtime");
+  private readonly runsFile = path.resolve(this.persistenceDir, "internal-agent-runs.json");
+  private readonly maxPersistedRuns = 500;
 
-  bootstrapDefaultAgents(): InternalAgent[] {
+  async bootstrapDefaultAgents(): Promise<InternalAgent[]> {
     if (this.seeded) {
       return this.listAgents();
     }
 
     for (const seed of DEFAULT_AGENT_SEEDS) {
       const now = new Date();
-      const id = randomUUID();
+      const id = `internal-agent-${seed.key}`;
       const agent: InternalAgent = {
         id,
         ...seed,
@@ -108,6 +113,7 @@ class InternalAgentRegistry {
       this.agents.set(id, agent);
     }
 
+    await this.loadPersistedRuns();
     this.seeded = true;
     return this.listAgents();
   }
@@ -156,6 +162,7 @@ class InternalAgentRegistry {
       run.summary = this.generateSummary(agent, context, output);
       run.finishedAt = finishedAt;
       this.runs.set(runId, run);
+      await this.persistRuns();
       agent.status = "READY";
       agent.updatedAt = finishedAt;
       this.agents.set(agentId, agent);
@@ -167,6 +174,7 @@ class InternalAgentRegistry {
       run.summary = `${agent.name} failed: ${run.error}`;
       run.finishedAt = finishedAt;
       this.runs.set(runId, run);
+      await this.persistRuns();
       agent.status = "READY";
       agent.updatedAt = finishedAt;
       this.agents.set(agentId, agent);
@@ -286,6 +294,14 @@ class InternalAgentRegistry {
         draft: `Hi team, ${lead.projectName} in ${lead.state} looks aligned with our current mandate. Can we schedule a diligence intro this week?`,
       })),
       pipelineGaps: this.identifyPipelineGaps(topLeads),
+      connectorDispatch: await this.dispatchConnector(
+        process.env.INTERNAL_AGENT_CRM_WEBHOOK_URL,
+        {
+          agent: "lead_gen",
+          generatedAt: new Date().toISOString(),
+          leads: topLeads,
+        }
+      ),
     };
   }
 
@@ -418,6 +434,18 @@ class InternalAgentRegistry {
         projectId,
         investorId,
       },
+      connectorDispatch: await this.dispatchConnector(
+        process.env.INTERNAL_AGENT_COMPLIANCE_WEBHOOK_URL,
+        {
+          agent: "compliance_gatekeeper",
+          checkedAt: new Date().toISOString(),
+          complianceVerdict: verdict,
+          requiredControls: controls,
+          escalationReason: escalations,
+          projectId,
+          investorId,
+        }
+      ),
     };
   }
 
@@ -479,6 +507,17 @@ class InternalAgentRegistry {
         owner: "diligence_ops",
         nextReview: new Date(Date.now() + (7 * 24 * 60 * 60 * 1000)).toISOString(),
       },
+      connectorDispatch: await this.dispatchConnector(
+        process.env.INTERNAL_AGENT_DATAROOM_WEBHOOK_URL,
+        {
+          agent: "diligence",
+          generatedAt: new Date().toISOString(),
+          projectId,
+          diligenceScore,
+          conditionsPrecedent,
+          riskMatrix,
+        }
+      ),
     };
   }
 
@@ -497,6 +536,69 @@ class InternalAgentRegistry {
     const annualMwh = capacityMw * 8760 * 0.27;
     const ppaRate = Number(project.ppaRate || "0") || Number(project.marketPpaBenchmarkUsdPerMwh || "0") || 64.49;
     return annualMwh * ppaRate;
+  }
+
+  private async loadPersistedRuns(): Promise<void> {
+    try {
+      const contents = await readFile(this.runsFile, "utf8");
+      const parsed = JSON.parse(contents) as Array<Omit<InternalAgentRun, "createdAt" | "startedAt" | "finishedAt"> & {
+        createdAt: string;
+        startedAt: string | null;
+        finishedAt: string | null;
+      }>;
+      for (const row of parsed) {
+        if (!this.agents.has(row.agentId)) continue;
+        this.runs.set(row.id, {
+          ...row,
+          createdAt: new Date(row.createdAt),
+          startedAt: row.startedAt ? new Date(row.startedAt) : null,
+          finishedAt: row.finishedAt ? new Date(row.finishedAt) : null,
+        });
+      }
+    } catch {
+      // no-op when persistence file doesn't exist yet
+    }
+  }
+
+  private async persistRuns(): Promise<void> {
+    await mkdir(this.persistenceDir, { recursive: true });
+    const rows = Array.from(this.runs.values())
+      .sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime())
+      .slice(0, this.maxPersistedRuns)
+      .map((run) => ({
+        ...run,
+        createdAt: run.createdAt.toISOString(),
+        startedAt: run.startedAt ? run.startedAt.toISOString() : null,
+        finishedAt: run.finishedAt ? run.finishedAt.toISOString() : null,
+      }));
+    await writeFile(this.runsFile, JSON.stringify(rows, null, 2), "utf8");
+  }
+
+  private async dispatchConnector(url: string | undefined, payload: Record<string, unknown>): Promise<Record<string, unknown>> {
+    if (!url) {
+      return { dispatched: false, reason: "connector_url_not_configured" };
+    }
+    try {
+      const controller = new AbortController();
+      const timeout = setTimeout(() => controller.abort(), 5000);
+      const response = await fetch(url, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload),
+        signal: controller.signal,
+      });
+      clearTimeout(timeout);
+      return {
+        dispatched: true,
+        status: response.status,
+        ok: response.ok,
+      };
+    } catch (error: any) {
+      return {
+        dispatched: false,
+        reason: error?.message || "connector_dispatch_failed",
+      };
+    }
   }
 }
 
