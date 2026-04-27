@@ -13,6 +13,7 @@ import { settleProject } from "./services/settle-project";
 import { runSgtHandshake } from "./services/sgt-handshake";
 import { csvConnector } from "./services/scada-connector";
 import { validateProjectAgainstEia923, type ValidationResult } from "./lib/validator";
+import { internalAgentRegistry } from "./services/internal-agents";
 import { db } from "./db";
 import { accounts as accountsTable, transactions as txTable, postings as postingsTable } from "@shared/schema";
 import { eq, sql as dsql } from "drizzle-orm";
@@ -39,6 +40,8 @@ export async function registerRoutes(
   httpServer: Server,
   app: Express
 ): Promise<Server> {
+  internalAgentRegistry.bootstrapDefaultAgents();
+
   app.set("trust proxy", 1);
   app.use(
     session({
@@ -109,6 +112,35 @@ export async function registerRoutes(
 
   app.post("/api/auth/logout", (req: any, res) => {
     req.session.destroy(() => { res.json({ message: "Logged out" }); });
+  });
+
+  // ═══ Internal Agent Routes ═══
+
+  app.get("/api/internal-agents", requireAuth, async (_req: any, res) => {
+    const agents = internalAgentRegistry.listAgents();
+    res.json(agents);
+  });
+
+  app.get("/api/internal-agents/:id", requireAuth, async (req: any, res) => {
+    const agent = internalAgentRegistry.getAgent(req.params.id);
+    if (!agent) return res.status(404).json({ message: "Internal agent not found" });
+    const runs = internalAgentRegistry.listRunsForAgent(agent.id);
+    res.json({ agent, runs });
+  });
+
+  app.post("/api/internal-agents/:id/run", requireAuth, async (req: any, res) => {
+    const context = req.body && typeof req.body === "object"
+      ? (req.body as Record<string, unknown>)
+      : {};
+    try {
+      const run = internalAgentRegistry.runAgent(req.params.id, req.session.userId || null, context);
+      res.json(run);
+    } catch (error: any) {
+      if (error.message === "Agent not found") {
+        return res.status(404).json({ message: error.message });
+      }
+      return res.status(400).json({ message: "Failed to run internal agent" });
+    }
   });
 
   // ═══ Persona Verification Routes ═══
@@ -1598,6 +1630,33 @@ export async function registerRoutes(
     } catch (error: any) {
       res.json({ hasStoredData: false });
     }
+  });
+
+  // ═══ Internal Subagent Routes ═══
+
+  app.get("/api/internal/agents", requireRole("ADMIN"), (_req: any, res) => {
+    const agents = internalAgentRegistry.listAgents();
+    res.json(agents);
+  });
+
+  app.get("/api/internal/agents/:id", requireRole("ADMIN"), (req: any, res) => {
+    const agent = internalAgentRegistry.getAgent(req.params.id);
+    if (!agent) return res.status(404).json({ message: "Agent not found" });
+
+    const runs = internalAgentRegistry.listRunsForAgent(agent.id);
+    res.json({ agent, runs });
+  });
+
+  app.post("/api/internal/agents/:id/run", requireRole("ADMIN"), (req: any, res) => {
+    const agent = internalAgentRegistry.getAgent(req.params.id);
+    if (!agent) return res.status(404).json({ message: "Agent not found" });
+
+    const context = req.body && typeof req.body === "object"
+      ? (req.body as Record<string, unknown>)
+      : {};
+
+    const run = internalAgentRegistry.runAgent(agent.id, req.user?.id ?? null, context);
+    res.json(run);
   });
 
   return httpServer;
