@@ -30,7 +30,7 @@ export function Header() {
     location.startsWith("/market/");
 
   return (
-    <header className="sticky top-0 z-50 w-full border-b border-border/40 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
+    <header className="sticky top-0 z-50 w-full border-b border-border/50 bg-white/95 shadow-sm backdrop-blur supports-[backdrop-filter]:bg-white/80">
       <div className="container mx-auto flex h-16 items-center justify-between px-4 gap-4">
         <Link href="/" className="flex items-center gap-3">
           <img 
@@ -44,26 +44,20 @@ export function Header() {
         {isPublicPage && (
           <>
             <nav className="hidden md:flex items-center gap-6">
-              <Link href="/" className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors" data-testid="link-home">
+              <Link href="/" className="text-sm font-semibold text-muted-foreground hover:text-foreground transition-colors" data-testid="link-home">
                 Home
               </Link>
-              <Link href="/market" className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors" data-testid="link-offerings">
+              <Link href="/market" className="text-sm font-semibold text-muted-foreground hover:text-foreground transition-colors" data-testid="link-offerings">
                 Marketplace
               </Link>
-              <Link href="/performance" className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors" data-testid="link-performance">
-                Performance
+              <Link href="/performance" className="text-sm font-semibold text-muted-foreground hover:text-foreground transition-colors" data-testid="link-performance">
+                Projects
               </Link>
-              <Link href="/auth/login?redirect=/investor" className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors" data-testid="link-investor-dashboard">
-                Investor Dashboard
+              <Link href="/yield-simulation" className="text-sm font-semibold text-muted-foreground hover:text-foreground transition-colors">
+                Resources
               </Link>
-              <Link href="/auth/login?redirect=/developer" className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors" data-testid="link-developer-portal">
-                Developer Portal
-              </Link>
-              <Link href="/auth/login?redirect=/operations" className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors" data-testid="link-operations">
-                Operations
-              </Link>
-              <Link href="/auth/login" className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors" data-testid="link-signin">
-                Sign In
+              <Link href="/about" className="text-sm font-semibold text-muted-foreground hover:text-foreground transition-colors">
+                About
               </Link>
             </nav>
 
@@ -77,26 +71,20 @@ export function Header() {
                 </SheetTrigger>
                 <SheetContent side="right" className="w-64">
                   <nav className="flex flex-col gap-5 mt-8">
-                    <Link href="/" className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors" data-testid="link-mobile-home">
+                    <Link href="/" className="text-sm font-semibold text-muted-foreground hover:text-foreground transition-colors" data-testid="link-mobile-home">
                       Home
                     </Link>
-                    <Link href="/market" className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors" data-testid="link-mobile-marketplace">
+                    <Link href="/market" className="text-sm font-semibold text-muted-foreground hover:text-foreground transition-colors" data-testid="link-mobile-marketplace">
                       Marketplace
                     </Link>
-                    <Link href="/performance" className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors" data-testid="link-mobile-performance">
-                      Performance
+                    <Link href="/performance" className="text-sm font-semibold text-muted-foreground hover:text-foreground transition-colors" data-testid="link-mobile-performance">
+                      Projects
                     </Link>
-                    <Link href="/auth/login?redirect=/investor" className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors" data-testid="link-mobile-investor-dashboard">
-                      Investor Dashboard
+                    <Link href="/yield-simulation" className="text-sm font-semibold text-muted-foreground hover:text-foreground transition-colors">
+                      Resources
                     </Link>
-                    <Link href="/auth/login?redirect=/developer" className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors" data-testid="link-mobile-developer-portal">
-                      Developer Portal
-                    </Link>
-                    <Link href="/auth/login?redirect=/operations" className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors" data-testid="link-mobile-operations">
-                      Operations
-                    </Link>
-                    <Link href="/auth/login" className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors" data-testid="link-mobile-signin">
-                      Sign In
+                    <Link href="/about" className="text-sm font-semibold text-muted-foreground hover:text-foreground transition-colors">
+                      About
                     </Link>
                     <Link href="/auth/signup">
                       <Button className="w-full" size="sm" data-testid="button-mobile-signup">
@@ -150,8 +138,8 @@ export function Header() {
           ) : (
             <>
               <Link href="/auth/login">
-                <Button variant="ghost" size="sm" data-testid="button-login">
-                  Sign in
+                <Button variant="outline" size="sm" data-testid="button-login">
+                  Log In
                 </Button>
               </Link>
               <Link href="/auth/signup">

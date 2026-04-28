@@ -29,19 +29,19 @@ export function StatsCard({
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.3, ease: "easeOut" }}
     >
-    <Card className={cn("relative overflow-visible", className)}>
+    <Card className={cn("relative overflow-visible border-border/80 bg-card/95", className)}>
       <CardHeader className="flex flex-row items-center justify-between gap-2 pb-2">
         <CardTitle className="text-sm font-medium text-muted-foreground">
           {title}
         </CardTitle>
         {Icon && (
-          <div className="flex items-center justify-center w-8 h-8 rounded-md bg-primary/10">
+          <div className="flex items-center justify-center w-9 h-9 rounded-lg bg-primary/10">
             <Icon className="h-4 w-4 text-primary" />
           </div>
         )}
       </CardHeader>
       <CardContent>
-        <div className="text-2xl font-bold" data-testid={`stat-${title.toLowerCase().replace(/\s/g, "-")}`}>
+        <div className="text-3xl font-bold tracking-tight" data-testid={`stat-${title.toLowerCase().replace(/\s/g, "-")}`}>
           {value}
         </div>
         {description && (

@@ -8,66 +8,71 @@ interface StatusBadgeProps {
 }
 
 export function StatusBadge({ status, type = "project", className }: StatusBadgeProps) {
+  const positive = "bg-primary/15 text-primary border-primary/35";
+  const warning = "bg-amber-500/15 text-amber-600 border-amber-500/35";
+  const negative = "bg-red-500/15 text-red-600 border-red-500/35";
+  const neutral = "bg-muted text-muted-foreground border-border";
+
   const getVariant = () => {
     const upperStatus = status.toUpperCase();
     
     if (type === "readiness") {
       switch (upperStatus) {
         case "GREEN":
-          return "bg-emerald-500/20 text-emerald-400 border-emerald-500/30";
+          return positive;
         case "YELLOW":
-          return "bg-yellow-500/20 text-yellow-400 border-yellow-500/30";
+          return warning;
         case "RED":
-          return "bg-red-500/20 text-red-400 border-red-500/30";
+          return negative;
         default:
-          return "bg-muted text-muted-foreground";
+          return neutral;
       }
     }
 
     if (type === "project") {
       switch (upperStatus) {
         case "APPROVED":
-          return "bg-emerald-500/20 text-emerald-400 border-emerald-500/30";
+          return positive;
         case "SUBMITTED":
         case "IN_REVIEW":
-          return "bg-yellow-500/20 text-yellow-400 border-yellow-500/30";
+          return warning;
         case "REJECTED":
-          return "bg-red-500/20 text-red-400 border-red-500/30";
+          return negative;
         case "DRAFT":
         default:
-          return "bg-muted text-muted-foreground";
+          return neutral;
       }
     }
 
     if (type === "interest") {
       switch (upperStatus) {
         case "ACCEPTED_BY_DEV":
-          return "bg-emerald-500/20 text-emerald-400 border-emerald-500/30";
+          return positive;
         case "SUBMITTED":
-          return "bg-yellow-500/20 text-yellow-400 border-yellow-500/30";
+          return warning;
         case "DECLINED_BY_DEV":
-          return "bg-red-500/20 text-red-400 border-red-500/30";
+          return negative;
         case "WITHDRAWN":
-          return "bg-muted text-muted-foreground";
+          return neutral;
         default:
-          return "bg-muted text-muted-foreground";
+          return neutral;
       }
     }
 
     if (type === "checklist") {
       switch (upperStatus) {
         case "VERIFIED":
-          return "bg-emerald-500/20 text-emerald-400 border-emerald-500/30";
+          return positive;
         case "UPLOADED":
-          return "bg-blue-500/20 text-blue-400 border-blue-500/30";
+          return "bg-accent/20 text-accent border-accent/40";
         case "MISSING":
-          return "bg-red-500/20 text-red-400 border-red-500/30";
+          return negative;
         default:
-          return "bg-muted text-muted-foreground";
+          return neutral;
       }
     }
 
-    return "bg-muted text-muted-foreground";
+    return neutral;
   };
 
   const formatStatus = (s: string) => {
