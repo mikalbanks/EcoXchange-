@@ -83,15 +83,15 @@ export function DashboardLayout({
 
   return (
     <SidebarProvider style={style as React.CSSProperties}>
-      <div className="flex min-h-screen w-full bg-gradient-dark">
-        <Sidebar className="border-r border-sidebar-border">
+      <div className="flex min-h-screen w-full bg-muted/20">
+        <Sidebar className="border-r border-sidebar-border bg-sidebar">
           <SidebarHeader className="p-4 border-b border-sidebar-border">
             <Link href="/" className="flex items-center gap-2">
               <div className="flex items-center gap-2">
-                <div className="w-7 h-7 rounded-md bg-primary flex items-center justify-center">
+                <div className="w-8 h-8 rounded-lg bg-sidebar-primary flex items-center justify-center">
                   <span className="text-primary-foreground font-bold text-sm">E</span>
                 </div>
-                <span className="font-semibold text-sidebar-foreground text-sm" data-testid="text-sidebar-brand">EcoXchange</span>
+                <span className="font-semibold text-sidebar-foreground text-sm tracking-tight" data-testid="text-sidebar-brand">EcoXchange</span>
               </div>
             </Link>
           </SidebarHeader>
@@ -111,7 +111,7 @@ export function DashboardLayout({
                           asChild 
                           isActive={isActive}
                           className={cn(
-                            "hover-elevate",
+                            "rounded-md hover-elevate",
                             isActive && "bg-sidebar-accent text-sidebar-accent-foreground"
                           )}
                         >
@@ -133,7 +133,7 @@ export function DashboardLayout({
                   <SidebarMenuItem>
                     <SidebarMenuButton 
                       onClick={logout}
-                      className="text-destructive hover-elevate cursor-pointer"
+                      className="text-destructive hover-elevate cursor-pointer rounded-md"
                       data-testid="button-sidebar-logout"
                     >
                       <LogOut className="h-4 w-4" />
@@ -147,7 +147,7 @@ export function DashboardLayout({
         </Sidebar>
 
         <div className="flex flex-col flex-1 min-w-0">
-          <header className="sticky top-0 z-40 flex h-14 items-center gap-4 border-b border-border/40 bg-background/95 backdrop-blur px-4">
+          <header className="sticky top-0 z-40 flex h-16 items-center gap-4 border-b border-border/60 bg-background/95 backdrop-blur px-4">
             <SidebarTrigger className="lg:hidden" data-testid="button-sidebar-toggle" />
             
             {breadcrumbs && breadcrumbs.length > 0 && (
@@ -170,7 +170,7 @@ export function DashboardLayout({
             <div className="ml-auto flex items-center gap-3">
               {user && (
                 <div className="flex items-center gap-2">
-                  <div className="flex items-center gap-1.5 px-2 py-1 rounded-md bg-muted/50">
+                  <div className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-full bg-muted/50">
                     <Shield className="h-3.5 w-3.5 text-muted-foreground" />
                     <span className="text-xs font-medium text-muted-foreground">{user.role === "DEVELOPER" ? "ISSUER" : user.role}</span>
                   </div>
@@ -183,11 +183,11 @@ export function DashboardLayout({
           </header>
 
           <main className="flex-1 overflow-auto">
-            <div className="container mx-auto p-6 max-w-7xl">
+            <div className="container mx-auto p-6 md:p-8 max-w-7xl">
               {(title || actions) && (
-                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-8">
                   <div>
-                    {title && <h1 className="text-2xl font-semibold" data-testid="text-page-title">{title}</h1>}
+                    {title && <h1 className="text-3xl font-semibold tracking-tight" data-testid="text-page-title">{title}</h1>}
                     {description && <p className="text-muted-foreground mt-1">{description}</p>}
                   </div>
                   {actions && <div className="flex items-center gap-2">{actions}</div>}

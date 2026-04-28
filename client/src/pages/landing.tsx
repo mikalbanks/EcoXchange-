@@ -5,32 +5,16 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
-import { HealthBadge } from "@/components/scada";
-import { 
-  Sun, 
-  Wind, 
-  Zap, 
-  Shield, 
-  TrendingUp, 
+import {
   ArrowRight,
-  Building2,
-  Wallet,
-  Lock,
-  BarChart3,
-  Globe,
-  FileCheck,
-  Layers,
-  CircleDollarSign,
-  Scale,
-  RefreshCw,
-  CheckCircle,
+  Leaf,
+  TrendingUp,
+  Eye,
+  Network,
+  Sun,
   MapPin,
-  Activity,
-  Satellite,
-  PlugZap,
-  Workflow,
-  Landmark,
-  Coins,
+  Zap,
+  Newspaper,
 } from "lucide-react";
 
 interface FeaturedProject {
@@ -43,23 +27,191 @@ interface FeaturedProject {
 
 interface ScadaSummaryData {
   totalProductionMwh: number;
-  totalGrossRevenue: number;
   totalNetRevenue: number;
   avgCapacityFactor: number;
-  periodsReported: number;
   trailing12MonthRevenue: number;
-  provenance: {
-    verificationStatus: string;
-    sourceType: string;
-    providerName: string | null;
-    dataQuality: string;
+}
+
+interface PublicSgtProject {
+  projectId: string;
+  projectName: string;
+  state: string;
+  county: string;
+  capacityMW: number;
+  health: string;
+  sgtEstimated: {
+    avgCapacityFactor: number;
   };
 }
 
+interface PublicSgtProjectsResponse {
+  projects: PublicSgtProject[];
+}
+
+const benefits = [
+  {
+    icon: Leaf,
+    title: "Sustainable Impact",
+    description: "Back utility-scale solar assets that deliver measurable environmental and financial outcomes.",
+  },
+  {
+    icon: TrendingUp,
+    title: "Attractive Returns",
+    description: "Access income-oriented digital securities tied to contracted generation and project cash flows.",
+  },
+  {
+    icon: Eye,
+    title: "Transparent Data",
+    description: "Track production, revenue, and asset health through auditable project-level analytics.",
+  },
+  {
+    icon: Network,
+    title: "Open Access",
+    description: "Connect issuers, investors, and partners in one institutional-grade marketplace.",
+  },
+];
+
+const solutions = [
+  {
+    title: "Tokenization as a Service",
+    description: "Launch compliant, asset-backed digital offerings for solar infrastructure portfolios.",
+  },
+  {
+    title: "Fund Administration",
+    description: "Automate investor operations, cap table governance, and distribution workflows.",
+  },
+  {
+    title: "Digital Asset Reporting",
+    description: "Unify operational telemetry and investor disclosures in a single reporting layer.",
+  },
+  {
+    title: "Enterprise",
+    description: "Deploy EcoXchange infrastructure across institutional clean-energy ecosystems.",
+  },
+];
+
+const partnerLogos = ["Solcast", "Securitize", "GreenLedger", "SolarGrid", "CleanYield", "NovaInfra"];
+
+const inTheNews = [
+  {
+    publication: "Clean Finance Journal",
+    date: "Apr 2026",
+    title: "Institutional capital turns to tokenized solar infrastructure",
+  },
+  {
+    publication: "Energy Markets Weekly",
+    date: "Mar 2026",
+    title: "How digital securities are modernizing renewable project finance",
+  },
+  {
+    publication: "Climate Investor Review",
+    date: "Feb 2026",
+    title: "EcoXchange expands access to infrastructure-backed clean energy investments",
+  },
+];
+
 function formatCompact(num: number): string {
-  if (num >= 1000000) return `$${(num / 1000000).toFixed(1)}M`;
-  if (num >= 1000) return `$${(num / 1000).toFixed(0)}K`;
+  if (num >= 1_000_000_000) return `$${(num / 1_000_000_000).toFixed(1)}B`;
+  if (num >= 1_000_000) return `$${(num / 1_000_000).toFixed(1)}M`;
+  if (num >= 1_000) return `$${(num / 1_000).toFixed(0)}K`;
   return `$${num.toFixed(0)}`;
+}
+
+function HeroSection() {
+  return (
+    <section className="relative isolate overflow-hidden">
+      <div
+        className="absolute inset-0"
+        style={{
+          backgroundImage:
+            "linear-gradient(120deg, rgba(11,29,45,0.88), rgba(11,29,45,0.62)), url('https://images.unsplash.com/photo-1509391366360-2e959784a276?auto=format&fit=crop&w=1800&q=80')",
+          backgroundPosition: "center",
+          backgroundSize: "cover",
+        }}
+        aria-hidden="true"
+      />
+      <div className="relative container mx-auto px-4 py-24 md:py-32">
+        <div className="max-w-4xl text-white">
+          <p className="text-sm md:text-base font-semibold tracking-[0.2em] uppercase text-primary-foreground/80 mb-5">
+            Professional Clean Energy Marketplace
+          </p>
+          <h1 className="text-5xl md:text-6xl lg:text-7xl leading-tight font-bold mb-6" data-testid="text-hero-title">
+            Invest in a cleaner future.
+          </h1>
+          <p className="text-base md:text-xl text-white/85 max-w-2xl mb-10" data-testid="text-hero-subtitle">
+            EcoXchange connects investors with high-quality solar projects through compliant, data-transparent digital securities.
+          </p>
+          <div className="flex flex-col sm:flex-row gap-4">
+            <Link href="/market">
+              <Button size="lg" className="min-w-[210px]" data-testid="button-hero-explore">
+                Explore Projects <ArrowRight className="h-4 w-4" />
+              </Button>
+            </Link>
+            <Link href="/auth/signup">
+              <Button size="lg" variant="outline" className="min-w-[210px] border-white text-white hover:bg-white hover:text-foreground" data-testid="button-hero-create-account">
+                Create Account
+              </Button>
+            </Link>
+          </div>
+        </div>
+      </div>
+    </section>
+  );
+}
+
+function BenefitsSection() {
+  return (
+    <section className="py-20 bg-background">
+      <div className="container mx-auto px-4">
+        <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-6">
+          {benefits.map((benefit) => (
+            <Card key={benefit.title} className="h-full">
+              <CardContent className="p-6">
+                <benefit.icon className="h-8 w-8 text-primary mb-4" aria-hidden="true" />
+                <h3 className="text-xl font-semibold mb-3">{benefit.title}</h3>
+                <p className="text-muted-foreground text-sm leading-relaxed">{benefit.description}</p>
+              </CardContent>
+            </Card>
+          ))}
+        </div>
+      </div>
+    </section>
+  );
+}
+
+function OpportunitySection() {
+  return (
+    <section className="py-20 bg-muted/35">
+      <div className="container mx-auto px-4">
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-10 items-start">
+          <div>
+            <h2 className="text-4xl font-bold mb-5">The Solar Market Opportunity</h2>
+            <p className="text-muted-foreground text-lg mb-4">
+              Global clean-energy investment is accelerating as utility-scale solar and storage become core infrastructure assets.
+            </p>
+            <p className="text-muted-foreground">
+              EcoXchange gives accredited investors a structured path to participate in growth, with transparent reporting and project-level underwriting context.
+            </p>
+          </div>
+          <div className="grid grid-cols-2 gap-4">
+            {[
+              { value: "$1.4T+", label: "Global solar investment by 2030" },
+              { value: "28%", label: "Projected solar CAGR" },
+              { value: "500GW+", label: "New annual renewable capacity by decade end" },
+              { value: "24/7", label: "Performance visibility and reporting" },
+            ].map((metric) => (
+              <Card key={metric.label} className="bg-card">
+                <CardContent className="p-6">
+                  <p className="text-3xl font-bold text-primary mb-2">{metric.value}</p>
+                  <p className="text-sm text-muted-foreground leading-snug">{metric.label}</p>
+                </CardContent>
+              </Card>
+            ))}
+          </div>
+        </div>
+      </div>
+    </section>
+  );
 }
 
 function FeaturedProjectSection() {
@@ -67,7 +219,7 @@ function FeaturedProjectSection() {
     queryKey: ["/api/public/projects/featured"],
     queryFn: async () => {
       const res = await fetch("/api/public/projects/featured", { credentials: "include" });
-      if (!res.ok) throw new Error("Failed");
+      if (!res.ok) throw new Error("Failed to fetch featured project");
       return res.json();
     },
     staleTime: 120000,
@@ -79,7 +231,7 @@ function FeaturedProjectSection() {
     queryKey: ["/api/public/projects", featuredProjectId, "scada", "summary"],
     queryFn: async () => {
       const res = await fetch(`/api/public/projects/${featuredProjectId}/scada/summary`, { credentials: "include" });
-      if (!res.ok) throw new Error("Failed");
+      if (!res.ok) throw new Error("Failed to fetch project summary");
       return res.json();
     },
     enabled: !!featuredProjectId,
@@ -87,91 +239,72 @@ function FeaturedProjectSection() {
   });
 
   return (
-    <section className="py-20">
+    <section className="py-20 bg-background">
       <div className="container mx-auto px-4">
         <div className="text-center mb-12">
-          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-primary/10 border border-primary/20 mb-4">
-            <Activity className="h-3.5 w-3.5 text-primary" />
-            <span className="text-sm font-medium text-primary">Live SCADA Data</span>
-          </div>
-          <h2 className="text-3xl font-bold mb-4" data-testid="text-featured-title">Featured Project</h2>
+          <h2 className="text-4xl font-bold mb-4">Featured Solar Offering</h2>
           <p className="text-muted-foreground max-w-2xl mx-auto">
-            Real-time production data from Solcast Sky Oracle-verified solar installations
+            Real operational metrics from a live project in the EcoXchange marketplace.
           </p>
         </div>
 
-        <Card className="max-w-4xl mx-auto relative overflow-hidden">
-          <div className="absolute inset-0 bg-gradient-to-br from-primary/5 to-transparent pointer-events-none" />
-          <CardContent className="p-6 md:p-8 relative">
+        <Card className="max-w-5xl mx-auto overflow-hidden">
+          <div
+            className="h-56"
+            style={{
+              backgroundImage:
+                "linear-gradient(180deg, rgba(11,29,45,0.2), rgba(11,29,45,0.7)), url('https://images.unsplash.com/photo-1466611653911-95081537e5b7?auto=format&fit=crop&w=1600&q=80')",
+              backgroundPosition: "center",
+              backgroundSize: "cover",
+            }}
+            aria-label="Solar project image"
+          />
+          <CardContent className="p-6 md:p-8">
             <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-6">
-              <div className="flex items-center gap-4">
-                <div className="flex items-center justify-center w-12 h-12 rounded-xl bg-primary/10 text-primary">
-                  <Sun className="h-6 w-6" />
-                </div>
-                <div>
-                  <h3 className="text-xl font-bold" data-testid="text-featured-name">
-                    {featuredProject?.name || "Featured Institutional Project"}
-                  </h3>
-                  <div className="flex items-center gap-3 text-sm text-muted-foreground mt-0.5">
-                    <span className="flex items-center gap-1">
-                      <MapPin className="h-3 w-3" /> {featuredProject?.county && featuredProject?.state ? `${featuredProject.county}, ${featuredProject.state}` : "California"}
-                    </span>
-                    <span className="flex items-center gap-1">
-                      <Zap className="h-3 w-3" /> {featuredProject ? `${featuredProject.capacityMW.toFixed(2)} MW` : "N/A"}
-                    </span>
-                  </div>
-                </div>
+              <div>
+                <h3 className="text-2xl font-semibold" data-testid="text-featured-name">{featuredProject?.name || "Featured Institutional Solar Project"}</h3>
+                <p className="text-sm text-muted-foreground mt-1 flex items-center gap-3">
+                  <span className="inline-flex items-center gap-1"><MapPin className="h-3.5 w-3.5" />{featuredProject?.county && featuredProject?.state ? `${featuredProject.county}, ${featuredProject.state}` : "California"}</span>
+                  <span className="inline-flex items-center gap-1"><Zap className="h-3.5 w-3.5" />{featuredProject ? `${featuredProject.capacityMW.toFixed(2)} MW` : "N/A"}</span>
+                </p>
               </div>
-              <div className="flex items-center gap-2">
-                {featuredProjectId ? <HealthBadge projectId={featuredProjectId} size="md" usePublicApi /> : null}
-              </div>
+              <Badge className="w-fit">Active</Badge>
             </div>
 
             {isLoading ? (
               <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                {[...Array(4)].map((_, i) => <Skeleton key={i} className="h-20 w-full rounded-lg" />)}
+                {[...Array(4)].map((_, i) => (
+                  <Skeleton key={i} className="h-24 w-full rounded-lg" />
+                ))}
               </div>
-            ) : data && data.periodsReported > 0 ? (
-              <>
-                <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
-                  <div className="rounded-lg bg-muted/30 p-4">
-                    <p className="text-xs text-muted-foreground flex items-center gap-1"><Zap className="h-3 w-3" /> Production</p>
-                    <p className="text-lg font-bold mt-1" data-testid="text-featured-production">{data.totalProductionMwh.toLocaleString()} MWh</p>
-                    <p className="text-xs text-muted-foreground">{data.periodsReported} months</p>
-                  </div>
-                  <div className="rounded-lg bg-muted/30 p-4">
-                    <p className="text-xs text-muted-foreground flex items-center gap-1"><TrendingUp className="h-3 w-3" /> Net Revenue</p>
-                    <p className="text-lg font-bold mt-1" data-testid="text-featured-revenue">{formatCompact(data.totalNetRevenue)}</p>
-                  </div>
-                  <div className="rounded-lg bg-muted/30 p-4">
-                    <p className="text-xs text-muted-foreground flex items-center gap-1"><BarChart3 className="h-3 w-3" /> Capacity Factor</p>
-                    <p className="text-lg font-bold mt-1" data-testid="text-featured-capacity">{(data.avgCapacityFactor * 100).toFixed(1)}%</p>
-                  </div>
-                  <div className="rounded-lg bg-muted/30 p-4">
-                    <p className="text-xs text-muted-foreground flex items-center gap-1"><Activity className="h-3 w-3" /> Trailing 12m</p>
-                    <p className="text-lg font-bold mt-1" data-testid="text-featured-trailing">{formatCompact(data.trailing12MonthRevenue)}</p>
-                  </div>
+            ) : data ? (
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                <div className="rounded-xl bg-muted/40 p-4">
+                  <p className="text-xs uppercase tracking-wide text-muted-foreground">Production</p>
+                  <p className="text-lg font-semibold" data-testid="text-featured-production">{data.totalProductionMwh.toLocaleString()} MWh</p>
                 </div>
-
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-2 text-xs text-muted-foreground">
-                    <Badge variant="outline" className="text-[10px] bg-emerald-500/20 text-emerald-400 border-emerald-500/50">
-                      {data.provenance.verificationStatus.replace(/_/g, " ")}
-                    </Badge>
-                    <span>{data.provenance.providerName || data.provenance.sourceType.replace(/_/g, " ")}</span>
-                  </div>
-                  <Link href="/performance">
-                    <Button variant="outline" size="sm" className="gap-1" data-testid="button-view-performance">
-                      View Full Performance <ArrowRight className="h-3.5 w-3.5" />
-                    </Button>
-                  </Link>
+                <div className="rounded-xl bg-muted/40 p-4">
+                  <p className="text-xs uppercase tracking-wide text-muted-foreground">Net Revenue</p>
+                  <p className="text-lg font-semibold" data-testid="text-featured-revenue">{formatCompact(data.totalNetRevenue)}</p>
                 </div>
-              </>
+                <div className="rounded-xl bg-muted/40 p-4">
+                  <p className="text-xs uppercase tracking-wide text-muted-foreground">Capacity Factor</p>
+                  <p className="text-lg font-semibold" data-testid="text-featured-capacity">{(data.avgCapacityFactor * 100).toFixed(1)}%</p>
+                </div>
+                <div className="rounded-xl bg-muted/40 p-4">
+                  <p className="text-xs uppercase tracking-wide text-muted-foreground">Trailing 12m</p>
+                  <p className="text-lg font-semibold" data-testid="text-featured-trailing">{formatCompact(data.trailing12MonthRevenue)}</p>
+                </div>
+              </div>
             ) : (
-              <div className="text-center py-8">
-                <p className="text-sm text-muted-foreground">Performance data loading...</p>
-              </div>
+              <p className="text-sm text-muted-foreground">Performance data loading...</p>
             )}
+
+            <div className="mt-6 flex justify-end">
+              <Link href="/performance">
+                <Button variant="link" className="p-0" data-testid="button-view-performance">View Full Performance <ArrowRight className="h-4 w-4" /></Button>
+              </Link>
+            </div>
           </CardContent>
         </Card>
       </div>
@@ -179,240 +312,69 @@ function FeaturedProjectSection() {
   );
 }
 
-interface PipelineProject {
-  projectId: string;
-  projectName: string;
-  capacityMW: string;
-  state: string;
-  pipeline: {
-    skyOracle: { status: string; provider: string };
-    utilityShadow: { status: string; provider: string };
-    sgtHandshake: { status: string; provider: string };
-    waterfallEngine: { status: string; provider: string };
-    securitizeBridge: { status: string; provider: string };
-  };
-}
-
-interface PipelineStatus {
-  pipelineVersion: string;
-  totalProjects: number;
-  solcastConnected: boolean;
-  utilityShadowActive: boolean;
-  projects: PipelineProject[];
-}
-
-interface PublicSgtProject {
-  projectId: string;
-  projectName: string;
-  state: string;
-  county: string;
-  technology: string;
-  capacityMW: number;
-  health: string;
-  sgtEstimated: {
-    trailing12MonthRevenue: number;
-    annualizedProductionMwh: number;
-    avgCapacityFactor: number;
-    next12MonthProductionMwh: number;
-    next12MonthRevenueUsd: number;
-  };
-}
-
-interface PublicSgtProjectsResponse {
-  generatedAt: string;
-  projectCount: number;
-  projects: PublicSgtProject[];
-  featuredProjectId: string | null;
-}
-
-function PipelineStageIcon({ stage }: { stage: string }) {
-  switch (stage) {
-    case "skyOracle": return <Satellite className="h-5 w-5" />;
-    case "utilityShadow": return <PlugZap className="h-5 w-5" />;
-    case "sgtHandshake": return <Workflow className="h-5 w-5" />;
-    case "waterfallEngine": return <Landmark className="h-5 w-5" />;
-    case "securitizeBridge": return <Coins className="h-5 w-5" />;
-    default: return <Activity className="h-5 w-5" />;
-  }
-}
-
-function StatusDot({ status }: { status: string }) {
-  const color = status === "CONNECTED" || status === "ACTIVE" || status === "READY" || status === "CONFIGURED"
-    ? "bg-emerald-400"
-    : status === "FALLBACK_MODE" || status === "MOCK"
-    ? "bg-yellow-400"
-    : "bg-muted-foreground";
-  return <span className={`inline-block w-2 h-2 rounded-full ${color}`} />;
-}
-
-const PIPELINE_STAGES = [
-  { key: "skyOracle", label: "Sky Oracle", desc: "Satellite PV telemetry from Solcast — real-time solar irradiance and power estimates for any GPS coordinate" },
-  { key: "utilityShadow", label: "Utility Shadow", desc: "Simulated net meter data scaling consumption by project size — C&I vs utility-scale profiles with realistic noise" },
-  { key: "sgtHandshake", label: "SGT Handshake", desc: "Reconciles satellite solar estimates with net meter readings to produce verified 15-minute SGT intervals" },
-  { key: "waterfallEngine", label: "Waterfall Engine", desc: "Double-entry ledger distributing daily revenue through debt service, OpEx, reserves, platform fee, and investor yield" },
-  { key: "securitizeBridge", label: "Securitize Bridge", desc: "RWA protocol bridge for on-chain yield distribution to tokenized security holders" },
-];
-
-function SgtPipelineSection() {
-  const { data, isLoading } = useQuery<PipelineStatus>({
-    queryKey: ["/api/public/sgt-pipeline-status"],
-    queryFn: async () => {
-      const res = await fetch("/api/public/sgt-pipeline-status");
-      if (!res.ok) throw new Error("Failed");
-      return res.json();
-    },
-    staleTime: 120000,
-  });
-
-  return (
-    <section className="py-20 bg-card/30">
-      <div className="container mx-auto px-4">
-        <div className="text-center mb-12">
-          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-primary/10 border border-primary/20 mb-4">
-            <Workflow className="h-3.5 w-3.5 text-primary" />
-            <span className="text-sm font-medium text-primary">SGT Pipeline</span>
-          </div>
-          <h2 className="text-3xl font-bold mb-4" data-testid="text-pipeline-title">
-            Institutional Revenue Infrastructure
-          </h2>
-          <p className="text-muted-foreground max-w-2xl mx-auto">
-            Five-stage telemetry-to-yield pipeline connecting satellite data to investor distributions in real time
-          </p>
-        </div>
-
-        <div className="max-w-5xl mx-auto">
-          <div className="grid grid-cols-1 md:grid-cols-5 gap-3 mb-10">
-            {PIPELINE_STAGES.map((stage, i) => (
-              <div key={stage.key} className="relative">
-                <Card className="h-full group hover-elevate relative overflow-visible">
-                  <CardContent className="pt-5 pb-4 px-4 text-center">
-                    <div className="flex items-center justify-center w-10 h-10 rounded-full bg-primary/10 mx-auto mb-3 group-hover:glow-lime transition-all">
-                      <PipelineStageIcon stage={stage.key} />
-                    </div>
-                    <h4 className="text-sm font-semibold mb-1">{stage.label}</h4>
-                    <p className="text-[11px] text-muted-foreground leading-tight">{stage.desc}</p>
-                  </CardContent>
-                </Card>
-                {i < PIPELINE_STAGES.length - 1 && (
-                  <div className="hidden md:flex absolute top-1/2 -right-3 transform -translate-y-1/2 z-10">
-                    <ArrowRight className="h-4 w-4 text-primary/50" />
-                  </div>
-                )}
-              </div>
-            ))}
-          </div>
-
-          {isLoading ? (
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              {[1, 2].map((i) => <Skeleton key={i} className="h-32 w-full rounded-lg" />)}
-            </div>
-          ) : data && data.projects.length > 0 ? (
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              {data.projects.map((proj) => (
-                <Card key={proj.projectId} data-testid={`card-pipeline-${proj.projectId}`}>
-                  <CardContent className="pt-5 pb-4">
-                    <div className="flex items-center justify-between mb-3">
-                      <div>
-                        <h4 className="font-medium text-sm" data-testid={`text-pipeline-name-${proj.projectId}`}>{proj.projectName}</h4>
-                        <p className="text-xs text-muted-foreground">{proj.state} · {proj.capacityMW} MW</p>
-                      </div>
-                      <Badge variant="outline" className="text-[10px]">{data.pipelineVersion}</Badge>
-                    </div>
-                    <div className="space-y-1.5">
-                      {Object.entries(proj.pipeline).map(([key, val]) => (
-                        <div key={key} className="flex items-center justify-between text-xs">
-                          <span className="text-muted-foreground">{PIPELINE_STAGES.find(s => s.key === key)?.label || key}</span>
-                          <span className="flex items-center gap-1.5">
-                            <StatusDot status={val.status} />
-                            <span className={val.status === "CONNECTED" || val.status === "ACTIVE" || val.status === "READY" || val.status === "CONFIGURED" ? "text-emerald-400" : val.status === "MOCK" || val.status === "FALLBACK_MODE" ? "text-yellow-400" : "text-muted-foreground"}>
-                              {val.status.replace(/_/g, " ")}
-                            </span>
-                          </span>
-                        </div>
-                      ))}
-                    </div>
-                  </CardContent>
-                </Card>
-              ))}
-            </div>
-          ) : (
-            <Card>
-              <CardContent className="py-8 text-center text-sm text-muted-foreground">
-                <p>Pipeline status loading...</p>
-              </CardContent>
-            </Card>
-          )}
-        </div>
-      </div>
-    </section>
-  );
-}
-
-function PublicProjectMetricsSection() {
+function ProjectsSection() {
   const { data, isLoading } = useQuery<PublicSgtProjectsResponse>({
     queryKey: ["/api/public/projects/sgt-metrics"],
     queryFn: async () => {
-      const res = await fetch("/api/public/projects/sgt-metrics");
-      if (!res.ok) throw new Error("Failed");
+      const res = await fetch("/api/public/projects/sgt-metrics", { credentials: "include" });
+      if (!res.ok) throw new Error("Failed to fetch metrics");
       return res.json();
     },
     staleTime: 120000,
   });
 
   return (
-    <section className="py-20">
+    <section className="py-20 bg-muted/25">
       <div className="container mx-auto px-4">
-        <div className="text-center mb-12">
-          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-primary/10 border border-primary/20 mb-4">
-            <BarChart3 className="h-3.5 w-3.5 text-primary" />
-            <span className="text-sm font-medium text-primary">SGT Estimated Metrics</span>
+        <div className="flex flex-col md:flex-row md:items-end justify-between gap-4 mb-12">
+          <div>
+            <h2 className="text-4xl font-bold mb-2">Projects & Offerings</h2>
+            <p className="text-muted-foreground">Evaluate active and pipeline solar opportunities in one marketplace.</p>
           </div>
-          <h2 className="text-3xl font-bold mb-4">Live Projects From Our Database</h2>
-          <p className="text-muted-foreground max-w-2xl mx-auto">
-            Approved projects with institutional 1 MW+ filtering and SGT-derived production and revenue estimates.
-          </p>
+          <Link href="/market">
+            <Button variant="outline">Browse Marketplace</Button>
+          </Link>
         </div>
 
         {isLoading ? (
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            {[...Array(2)].map((_, i) => <Skeleton key={i} className="h-52 w-full rounded-lg" />)}
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            {[...Array(3)].map((_, i) => (
+              <Skeleton key={i} className="h-[340px] w-full rounded-xl" />
+            ))}
           </div>
-        ) : data && data.projects.length > 0 ? (
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 max-w-5xl mx-auto">
-            {data.projects.map((project) => (
+        ) : data?.projects?.length ? (
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            {data.projects.slice(0, 6).map((project) => (
               <Card key={project.projectId} data-testid={`card-public-project-${project.projectId}`}>
-                <CardContent className="pt-5 pb-4">
-                  <div className="flex items-start justify-between mb-3 gap-3">
-                    <div>
-                      <h4 className="font-semibold text-base">{project.projectName}</h4>
-                      <p className="text-xs text-muted-foreground">
-                        {project.state}, {project.county} · {project.capacityMW} MW · {project.technology.replace(/_/g, " ")}
-                      </p>
-                    </div>
-                    <div className="flex items-center gap-2">
-                      {data.featuredProjectId === project.projectId && (
-                        <Badge className="text-[10px]">Featured Asset</Badge>
-                      )}
-                      <Badge variant="outline" className="text-[10px]">{project.health}</Badge>
-                    </div>
+                <div
+                  className="h-44"
+                  style={{
+                    backgroundImage:
+                      "linear-gradient(180deg, rgba(11,29,45,0.1), rgba(11,29,45,0.7)), url('https://images.unsplash.com/photo-1497440001374-f26997328c1b?auto=format&fit=crop&w=1000&q=80')",
+                    backgroundPosition: "center",
+                    backgroundSize: "cover",
+                  }}
+                  aria-label="Project image"
+                />
+                <CardContent className="p-6">
+                  <div className="flex items-start justify-between gap-3 mb-4">
+                    <h3 className="text-lg font-semibold leading-snug">{project.projectName}</h3>
+                    <Badge variant="outline">{project.health}</Badge>
                   </div>
-                  <div className="grid grid-cols-2 gap-3 text-sm">
-                    <div className="rounded-lg bg-muted/30 p-3">
-                      <p className="text-xs text-muted-foreground">Next 12m Revenue</p>
-                      <p className="font-semibold">{formatCompact(project.sgtEstimated.next12MonthRevenueUsd)}</p>
-                    </div>
-                    <div className="rounded-lg bg-muted/30 p-3">
-                      <p className="text-xs text-muted-foreground">Next 12m Production</p>
-                      <p className="font-semibold">{project.sgtEstimated.next12MonthProductionMwh.toLocaleString()} MWh</p>
-                    </div>
-                    <div className="rounded-lg bg-muted/30 p-3">
-                      <p className="text-xs text-muted-foreground">Trailing 12m Revenue</p>
-                      <p className="font-semibold">{formatCompact(project.sgtEstimated.trailing12MonthRevenue)}</p>
-                    </div>
-                    <div className="rounded-lg bg-muted/30 p-3">
-                      <p className="text-xs text-muted-foreground">Avg Capacity Factor</p>
-                      <p className="font-semibold">{(project.sgtEstimated.avgCapacityFactor * 100).toFixed(1)}%</p>
-                    </div>
+                  <div className="grid grid-cols-2 gap-x-4 gap-y-2 text-sm">
+                    <p className="text-muted-foreground">Location</p>
+                    <p className="text-right font-medium">{project.county}, {project.state}</p>
+                    <p className="text-muted-foreground">Capacity</p>
+                    <p className="text-right font-medium">{project.capacityMW} MW</p>
+                    <p className="text-muted-foreground">Target Return</p>
+                    <p className="text-right font-medium">{(project.sgtEstimated.avgCapacityFactor * 100).toFixed(1)}% CF</p>
+                    <p className="text-muted-foreground">Minimum</p>
+                    <p className="text-right font-medium">$25,000</p>
+                  </div>
+                  <div className="mt-4 pt-4 border-t border-border/60 flex justify-end">
+                    <Link href="/market" className="text-sm font-semibold text-primary inline-flex items-center gap-1 hover:underline">
+                      View Project <ArrowRight className="h-4 w-4" />
+                    </Link>
                   </div>
                 </CardContent>
               </Card>
@@ -420,9 +382,7 @@ function PublicProjectMetricsSection() {
           </div>
         ) : (
           <Card>
-            <CardContent className="py-8 text-center text-sm text-muted-foreground">
-              <p>No approved projects with SGT metrics are available yet.</p>
-            </CardContent>
+            <CardContent className="p-8 text-center text-muted-foreground">No approved projects with public metrics are available yet.</CardContent>
           </Card>
         )}
       </div>
@@ -430,511 +390,192 @@ function PublicProjectMetricsSection() {
   );
 }
 
-export default function LandingPage() {
+function SolutionsSection() {
   return (
-    <div className="min-h-screen bg-gradient-dark-green">
-      <Header />
-      
-      {/* Hero Section */}
-      <section className="relative overflow-hidden">
-        <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top,rgba(115,172,32,0.15),transparent_50%)]" />
-        <div className="container mx-auto px-4 py-20 md:py-32 relative">
-          <div className="max-w-4xl mx-auto text-center">
-            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-primary/10 border border-primary/20 mb-6">
-              <img src="/brand/ecoxchange-logo.png" alt="" className="h-4 w-auto" data-testid="img-hero-badge-logo" />
-              <span className="text-sm font-medium text-primary">Digital Securities Platform</span>
+    <section className="py-20 bg-background">
+      <div className="container mx-auto px-4">
+        <h2 className="text-4xl font-bold mb-10">Solutions</h2>
+        <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-6">
+          {solutions.map((solution, index) => (
+            <Card key={solution.title} className="relative overflow-hidden text-white min-h-[240px]">
+              <div
+                className="absolute inset-0"
+                style={{
+                  backgroundImage:
+                    "linear-gradient(180deg, rgba(11,29,45,0.45), rgba(11,29,45,0.88)), url('https://images.unsplash.com/photo-1473341304170-971dccb5ac1e?auto=format&fit=crop&w=1000&q=80')",
+                  backgroundPosition: `${20 + index * 15}% center`,
+                  backgroundSize: "cover",
+                }}
+              />
+              <CardContent className="relative z-10 p-6 h-full flex flex-col justify-end">
+                <h3 className="text-xl font-semibold mb-2">{solution.title}</h3>
+                <p className="text-sm text-white/85 mb-4">{solution.description}</p>
+                <a className="text-sm font-semibold inline-flex items-center gap-1 hover:underline" href="/auth/login">
+                  Learn More <ArrowRight className="h-4 w-4" />
+                </a>
+              </CardContent>
+            </Card>
+          ))}
+        </div>
+      </div>
+    </section>
+  );
+}
+
+function EcosystemSection() {
+  return (
+    <section className="py-20 bg-muted/35">
+      <div className="container mx-auto px-4 text-center">
+        <h2 className="text-4xl font-bold mb-3">Powered by industry partners</h2>
+        <p className="text-muted-foreground max-w-2xl mx-auto mb-10">
+          EcoXchange integrates institutional technology and energy-data providers to power compliant digital infrastructure.
+        </p>
+        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4 mb-8">
+          {partnerLogos.map((partner) => (
+            <div key={partner} className="rounded-xl border border-border bg-card py-5 px-3 text-sm font-semibold text-foreground/85">
+              {partner}
             </div>
-            
-            <h1 className="text-4xl md:text-6xl font-bold tracking-tight mb-6" data-testid="text-hero-title">
-              Invest in Digital Renewable
-              <span className="block text-transparent bg-clip-text bg-gradient-to-r from-primary to-accent mt-2">
-                Energy Securities
-              </span>
-            </h1>
-            
-            <p className="text-lg md:text-xl text-muted-foreground max-w-2xl mx-auto mb-4" data-testid="text-hero-subtitle">
-              EcoXchange tokenizes renewable energy project SPV membership interests into regulated securities and distributes yield based on real-world energy production.
-            </p>
-            <p className="text-sm text-muted-foreground max-w-xl mx-auto mb-10">
-              Asset-backed digital securities structured under Reg D 506(c) with yield from solar PPAs and contracted energy revenues.
-            </p>
-            
-            <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
-              <Link href="/auth/signup?role=investor">
-                <Button size="lg" className="min-w-[200px] gap-2" data-testid="button-cta-investor">
-                  <Wallet className="h-5 w-5" />
-                  Start Investing
-                  <ArrowRight className="h-4 w-4" />
-                </Button>
-              </Link>
-              <Link href="/auth/signup?role=developer">
-                <Button size="lg" variant="outline" className="min-w-[200px] gap-2" data-testid="button-cta-developer">
-                  <Building2 className="h-5 w-5" />
-                  Tokenize a Project
-                </Button>
-              </Link>
-            </div>
-          </div>
+          ))}
         </div>
-      </section>
+        <Button variant="outline">Explore Ecosystem</Button>
+      </div>
+    </section>
+  );
+}
 
-      {/* Product Pillars */}
-      <section id="pillars" className="py-20 border-t border-border/40 scroll-mt-20">
-        <div className="container mx-auto px-4">
-          <div className="text-center mb-12">
-            <h2 className="text-3xl font-bold mb-4" data-testid="text-pillars-title">Platform Pillars</h2>
-            <p className="text-muted-foreground max-w-2xl mx-auto">
-              Five foundational pillars powering a compliant digital securities platform for renewable energy
-            </p>
-          </div>
-          
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 max-w-6xl mx-auto">
-            {[
-              {
-                icon: Layers,
-                title: "Digital Securities Issuance",
-                desc: "Tokenized renewable energy securities with offering management workflows, cap table tracking, and compliance gating.",
-              },
-              {
-                icon: TrendingUp,
-                title: "Yield Infrastructure",
-                desc: "Revenue ingestion from projects, production-based yield calculations, automated distribution logic, and transparent reporting.",
-              },
-              {
-                icon: Globe,
-                title: "Investment Infrastructure",
-                desc: "Investor onboarding, project discovery, offering participation, investor dashboards, and future secondary trading rails.",
-              },
-              {
-                icon: Shield,
-                title: "Compliance-First Architecture",
-                desc: "KYC/AML verification, broker-dealer/ATS pathway, transfer agent and custodian integrations, and securities transfer restrictions.",
-              },
-              {
-                icon: RefreshCw,
-                title: "Liquidity Layer",
-                desc: "Compliant secondary trading environment with programmatic transfer restrictions and holding period logic.",
-                badge: "Coming Soon",
-              },
-            ].map((pillar) => (
-              <Card key={pillar.title} className="group hover-elevate relative overflow-visible">
-                <CardContent className="pt-6">
-                  <div className="flex items-center justify-center w-14 h-14 rounded-full bg-primary/10 mx-auto mb-4 group-hover:glow-lime transition-all">
-                    <pillar.icon className="h-7 w-7 text-primary" />
-                  </div>
-                  <div className="text-center">
-                    <div className="flex items-center justify-center gap-2 mb-2">
-                      <h3 className="font-semibold text-lg">{pillar.title}</h3>
-                      {pillar.badge && (
-                        <Badge variant="secondary" className="text-xs">{pillar.badge}</Badge>
-                      )}
-                    </div>
-                    <p className="text-sm text-muted-foreground">{pillar.desc}</p>
-                  </div>
-                </CardContent>
-              </Card>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      {/* Asset Classes */}
-      <section className="py-20 bg-card/30">
-        <div className="container mx-auto px-4">
-          <div className="text-center mb-12">
-            <h2 className="text-3xl font-bold mb-4">Asset Classes</h2>
-            <p className="text-muted-foreground max-w-2xl mx-auto">
-              Digitized securities backed by diversified renewable energy infrastructure
-            </p>
-          </div>
-          
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 max-w-4xl mx-auto">
-            <Card className="group hover-elevate relative overflow-visible">
-              <CardContent className="pt-6 text-center">
-                <div className="flex items-center justify-center w-14 h-14 rounded-full bg-accent/10 mx-auto mb-4 group-hover:glow-lime transition-all">
-                  <Sun className="h-7 w-7 text-accent" />
-                </div>
-                <h3 className="font-semibold text-lg mb-2">Solar</h3>
-                <p className="text-sm text-muted-foreground">
-                  Utility-scale and distributed solar with yield from long-term PPAs
-                </p>
-              </CardContent>
-            </Card>
-            
-            <Card className="group hover-elevate relative overflow-visible">
-              <CardContent className="pt-6 text-center">
-                <div className="flex items-center justify-center w-14 h-14 rounded-full bg-primary/10 mx-auto mb-4 group-hover:glow-lime transition-all">
-                  <Wind className="h-7 w-7 text-primary" />
-                </div>
-                <h3 className="font-semibold text-lg mb-2">Wind</h3>
-                <p className="text-sm text-muted-foreground">
-                  Onshore and offshore wind farms with structured cash flow distributions
-                </p>
-              </CardContent>
-            </Card>
-            
-            <Card className="group hover-elevate relative overflow-visible">
-              <CardContent className="pt-6 text-center">
-                <div className="flex items-center justify-center w-14 h-14 rounded-full bg-secondary/20 mx-auto mb-4 group-hover:glow-lime transition-all">
-                  <Zap className="h-7 w-7 text-primary" />
-                </div>
-                <h3 className="font-semibold text-lg mb-2">Storage</h3>
-                <p className="text-sm text-muted-foreground">
-                  Battery storage paired with solar for firm capacity and revenue stacking
-                </p>
-              </CardContent>
-            </Card>
-          </div>
-        </div>
-      </section>
-
-      {/* Featured Project — Live SCADA */}
-      <FeaturedProjectSection />
-
-      {/* Public DB-backed project metrics */}
-      <PublicProjectMetricsSection />
-
-      {/* Sample Offering + Features */}
-      <section className="py-20">
-        <div className="container mx-auto px-4">
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
-            <div>
-              <h2 className="text-3xl font-bold mb-6">
-                Institutional-Grade Digital Securities
-              </h2>
-              <p className="text-muted-foreground mb-8">
-                EcoXchange provides compliant infrastructure for digital securities issuance, yield distribution, and investment participation. Each project is held in a dedicated SPV (Delaware LLC) with tokenized membership interests.
-              </p>
-              
-              <div className="space-y-4">
+function InsightsSection() {
+  return (
+    <section className="py-20 bg-background">
+      <div className="container mx-auto px-4">
+        <div className="grid grid-cols-1 xl:grid-cols-2 gap-10">
+          <Card>
+            <CardContent className="p-8">
+              <div className="flex items-center justify-between gap-4 mb-6">
+                <h3 className="text-2xl font-semibold">Company Announcements</h3>
+                <Button variant="outline" size="sm">View All Announcements</Button>
+              </div>
+              <div className="space-y-6">
                 {[
-                  { icon: Lock, title: "Compliance-First", desc: "KYC/AML verification, broker-dealer alignment, and regulatory-aware architecture" },
-                  { icon: CircleDollarSign, title: "Yield Distribution", desc: "Automated yield based on real-world energy production and PPA revenues" },
-                  { icon: BarChart3, title: "Transparent Reporting", desc: "Full project dashboards with readiness scoring and capital stack visibility" },
-                ].map((feature) => (
-                  <div key={feature.title} className="flex gap-4">
-                    <div className="flex items-center justify-center w-10 h-10 rounded-lg bg-primary/10 shrink-0">
-                      <feature.icon className="h-5 w-5 text-primary" />
-                    </div>
-                    <div>
-                      <h3 className="font-medium mb-1">{feature.title}</h3>
-                      <p className="text-sm text-muted-foreground">{feature.desc}</p>
-                    </div>
-                  </div>
+                  {
+                    date: "Apr 22, 2026",
+                    title: "EcoXchange expands issuer onboarding for utility-scale portfolios",
+                    summary: "New issuer workflows streamline diligence, data validation, and listing readiness.",
+                  },
+                  {
+                    date: "Mar 15, 2026",
+                    title: "Performance dashboard now includes enhanced SCADA insights",
+                    summary: "Investors can review production and revenue trends with greater interval transparency.",
+                  },
+                  {
+                    date: "Feb 03, 2026",
+                    title: "Partner network grows across digital asset administration",
+                    summary: "Additional ecosystem integrations improve reporting and settlement operations.",
+                  },
+                ].map((item) => (
+                  <article key={item.title} className="border-b border-border/70 pb-5 last:border-none last:pb-0">
+                    <p className="text-xs uppercase tracking-wide text-muted-foreground mb-2">{item.date}</p>
+                    <h4 className="font-semibold mb-2">{item.title}</h4>
+                    <p className="text-sm text-muted-foreground mb-2">{item.summary}</p>
+                    <a href="#" className="text-sm text-primary font-semibold inline-flex items-center gap-1 hover:underline">
+                      Read More <ArrowRight className="h-4 w-4" />
+                    </a>
+                  </article>
                 ))}
               </div>
-            </div>
-            
-            <div className="relative">
-              <div className="absolute inset-0 bg-gradient-to-br from-primary/20 to-transparent rounded-2xl blur-3xl" />
-              <Card className="relative">
-                <CardContent className="p-8">
-                  <div className="flex items-center gap-3 mb-6">
-                    <img 
-                      src="/brand/ecoxchange-logo.png" 
-                      alt="EcoXchange" 
-                      className="h-10 w-auto"
-                    />
-                    <div>
-                      <p className="font-semibold">Sample Offering</p>
-                      <p className="text-sm text-muted-foreground">Imperial Valley Solar I</p>
-                    </div>
-                  </div>
-                  
-                  <div className="space-y-4">
-                    <div className="flex justify-between py-2 border-b border-border/50">
-                      <span className="text-muted-foreground">Target Raise</span>
-                      <span className="font-medium" data-testid="text-sample-target-raise">$13,800,000</span>
-                    </div>
-                    <div className="flex justify-between py-2 border-b border-border/50">
-                      <span className="text-muted-foreground">Min Investment</span>
-                      <span className="font-medium" data-testid="text-sample-min-investment">$25,000</span>
-                    </div>
-                    <div className="flex justify-between py-2 border-b border-border/50">
-                      <span className="text-muted-foreground">Expected Yield (IRR)</span>
-                      <span className="font-medium text-primary" data-testid="text-sample-irr">8.5%</span>
-                    </div>
-                    <div className="flex justify-between py-2 border-b border-border/50">
-                      <span className="text-muted-foreground">Yield Basis</span>
-                      <span className="font-medium">Solar PPA Revenue</span>
-                    </div>
-                    <div className="flex justify-between py-2 border-b border-border/50">
-                      <span className="text-muted-foreground">Distribution</span>
-                      <span className="font-medium">Quarterly</span>
-                    </div>
-                    <div className="flex justify-between py-2">
-                      <span className="text-muted-foreground">Security Type</span>
-                      <span className="font-medium">Revenue-Share Token</span>
-                    </div>
-                  </div>
+            </CardContent>
+          </Card>
 
-                  <div className="mt-4 pt-4 border-t border-border/50">
-                    <p className="text-xs text-muted-foreground">
-                      Securities are asset-backed and yield-generating. Secondary trading is simulated in the MVP and will become compliant live trading in later phases.
-                    </p>
-                  </div>
-                  
-                  <Button className="w-full mt-4" disabled>
-                    View Offering Details
-                  </Button>
-                </CardContent>
-              </Card>
+          <div>
+            <h3 className="text-2xl font-semibold mb-6">In the News</h3>
+            <div className="space-y-4">
+              {inTheNews.map((item) => (
+                <Card key={item.title}>
+                  <CardContent className="p-6">
+                    <div className="flex items-center gap-2 text-xs uppercase tracking-wide text-muted-foreground mb-2">
+                      <Newspaper className="h-3.5 w-3.5" />
+                      <span>{item.publication}</span>
+                      <span>•</span>
+                      <span>{item.date}</span>
+                    </div>
+                    <p className="font-semibold leading-snug">{item.title}</p>
+                  </CardContent>
+                </Card>
+              ))}
             </div>
           </div>
         </div>
-      </section>
+      </div>
+    </section>
+  );
+}
 
-      {/* How It Works */}
-      <section id="how-it-works" className="py-20 bg-card/30 scroll-mt-20">
-        <div className="container mx-auto px-4">
-          <div className="text-center mb-12">
-            <h2 className="text-3xl font-bold mb-4">How It Works</h2>
-            <p className="text-muted-foreground max-w-2xl mx-auto">
-              A streamlined, compliance-first process for both issuers and investors
-            </p>
-          </div>
-          
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-8 max-w-5xl mx-auto">
-            <Card>
-              <CardContent className="p-6">
-                <div className="flex items-center gap-3 mb-6">
-                  <Building2 className="h-6 w-6 text-primary" />
-                  <h3 className="text-xl font-semibold">For Issuers</h3>
-                </div>
-                <ol className="space-y-4">
-                  {[
-                    "Register and complete issuer profile with KYC/AML",
-                    "Tokenize your renewable energy project and define security terms",
-                    "Run compliance checks and obtain readiness score",
-                    "Upload data room documents and complete checklist",
-                    "List offering for qualified investors",
-                  ].map((step, i) => (
-                    <li key={i} className="flex gap-3">
-                      <span className="flex items-center justify-center w-6 h-6 rounded-full bg-primary/10 text-primary text-sm font-medium shrink-0">
-                        {i + 1}
-                      </span>
-                      <span className="text-sm text-muted-foreground">{step}</span>
-                    </li>
-                  ))}
-                </ol>
-              </CardContent>
-            </Card>
-            
-            <Card>
-              <CardContent className="p-6">
-                <div className="flex items-center gap-3 mb-6">
-                  <Wallet className="h-6 w-6 text-primary" />
-                  <h3 className="text-xl font-semibold">For Investors</h3>
-                </div>
-                <ol className="space-y-4">
-                  {[
-                    "Register and complete investor KYC/AML verification",
-                    "Browse offerings and review project dashboards",
-                    "Invest in digital securities with structured yield",
-                    "Receive yield distributions based on energy production",
-                    "Trade securities on compliant secondary market (future)",
-                  ].map((step, i) => (
-                    <li key={i} className="flex gap-3">
-                      <span className="flex items-center justify-center w-6 h-6 rounded-full bg-primary/10 text-primary text-sm font-medium shrink-0">
-                        {i + 1}
-                      </span>
-                      <span className="text-sm text-muted-foreground">{step}</span>
-                    </li>
-                  ))}
-                </ol>
-              </CardContent>
-            </Card>
-          </div>
+function CtaBanner() {
+  return (
+    <section className="py-20 bg-background">
+      <div className="container mx-auto px-4">
+        <div className="rounded-2xl bg-primary text-primary-foreground p-10 md:p-14 text-center">
+          <h2 className="text-4xl md:text-5xl font-bold mb-5">Let’s build the future of clean energy together.</h2>
+          <p className="text-primary-foreground/85 max-w-2xl mx-auto mb-8">
+            Partner with EcoXchange to originate, structure, and scale institutional-quality solar investment opportunities.
+          </p>
+          <Button variant="outline" className="border-primary-foreground text-primary-foreground hover:bg-primary-foreground hover:text-primary">
+            Get in Touch
+          </Button>
         </div>
-      </section>
+      </div>
+    </section>
+  );
+}
 
-      {/* SGT Pipeline Infrastructure */}
-      <SgtPipelineSection />
-
-      {/* Audience / Phases */}
-      <section className="py-20">
-        <div className="container mx-auto px-4">
-          <div className="text-center mb-12">
-            <h2 className="text-3xl font-bold mb-4">Who Can Invest</h2>
-            <p className="text-muted-foreground max-w-2xl mx-auto">
-              EcoXchange currently serves accredited investors with plans to expand access through compliant regulatory frameworks
-            </p>
+function FooterSection() {
+  return (
+    <footer className="bg-[#0B1D2D] text-white pt-10 pb-12">
+      <div className="container mx-auto px-4">
+        <p className="text-xs text-white/70 mb-8 border-b border-white/20 pb-4">
+          Disclosures: EcoXchange operates as a digital infrastructure platform. Investment offerings are subject to applicable securities regulations and investor qualification requirements.
+        </p>
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-6 gap-8">
+          <div className="lg:col-span-2">
+            <img src="/brand/ecoxchange-logo.png" alt="EcoXchange" className="h-10 w-auto mb-4" data-testid="img-footer-logo" />
+            <p className="text-sm text-white/70">Digital securities infrastructure for renewable energy investment marketplaces.</p>
           </div>
-          
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 max-w-4xl mx-auto">
-            <Card className="border-primary/30">
-              <CardContent className="p-6">
-                <div className="flex items-center gap-2 mb-4">
-                  <CheckCircle className="h-5 w-5 text-primary" />
-                  <h3 className="font-semibold text-lg">Available Now</h3>
-                  <Badge variant="default" className="ml-auto">Phase 1</Badge>
-                </div>
-                <ul className="space-y-3 text-sm text-muted-foreground">
-                  <li className="flex items-center gap-2"><CheckCircle className="h-3.5 w-3.5 text-primary shrink-0" /> Accredited investors</li>
-                  <li className="flex items-center gap-2"><CheckCircle className="h-3.5 w-3.5 text-primary shrink-0" /> Family offices</li>
-                  <li className="flex items-center gap-2"><CheckCircle className="h-3.5 w-3.5 text-primary shrink-0" /> Climate funds</li>
-                  <li className="flex items-center gap-2"><CheckCircle className="h-3.5 w-3.5 text-primary shrink-0" /> High-net-worth individuals</li>
-                </ul>
-              </CardContent>
-            </Card>
-
-            <Card className="border-muted/50">
-              <CardContent className="p-6">
-                <div className="flex items-center gap-2 mb-4">
-                  <Scale className="h-5 w-5 text-muted-foreground" />
-                  <h3 className="font-semibold text-lg">Coming Soon</h3>
-                  <Badge variant="secondary" className="ml-auto">Phase 2+</Badge>
-                </div>
-                <ul className="space-y-3 text-sm text-muted-foreground">
-                  <li className="flex items-center gap-2"><ArrowRight className="h-3.5 w-3.5 shrink-0" /> Non-accredited investors (Reg CF/Reg A+)</li>
-                  <li className="flex items-center gap-2"><ArrowRight className="h-3.5 w-3.5 shrink-0" /> Retail investors</li>
-                  <li className="flex items-center gap-2"><ArrowRight className="h-3.5 w-3.5 shrink-0" /> Climate-aligned individuals seeking yield</li>
-                  <li className="flex items-center gap-2"><ArrowRight className="h-3.5 w-3.5 shrink-0" /> Secondary market trading</li>
-                </ul>
-              </CardContent>
-            </Card>
-          </div>
-        </div>
-      </section>
-
-      {/* Roadmap */}
-      <section className="py-20 bg-card/30">
-        <div className="container mx-auto px-4">
-          <div className="text-center mb-12">
-            <h2 className="text-3xl font-bold mb-4" data-testid="text-roadmap-title">Platform Roadmap</h2>
-            <p className="text-muted-foreground max-w-2xl mx-auto">
-              A phased execution strategy from digital securities platform to fully regulated marketplace
-            </p>
-          </div>
-          
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 max-w-5xl mx-auto">
-            {[
-              {
-                phase: "Phase 1",
-                status: "Live",
-                statusColor: "text-primary",
-                items: [
-                  "Accredited investors only",
-                  "Private offerings (Reg D 506(c))",
-                  "Simulated secondary liquidity",
-                  "Yield calculation engine",
-                  "KYC/AML verification",
-                ],
-              },
-              {
-                phase: "Phase 2",
-                status: "Upcoming",
-                statusColor: "text-muted-foreground",
-                items: [
-                  "Real yield distribution",
-                  "Transfer agent integration",
-                  "Custodian integration",
-                  "Structured SPV offerings",
-                  "Enhanced reporting dashboards",
-                ],
-              },
-              {
-                phase: "Phase 3",
-                status: "Future",
-                statusColor: "text-muted-foreground",
-                items: [
-                  "Reg CF / Reg A+ pathways",
-                  "Non-accredited investor access",
-                  "ATS integration or licensing",
-                  "Compliant secondary marketplace",
-                  "Programmatic transfer restrictions",
-                ],
-              },
-            ].map((phase) => (
-              <Card key={phase.phase}>
-                <CardContent className="p-6">
-                  <div className="flex items-center justify-between mb-4">
-                    <h3 className="font-semibold text-lg">{phase.phase}</h3>
-                    <span className={`text-sm font-medium ${phase.statusColor}`}>{phase.status}</span>
-                  </div>
-                  <ul className="space-y-3">
-                    {phase.items.map((item, i) => (
-                      <li key={i} className="flex items-start gap-2 text-sm text-muted-foreground">
-                        <FileCheck className="h-3.5 w-3.5 mt-0.5 shrink-0 text-primary/60" />
-                        {item}
-                      </li>
-                    ))}
-                  </ul>
-                </CardContent>
-              </Card>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      {/* CTA */}
-      <section className="py-20">
-        <div className="container mx-auto px-4">
-          <div className="max-w-3xl mx-auto text-center">
-            <h2 className="text-3xl font-bold mb-4">
-              Ready to Get Started?
-            </h2>
-            <p className="text-muted-foreground mb-8">
-              Join the compliant platform connecting renewable energy infrastructure with qualified investors.
-            </p>
-            <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
-              <Link href="/auth/signup">
-                <Button size="lg" className="min-w-[180px]" data-testid="button-cta-signup">
-                  Create Account
-                </Button>
-              </Link>
-              <Link href="/auth/login">
-                <Button size="lg" variant="outline" className="min-w-[180px]">
-                  Sign In
-                </Button>
-              </Link>
+          {[
+            { heading: "Marketplace", links: ["Projects", "Offerings", "Performance"] },
+            { heading: "Solutions", links: ["Tokenization", "Administration", "Reporting"] },
+            { heading: "Ecosystem", links: ["Partners", "Integrations", "Developers"] },
+            { heading: "Insights", links: ["Announcements", "In the News", "Resources"] },
+          ].map((col) => (
+            <div key={col.heading}>
+              <h4 className="font-semibold mb-3">{col.heading}</h4>
+              <ul className="space-y-2 text-sm text-white/70">
+                {col.links.map((link) => (
+                  <li key={link}>{link}</li>
+                ))}
+              </ul>
             </div>
-          </div>
+          ))}
         </div>
-      </section>
+      </div>
+    </footer>
+  );
+}
 
-      {/* Compliance & Regulatory Footnotes */}
-      <section id="compliance" className="py-12 border-t border-border/40 scroll-mt-20">
-        <div className="container mx-auto px-4">
-          <div className="max-w-4xl mx-auto">
-            <h3 className="text-sm font-semibold mb-4 text-muted-foreground uppercase tracking-wider">Regulatory & Compliance</h3>
-            <div className="space-y-3 text-xs text-muted-foreground">
-              <p>
-                EcoXchange is pursuing broker-dealer and ATS partnerships, transfer agent and custodian integrations, and will enforce securities transfer restrictions programmatically. Until those integrations are live, secondary trading is simulated and only accredited investors may participate.
-              </p>
-              <p>
-                All offerings on EcoXchange comply with relevant securities exemptions. Phase 1 operates under Reg D 506(c) for accredited investors with general solicitation permitted. Future phases will introduce Reg CF and Reg A+ pathways for broader investor access, subject to regulatory approvals and BD/funding portal partnerships.
-              </p>
-              <p>
-                Securities offered through EcoXchange are asset-backed and yield-generating. All participants must complete KYC/AML verification. This platform is not a broker-dealer or investment advisor. Investment involves risk, including possible loss of principal.
-              </p>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      {/* Footer */}
-      <footer className="border-t border-border/40 py-12">
-        <div className="container mx-auto px-4">
-          <div className="flex flex-col md:flex-row items-center justify-between gap-4">
-            <div className="flex items-center gap-3">
-              <img 
-                src="/brand/ecoxchange-logo.png" 
-                alt="EcoXchange" 
-                className="h-8 w-auto"
-                data-testid="img-footer-logo"
-              />
-              <span className="text-sm text-muted-foreground">Digital Securities Platform</span>
-            </div>
-            <div className="flex flex-wrap items-center gap-6 text-sm text-muted-foreground">
-              <Link href="/auth/login" className="hover:text-foreground transition-colors" data-testid="link-footer-login">Sign In</Link>
-              <Link href="/auth/signup" className="hover:text-foreground transition-colors">Create Account</Link>
-              <Link href="/privacy" className="hover:text-foreground transition-colors" data-testid="link-footer-privacy">Privacy Policy</Link>
-              <span>© 2026 EcoXchange, Inc.</span>
-            </div>
-          </div>
-        </div>
-      </footer>
+export default function LandingPage() {
+  return (
+    <div className="min-h-screen bg-background text-foreground">
+      <Header />
+      <main>
+        <HeroSection />
+        <BenefitsSection />
+        <OpportunitySection />
+        <FeaturedProjectSection />
+        <ProjectsSection />
+        <SolutionsSection />
+        <EcosystemSection />
+        <InsightsSection />
+        <CtaBanner />
+      </main>
+      <FooterSection />
     </div>
   );
 }

@@ -18,58 +18,58 @@ html {
   --elevate-1: rgba(0,0,0, .03);
   --elevate-2: rgba(0,0,0, .08);
 
-  --background: 140 20% 98%;
+  --background: 210 33% 99%;
 
-  --foreground: 140 25% 15%;
+  --foreground: 211 47% 11%;
 
-  --border: 140 15% 88%;
+  --border: 215 23% 86%;
 
   --card: 0 0% 100%;
 
-  --card-foreground: 140 25% 15%;
+  --card-foreground: 211 47% 11%;
 
-  --card-border: 140 15% 92%;
+  --card-border: 215 24% 90%;
 
   /* Sidebar - Deep green for both modes */
-  --sidebar: 146 68% 10%;
+  --sidebar: 211 47% 11%;
 
-  --sidebar-foreground: 140 33% 94%;
+  --sidebar-foreground: 210 40% 98%;
 
-  --sidebar-border: 146 50% 16%;
+  --sidebar-border: 214 35% 24%;
 
   /* Brand primary - Eco Green #73AC20 */
-  --sidebar-primary: 79 69% 40%;
+  --sidebar-primary: 169 78% 24%;
 
-  --sidebar-primary-foreground: 140 33% 94%;
+  --sidebar-primary-foreground: 210 40% 98%;
 
-  --sidebar-accent: 146 50% 14%;
+  --sidebar-accent: 214 35% 24%;
 
-  --sidebar-accent-foreground: 140 33% 94%;
+  --sidebar-accent-foreground: 210 40% 98%;
 
-  --sidebar-ring: 79 69% 40%;
+  --sidebar-ring: 157 48% 44%;
 
   --popover: 0 0% 100%;
 
-  --popover-foreground: 140 25% 15%;
+  --popover-foreground: 211 47% 11%;
 
-  --popover-border: 140 15% 88%;
+  --popover-border: 215 23% 86%;
 
   /* Primary - Eco Green #73AC20 */
-  --primary: 79 69% 40%;
+  --primary: 169 78% 24%;
 
   --primary-foreground: 0 0% 100%;
 
   /* Secondary - Deep Green #135F2D */
-  --secondary: 146 68% 22%;
+  --secondary: 157 48% 44%;
 
   --secondary-foreground: 0 0% 100%;
 
-  --muted: 140 15% 94%;
+  --muted: 210 40% 96%;
 
-  --muted-foreground: 140 15% 40%;
+  --muted-foreground: 217 19% 45%;
 
   /* Accent - Primary Strong #90C11B */
-  --accent: 76 76% 43%;
+  --accent: 157 48% 44%;
 
   --accent-foreground: 0 0% 100%;
 
@@ -78,15 +78,15 @@ html {
   --destructive-foreground: 0 0% 100%;
 
   --input: 140 15% 88%;
-  --ring: 79 69% 40%;
-  --chart-1: 79 69% 40%;
-  --chart-2: 76 76% 43%;
-  --chart-3: 146 68% 22%;
-  --chart-4: 131 53% 31%;
-  --chart-5: 91 67% 38%;
+  --ring: 169 78% 24%;
+  --chart-1: 169 78% 24%;
+  --chart-2: 157 48% 44%;
+  --chart-3: 211 47% 11%;
+  --chart-4: 217 19% 45%;
+  --chart-5: 210 40% 96%;
 
   --font-sans: 'Inter', sans-serif;
-  --font-serif: Georgia, serif;
+  --font-serif: 'Playfair Display', Georgia, serif;
   --font-mono: 'JetBrains Mono', monospace;
   --radius: .5rem; /* 8px */
   --shadow-2xs: 0px 1px 2px 0px rgba(0, 0, 0, 0.05);
@@ -142,74 +142,74 @@ html {
   --elevate-2: rgba(255,255,255, .09);
 
   /* EcoXchange Brand Colors - Near-black background */
-  --background: 144 17% 5%;
+  --background: 211 47% 10%;
 
-  --foreground: 140 33% 94%;
+  --foreground: 210 40% 98%;
 
-  --border: 140 17% 14%;
+  --border: 214 35% 24%;
 
   /* Surface/Card colors */
-  --card: 140 14% 7%;
+  --card: 211 47% 13%;
 
-  --card-foreground: 140 33% 94%;
+  --card-foreground: 210 40% 98%;
 
-  --card-border: 140 17% 12%;
+  --card-border: 214 35% 26%;
 
   /* Sidebar - Deep green */
-  --sidebar: 146 68% 10%;
+  --sidebar: 211 47% 11%;
 
-  --sidebar-foreground: 140 33% 94%;
+  --sidebar-foreground: 210 40% 98%;
 
-  --sidebar-border: 146 50% 16%;
+  --sidebar-border: 214 35% 24%;
 
   /* Brand primary - Eco Green #73AC20 */
-  --sidebar-primary: 79 69% 40%;
+  --sidebar-primary: 157 48% 44%;
 
-  --sidebar-primary-foreground: 140 33% 94%;
+  --sidebar-primary-foreground: 210 40% 98%;
 
-  --sidebar-accent: 146 50% 14%;
+  --sidebar-accent: 214 35% 24%;
 
-  --sidebar-accent-foreground: 140 33% 94%;
+  --sidebar-accent-foreground: 210 40% 98%;
 
-  --sidebar-ring: 79 69% 40%;
+  --sidebar-ring: 157 48% 44%;
 
-  --popover: 140 14% 7%;
+  --popover: 211 47% 13%;
 
-  --popover-foreground: 140 33% 94%;
+  --popover-foreground: 210 40% 98%;
 
-  --popover-border: 140 17% 14%;
+  --popover-border: 214 35% 24%;
 
   /* Primary - Eco Green #73AC20 */
-  --primary: 79 69% 40%;
+  --primary: 157 48% 44%;
 
-  --primary-foreground: 140 33% 94%;
+  --primary-foreground: 210 40% 98%;
 
   /* Secondary - Deep Green #135F2D */
-  --secondary: 146 68% 22%;
+  --secondary: 169 78% 24%;
 
-  --secondary-foreground: 140 33% 94%;
+  --secondary-foreground: 210 40% 98%;
 
-  --muted: 140 14% 12%;
+  --muted: 211 39% 19%;
 
-  --muted-foreground: 140 11% 69%;
+  --muted-foreground: 215 20% 70%;
 
   /* Accent - Primary Strong #90C11B */
-  --accent: 76 76% 43%;
+  --accent: 157 48% 44%;
 
-  --accent-foreground: 140 14% 7%;
+  --accent-foreground: 210 40% 98%;
 
   --destructive: 0 72% 51%;
 
   --destructive-foreground: 0 0% 100%;
 
   /* Input border */
-  --input: 140 17% 20%;
-  --ring: 79 69% 40%;
-  --chart-1: 79 69% 40%;
-  --chart-2: 76 76% 43%;
-  --chart-3: 146 68% 22%;
-  --chart-4: 131 53% 31%;
-  --chart-5: 91 67% 38%;
+  --input: 214 35% 24%;
+  --ring: 157 48% 44%;
+  --chart-1: 157 48% 44%;
+  --chart-2: 169 78% 24%;
+  --chart-3: 210 40% 98%;
+  --chart-4: 215 20% 70%;
+  --chart-5: 211 39% 19%;
 
   --shadow-2xs: 0px 1px 2px 0px rgba(0, 0, 0, 0.3);
   --shadow-xs: 0px 1px 3px 0px rgba(0, 0, 0, 0.4);
@@ -228,6 +228,12 @@ html {
 
   body {
     @apply font-sans antialiased bg-background text-foreground;
+  }
+
+  h1,
+  h2 {
+    @apply font-serif;
+    letter-spacing: -0.02em;
   }
 }
 
@@ -344,24 +350,24 @@ html {
 
   /* EcoXchange brand gradient backgrounds */
   .bg-gradient-dark {
-    background: linear-gradient(180deg, #0B0F0C 0%, #101712 100%);
+    background: linear-gradient(180deg, #0b1d2d 0%, #102a3f 100%);
   }
 
   .bg-gradient-dark-green {
-    background: linear-gradient(180deg, #0B0F0C 0%, rgba(19, 95, 45, 0.15) 50%, #101712 100%);
+    background: linear-gradient(180deg, #0b1d2d 0%, rgba(13, 107, 91, 0.2) 55%, #0f2436 100%);
   }
 
-  /* Brand glow effects using #73AC20 */
+  /* Brand glow effects */
   .glow-green {
-    box-shadow: 0 0 30px rgba(115, 172, 32, 0.2);
+    box-shadow: 0 0 30px rgba(58, 165, 124, 0.22);
   }
 
   .glow-lime {
-    box-shadow: 0 0 20px rgba(144, 193, 27, 0.25);
+    box-shadow: 0 0 20px rgba(13, 107, 91, 0.3);
   }
 
   /* Brand accent glow */
   .glow-brand {
-    box-shadow: 0 0 40px rgba(115, 172, 32, 0.15);
+    box-shadow: 0 0 40px rgba(13, 107, 91, 0.2);
   }
 }
