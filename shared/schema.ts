@@ -1,5 +1,5 @@
 import { sql } from "drizzle-orm";
-import { pgTable, text, varchar, boolean, decimal, timestamp, integer, serial } from "drizzle-orm/pg-core";
+import { pgTable, text, varchar, boolean, decimal, timestamp, integer, serial, jsonb, index, uniqueIndex } from "drizzle-orm/pg-core";
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod";
 
@@ -150,6 +150,100 @@ export const insertUserSchema = createInsertSchema(users).omit({
 export type InsertUser = z.infer<typeof insertUserSchema>;
 export type User = typeof users.$inferSelect;
 
+// ─── Interconnection queue (GridStatus) — before projects for FK on queueEntryId
+
+export const QueueEntryComputeStatus = {
+  PENDING: "PENDING",
+  RUNNING: "RUNNING",
+  READY: "READY",
+  FAILED: "FAILED",
+} as const;
+
+export const interconnectionQueueEntries = pgTable(
+  "interconnection_queue_entries",
+  {
+    id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+    externalId: text("external_id").notNull(),
+    isoCode: text("iso_code").notNull(),
+    projectName: text("project_name").notNull().default(""),
+    queueStatus: text("queue_status"),
+    resourceType: text("resource_type"),
+    capacityMW: decimal("capacity_mw", { precision: 12, scale: 4 }),
+    state: text("state").notNull().default(""),
+    county: text("county"),
+    latitude: decimal("latitude", { precision: 10, scale: 6 }),
+    longitude: decimal("longitude", { precision: 10, scale: 6 }),
+    rawJson: text("raw_json"),
+    syncedAt: timestamp("synced_at").defaultNow(),
+  },
+  (t) => ({
+    isoExtIdx: uniqueIndex("interconnection_queue_iso_external_uid").on(t.isoCode, t.externalId),
+    stateIdx: index("interconnection_queue_state_idx").on(t.state),
+  }),
+);
+
+export const insertInterconnectionQueueEntrySchema = createInsertSchema(interconnectionQueueEntries).omit({
+  id: true,
+  syncedAt: true,
+});
+export type InsertInterconnectionQueueEntry = z.infer<typeof insertInterconnectionQueueEntrySchema>;
+export type InterconnectionQueueEntry = typeof interconnectionQueueEntries.$inferSelect;
+
+export const jurisdictionPpaBenchmarks = pgTable(
+  "jurisdiction_ppa_benchmarks",
+  {
+    id: serial("id").primaryKey(),
+    state: text("state"),
+    isoCode: text("iso_code"),
+    regionLabel: text("region_label").notNull().default(""),
+    regulatoryZone: text("regulatory_zone"),
+    benchmarkUsdPerMwh: decimal("benchmark_usd_per_mwh", { precision: 10, scale: 4 }).notNull(),
+    effectiveFrom: timestamp("effective_from", { withTimezone: true, mode: "date" }),
+    sourceNote: text("source_note"),
+  },
+  (t) => ({
+    stIsoIdx: index("jurisdiction_ppa_state_iso_idx").on(t.state, t.isoCode),
+  }),
+);
+
+export const insertJurisdictionPpaBenchmarkSchema = createInsertSchema(jurisdictionPpaBenchmarks).omit({
+  id: true,
+});
+export type InsertJurisdictionPpaBenchmark = z.infer<typeof insertJurisdictionPpaBenchmarkSchema>;
+export type JurisdictionPpaBenchmark = typeof jurisdictionPpaBenchmarks.$inferSelect;
+
+export const queueEntryAnalytics = pgTable(
+  "queue_entry_analytics",
+  {
+    id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+    entryId: varchar("entry_id")
+      .notNull()
+      .references(() => interconnectionQueueEntries.id, { onDelete: "cascade" })
+      .unique(),
+    backtestSummary: jsonb("backtest_summary").$type<Record<string, unknown> | null>(),
+    annualMwhModeled: decimal("annual_mwh_modeled", { precision: 14, scale: 3 }),
+    annualKwhNsrdb: decimal("annual_kwh_nsrdb", { precision: 16, scale: 0 }),
+    irrProxyPct: decimal("irr_proxy_pct", { precision: 8, scale: 4 }),
+    moicProxy: decimal("moic_proxy", { precision: 8, scale: 4 }),
+    ppaScenario: jsonb("ppa_scenario").$type<Record<string, unknown> | null>(),
+    waterfallSummary: jsonb("waterfall_summary").$type<Record<string, number> | null>(),
+    monthlyWaterfallSeries: jsonb("monthly_waterfall_series").$type<unknown[] | null>(),
+    engineVersion: text("engine_version").notNull().default("1"),
+    computeStatus: text("compute_status").notNull().default("PENDING"),
+    errorMessage: text("error_message"),
+    computedAt: timestamp("computed_at"),
+  },
+  (t) => ({
+    statusIdx: index("queue_entry_analytics_status_idx").on(t.computeStatus),
+  }),
+);
+
+export const insertQueueEntryAnalyticsSchema = createInsertSchema(queueEntryAnalytics).omit({
+  id: true,
+});
+export type InsertQueueEntryAnalytics = z.infer<typeof insertQueueEntryAnalyticsSchema>;
+export type QueueEntryAnalytics = typeof queueEntryAnalytics.$inferSelect;
+
 // ─── Projects ────────────────────────────────────────────────────────────────
 
 export const projects = pgTable("projects", {
@@ -182,6 +276,8 @@ export const projects = pgTable("projects", {
   eiaPlantCode: text("eia_plant_code"),
   eiaGeneratorId: text("eia_generator_id"),
   eiaReferencePlantName: text("eia_reference_plant_name"),
+  /** When promoted from interconnection queue analytics */
+  queueEntryId: varchar("queue_entry_id").references(() => interconnectionQueueEntries.id, { onDelete: "set null" }),
   /** Institutional: ((annual kWh × market PPA) − annual O&M) / asset CapEx, from NSRDB + market-rates */
   financialApyPct: decimal("financial_apy_pct", { precision: 8, scale: 4 }),
   /** How market PPA $/kWh was resolved (e.g. FIXED_PPA, CAISO_NP15_SPOT_PROXY) */

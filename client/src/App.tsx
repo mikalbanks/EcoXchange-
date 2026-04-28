@@ -63,6 +63,7 @@ import DeveloperProjectDetail from "@/pages/developer/project-detail";
 import PrivacyPolicy from "@/pages/privacy";
 import InvestorDashboard from "@/pages/investor/dashboard";
 import InvestorDeals from "@/pages/investor/deals";
+import InvestorQueueDeal from "@/pages/investor/queue-deal";
 import InvestorDealRoom from "@/pages/investor/deal-room";
 import InvestorInterests from "@/pages/investor/interests";
 
@@ -155,6 +156,11 @@ function Router() {
       <Route path="/investor/deals/:id">
         <ProtectedRoute allowedRoles={["INVESTOR"]}>
           <InvestorDealRoom />
+        </ProtectedRoute>
+      </Route>
+      <Route path="/investor/queue/:id">
+        <ProtectedRoute allowedRoles={["INVESTOR"]}>
+          <InvestorQueueDeal />
         </ProtectedRoute>
       </Route>
       <Route path="/investor/interests">

@@ -17,6 +17,12 @@ import { internalAgentRegistry } from "./services/internal-agents";
 import { db } from "./db";
 import { accounts as accountsTable, transactions as txTable, postings as postingsTable } from "@shared/schema";
 import { eq, sql as dsql } from "drizzle-orm";
+import {
+  listQueueEntries,
+  getQueueEntryDetail,
+  computeAndPersistQueueAnalytics,
+  runBatchQueueAnalytics,
+} from "./queue-data";
 import multer from "multer";
 
 const SessionStore = MemoryStore(session);
@@ -653,7 +659,71 @@ export async function registerRoutes(
     res.json(result);
   });
 
+  // Interconnection queue (GridStatus solar) — precomputed analytics
+  app.get("/api/investor/queue-entries", requireRole("INVESTOR"), async (req: any, res) => {
+    try {
+      const state = typeof req.query.state === "string" ? req.query.state : undefined;
+      const isoCode = typeof req.query.iso === "string" ? req.query.iso : undefined;
+      const minMw = req.query.minMw != null ? Number(req.query.minMw) : undefined;
+      const status = req.query.status === "READY" ? "READY" : "ALL";
+      const limit = req.query.limit != null ? Number(req.query.limit) : 50;
+      const offset = req.query.offset != null ? Number(req.query.offset) : 0;
+      const { items, total } = await listQueueEntries({
+        state,
+        isoCode,
+        minMw: Number.isFinite(minMw) ? minMw : undefined,
+        status,
+        limit,
+        offset,
+      });
+      res.json({ items, total });
+    } catch (e: any) {
+      res.status(500).json({ message: e?.message || "Failed to list queue entries" });
+    }
+  });
+
+  app.get("/api/investor/queue-entries/:id", requireRole("INVESTOR"), async (req: any, res) => {
+    try {
+      const row = await getQueueEntryDetail(req.params.id);
+      if (!row) return res.status(404).json({ message: "Queue entry not found" });
+      res.json(row);
+    } catch (e: any) {
+      res.status(500).json({ message: e?.message || "Failed to load queue entry" });
+    }
+  });
+
+  const queueRecomputeLimiter = rateLimit({
+    windowMs: 15 * 60 * 1000,
+    max: 20,
+    standardHeaders: true,
+    legacyHeaders: false,
+  });
+
+  app.post(
+    "/api/investor/queue-entries/:id/recompute",
+    requireRole("INVESTOR"),
+    queueRecomputeLimiter,
+    async (req: any, res) => {
+      try {
+        const result = await computeAndPersistQueueAnalytics(req.params.id);
+        res.json({ ok: true, result });
+      } catch (e: any) {
+        res.status(500).json({ message: e?.message || "Recompute failed" });
+      }
+    },
+  );
+
   // ═══ Admin Routes ═══
+
+  app.post("/api/admin/queue-analytics/batch", requireRole("ADMIN"), async (req: any, res) => {
+    try {
+      const limit = req.body?.limit != null ? Number(req.body.limit) : 20;
+      const out = await runBatchQueueAnalytics(Number.isFinite(limit) ? limit : 20);
+      res.json(out);
+    } catch (e: any) {
+      res.status(500).json({ message: e?.message || "Batch failed" });
+    }
+  });
 
   // Admin stats
   app.get("/api/admin/stats", requireRole("ADMIN"), async (req: any, res) => {

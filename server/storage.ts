@@ -25,6 +25,8 @@ import {
   type Account, type InsertAccount,
   type Transaction, type InsertTransaction,
   type Posting, type InsertPosting,
+  type InterconnectionQueueEntry, type InsertInterconnectionQueueEntry,
+  type QueueEntryAnalytics, type InsertQueueEntryAnalytics,
 } from "@shared/schema";
 
 export function hashPassword(password: string): string {
@@ -117,6 +119,12 @@ export interface IStorage {
 
   getPostingsByTransaction(transactionId: string): Promise<Posting[]>;
   createPosting(posting: InsertPosting): Promise<Posting>;
+
+  getAllInterconnectionQueueEntries(): Promise<InterconnectionQueueEntry[]>;
+  getInterconnectionQueueEntry(id: string): Promise<InterconnectionQueueEntry | undefined>;
+  getQueueEntryAnalyticsByEntryId(entryId: string): Promise<QueueEntryAnalytics | undefined>;
+  getAllQueueEntryAnalytics(): Promise<QueueEntryAnalytics[]>;
+  upsertQueueEntryAnalytics(row: Partial<QueueEntryAnalytics> & { entryId: string }): Promise<QueueEntryAnalytics>;
 }
 
 import { computeReadiness, generateChecklist, computeCapitalStack, computeRevenue, computeDistribution } from "./scoring-engine";
@@ -145,6 +153,8 @@ export class MemStorage implements IStorage {
   private accountsMap: Map<string, Account> = new Map();
   private transactionsMap: Map<string, Transaction> = new Map();
   private postingsMap: Map<number, Posting> = new Map();
+  private interconnectionQueueEntries: Map<string, InterconnectionQueueEntry> = new Map();
+  private queueEntryAnalytics: Map<string, QueueEntryAnalytics> = new Map();
   private postingSeq: number = 1;
 
   constructor() {
@@ -232,6 +242,7 @@ export class MemStorage implements IStorage {
       eiaPlantCode: null,
       eiaGeneratorId: null,
       eiaReferencePlantName: null,
+      queueEntryId: null,
       financialApyPct: "8.4200",
       marketPpaSource: "CAISO_SP15_SPOT_PROXY",
       marketPpaBenchmarkUsdPerMwh: "64.4900",
@@ -348,6 +359,7 @@ export class MemStorage implements IStorage {
       eiaPlantCode: null,
       eiaGeneratorId: null,
       eiaReferencePlantName: null,
+      queueEntryId: null,
       financialApyPct: "6.9500",
       marketPpaSource: "LEVELTEN_P25_PROXY",
       marketPpaBenchmarkUsdPerMwh: "64.4900",
@@ -486,6 +498,7 @@ export class MemStorage implements IStorage {
       eiaPlantCode: null,
       eiaGeneratorId: null,
       eiaReferencePlantName: null,
+      queueEntryId: null,
       financialApyPct: "9.1800",
       marketPpaSource: "CAISO_SP15_SPOT_PROXY",
       marketPpaBenchmarkUsdPerMwh: "64.4900",
@@ -672,6 +685,77 @@ export class MemStorage implements IStorage {
     });
 
     this.seedPipelinePortfolio(devId, adminId);
+    this.seedInterconnectionQueueDemo();
+  }
+
+  /** Demo solar queue rows + pre-computed analytics (no NREL call). */
+  private seedInterconnectionQueueDemo() {
+    const mk = (
+      id: string,
+      ext: string,
+      iso: string,
+      name: string,
+      st: string,
+      mw: string,
+      lat: string,
+      lon: string,
+    ) => {
+      this.interconnectionQueueEntries.set(id, {
+        id,
+        externalId: ext,
+        isoCode: iso,
+        projectName: name,
+        queueStatus: "Active",
+        resourceType: "Solar PV",
+        capacityMW: mw,
+        state: st,
+        county: "Demo",
+        latitude: lat,
+        longitude: lon,
+        rawJson: null,
+        syncedAt: new Date(),
+      });
+    };
+
+    mk("iqe-demo-1", "GS-DEMO-1001", "CAISO", "Kern Sunfield South", "California", "48.50", "35.37", "-119.02");
+    mk("iqe-demo-2", "GS-DEMO-2002", "PJM", "Piedmont Queue Solar", "North Carolina", "55.00", "35.72", "-79.18");
+    mk("iqe-demo-3", "GS-DEMO-3003", "SPP", "Plains Wind & Solar Hybrid", "Kansas", "150.00", "37.75", "-99.64");
+
+    const baseAnalytics = (entryId: string, mwh: string, kwh: string): QueueEntryAnalytics => ({
+      id: `iqa-${entryId}`,
+      entryId,
+      backtestSummary: {
+        nsrdbAnnualKwh: Number(kwh),
+        performanceRatio: 0.2,
+        demo: true,
+      },
+      annualMwhModeled: mwh,
+      annualKwhNsrdb: kwh,
+      irrProxyPct: "8.2500",
+      moicProxy: "1.5775",
+      ppaScenario: {
+        source: "CAISO_SP15_SPOT_PROXY",
+        usdPerKwh: 0.06449,
+        benchmarkUsdPerMwh: 64.49,
+        annualGrossRevenueUsd: 2_000_000,
+      } as unknown as Record<string, unknown>,
+      waterfallSummary: {
+        DEBT_SERVICE: 400_000,
+        OPEX_FUND: 120_000,
+        RESERVES: 100_000,
+        PLATFORM_FEE: 21_300,
+        INVESTOR_YIELD: 1_250_000,
+      },
+      monthlyWaterfallSeries: [],
+      engineVersion: "queue-analytics-demo",
+      computeStatus: "READY",
+      errorMessage: null,
+      computedAt: new Date(),
+    });
+
+    this.queueEntryAnalytics.set("iqe-demo-1", baseAnalytics("iqe-demo-1", "142000.000", "142000000"));
+    this.queueEntryAnalytics.set("iqe-demo-2", baseAnalytics("iqe-demo-2", "161000.000", "161000000"));
+    this.queueEntryAnalytics.set("iqe-demo-3", baseAnalytics("iqe-demo-3", "438000.000", "438000000"));
   }
 
   /**
@@ -755,6 +839,7 @@ export class MemStorage implements IStorage {
         eiaPlantCode: null,
         eiaGeneratorId: null,
         eiaReferencePlantName: null,
+        queueEntryId: null,
         financialApyPct: String(apyBase.toFixed(4)),
         marketPpaSource: mppa,
         marketPpaBenchmarkUsdPerMwh: "64.4900",
@@ -1019,6 +1104,7 @@ export class MemStorage implements IStorage {
       eiaPlantCode: project.eiaPlantCode || null,
       eiaGeneratorId: project.eiaGeneratorId || null,
       eiaReferencePlantName: project.eiaReferencePlantName || null,
+      queueEntryId: project.queueEntryId || null,
       financialApyPct: project.financialApyPct || null,
       marketPpaSource: project.marketPpaSource || null,
       marketPpaBenchmarkUsdPerMwh: project.marketPpaBenchmarkUsdPerMwh || null,
@@ -1543,6 +1629,49 @@ export class MemStorage implements IStorage {
     };
     this.postingsMap.set(id, newPosting);
     return newPosting;
+  }
+
+  // ─── Interconnection queue (demo / MemStorage) ─────────────────────────────
+
+  async getAllInterconnectionQueueEntries(): Promise<InterconnectionQueueEntry[]> {
+    return Array.from(this.interconnectionQueueEntries.values());
+  }
+
+  async getInterconnectionQueueEntry(id: string): Promise<InterconnectionQueueEntry | undefined> {
+    return this.interconnectionQueueEntries.get(id);
+  }
+
+  async getQueueEntryAnalyticsByEntryId(entryId: string): Promise<QueueEntryAnalytics | undefined> {
+    return this.queueEntryAnalytics.get(entryId);
+  }
+
+  async getAllQueueEntryAnalytics(): Promise<QueueEntryAnalytics[]> {
+    return Array.from(this.queueEntryAnalytics.values());
+  }
+
+  async upsertQueueEntryAnalytics(
+    row: Partial<QueueEntryAnalytics> & { entryId: string },
+  ): Promise<QueueEntryAnalytics> {
+    const existing = this.queueEntryAnalytics.get(row.entryId);
+    const id = existing?.id ?? randomUUID();
+    const merged: QueueEntryAnalytics = {
+      id,
+      entryId: row.entryId,
+      backtestSummary: (row.backtestSummary ?? existing?.backtestSummary ?? null) as any,
+      annualMwhModeled: row.annualMwhModeled ?? existing?.annualMwhModeled ?? null,
+      annualKwhNsrdb: row.annualKwhNsrdb ?? existing?.annualKwhNsrdb ?? null,
+      irrProxyPct: row.irrProxyPct ?? existing?.irrProxyPct ?? null,
+      moicProxy: row.moicProxy ?? existing?.moicProxy ?? null,
+      ppaScenario: (row.ppaScenario ?? existing?.ppaScenario ?? null) as any,
+      waterfallSummary: (row.waterfallSummary ?? existing?.waterfallSummary ?? null) as any,
+      monthlyWaterfallSeries: (row.monthlyWaterfallSeries ?? existing?.monthlyWaterfallSeries ?? null) as any,
+      engineVersion: row.engineVersion ?? existing?.engineVersion ?? "1",
+      computeStatus: row.computeStatus ?? existing?.computeStatus ?? "PENDING",
+      errorMessage: row.errorMessage !== undefined ? row.errorMessage : existing?.errorMessage ?? null,
+      computedAt: row.computedAt ?? existing?.computedAt ?? null,
+    };
+    this.queueEntryAnalytics.set(row.entryId, merged);
+    return merged;
   }
 }
 

@@ -8,6 +8,7 @@
     "build": "tsx script/build.ts",
     "start": "NODE_ENV=production node dist/index.cjs",
     "check": "tsc",
+    "test:queue-analytics": "tsx scripts/test-queue-analytics.ts",
     "catalog:import": "tsx scripts/import-ca-listings-csv.ts",
     "db:push": "drizzle-kit push"
   },

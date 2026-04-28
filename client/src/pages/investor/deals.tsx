@@ -1,6 +1,6 @@
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { Link } from "wouter";
+import { Link, useLocation } from "wouter";
 import { DashboardLayout } from "@/components/dashboard-layout";
 import { StatusBadge } from "@/components/status-badge";
 import { EmptyState } from "@/components/empty-state";
@@ -28,7 +28,9 @@ import {
   Filter,
   X,
   Activity,
+  SunMedium,
 } from "lucide-react";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 interface ScadaQuickData {
   totalProductionMwh: number;
@@ -149,6 +151,20 @@ const OFFTAKER_OPTIONS = [
   { value: "MERCHANT", label: "Merchant" },
 ];
 
+interface QueueListResponse {
+  items: Array<{
+    id: string;
+    projectName: string;
+    isoCode: string;
+    state: string;
+    capacityMW: string | null;
+    queueStatus: string | null;
+    resourceType: string | null;
+    analytics: { computeStatus: string; irrProxyPct: string | null; annualMwhModeled: string | null } | null;
+  }>;
+  total: number;
+}
+
 interface DealProject {
   id: string;
   name: string;
@@ -177,6 +193,17 @@ function formatCurrency(value: string | number | null): string {
 }
 
 export default function InvestorDeals() {
+  const [location, setLocation] = useLocation();
+  const tabFromUrl = useMemo(() => {
+    const q = new URLSearchParams(location.split("?")[1] || "");
+    return q.get("tab") === "queue" ? "queue" : "deals";
+  }, [location]);
+  const [activeTab, setActiveTab] = useState<"deals" | "queue">(tabFromUrl);
+
+  useEffect(() => {
+    setActiveTab(tabFromUrl);
+  }, [tabFromUrl]);
+
   const [stateFilter, setStateFilter] = useState<string>("all");
   const [minMW, setMinMW] = useState<string>("");
   const [maxMW, setMaxMW] = useState<string>("");
@@ -184,8 +211,28 @@ export default function InvestorDeals() {
   const [ratingFilter, setRatingFilter] = useState<string>("all");
   const [offtakerFilter, setOfftakerFilter] = useState<string>("all");
 
+  const [queueState, setQueueState] = useState<string>("");
+  const [queueIso, setQueueIso] = useState<string>("");
+  const [queueMinMw, setQueueMinMw] = useState<string>("");
+
   const { data: deals, isLoading, error } = useQuery<DealProject[]>({
     queryKey: ["/api/investor/deals"],
+  });
+
+  const { data: queueData, isLoading: queueLoading } = useQuery<QueueListResponse>({
+    queryKey: ["/api/investor/queue-entries", queueState, queueIso, queueMinMw],
+    queryFn: async () => {
+      const p = new URLSearchParams();
+      if (queueState.trim()) p.set("state", queueState.trim());
+      if (queueIso.trim()) p.set("iso", queueIso.trim());
+      if (queueMinMw.trim()) p.set("minMw", queueMinMw.trim());
+      p.set("status", "ALL");
+      p.set("limit", "50");
+      const res = await fetch(`/api/investor/queue-entries?${p.toString()}`, { credentials: "include" });
+      if (!res.ok) throw new Error("Failed to load queue");
+      return res.json();
+    },
+    enabled: activeTab === "queue",
   });
 
   const filteredDeals = useMemo(() => {
@@ -218,6 +265,12 @@ export default function InvestorDeals() {
     setOfftakerFilter("all");
   }
 
+  function onTabChange(v: string) {
+    const next = v as "deals" | "queue";
+    setActiveTab(next);
+    setLocation(next === "queue" ? "/investor/deals?tab=queue" : "/investor/deals");
+  }
+
   return (
     <DashboardLayout
       title="Browse Offerings"
@@ -236,6 +289,17 @@ export default function InvestorDeals() {
         </CardContent>
       </Card>
 
+      <Tabs value={activeTab} onValueChange={onTabChange} className="w-full">
+        <TabsList className="mb-6">
+          <TabsTrigger value="deals" data-testid="tab-platform-deals">
+            Platform deals
+          </TabsTrigger>
+          <TabsTrigger value="queue" className="gap-1" data-testid="tab-ic-queue">
+            <SunMedium className="h-3.5 w-3.5" />
+            Interconnection queue
+          </TabsTrigger>
+        </TabsList>
+        <TabsContent value="deals" className="mt-0">
       <Card className="mb-6">
         <CardHeader className="flex flex-row items-center justify-between gap-2 pb-3">
           <CardTitle className="text-base flex items-center gap-2">
@@ -450,6 +514,90 @@ export default function InvestorDeals() {
           ))}
         </div>
       )}
+        </TabsContent>
+
+        <TabsContent value="queue" className="mt-0">
+          <Card className="mb-6">
+            <CardHeader>
+              <CardTitle className="text-base">Queue filters</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                <div>
+                  <label className="text-xs text-muted-foreground mb-1 block">State (partial)</label>
+                  <Input
+                    placeholder="e.g. CA or California"
+                    value={queueState}
+                    onChange={(e) => setQueueState(e.target.value)}
+                  />
+                </div>
+                <div>
+                  <label className="text-xs text-muted-foreground mb-1 block">ISO</label>
+                  <Input placeholder="CAISO, PJM, SPP" value={queueIso} onChange={(e) => setQueueIso(e.target.value)} />
+                </div>
+                <div>
+                  <label className="text-xs text-muted-foreground mb-1 block">Min MW</label>
+                  <Input
+                    type="number"
+                    placeholder="0"
+                    value={queueMinMw}
+                    onChange={(e) => setQueueMinMw(e.target.value)}
+                  />
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+
+          {queueLoading ? (
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+              {[...Array(3)].map((_, i) => (
+                <Skeleton key={i} className="h-32" />
+              ))}
+            </div>
+          ) : !queueData?.items?.length ? (
+            <EmptyState
+              icon={SunMedium}
+              title="No queue projects loaded"
+              description="Run the GridStatus ETL against your database, then batch analytics. In demo mode, sample projects appear here."
+            />
+          ) : (
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+              {queueData.items.map((q) => (
+                <Link key={q.id} href={`/investor/queue/${q.id}`}>
+                  <Card className="hover-elevate cursor-pointer h-full" data-testid={`card-queue-${q.id}`}>
+                    <CardHeader className="pb-2">
+                      <CardTitle className="text-sm font-medium leading-snug">
+                        {q.projectName}
+                      </CardTitle>
+                    </CardHeader>
+                    <CardContent className="text-sm text-muted-foreground space-y-1">
+                      <div className="flex items-center gap-1">
+                        <MapPin className="h-3.5 w-3.5" />
+                        {q.state} · {q.isoCode}
+                      </div>
+                      <div>{q.capacityMW ?? "—"} MW</div>
+                      <div className="flex flex-wrap gap-2 pt-1 text-xs">
+                        {q.analytics?.computeStatus && (
+                          <span
+                            className={
+                              q.analytics.computeStatus === "READY" ? "text-emerald-600" : "text-amber-600"
+                            }
+                          >
+                            {q.analytics.computeStatus}
+                          </span>
+                        )}
+                        {q.analytics?.irrProxyPct && (
+                          <span>IRR proxy: {Number(q.analytics.irrProxyPct).toFixed(1)}%</span>
+                        )}
+                      </div>
+                    </CardContent>
+                  </Card>
+                </Link>
+              ))}
+            </div>
+          )}
+        </TabsContent>
+      </Tabs>
     </DashboardLayout>
   );
 }

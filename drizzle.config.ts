@@ -33,5 +33,8 @@ export default defineConfig({
     "postings",
     "conversations",
     "messages",
+    "interconnection_queue_entries",
+    "queue_entry_analytics",
+    "jurisdiction_ppa_benchmarks",
   ],
 });
