@@ -6,97 +6,95 @@ html {
   scroll-behavior: smooth;
 }
 
-/* LIGHT MODE - EcoXchange Brand Theme */
+/* LIGHT MODE — institutional / editorial (pitch deck): cream paper + forest + lime */
 :root {
   --button-outline: rgba(0,0,0, .10);
   --badge-outline: rgba(0,0,0, .05);
 
-  /* Automatic computation of border around primary / danger buttons */
-  --opaque-button-border-intensity: -8; /* In terms of percentages */
+  --opaque-button-border-intensity: -8;
 
-  /* Backgrounds applied on top of other backgrounds when hovered/active */
-  --elevate-1: rgba(0,0,0, .03);
-  --elevate-2: rgba(0,0,0, .08);
+  --elevate-1: rgba(6, 64, 43, .06);
+  --elevate-2: rgba(6, 64, 43, .11);
 
-  --background: 210 33% 99%;
+  /* Warm cream paper ~#F2F0E4 */
+  --background: 48 28% 93%;
 
-  --foreground: 211 47% 11%;
+  /* Deep forest ink ~#0a281c */
+  --foreground: 158 58% 11%;
 
-  --border: 215 23% 86%;
+  --border: 140 14% 78%;
 
-  --card: 0 0% 100%;
+  --card: 48 22% 97%;
 
-  --card-foreground: 211 47% 11%;
+  --card-foreground: 158 58% 11%;
 
-  --card-border: 215 24% 90%;
+  --card-border: 140 12% 82%;
 
-  /* Sidebar - Deep green for both modes */
-  --sidebar: 211 47% 11%;
+  /* Sidebar tokens used by dashboard shell */
+  --sidebar: 158 83% 13%;
 
-  --sidebar-foreground: 210 40% 98%;
+  --sidebar-foreground: 48 25% 96%;
 
-  --sidebar-border: 214 35% 24%;
+  --sidebar-border: 158 45% 22%;
 
-  /* Brand primary - Eco Green #73AC20 */
-  --sidebar-primary: 169 78% 24%;
+  --sidebar-primary: 82 78% 55%;
 
-  --sidebar-primary-foreground: 210 40% 98%;
+  --sidebar-primary-foreground: 158 85% 8%;
 
-  --sidebar-accent: 214 35% 24%;
+  --sidebar-accent: 158 55% 18%;
 
-  --sidebar-accent-foreground: 210 40% 98%;
+  --sidebar-accent-foreground: 48 25% 96%;
 
-  --sidebar-ring: 157 48% 44%;
+  --sidebar-ring: 82 78% 55%;
 
-  --popover: 0 0% 100%;
+  --popover: 48 22% 98%;
 
-  --popover-foreground: 211 47% 11%;
+  --popover-foreground: 158 58% 11%;
 
-  --popover-border: 215 23% 86%;
+  --popover-border: 140 12% 82%;
 
-  /* Primary - Eco Green #73AC20 */
-  --primary: 169 78% 24%;
+  /* Primary CTA — lime ~#A3E635 */
+  --primary: 82 78% 55%;
 
-  --primary-foreground: 0 0% 100%;
+  --primary-foreground: 158 85% 8%;
 
-  /* Secondary - Deep Green #135F2D */
-  --secondary: 157 48% 44%;
+  /* Secondary — forest ~#06402B family */
+  --secondary: 158 83% 18%;
 
-  --secondary-foreground: 0 0% 100%;
+  --secondary-foreground: 48 28% 96%;
 
-  --muted: 210 40% 96%;
+  --muted: 48 18% 88%;
 
-  --muted-foreground: 217 19% 45%;
+  --muted-foreground: 158 22% 38%;
 
-  /* Accent - Primary Strong #90C11B */
-  --accent: 157 48% 44%;
+  --accent: 82 65% 92%;
 
-  --accent-foreground: 0 0% 100%;
+  --accent-foreground: 158 58% 11%;
 
   --destructive: 0 72% 51%;
 
   --destructive-foreground: 0 0% 100%;
 
-  --input: 140 15% 88%;
-  --ring: 169 78% 24%;
-  --chart-1: 169 78% 24%;
-  --chart-2: 157 48% 44%;
-  --chart-3: 211 47% 11%;
-  --chart-4: 217 19% 45%;
-  --chart-5: 210 40% 96%;
+  --input: 140 14% 84%;
+  --ring: 82 78% 48%;
+  --chart-1: 82 78% 55%;
+  --chart-2: 158 83% 28%;
+  --chart-3: 158 45% 45%;
+  --chart-4: 48 15% 70%;
+  --chart-5: 140 20% 88%;
 
-  --font-sans: 'Inter', sans-serif;
-  --font-serif: 'Playfair Display', Georgia, serif;
-  --font-mono: 'JetBrains Mono', monospace;
-  --radius: .5rem; /* 8px */
-  --shadow-2xs: 0px 1px 2px 0px rgba(0, 0, 0, 0.05);
-  --shadow-xs: 0px 1px 3px 0px rgba(0, 0, 0, 0.08);
-  --shadow-sm: 0px 2px 4px -1px rgba(0, 0, 0, 0.08), 0px 1px 2px -1px rgba(0, 0, 0, 0.04);
-  --shadow: 0px 4px 6px -1px rgba(0, 0, 0, 0.1), 0px 2px 4px -1px rgba(0, 0, 0, 0.06);
-  --shadow-md: 0px 6px 8px -2px rgba(0, 0, 0, 0.1), 0px 4px 6px -1px rgba(0, 0, 0, 0.06);
-  --shadow-lg: 0px 10px 15px -3px rgba(0, 0, 0, 0.1), 0px 4px 6px -2px rgba(0, 0, 0, 0.05);
-  --shadow-xl: 0px 20px 25px -5px rgba(0, 0, 0, 0.1), 0px 10px 10px -5px rgba(0, 0, 0, 0.04);
-  --shadow-2xl: 0px 25px 50px -12px rgba(0, 0, 0, 0.25);
+  --font-sans: 'Inter', system-ui, sans-serif;
+  --font-serif: 'Cormorant Garamond', 'Playfair Display', Georgia, serif;
+  --font-mono: 'IBM Plex Mono', ui-monospace, monospace;
+  --radius: 0.125rem;
+  --shadow-2xs: 0 1px 0 0 hsl(158 83% 13% / 0.06);
+  --shadow-xs: 0 1px 2px 0 hsl(158 83% 13% / 0.06);
+  --shadow-sm: 0 1px 3px 0 hsl(158 83% 13% / 0.08);
+  --shadow: 0 2px 4px -1px hsl(158 83% 13% / 0.07);
+  --shadow-md: 0 4px 6px -2px hsl(158 83% 13% / 0.08);
+  --shadow-lg: 0 8px 12px -4px hsl(158 83% 13% / 0.09);
+  --shadow-xl: 0 12px 20px -6px hsl(158 83% 13% / 0.1);
+  --shadow-2xl: 0 20px 40px -12px hsl(158 83% 13% / 0.15);
   --tracking-normal: 0em;
   --spacing: 0.25rem;
 
@@ -135,90 +133,82 @@ html {
   --button-outline: rgba(255,255,255, .10);
   --badge-outline: rgba(255,255,255, .05);
 
-  --opaque-button-border-intensity: 9;  /* In terms of percentages */
+  --opaque-button-border-intensity: 9;
 
-  /* Backgrounds applied on top of other backgrounds when hovered/active */
-  --elevate-1: rgba(255,255,255, .04);
-  --elevate-2: rgba(255,255,255, .09);
+  --elevate-1: rgba(255,255,255, .05);
+  --elevate-2: rgba(255,255,255, .1);
 
-  /* EcoXchange Brand Colors - Near-black background */
-  --background: 211 47% 10%;
+  /* Forest floor ~#06402B */
+  --background: 158 83% 11%;
 
-  --foreground: 210 40% 98%;
+  --foreground: 48 28% 95%;
 
-  --border: 214 35% 24%;
+  --border: 158 45% 22%;
 
-  /* Surface/Card colors */
-  --card: 211 47% 13%;
+  --card: 158 78% 14%;
 
-  --card-foreground: 210 40% 98%;
+  --card-foreground: 48 28% 95%;
 
-  --card-border: 214 35% 26%;
+  --card-border: 158 50% 20%;
 
-  /* Sidebar - Deep green */
-  --sidebar: 211 47% 11%;
+  --sidebar: 158 83% 10%;
 
-  --sidebar-foreground: 210 40% 98%;
+  --sidebar-foreground: 48 28% 95%;
 
-  --sidebar-border: 214 35% 24%;
+  --sidebar-border: 158 45% 20%;
 
-  /* Brand primary - Eco Green #73AC20 */
-  --sidebar-primary: 157 48% 44%;
+  --sidebar-primary: 82 78% 55%;
 
-  --sidebar-primary-foreground: 210 40% 98%;
+  --sidebar-primary-foreground: 158 85% 8%;
 
-  --sidebar-accent: 214 35% 24%;
+  --sidebar-accent: 158 55% 18%;
 
-  --sidebar-accent-foreground: 210 40% 98%;
+  --sidebar-accent-foreground: 48 28% 95%;
 
-  --sidebar-ring: 157 48% 44%;
+  --sidebar-ring: 82 78% 55%;
 
-  --popover: 211 47% 13%;
+  --popover: 158 78% 13%;
 
-  --popover-foreground: 210 40% 98%;
+  --popover-foreground: 48 28% 95%;
 
-  --popover-border: 214 35% 24%;
+  --popover-border: 158 45% 22%;
 
-  /* Primary - Eco Green #73AC20 */
-  --primary: 157 48% 44%;
+  --primary: 82 78% 55%;
 
-  --primary-foreground: 210 40% 98%;
+  --primary-foreground: 158 85% 8%;
 
-  /* Secondary - Deep Green #135F2D */
-  --secondary: 169 78% 24%;
+  --secondary: 158 55% 22%;
 
-  --secondary-foreground: 210 40% 98%;
+  --secondary-foreground: 48 28% 95%;
 
-  --muted: 211 39% 19%;
+  --muted: 158 40% 18%;
 
-  --muted-foreground: 215 20% 70%;
+  --muted-foreground: 140 18% 72%;
 
-  /* Accent - Primary Strong #90C11B */
-  --accent: 157 48% 44%;
+  --accent: 158 55% 22%;
 
-  --accent-foreground: 210 40% 98%;
+  --accent-foreground: 48 28% 95%;
 
   --destructive: 0 72% 51%;
 
   --destructive-foreground: 0 0% 100%;
 
-  /* Input border */
-  --input: 214 35% 24%;
-  --ring: 157 48% 44%;
-  --chart-1: 157 48% 44%;
-  --chart-2: 169 78% 24%;
-  --chart-3: 210 40% 98%;
-  --chart-4: 215 20% 70%;
-  --chart-5: 211 39% 19%;
+  --input: 158 45% 24%;
+  --ring: 82 78% 55%;
+  --chart-1: 82 78% 55%;
+  --chart-2: 158 45% 55%;
+  --chart-3: 48 35% 90%;
+  --chart-4: 140 25% 65%;
+  --chart-5: 158 40% 25%;
 
-  --shadow-2xs: 0px 1px 2px 0px rgba(0, 0, 0, 0.3);
-  --shadow-xs: 0px 1px 3px 0px rgba(0, 0, 0, 0.4);
-  --shadow-sm: 0px 2px 4px -1px rgba(0, 0, 0, 0.4), 0px 1px 2px -1px rgba(0, 0, 0, 0.2);
-  --shadow: 0px 4px 6px -1px rgba(0, 0, 0, 0.5), 0px 2px 4px -1px rgba(0, 0, 0, 0.3);
-  --shadow-md: 0px 6px 8px -2px rgba(0, 0, 0, 0.5), 0px 4px 6px -1px rgba(0, 0, 0, 0.3);
-  --shadow-lg: 0px 10px 15px -3px rgba(0, 0, 0, 0.5), 0px 4px 6px -2px rgba(0, 0, 0, 0.25);
-  --shadow-xl: 0px 20px 25px -5px rgba(0, 0, 0, 0.5), 0px 10px 10px -5px rgba(0, 0, 0, 0.2);
-  --shadow-2xl: 0px 25px 50px -12px rgba(0, 0, 0, 0.7);
+  --shadow-2xs: 0 1px 0 0 hsl(0 0% 0% / 0.35);
+  --shadow-xs: 0 1px 2px 0 hsl(0 0% 0% / 0.4);
+  --shadow-sm: 0 2px 4px -1px hsl(0 0% 0% / 0.45);
+  --shadow: 0 4px 6px -1px hsl(0 0% 0% / 0.45);
+  --shadow-md: 0 6px 10px -2px hsl(0 0% 0% / 0.5);
+  --shadow-lg: 0 10px 18px -4px hsl(0 0% 0% / 0.55);
+  --shadow-xl: 0 16px 28px -6px hsl(0 0% 0% / 0.55);
+  --shadow-2xl: 0 24px 48px -12px hsl(0 0% 0% / 0.65);
 }
 
 @layer base {
@@ -231,7 +221,8 @@ html {
   }
 
   h1,
-  h2 {
+  h2,
+  h3 {
     @apply font-serif;
     letter-spacing: -0.02em;
   }
@@ -348,26 +339,124 @@ html {
     inset: -1px;
   }
 
-  /* EcoXchange brand gradient backgrounds */
+  /* Forest / lime gradients (auth, market, performance) */
   .bg-gradient-dark {
-    background: linear-gradient(180deg, #0b1d2d 0%, #102a3f 100%);
+    background: linear-gradient(165deg, hsl(158 83% 9%) 0%, hsl(158 78% 14%) 45%, hsl(158 70% 11%) 100%);
   }
 
   .bg-gradient-dark-green {
-    background: linear-gradient(180deg, #0b1d2d 0%, rgba(13, 107, 91, 0.2) 55%, #0f2436 100%);
+    background: linear-gradient(
+      165deg,
+      hsl(158 83% 10%) 0%,
+      hsl(158 65% 14%) 42%,
+      hsl(82 35% 18% / 0.25) 58%,
+      hsl(158 78% 12%) 100%
+    );
   }
 
-  /* Brand glow effects */
   .glow-green {
-    box-shadow: 0 0 30px rgba(58, 165, 124, 0.22);
+    box-shadow: 0 0 36px hsl(82 78% 55% / 0.22);
   }
 
   .glow-lime {
-    box-shadow: 0 0 20px rgba(13, 107, 91, 0.3);
+    box-shadow: 0 0 24px hsl(82 78% 55% / 0.28);
   }
 
-  /* Brand accent glow */
   .glow-brand {
-    box-shadow: 0 0 40px rgba(13, 107, 91, 0.2);
+    box-shadow: 0 0 44px hsl(82 78% 55% / 0.18);
+  }
+
+  /* Subtle blueprint grid on cream */
+  .editorial-grid {
+    background-color: hsl(var(--background));
+    background-image:
+      linear-gradient(hsl(158 83% 13% / 0.06) 1px, transparent 1px),
+      linear-gradient(90deg, hsl(158 83% 13% / 0.06) 1px, transparent 1px);
+    background-size: 24px 24px;
+  }
+
+  .editorial-grid-dark {
+    background-color: hsl(158 83% 11%);
+    background-image:
+      linear-gradient(hsl(48 28% 95% / 0.06) 1px, transparent 1px),
+      linear-gradient(90deg, hsl(48 28% 95% / 0.06) 1px, transparent 1px);
+    background-size: 28px 28px;
+  }
+
+  .pitch-panel-cream {
+    @apply editorial-grid border border-border;
+  }
+
+  .pitch-panel-dark {
+    @apply editorial-grid-dark border border-white/10;
+  }
+
+  .editorial-rule {
+    height: 1px;
+    background: linear-gradient(90deg, transparent, hsl(var(--border)), transparent);
+  }
+
+  .editorial-rule-solid {
+    height: 1px;
+    background: hsl(var(--border));
+  }
+
+  /* Vertical axis + dot — title-slide motif */
+  .pitch-plumb {
+    position: relative;
+    isolation: isolate;
+  }
+
+  .pitch-plumb::after {
+    content: "";
+    position: absolute;
+    left: 50%;
+    bottom: 0;
+    translate: -50% 0;
+    width: 1px;
+    height: min(28vh, 180px);
+    background: linear-gradient(
+      to bottom,
+      hsl(48 28% 95% / 0),
+      hsl(48 28% 95% / 0.35) 20%,
+      hsl(82 78% 55% / 0.85)
+    );
+    pointer-events: none;
+  }
+
+  .pitch-plumb-dot {
+    position: absolute;
+    left: 50%;
+    bottom: 0;
+    translate: -50% 50%;
+    width: 8px;
+    height: 8px;
+    border-radius: 9999px;
+    background: hsl(82 78% 55%);
+    box-shadow: 0 0 0 3px hsl(158 83% 11% / 0.5);
+    pointer-events: none;
+  }
+
+  /* Decorative arcs — lightweight SVG-free rings */
+  .pitch-arcs {
+    pointer-events: none;
+    position: absolute;
+    inset: -15% -10% auto -10%;
+    height: 55%;
+    border: 1px solid hsl(48 28% 95% / 0.08);
+    border-radius: 50%;
+    aspect-ratio: 1;
+    margin: 0 auto;
+    max-width: 900px;
+    left: 50%;
+    translate: -50% 0;
+  }
+
+  .pitch-arcs::before {
+    content: "";
+    position: absolute;
+    inset: 12%;
+    border: 1px solid hsl(48 28% 95% / 0.06);
+    border-radius: 50%;
   }
 }
