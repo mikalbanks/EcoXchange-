@@ -83,21 +83,21 @@ export function DashboardLayout({
 
   return (
     <SidebarProvider style={style as React.CSSProperties}>
-      <div className="flex min-h-screen w-full bg-muted/20">
-        <Sidebar className="border-r border-sidebar-border bg-sidebar">
-          <SidebarHeader className="p-4 border-b border-sidebar-border">
+      <div className="flex min-h-screen w-full bg-muted/30 editorial-grid">
+        <Sidebar className="border-r border-sidebar-border bg-sidebar editorial-grid-dark">
+          <SidebarHeader className="p-4 border-b border-sidebar-border/80">
             <Link href="/" className="flex items-center gap-2">
               <div className="flex items-center gap-2">
-                <div className="w-8 h-8 rounded-lg bg-sidebar-primary flex items-center justify-center">
-                  <span className="text-primary-foreground font-bold text-sm">E</span>
+                <div className="flex h-8 w-8 items-center justify-center rounded-sm border border-primary/40 bg-primary">
+                  <span className="font-mono text-xs font-bold text-primary-foreground">E</span>
                 </div>
-                <span className="font-semibold text-sidebar-foreground text-sm tracking-tight" data-testid="text-sidebar-brand">EcoXchange</span>
+                <span className="font-serif font-semibold text-sidebar-foreground text-sm tracking-tight" data-testid="text-sidebar-brand">EcoXchange</span>
               </div>
             </Link>
           </SidebarHeader>
           <SidebarContent>
             <SidebarGroup>
-              <SidebarGroupLabel className="text-sidebar-foreground/50 text-xs uppercase tracking-wider">
+              <SidebarGroupLabel className="font-mono text-sidebar-foreground/45 text-[0.65rem] uppercase tracking-[0.2em]">
                 {user?.role === "ADMIN" ? "Administration" : user?.role === "DEVELOPER" ? "Issuer Portal" : "Investor Portal"}
               </SidebarGroupLabel>
               <SidebarGroupContent>
@@ -111,8 +111,8 @@ export function DashboardLayout({
                           asChild 
                           isActive={isActive}
                           className={cn(
-                            "rounded-md hover-elevate",
-                            isActive && "bg-sidebar-accent text-sidebar-accent-foreground"
+                            "rounded-sm hover-elevate border border-transparent",
+                            isActive && "border-primary/50 bg-primary text-primary-foreground shadow-none"
                           )}
                         >
                           <Link href={item.url} data-testid={`nav-${item.title.toLowerCase().replace(/\s/g, "-")}`}>
@@ -147,7 +147,7 @@ export function DashboardLayout({
         </Sidebar>
 
         <div className="flex flex-col flex-1 min-w-0">
-          <header className="sticky top-0 z-40 flex h-16 items-center gap-4 border-b border-border/60 bg-background/95 backdrop-blur px-4">
+          <header className="sticky top-0 z-40 flex h-16 items-center gap-4 border-b border-border bg-background/95 backdrop-blur px-4">
             <SidebarTrigger className="lg:hidden" data-testid="button-sidebar-toggle" />
             
             {breadcrumbs && breadcrumbs.length > 0 && (
@@ -170,9 +170,9 @@ export function DashboardLayout({
             <div className="ml-auto flex items-center gap-3">
               {user && (
                 <div className="flex items-center gap-2">
-                  <div className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-full bg-muted/50">
+                  <div className="flex items-center gap-1.5 rounded-sm border border-border px-2.5 py-1.5 bg-muted/40">
                     <Shield className="h-3.5 w-3.5 text-muted-foreground" />
-                    <span className="text-xs font-medium text-muted-foreground">{user.role === "DEVELOPER" ? "ISSUER" : user.role}</span>
+                    <span className="font-mono text-[0.65rem] font-medium uppercase tracking-wide text-muted-foreground">{user.role === "DEVELOPER" ? "ISSUER" : user.role}</span>
                   </div>
                   <span className="text-sm text-muted-foreground hidden sm:inline" data-testid="text-header-email">
                     {user.name || user.email}
@@ -187,7 +187,7 @@ export function DashboardLayout({
               {(title || actions) && (
                 <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-8">
                   <div>
-                    {title && <h1 className="text-3xl font-semibold tracking-tight" data-testid="text-page-title">{title}</h1>}
+                    {title && <h1 className="font-serif text-3xl font-semibold tracking-tight" data-testid="text-page-title">{title}</h1>}
                     {description && <p className="text-muted-foreground mt-1">{description}</p>}
                   </div>
                   {actions && <div className="flex items-center gap-2">{actions}</div>}

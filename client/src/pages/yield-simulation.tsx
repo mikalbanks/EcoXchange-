@@ -214,7 +214,7 @@ const PipelineArrow = ({ active, delay }: { active: boolean; delay: number }) =>
   </div>
 );
 
-const CHART_PRIMARY = "#73AC20";
+const CHART_PRIMARY = "#A3E635";
 const CHART_PRIMARY_DARK = "#5C8A1A";
 const CHART_ACCENT = "#90C11B";
 

@@ -81,7 +81,7 @@ function ConfidenceGauge({ score }: { score: number }) {
   const radius = 80;
   const circumference = Math.PI * radius;
   const progress = (score / 100) * circumference;
-  const color = score >= 90 ? "#73AC20" : score >= 75 ? "#EAB308" : "#EF4444";
+  const color = score >= 90 ? "#A3E635" : score >= 75 ? "#EAB308" : "#EF4444";
 
   return (
     <div className="flex flex-col items-center" data-testid="gauge-confidence">
@@ -342,14 +342,14 @@ export default function BacktestReportPage() {
   }));
 
   const bucketData = [
-    { name: "≤1%", value: statistics.errorBuckets.within1Pct, fill: "#73AC20" },
+    { name: "≤1%", value: statistics.errorBuckets.within1Pct, fill: "#A3E635" },
     { name: "1-2%", value: statistics.errorBuckets.within2Pct, fill: "#90C11B" },
     { name: "2-5%", value: statistics.errorBuckets.within5Pct, fill: "#EAB308" },
     { name: ">5%", value: statistics.errorBuckets.above5Pct, fill: "#EF4444" },
   ];
 
   const pieData = [
-    { name: "Pass @2%", value: statistics.passRate2Pct, fill: "#73AC20" },
+    { name: "Pass @2%", value: statistics.passRate2Pct, fill: "#A3E635" },
     { name: "Pass @5% only", value: statistics.passRate5Pct - statistics.passRate2Pct, fill: "#EAB308" },
     { name: "Fail", value: Math.max(0, 100 - statistics.passRate5Pct), fill: "#EF4444" },
   ].filter(d => d.value > 0);
@@ -377,15 +377,15 @@ export default function BacktestReportPage() {
           color: #4b5563 !important;
         }
         .pdf-capture-mode [class*="text-primary"] {
-          color: #73AC20 !important;
+          color: #A3E635 !important;
         }
         .pdf-capture-mode [class*="bg-primary\\/5"],
         .pdf-capture-mode [class*="bg-primary\\/20"] {
           background-color: #f0fdf4 !important;
         }
-        .pdf-capture-mode [data-testid="stat-mae"] { color: #73AC20 !important; }
-        .pdf-capture-mode [data-testid="stat-pass-@2%"] { color: #73AC20 !important; }
-        .pdf-capture-mode [data-testid="stat-pass-@5%"] { color: #73AC20 !important; }
+        .pdf-capture-mode [data-testid="stat-mae"] { color: #A3E635 !important; }
+        .pdf-capture-mode [data-testid="stat-pass-@2%"] { color: #A3E635 !important; }
+        .pdf-capture-mode [data-testid="stat-pass-@5%"] { color: #A3E635 !important; }
       `}</style>
       <div className="print:hidden" data-pdf-app-header>
         <Header />
@@ -613,10 +613,10 @@ export default function BacktestReportPage() {
         </Card>
 
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-          <StatCard icon={Activity} label="MAE" value={`${statistics.mae.toFixed(2)}%`} sublabel="Mean Absolute Error" color={statistics.mae < 5 ? "#73AC20" : "#EF4444"} />
+          <StatCard icon={Activity} label="MAE" value={`${statistics.mae.toFixed(2)}%`} sublabel="Mean Absolute Error" color={statistics.mae < 5 ? "#A3E635" : "#EF4444"} />
           <StatCard icon={BarChart3} label="RMSE" value={`${statistics.rmse.toFixed(2)}%`} sublabel="Root Mean Square Error" />
-          <StatCard icon={CheckCircle2} label="Pass @2%" value={`${statistics.passRate2Pct.toFixed(1)}%`} sublabel="Strict tolerance" color="#73AC20" />
-          <StatCard icon={Shield} label="Pass @5%" value={`${statistics.passRate5Pct.toFixed(1)}%`} sublabel="Standard tolerance" color="#73AC20" />
+          <StatCard icon={CheckCircle2} label="Pass @2%" value={`${statistics.passRate2Pct.toFixed(1)}%`} sublabel="Strict tolerance" color="#A3E635" />
+          <StatCard icon={Shield} label="Pass @5%" value={`${statistics.passRate5Pct.toFixed(1)}%`} sublabel="Standard tolerance" color="#A3E635" />
         </div>
 
         <Card className="print:break-before-page print:border-gray-300 print:bg-white">
@@ -642,7 +642,7 @@ export default function BacktestReportPage() {
                     formatter={(value: number, name: string) => [`${value} MWh`, name === "satellite" ? "Satellite" : "Meter"]}
                   />
                   <Legend />
-                  <Bar dataKey="satellite" name="Satellite (Solcast)" fill="#73AC20" radius={[2, 2, 0, 0]} />
+                  <Bar dataKey="satellite" name="Satellite (Solcast)" fill="#A3E635" radius={[2, 2, 0, 0]} />
                   <Bar dataKey="meter" name="Meter (PVDAQ)" fill="#3B82F6" radius={[2, 2, 0, 0]} />
                 </BarChart>
               </ResponsiveContainer>
@@ -736,7 +736,7 @@ export default function BacktestReportPage() {
                     formatter={(value: number, name: string) => [`${value} kW`, name === "satellite" ? "Satellite" : "Meter"]}
                   />
                   <Legend />
-                  <Line type="monotone" dataKey="satellite" name="Satellite (Solcast)" stroke="#73AC20" dot={false} strokeWidth={1.5} />
+                  <Line type="monotone" dataKey="satellite" name="Satellite (Solcast)" stroke="#A3E635" dot={false} strokeWidth={1.5} />
                   <Line type="monotone" dataKey="meter" name="Meter (PVDAQ)" stroke="#3B82F6" dot={false} strokeWidth={1.5} />
                 </LineChart>
               </ResponsiveContainer>
