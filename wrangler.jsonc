@@ -1,0 +1,19 @@
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "ecoxchange",
+  "main": "worker/index.ts",
+  "compatibility_date": "2026-05-14",
+  "compatibility_flags": ["nodejs_compat"],
+  "observability": { "enabled": true },
+  "assets": {
+    "directory": "./dist/public",
+    "binding": "ASSETS",
+    "not_found_handling": "single-page-application"
+  },
+  "vars": {
+    // IMPORTANT: replace with your actual Render service origin before the first
+    // deploy, OR remove this block and run `npx wrangler secret put API_ORIGIN`
+    // instead. The Worker reads env.API_ORIGIN either way.
+    "API_ORIGIN": "https://REPLACE-ME.onrender.com"
+  }
+}
