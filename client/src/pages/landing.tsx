@@ -1,3 +1,4 @@
+import { useState } from "react";
 import { Link } from "wouter";
 import { useQuery } from "@tanstack/react-query";
 import { Header } from "@/components/header";
@@ -7,16 +8,19 @@ import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import {
   ArrowRight,
-  Leaf,
-  TrendingUp,
-  Eye,
-  Network,
   MapPin,
   Zap,
-  Newspaper,
   ShieldCheck,
   Users,
   BarChart3,
+  Calculator,
+  Mail,
+  DollarSign,
+  Clock,
+  Activity,
+  Sun,
+  Landmark,
+  Building2,
 } from "lucide-react";
 
 interface FeaturedProject {
@@ -34,21 +38,99 @@ interface ScadaSummaryData {
   trailing12MonthRevenue: number;
 }
 
-interface PublicSgtProject {
-  projectId: string;
-  projectName: string;
+interface UpcomingProject {
+  id: string;
+  name: string;
+  location: string;
   state: string;
-  county: string;
   capacityMW: number;
-  health: string;
-  sgtEstimated: {
-    avgCapacityFactor: number;
-  };
+  capacityLabel: string;
+  type: string;
+  status: string;
+  statusColor: string;
+  estimatedYieldLow: number;
+  estimatedYieldHigh: number;
+  sourceLabel: string;
+  icon: typeof Sun;
 }
 
-interface PublicSgtProjectsResponse {
-  projects: PublicSgtProject[];
-}
+const upcomingProjects: UpcomingProject[] = [
+  {
+    id: "deptford-court",
+    name: "Court at Deptford Solar",
+    location: "Gloucester County",
+    state: "NJ",
+    capacityMW: 4.1,
+    capacityLabel: "4.1 MW",
+    type: "Grid-supply solar",
+    status: "CSI Awarded",
+    statusColor: "bg-green-600",
+    estimatedYieldLow: 6,
+    estimatedYieldHigh: 8,
+    sourceLabel: "NJ BPU 8C Order",
+    icon: Sun,
+  },
+  {
+    id: "deptford-landfill",
+    name: "Deptford Landfill Solar",
+    location: "Deptford Township",
+    state: "NJ",
+    capacityMW: 10,
+    capacityLabel: "10 MW",
+    type: "Landfill brownfield solar",
+    status: "CSI Awarded",
+    statusColor: "bg-green-600",
+    estimatedYieldLow: 5,
+    estimatedYieldHigh: 7,
+    sourceLabel: "NJ BPU 8C Order",
+    icon: Landmark,
+  },
+  {
+    id: "camden-municipal",
+    name: "Camden Municipal Community Solar",
+    location: "Camden",
+    state: "NJ",
+    capacityMW: 4,
+    capacityLabel: "3–5 MW est.",
+    type: "Municipal auto-enrollment",
+    status: "RFP Active",
+    statusColor: "bg-amber-500",
+    estimatedYieldLow: 6,
+    estimatedYieldHigh: 9,
+    sourceLabel: "Camden RFP 26-04",
+    icon: Building2,
+  },
+  {
+    id: "howard-county",
+    name: "Howard County Solar Portfolio",
+    location: "Howard County",
+    state: "MD",
+    capacityMW: 5,
+    capacityLabel: "~5 MW portfolio",
+    type: "Landfill + canopy brownfield",
+    status: "MEA Grant-Backed",
+    statusColor: "bg-blue-600",
+    estimatedYieldLow: 5,
+    estimatedYieldHigh: 7,
+    sourceLabel: "Howard County announcement",
+    icon: Landmark,
+  },
+  {
+    id: "groundswell-serp",
+    name: "Groundswell Southeast Rural Power",
+    location: "Southeast US",
+    state: "Multi-state",
+    capacityMW: 24,
+    capacityLabel: "~24 MW initial",
+    type: "Rural community solar",
+    status: "RFP Active",
+    statusColor: "bg-amber-500",
+    estimatedYieldLow: 5,
+    estimatedYieldHigh: 8,
+    sourceLabel: "Groundswell SERP",
+    icon: Sun,
+  },
+];
 
 const capabilities = [
   {
@@ -85,29 +167,15 @@ const capabilities = [
   },
 ];
 
-const inTheNews = [
-  {
-    publication: "Clean Finance Journal",
-    date: "Apr 2026",
-    title: "Institutional capital turns to tokenized solar infrastructure",
-  },
-  {
-    publication: "Energy Markets Weekly",
-    date: "Mar 2026",
-    title: "How digital securities are modernizing renewable project finance",
-  },
-  {
-    publication: "Climate Investor Review",
-    date: "Feb 2026",
-    title: "EcoXchange expands access to infrastructure-backed clean energy investments",
-  },
-];
-
 function formatCompact(num: number): string {
   if (num >= 1_000_000_000) return `$${(num / 1_000_000_000).toFixed(1)}B`;
   if (num >= 1_000_000) return `$${(num / 1_000_000).toFixed(1)}M`;
   if (num >= 1_000) return `$${(num / 1_000).toFixed(0)}K`;
   return `$${num.toFixed(0)}`;
+}
+
+function formatCurrency(num: number): string {
+  return num.toLocaleString("en-US", { style: "currency", currency: "USD", minimumFractionDigits: 0, maximumFractionDigits: 0 });
 }
 
 function HeroSection() {
@@ -134,17 +202,24 @@ function HeroSection() {
             Physics-verified yield for accredited investors.
           </p>
           <div className="editorial-rule mx-auto my-10 max-w-xs bg-[hsl(48_28%_95%/0.25)]" />
-          <p className="mb-12 max-w-xl font-mono text-[0.7rem] uppercase tracking-[0.28em] text-[hsl(48_28%_95%/0.65)]">
+          <p className="mb-8 max-w-xl font-mono text-[0.7rem] uppercase tracking-[0.28em] text-[hsl(48_28%_95%/0.65)]">
             A regulated digital-securities platform giving accredited investors direct,
             physics-verified yield on individual solar projects.
           </p>
+          <div className="mb-8 flex items-center gap-2 font-mono text-[0.65rem] uppercase tracking-[0.2em] text-[hsl(48_28%_95%/0.7)]">
+            <span className="relative flex h-2 w-2">
+              <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-green-400 opacity-75" />
+              <span className="relative inline-flex h-2 w-2 rounded-full bg-green-500" />
+            </span>
+            5 projects in active pipeline
+          </div>
           <div className="flex flex-col gap-4 sm:flex-row sm:justify-center">
-            <a href="mailto:contact@ecoxchange.net?subject=Investor%20access%20inquiry">
+            <a href="#signup">
               <Button size="lg" className="min-w-[220px] font-semibold" data-testid="button-hero-investor">
                 Request investor access <ArrowRight className="h-4 w-4" />
               </Button>
             </a>
-            <Link href="/market">
+            <a href="#pipeline">
               <Button
                 size="lg"
                 variant="outline"
@@ -153,7 +228,7 @@ function HeroSection() {
               >
                 Explore projects →
               </Button>
-            </Link>
+            </a>
           </div>
         </div>
 
@@ -308,7 +383,7 @@ function InvestorSection() {
               ))}
             </div>
             <div className="mt-8">
-              <a href="mailto:contact@ecoxchange.net?subject=Investor%20access%20inquiry">
+              <a href="#signup">
                 <Button size="lg" className="font-semibold">
                   Request investor access <ArrowRight className="h-4 w-4" />
                 </Button>
@@ -345,7 +420,7 @@ function InvestorSection() {
 
 function FeeStructureSection() {
   const rows = [
-    { label: "Annual management fee", ecox: "None", competitor: "1–2% / year", ecoxGood: true },
+    { label: "Annual management fee", ecox: "1% / year", competitor: "1–2% / year", ecoxGood: true },
     { label: "Investor load charge", ecox: "None", competitor: "0–5% upfront", ecoxGood: true },
     { label: "Production verification", ecox: "Physics-based", competitor: "Developer self-report", ecoxGood: true },
     { label: "Yield exposure", ecox: "Direct, per-project", competitor: "Pooled, blended", ecoxGood: true },
@@ -365,20 +440,25 @@ function FeeStructureSection() {
             <p className="text-lg text-muted-foreground">
               EcoXchange charges a <strong className="text-foreground font-semibold">5% origination fee to the project SPV
               at offering close</strong> — paid from the capital raised, not from investor returns.
-              Investors pay no management fee, no annual platform fee, and no load charge.
+              A <strong className="text-foreground font-semibold">1% annual management fee</strong> covers
+              ongoing platform servicing, distribution calculation, reporting, and audit delivery.
             </p>
             <p className="mt-4 text-muted-foreground">
               After close, investor distributions are calculated entirely from verified production figures.
-              The origination fee is a one-time transaction charge; it does not persist as an annual drag on yield.
+              The origination fee is a one-time transaction charge; the annual management fee is the only
+              recurring cost and is lower than the industry standard of 1–2%.
             </p>
-            <p className="mt-4 text-muted-foreground">
-              The platform retains an ongoing servicing fee from the project SPV to cover distribution
-              calculation, reporting, and audit delivery. This is also borne by the project side, not by investors.
-            </p>
-            <div className="mt-8 rounded-md border border-primary/30 bg-primary/5 p-5">
-              <p className="font-mono text-[0.65rem] uppercase tracking-wider text-primary mb-2">Origination fee</p>
-              <p className="font-sans text-3xl font-bold text-primary">5%</p>
-              <p className="mt-2 text-sm text-muted-foreground">Charged to project SPV at close. From capital raised. Investors pay nothing.</p>
+            <div className="mt-8 grid grid-cols-2 gap-4">
+              <div className="rounded-md border border-primary/30 bg-primary/5 p-5">
+                <p className="font-mono text-[0.65rem] uppercase tracking-wider text-primary mb-2">Origination fee</p>
+                <p className="font-sans text-3xl font-bold text-primary">5%</p>
+                <p className="mt-2 text-xs text-muted-foreground">One-time. Charged to project SPV at close from capital raised.</p>
+              </div>
+              <div className="rounded-md border border-primary/30 bg-primary/5 p-5">
+                <p className="font-mono text-[0.65rem] uppercase tracking-wider text-primary mb-2">Management fee</p>
+                <p className="font-sans text-3xl font-bold text-primary">1%</p>
+                <p className="mt-2 text-xs text-muted-foreground">Annual. Covers servicing, reporting, and audit delivery.</p>
+              </div>
             </div>
           </div>
 
@@ -463,14 +543,8 @@ function FeaturedProjectSection() {
 
         <Card className="mx-auto max-w-5xl overflow-hidden border-border mt-10">
           <div
-            className="h-56"
-            style={{
-              backgroundImage:
-                "linear-gradient(180deg, hsl(158 83% 11% / 0.15), hsl(158 83% 11% / 0.82)), url('https://images.unsplash.com/photo-1466611653911-95081537e5b7?auto=format&fit=crop&w=1600&q=80')",
-              backgroundPosition: "center",
-              backgroundSize: "cover",
-            }}
-            aria-label="Solar project image"
+            className="h-56 bg-gradient-to-b from-[hsl(158_83%_11%/0.4)] via-[hsl(158_83%_11%/0.6)] to-[hsl(158_83%_11%/0.85)]"
+            aria-label="Solar project"
           />
           <CardContent className="p-6 md:p-8">
             <div className="mb-6 flex flex-col justify-between gap-4 md:flex-row md:items-center">
@@ -483,7 +557,7 @@ function FeaturedProjectSection() {
                     <MapPin className="h-3.5 w-3.5" />
                     {featuredProject?.county && featuredProject?.state
                       ? `${featuredProject.county}, ${featuredProject.state}`
-                      : "California"}
+                      : "Location TBD"}
                   </span>
                   <span className="inline-flex items-center gap-1">
                     <Zap className="h-3.5 w-3.5" />
@@ -517,7 +591,7 @@ function FeaturedProjectSection() {
                 ))}
               </div>
             ) : (
-              <p className="text-sm text-muted-foreground">Performance data loading...</p>
+              <p className="text-sm text-muted-foreground">Performance data will appear here once the first offering is live.</p>
             )}
 
             <div className="mt-6 flex justify-end">
@@ -534,12 +608,263 @@ function FeaturedProjectSection() {
   );
 }
 
+function MarketplaceSection() {
+  return (
+    <section id="pipeline" className="border-t border-border bg-background py-20">
+      <div className="container mx-auto px-4">
+        <div className="mb-2">
+          <p className="mb-2 font-mono text-[0.65rem] uppercase tracking-[0.28em] text-muted-foreground">§ VI — Project Pipeline</p>
+          <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+            <h2 className="font-serif text-4xl font-semibold tracking-tight md:text-5xl">Active pipeline</h2>
+            <div className="flex items-center gap-2 font-mono text-[0.65rem] uppercase tracking-[0.2em] text-primary">
+              <span className="relative flex h-2 w-2">
+                <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-green-400 opacity-75" />
+                <span className="relative inline-flex h-2 w-2 rounded-full bg-green-500" />
+              </span>
+              {upcomingProjects.length} projects in due diligence
+            </div>
+          </div>
+          <p className="mt-4 max-w-3xl text-muted-foreground">
+            Real projects sourced from public procurement records, state incentive programs, and municipal RFPs.
+            Each project is evaluated against EcoXchange's underwriting criteria before entering the offering pipeline.
+          </p>
+        </div>
+
+        <div className="mt-10 grid grid-cols-1 gap-5 md:grid-cols-2 xl:grid-cols-3">
+          {upcomingProjects.map((project) => {
+            const ProjectIcon = project.icon;
+            return (
+              <Card key={project.id} className="border-border bg-card flex flex-col">
+                <CardContent className="flex flex-1 flex-col p-6">
+                  <div className="flex items-start justify-between gap-3 mb-4">
+                    <div className="flex items-center gap-3">
+                      <div className="flex h-10 w-10 items-center justify-center rounded-md bg-primary/10">
+                        <ProjectIcon className="h-5 w-5 text-primary" />
+                      </div>
+                      <div>
+                        <h3 className="font-sans text-base font-bold leading-tight">{project.name}</h3>
+                        <p className="mt-0.5 flex items-center gap-1 text-xs text-muted-foreground">
+                          <MapPin className="h-3 w-3" />
+                          {project.location}, {project.state}
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="mb-4 flex flex-wrap gap-2">
+                    <Badge variant="secondary" className="font-mono text-[0.6rem] uppercase tracking-wider">
+                      <span className={`mr-1.5 inline-block h-1.5 w-1.5 rounded-full ${project.statusColor}`} />
+                      {project.status}
+                    </Badge>
+                    <Badge variant="outline" className="font-mono text-[0.6rem] uppercase tracking-wider">
+                      {project.type}
+                    </Badge>
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-3 mb-4">
+                    <div className="rounded border border-border/60 bg-muted/30 p-3">
+                      <p className="font-mono text-[0.6rem] uppercase tracking-wider text-muted-foreground">Capacity</p>
+                      <p className="mt-1 font-sans text-sm font-semibold flex items-center gap-1">
+                        <Zap className="h-3 w-3 text-primary" />
+                        {project.capacityLabel}
+                      </p>
+                    </div>
+                    <div className="rounded border border-border/60 bg-muted/30 p-3">
+                      <p className="font-mono text-[0.6rem] uppercase tracking-wider text-muted-foreground">Est. yield</p>
+                      <p className="mt-1 font-sans text-sm font-semibold text-primary">
+                        {project.estimatedYieldLow}–{project.estimatedYieldHigh}%
+                      </p>
+                    </div>
+                  </div>
+
+                  <div className="mt-auto pt-3 border-t border-border/40">
+                    <p className="font-mono text-[0.55rem] uppercase tracking-wider text-muted-foreground/70">
+                      Source: {project.sourceLabel}
+                    </p>
+                  </div>
+                </CardContent>
+              </Card>
+            );
+          })}
+        </div>
+
+        <p className="mt-6 text-center font-mono text-[0.6rem] text-muted-foreground/60 max-w-3xl mx-auto">
+          Projected returns are estimates based on historical irradiance data and current offtake contracts.
+          Past performance does not guarantee future results. This is not an offer to sell securities.
+          All investments involve risk, including potential loss of principal.
+        </p>
+      </div>
+    </section>
+  );
+}
+
+function ROICalculatorSection() {
+  const [investmentAmount, setInvestmentAmount] = useState(25000);
+  const [selectedProjectId, setSelectedProjectId] = useState(upcomingProjects[0].id);
+  const [holdingPeriod, setHoldingPeriod] = useState(10);
+
+  const selectedProject = upcomingProjects.find((p) => p.id === selectedProjectId) || upcomingProjects[0];
+  const midYield = (selectedProject.estimatedYieldLow + selectedProject.estimatedYieldHigh) / 2 / 100;
+  const mgmtFee = 0.01;
+  const netYield = midYield - mgmtFee;
+
+  const annualDistribution = investmentAmount * netYield;
+  const cumulativeReturn = investmentAmount * Math.pow(1 + netYield, holdingPeriod) - investmentAmount;
+  const totalDistributions = annualDistribution * holdingPeriod;
+  const effectiveYield = netYield * 100;
+
+  const yearByYear = Array.from({ length: Math.min(holdingPeriod, 10) }, (_, i) => {
+    const year = i + 1;
+    const compoundValue = investmentAmount * Math.pow(1 + netYield, year);
+    const totalDist = annualDistribution * year;
+    return { year, compoundValue, totalDist };
+  });
+
+  return (
+    <section className="border-t border-border bg-muted/40 py-20">
+      <div className="container mx-auto px-4">
+        <div className="mb-2">
+          <p className="mb-2 font-mono text-[0.65rem] uppercase tracking-[0.28em] text-muted-foreground">§ VII — Yield Simulator</p>
+          <h2 className="font-serif text-4xl font-semibold tracking-tight md:text-5xl">Simulate your investment</h2>
+          <p className="mt-4 max-w-3xl text-muted-foreground">
+            Model hypothetical returns based on estimated project yields. Adjust your investment amount,
+            select a project, and choose a holding period to see projected distributions.
+          </p>
+        </div>
+
+        <div className="grid grid-cols-1 items-start gap-10 lg:grid-cols-2 mt-10">
+          <Card className="border-border bg-card">
+            <CardContent className="p-6 space-y-6">
+              <div>
+                <label className="block font-mono text-[0.65rem] uppercase tracking-wider text-muted-foreground mb-3">
+                  <DollarSign className="inline h-3 w-3 mr-1" />
+                  Investment amount
+                </label>
+                <div className="flex items-center gap-4">
+                  <input
+                    type="range"
+                    min={1000}
+                    max={500000}
+                    step={1000}
+                    value={investmentAmount}
+                    onChange={(e) => setInvestmentAmount(Number(e.target.value))}
+                    className="flex-1 accent-primary"
+                  />
+                  <span className="min-w-[100px] text-right font-mono text-lg font-bold text-primary tabular-nums">
+                    {formatCurrency(investmentAmount)}
+                  </span>
+                </div>
+              </div>
+
+              <div>
+                <label className="block font-mono text-[0.65rem] uppercase tracking-wider text-muted-foreground mb-3">
+                  <Activity className="inline h-3 w-3 mr-1" />
+                  Select project
+                </label>
+                <select
+                  value={selectedProjectId}
+                  onChange={(e) => setSelectedProjectId(e.target.value)}
+                  className="w-full rounded-md border border-border bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary/50"
+                >
+                  {upcomingProjects.map((p) => (
+                    <option key={p.id} value={p.id}>
+                      {p.name} — {p.estimatedYieldLow}–{p.estimatedYieldHigh}% est. yield
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              <div>
+                <label className="block font-mono text-[0.65rem] uppercase tracking-wider text-muted-foreground mb-3">
+                  <Clock className="inline h-3 w-3 mr-1" />
+                  Holding period: {holdingPeriod} {holdingPeriod === 1 ? "year" : "years"}
+                </label>
+                <input
+                  type="range"
+                  min={1}
+                  max={25}
+                  step={1}
+                  value={holdingPeriod}
+                  onChange={(e) => setHoldingPeriod(Number(e.target.value))}
+                  className="w-full accent-primary"
+                />
+                <div className="flex justify-between text-[0.6rem] text-muted-foreground/60 mt-1">
+                  <span>1 yr</span>
+                  <span>25 yrs</span>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+
+          <div className="space-y-5">
+            <div className="grid grid-cols-2 gap-4">
+              {[
+                { label: "Est. annual distribution", value: formatCurrency(annualDistribution), sub: `After 1% mgmt fee` },
+                { label: "Effective net yield", value: `${effectiveYield.toFixed(1)}%`, sub: `Mid-range minus 1% fee` },
+                { label: `Total distributions (${holdingPeriod}yr)`, value: formatCurrency(totalDistributions), sub: "Simple cumulative" },
+                { label: `Compound return (${holdingPeriod}yr)`, value: formatCurrency(cumulativeReturn), sub: "Reinvested distributions" },
+              ].map((item) => (
+                <Card key={item.label} className="border-border bg-card">
+                  <CardContent className="p-4">
+                    <p className="font-mono text-[0.6rem] uppercase tracking-wider text-muted-foreground">{item.label}</p>
+                    <p className="mt-2 font-sans text-xl font-bold text-primary tabular-nums">{item.value}</p>
+                    <p className="mt-1 text-[0.6rem] text-muted-foreground/70">{item.sub}</p>
+                  </CardContent>
+                </Card>
+              ))}
+            </div>
+
+            <Card className="border-border bg-card">
+              <CardContent className="p-4">
+                <p className="font-mono text-[0.6rem] uppercase tracking-wider text-muted-foreground mb-3">
+                  Year-by-year projection (first {yearByYear.length} years)
+                </p>
+                <div className="overflow-x-auto">
+                  <table className="w-full text-sm">
+                    <thead>
+                      <tr className="border-b border-border/60">
+                        <th className="py-2 text-left font-mono text-[0.6rem] uppercase tracking-wider text-muted-foreground">Year</th>
+                        <th className="py-2 text-right font-mono text-[0.6rem] uppercase tracking-wider text-muted-foreground">Cumulative dist.</th>
+                        <th className="py-2 text-right font-mono text-[0.6rem] uppercase tracking-wider text-muted-foreground">Compound value</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {yearByYear.map((row) => (
+                        <tr key={row.year} className="border-b border-border/30">
+                          <td className="py-1.5 tabular-nums">{row.year}</td>
+                          <td className="py-1.5 text-right tabular-nums text-muted-foreground">{formatCurrency(row.totalDist)}</td>
+                          <td className="py-1.5 text-right tabular-nums font-semibold text-primary">{formatCurrency(row.compoundValue)}</td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+        </div>
+
+        <div className="mt-8 rounded-md border border-amber-500/30 bg-amber-500/5 p-5 max-w-4xl mx-auto">
+          <p className="text-xs leading-relaxed text-muted-foreground">
+            <strong className="text-foreground">Important:</strong> This calculator provides hypothetical projections for
+            illustrative purposes only. Actual returns depend on project performance, market conditions, and regulatory
+            factors. These projections do not constitute an offer to sell securities or a solicitation of an offer to buy
+            securities. All investments involve risk, including potential loss of principal. EcoXchange offerings are
+            restricted to verified accredited investors under Reg D 506(c). Past performance and projections do not
+            guarantee future results.
+          </p>
+        </div>
+      </div>
+    </section>
+  );
+}
+
 function CapabilitiesSection() {
   return (
     <section className="border-t border-border bg-secondary py-20 text-secondary-foreground editorial-grid-dark">
       <div className="container mx-auto px-4">
         <div className="mb-14 max-w-4xl">
-          <p className="mb-2 font-mono text-[0.65rem] uppercase tracking-[0.28em] text-secondary-foreground/60">§ VI — Platform</p>
+          <p className="mb-2 font-mono text-[0.65rem] uppercase tracking-[0.28em] text-secondary-foreground/60">§ VIII — Platform</p>
           <h2 className="font-serif text-4xl font-semibold tracking-tight text-secondary-foreground md:text-5xl">
             One platform. Four integrated capabilities.
           </h2>
@@ -564,14 +889,6 @@ function CapabilitiesSection() {
                 {cap.badge ? (
                   <p className="mt-4 font-mono text-[0.6rem] uppercase tracking-wider text-primary-foreground/90">{cap.badge}</p>
                 ) : null}
-                <div className="mt-6">
-                  <a
-                    className={`inline-flex items-center gap-1 text-sm font-semibold hover:underline ${cap.highlight ? "text-primary-foreground" : "text-primary"}`}
-                    href="/auth/login"
-                  >
-                    Learn more <ArrowRight className="h-4 w-4" />
-                  </a>
-                </div>
               </CardContent>
             </Card>
           ))}
@@ -587,7 +904,7 @@ function DeveloperSection() {
       <div className="container mx-auto px-4">
         <div className="grid grid-cols-1 items-start gap-12 lg:grid-cols-2">
           <div>
-            <p className="mb-2 font-mono text-[0.65rem] uppercase tracking-[0.28em] text-muted-foreground">§ VII — For Developers</p>
+            <p className="mb-2 font-mono text-[0.65rem] uppercase tracking-[0.28em] text-muted-foreground">§ IX — For Developers</p>
             <h2 className="font-serif text-3xl font-semibold tracking-tight md:text-4xl">For solar developers.</h2>
             <p className="mt-6 text-muted-foreground">
               The capital path EcoXchange provides to accredited investors is, by structural design,
@@ -610,7 +927,7 @@ function DeveloperSection() {
             {[
               { value: "$1–5M", label: "Target project size" },
               { value: "0", label: "On-site sensors required" },
-              { value: "5%", label: "Origination fee at close" },
+              { value: "5% + 1%", label: "Origination + annual mgmt fee" },
               { value: "Auto", label: "Post-funding distributions" },
             ].map((metric) => (
               <Card key={metric.label} className="border-border bg-card">
@@ -632,17 +949,19 @@ function InsightsSection() {
   return (
     <section className="border-t border-border bg-background py-20">
       <div className="container mx-auto px-4">
-        <div className="grid grid-cols-1 gap-10 xl:grid-cols-2">
+        <div className="max-w-3xl mx-auto">
           <Card className="border-border bg-card">
             <CardContent className="p-8">
               <div className="mb-6 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
                 <h3 className="font-serif text-2xl font-semibold">Company announcements</h3>
-                <Button variant="outline" size="sm">
-                  View all
-                </Button>
               </div>
               <div className="space-y-6">
                 {[
+                  {
+                    date: "May 08, 2026",
+                    title: "EcoXchange enters active due diligence on five community solar projects across NJ and MD",
+                    summary: "Pipeline includes CSI-awarded grid-supply and landfill projects in New Jersey, a municipal community solar RFP in Camden, and an MEA grant-backed portfolio in Howard County, Maryland.",
+                  },
                   {
                     date: "Apr 22, 2026",
                     title: "EcoXchange opens investor access applications for pilot stage",
@@ -668,25 +987,6 @@ function InsightsSection() {
               </div>
             </CardContent>
           </Card>
-
-          <div>
-            <h3 className="font-serif text-2xl font-semibold">In the news</h3>
-            <div className="mt-6 space-y-4">
-              {inTheNews.map((item) => (
-                <Card key={item.title}>
-                  <CardContent className="p-6">
-                    <div className="mb-2 flex flex-wrap items-center gap-2 font-mono text-[0.65rem] uppercase tracking-wide text-muted-foreground">
-                      <Newspaper className="h-3.5 w-3.5" />
-                      <span>{item.publication}</span>
-                      <span aria-hidden>•</span>
-                      <span>{item.date}</span>
-                    </div>
-                    <p className="font-semibold leading-snug">{item.title}</p>
-                  </CardContent>
-                </Card>
-              ))}
-            </div>
-          </div>
         </div>
       </div>
     </section>
@@ -710,12 +1010,12 @@ function CtaBanner() {
             with a clean energy mandate — we will respond personally within two business days.
           </p>
           <div className="flex flex-col gap-4 sm:flex-row sm:justify-center mt-10">
-            <a href="mailto:contact@ecoxchange.net?subject=Investor%20access%20inquiry">
+            <a href="#signup">
               <Button
                 variant="outline"
                 className="min-w-[220px] border-primary-foreground/50 bg-transparent text-primary-foreground hover:bg-primary-foreground hover:text-primary"
               >
-                Investor inquiry
+                Register your interest
               </Button>
             </a>
             <a href="mailto:contact@ecoxchange.net?subject=Developer%20submission">
@@ -738,7 +1038,147 @@ function CtaBanner() {
   );
 }
 
+function EmailSignupSection() {
+  const [name, setName] = useState("");
+  const [email, setEmail] = useState("");
+  const [investorType, setInvestorType] = useState("Accredited Investor");
+  const [submitted, setSubmitted] = useState(false);
+
+  function handleSubmit(e: React.FormEvent) {
+    e.preventDefault();
+    const subject = encodeURIComponent(`Interest from ${name} (${investorType})`);
+    const body = encodeURIComponent(
+      `Name: ${name}\nEmail: ${email}\nType: ${investorType}\n\nSubmitted via EcoXchange website interest form.`
+    );
+    window.location.href = `mailto:contact@ecoxchange.net?subject=${subject}&body=${body}`;
+    setSubmitted(true);
+  }
+
+  return (
+    <section id="signup" className="border-t border-border bg-muted/50 py-20">
+      <div className="container mx-auto px-4">
+        <div className="mx-auto max-w-2xl">
+          <div className="text-center mb-10">
+            <p className="mb-2 font-mono text-[0.65rem] uppercase tracking-[0.28em] text-muted-foreground">
+              <Mail className="inline h-3 w-3 mr-1" />
+              Stay informed
+            </p>
+            <h2 className="font-serif text-4xl font-semibold tracking-tight md:text-5xl">Register your interest</h2>
+            <p className="mt-4 text-muted-foreground">
+              Join the EcoXchange investor pipeline. We will reach out personally within two business days.
+            </p>
+          </div>
+
+          <Card className="border-border bg-card">
+            <CardContent className="p-8">
+              {submitted ? (
+                <div className="text-center py-8">
+                  <div className="mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-full bg-primary/10">
+                    <Mail className="h-6 w-6 text-primary" />
+                  </div>
+                  <h3 className="font-serif text-2xl font-semibold">Thank you</h3>
+                  <p className="mt-3 text-muted-foreground">
+                    Your email client should have opened with a pre-filled message.
+                    If it did not, please email <a href="mailto:contact@ecoxchange.net" className="text-primary underline">contact@ecoxchange.net</a> directly.
+                    We will respond within two business days.
+                  </p>
+                </div>
+              ) : (
+                <form onSubmit={handleSubmit} className="space-y-5">
+                  <div>
+                    <label className="block font-mono text-[0.65rem] uppercase tracking-wider text-muted-foreground mb-2">
+                      Full name
+                    </label>
+                    <input
+                      type="text"
+                      required
+                      value={name}
+                      onChange={(e) => setName(e.target.value)}
+                      placeholder="Your name"
+                      className="w-full rounded-md border border-border bg-background px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-primary/50"
+                    />
+                  </div>
+                  <div>
+                    <label className="block font-mono text-[0.65rem] uppercase tracking-wider text-muted-foreground mb-2">
+                      Email address
+                    </label>
+                    <input
+                      type="email"
+                      required
+                      value={email}
+                      onChange={(e) => setEmail(e.target.value)}
+                      placeholder="you@example.com"
+                      className="w-full rounded-md border border-border bg-background px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-primary/50"
+                    />
+                  </div>
+                  <div>
+                    <label className="block font-mono text-[0.65rem] uppercase tracking-wider text-muted-foreground mb-2">
+                      I am a...
+                    </label>
+                    <select
+                      value={investorType}
+                      onChange={(e) => setInvestorType(e.target.value)}
+                      className="w-full rounded-md border border-border bg-background px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-primary/50"
+                    >
+                      <option>Accredited Investor</option>
+                      <option>RIA / Investment Advisor</option>
+                      <option>Family Office</option>
+                      <option>Solar Developer</option>
+                      <option>Other</option>
+                    </select>
+                  </div>
+                  <Button type="submit" size="lg" className="w-full font-semibold">
+                    Register interest <ArrowRight className="h-4 w-4" />
+                  </Button>
+                </form>
+              )}
+            </CardContent>
+          </Card>
+
+          <p className="mt-6 text-center font-mono text-[0.6rem] text-muted-foreground/60 max-w-xl mx-auto">
+            No offering is currently open. Submitting this form does not constitute an investment or
+            commitment to invest. EcoXchange offerings are restricted to verified accredited investors
+            under Reg D 506(c). Contact: contact@ecoxchange.net
+          </p>
+        </div>
+      </div>
+    </section>
+  );
+}
+
 function FooterSection() {
+  const footerLinks = [
+    {
+      heading: "Investors",
+      links: [
+        { label: "Request Access", href: "#signup" },
+        { label: "How It Works", href: "#" },
+        { label: "Fee Structure", href: "#" },
+      ],
+    },
+    {
+      heading: "Platform",
+      links: [
+        { label: "Pipeline", href: "#pipeline" },
+        { label: "ROI Simulator", href: "#" },
+        { label: "Verification", href: "#" },
+      ],
+    },
+    {
+      heading: "Developers",
+      links: [
+        { label: "Submit Project", href: "mailto:contact@ecoxchange.net?subject=Developer%20submission" },
+      ],
+    },
+    {
+      heading: "Company",
+      links: [
+        { label: "Announcements", href: "#" },
+        { label: "Contact", href: "mailto:contact@ecoxchange.net" },
+      ],
+    },
+  ];
+
   return (
     <footer className="border-t border-primary/25 bg-secondary py-12 text-secondary-foreground editorial-grid-dark">
       <div className="container mx-auto px-4">
@@ -748,26 +1188,33 @@ function FooterSection() {
         </p>
         <div className="grid grid-cols-1 gap-10 md:grid-cols-2 lg:grid-cols-6 lg:gap-8">
           <div className="lg:col-span-2">
-            <img src="/brand/ecoxchange-logo.png" alt="EcoXchange" className="mb-4 h-10 w-auto opacity-95" data-testid="img-footer-logo" />
+            <p className="mb-4 font-sans text-lg font-bold text-primary">EcoXchange</p>
             <p className="max-w-sm text-sm text-secondary-foreground/75">
               Physics-verified yield for accredited investors. Reg D 506(c) digital securities for individual solar projects.
             </p>
+            <p className="mt-4 text-sm text-secondary-foreground/60">
+              <a href="mailto:contact@ecoxchange.net" className="hover:text-primary transition-colors">
+                contact@ecoxchange.net
+              </a>
+            </p>
           </div>
-          {[
-            { heading: "Investors", links: ["Request Access", "How It Works", "Fee Structure"] },
-            { heading: "Platform", links: ["Marketplace", "Performance", "Verification"] },
-            { heading: "Developers", links: ["Submit Project", "Underwriting", "SPV Structure"] },
-            { heading: "Company", links: ["Announcements", "In the News", "Contact"] },
-          ].map((col) => (
+          {footerLinks.map((col) => (
             <div key={col.heading}>
               <h4 className="mb-3 font-mono text-[0.65rem] uppercase tracking-[0.2em] text-primary">{col.heading}</h4>
               <ul className="space-y-2 text-sm text-secondary-foreground/75">
                 {col.links.map((link) => (
-                  <li key={link}>{link}</li>
+                  <li key={link.label}>
+                    <a href={link.href} className="hover:text-primary transition-colors">{link.label}</a>
+                  </li>
                 ))}
               </ul>
             </div>
           ))}
+        </div>
+        <div className="mt-10 border-t border-[hsl(48_28%_95%/0.12)] pt-6 text-center">
+          <p className="font-mono text-[0.6rem] uppercase tracking-[0.2em] text-secondary-foreground/40">
+            © 2026 EcoXchange · All rights reserved
+          </p>
         </div>
       </div>
     </footer>
@@ -785,10 +1232,13 @@ export default function LandingPage() {
         <InvestorSection />
         <FeeStructureSection />
         <FeaturedProjectSection />
+        <MarketplaceSection />
+        <ROICalculatorSection />
         <CapabilitiesSection />
         <DeveloperSection />
         <InsightsSection />
         <CtaBanner />
+        <EmailSignupSection />
       </main>
       <FooterSection />
     </div>
