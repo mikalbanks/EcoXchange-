@@ -1,0 +1,8 @@
+uploads = []
+generated = []
+
+[[outputs]]
+id = "bB2qXQnvKB4L4qyM8ZavU"
+uri = "file://ecoxchange_project.zip"
+type = "unspecified"
+title = "EcoXchange Project Source Code"

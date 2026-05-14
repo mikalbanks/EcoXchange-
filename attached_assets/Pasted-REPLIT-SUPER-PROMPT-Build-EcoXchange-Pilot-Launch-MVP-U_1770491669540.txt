@@ -1,0 +1,279 @@
+REPLIT SUPER-PROMPT — Build EcoXchange Pilot Launch MVP (US-only, Solar-first)
+
+You are a senior full-stack engineer + product builder. Build a production-quality MVP for “EcoXchange”: a platform that takes messy small renewable project inputs and turns them into an investor-ready deal package with (1) standardized project profile, (2) readiness/compliance score (green/yellow/red + reasons), (3) capital stack builder (tax credits + equity now; debt placeholder), (4) investor matching + soft commitments, and (5) a project data room + basic doc generation. Keep scope tight and shippable.
+
+PRIMARY GOAL (Pilot MVP)
+- Developers can submit a project via wizard → platform generates:
+  - canonical project profile
+  - readiness score + flags
+  - capital stack plan (Tax Credits + Equity)
+  - investor-facing deal room
+- Investors can browse approved projects, filter, view score + docs, and “Commit Interest” (soft commitment/LOI intent).
+- Admin can review/approve projects, adjust score overrides, manage users, and export project packets.
+
+NON-GOALS (Do NOT build in MVP)
+- No secondary trading
+- No tokenization/blockchain
+- No real tax credit marketplace transactions
+- No deep interconnection modeling
+- No full payment rails for actual securities funding (only “deposits” optional; default is soft commitments)
+
+ASSUMED USERS / ROLES
+- Admin: reviews, approves, overrides scoring, manages investors/developers, exports
+- Developer: creates projects, uploads docs, sees readiness + missing items, shares investor link
+- Investor: browsing + filtering, views deal room, submits soft commitment
+
+TECH STACK (use a fast, standard Replit-friendly stack)
+- Next.js (App Router) for full-stack web app
+- TypeScript
+- TailwindCSS for UI
+- Prisma ORM
+- Postgres database (use Replit Postgres if available; otherwise SQLite as fallback with clear migration instructions)
+- NextAuth (or simple JWT auth) with RBAC (Admin/Developer/Investor)
+- Zod for input validation
+- React Hook Form for wizard forms
+- Server Actions OR API routes for CRUD (choose whichever is simpler/stable)
+
+DATA MODEL (Prisma) — create these core entities
+1) User
+- id, email, passwordHash (if not NextAuth), role: ADMIN|DEVELOPER|INVESTOR
+- name, orgName, createdAt
+
+2) Project
+- id, developerId (User)
+- name, technology (SOLAR, SOLAR_STORAGE optional), stage (PRE_NTP, NTP, CONSTRUCTION, COD)
+- location: country(US only), state, county, latitude?, longitude?
+- capacityMW (decimal)
+- status: DRAFT | SUBMITTED | IN_REVIEW | APPROVED | REJECTED
+- summary, offtakerType (C&I, COMMUNITY_SOLAR, UTILITY, MERCHANT)
+- interconnectionStatus (UNKNOWN, APPLIED, STUDY, IA_EXECUTED, READY_TO_BUILD)
+- permittingStatus (UNKNOWN, IN_PROGRESS, SUBMITTED, APPROVED)
+- siteControlStatus (NONE, LOI, OPTION, LEASE, OWNED)
+- createdAt, updatedAt
+
+3) CapitalStack
+- id, projectId
+- totalCapex (number)
+- taxCreditType (ITC/PTC/UNKNOWN)
+- taxCreditEstimated (number)
+- taxCreditTransferabilityReady (boolean)
+- equityNeeded (number)
+- debtPlaceholder (number) // keep as placeholder, default 0
+- notes
+
+4) ReadinessScore
+- id, projectId
+- score (0-100)
+- rating: GREEN | YELLOW | RED
+- reasons (JSON array of strings)
+- flags (JSON object: {feocRisk, missingDocs, interconnectionRisk, permittingRisk, siteControlRisk, offtakerRisk})
+- overriddenByAdmin (boolean)
+- overrideNotes (string)
+
+5) Document
+- id, projectId
+- type: (SITE_CONTROL, INTERCONNECTION, PERMITS, EPC, FINANCIAL_MODEL, INSURANCE, OTHER)
+- filename, url/path (store in file system or object storage; use simple local upload in Replit)
+- uploadedBy (User)
+- createdAt
+
+6) DataRoomChecklistItem
+- id, projectId
+- key (string), label, required(boolean)
+- status: MISSING|UPLOADED|VERIFIED
+- notes
+
+7) InvestorInterest (Soft Commitment)
+- id, projectId, investorId
+- amountIntent (number)
+- structurePreference (EQUITY, PREFERRED, UNKNOWN)
+- timeline (IMMEDIATE, 30_60, 60_90, UNKNOWN)
+- message (string)
+- status: SUBMITTED|WITHDRAWN|ACCEPTED_BY_DEV|DECLINED_BY_DEV
+- createdAt
+
+8) ProjectApprovalLog
+- id, projectId, adminId
+- action: SUBMIT|APPROVE|REJECT|REQUEST_CHANGES|OVERRIDE_SCORE
+- notes
+- createdAt
+
+CORE FEATURES / PAGES (build these)
+A) Auth
+- /login, /signup
+- role selection at signup: Developer or Investor
+- Admin seeded via env (ADMIN_EMAIL, ADMIN_PASSWORD) or seed script
+
+B) Developer UX
+1. Dashboard: /developer/projects
+- create new project, status view, readiness summary, missing checklist count
+2. Project Wizard: /developer/projects/new (multi-step)
+- Step 1: Basics (name, tech, stage, location, MW)
+- Step 2: Status (site control, interconnection, permitting, offtaker)
+- Step 3: Financials (capex, tax credit type/estimate, equity target)
+- Step 4: Uploads (drag/drop, map to doc types)
+- Step 5: Review & Submit
+On submit: status → SUBMITTED; generate checklist; compute readiness score; compute capital stack
+
+3. Project Detail: /developer/projects/[id]
+- readiness score card (rating, score, reasons)
+- capital stack breakdown
+- checklist with required items
+- data room files
+- “Share Investor Link” (public but gated to logged-in investors, or use signed link later)
+
+4. Investor Interest Inbox: /developer/projects/[id]/interest
+- list investor intents; accept/decline; message thread optional (basic notes)
+
+C) Investor UX
+1. Browse: /investor/deals
+- filter by state, MW range, stage, rating, offtakerType
+- list cards with rating + key metrics
+2. Deal Room: /investor/deals/[id]
+- project summary + standardized fields
+- readiness score + reasons
+- capital stack snapshot
+- documents (download/view)
+- “Commit Interest” form
+
+D) Admin UX
+1. Admin Dashboard: /admin
+- KPIs: submitted, approved, avg score, total intent $
+2. Review Queue: /admin/projects
+- filter by status, rating
+- open project, view full data room and checklist
+- actions: approve/reject/request changes
+- score override capability with audit log
+3. Export Packet: /admin/projects/[id]/export
+- generate a single “Investor Packet” PDF (basic) containing:
+  - project overview
+  - readiness rating + reasons
+  - capital stack summary
+  - checklist summary
+  - links to docs
+(If full PDF merging is complex, generate a clean HTML “packet page” with print-to-PDF instructions + a “Download as PDF” basic render.)
+
+READINESS SCORING ENGINE (rules-based MVP)
+Implement computeReadiness(project, documents, checklist, capitalStack) -> ReadinessScore
+
+Start with a 100-point base, subtract for risk/missing:
+- Site control:
+  - NONE: -25 (RED flag)
+  - LOI: -15
+  - OPTION: -8
+  - LEASE/OWNED: 0
+- Interconnection:
+  - UNKNOWN: -20
+  - APPLIED: -15
+  - STUDY: -10
+  - IA_EXECUTED: -3
+  - READY_TO_BUILD: 0
+- Permitting:
+  - UNKNOWN: -15
+  - IN_PROGRESS: -10
+  - SUBMITTED: -5
+  - APPROVED: 0
+- Offtaker:
+  - MERCHANT: -12
+  - COMMUNITY_SOLAR: -6
+  - C&I: -4
+  - UTILITY: -2
+- Documents completeness:
+  - For each required checklist item MISSING: -3 (cap at -24)
+- Tax credit readiness:
+  - taxCreditEstimated missing/0: -8
+  - transferabilityReady false: -6 (not fatal)
+- FEOC risk (MVP = developer attestation checkbox + doc upload placeholder):
+  - if developer checked “FEOC unknown”: -8
+  - if FEOC attestation uploaded: 0
+
+Rating thresholds:
+- GREEN: score >= 75 and no fatal flags
+- YELLOW: score 50–74 OR minor fatal risk
+- RED: score < 50 OR any fatal flag (siteControl NONE, or interconnection UNKNOWN + stage=NTP/CONSTRUCTION)
+
+Return:
+- reasons: human-readable list of the top 5 deductions + what to fix
+- flags: booleans for each major risk
+
+CAPITAL STACK ENGINE (MVP)
+Compute:
+- equityNeeded = max(totalCapex - taxCreditEstimated, 0) (simple proxy)
+- debtPlaceholder default 0
+Store assumptions & allow developer edit.
+
+DATA ROOM CHECKLIST (MVP)
+Auto-generate required checklist items based on project stage:
+Always required:
+- Site control doc (LOI/Option/Lease)
+- Interconnection application/status evidence
+- Permitting evidence
+- Basic financial model (simple upload)
+- Developer FEOC attestation (checkbox + optional doc)
+If stage >= NTP:
+- EPC contract or term sheet
+- Insurance evidence (optional)
+Checklist items should map to Document types; mark UPLOADED when a matching doc is uploaded.
+
+INTEGRATION-READY PLACEHOLDERS (APIs)
+Create a server-side “Integrations” module with interface stubs:
+- TaxCreditMarketplaceProvider
+  - getIndicativePricing(taxCreditType, state, size) -> placeholder mock
+  - createListing(project) -> placeholder
+- PaymentsProvider (Stripe Connect later)
+  - createDepositIntent(user, amount) -> placeholder (disabled by default)
+- ESignProvider (DocuSign/Dropbox Sign later)
+  - sendForSignature(doc, recipients) -> placeholder
+These should be implemented as mocks with env flags to enable later.
+
+SECURITY & COMPLIANCE UX DISCLAIMERS (important)
+- Add clear disclaimer banners:
+  - “EcoXchange Pilot: informational platform; not a broker-dealer; commitments are non-binding; not an offer to sell securities.”
+- Require investors to accept terms before viewing deal rooms.
+- Log all actions.
+
+SEED DATA
+- Create seed script:
+  - Admin user from env
+  - 1 demo developer, 1 demo investor
+  - 2 demo projects (one GREEN-ish, one RED-ish) with sample docs metadata (no real files required)
+Provide demo credentials in README.
+
+QUALITY BAR / ACCEPTANCE CRITERIA
+- All forms validated (Zod)
+- RBAC enforced server-side (no client-only checks)
+- Project status transitions audited
+- Scoring recomputed on submit + whenever key fields/docs change
+- Filtering works for investors
+- Export packet works (PDF or printable packet page)
+
+DELIVERABLES
+1) Working Next.js app with pages above
+2) Prisma schema + migrations
+3) Seed script
+4) README with:
+- how to run
+- env vars
+- demo accounts
+- how to switch DB
+- what’s mocked vs real
+5) Minimal but clean UI (Tailwind, cards, badges for GREEN/YELLOW/RED)
+
+IMPLEMENTATION PLAN (follow this order)
+1) Set up project, DB, Prisma, auth, RBAC
+2) Build core models + migrations
+3) Build Developer wizard + submit flow
+4) Build scoring engine + checklist generation
+5) Build Investor browse + deal room + interest submission
+6) Build Admin review + overrides + export packet
+7) Add seed data + README
+8) Polish UI + guardrails + disclaimers
+
+IMPORTANT UI DETAILS
+- Use a “Readiness Badge” component everywhere
+- Use a “Missing Items” widget on developer dashboard
+- Use a “Capital Stack” card with simple breakdown bars
+- Keep navigation role-based and obvious
+
+NOW BUILD IT.
+Do not ask me questions. Make reasonable defaults. Keep it tight and shippable.

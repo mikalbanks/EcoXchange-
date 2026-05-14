@@ -1,0 +1,194 @@
+You are a senior full-stack engineer building a YC-demo MVP called EcoXchange.
+
+Goal:
+Build a production-like MVP for a compliant renewable infrastructure digital securities issuance platform, plus a DEMO-mode “simulated USDC rail” ledger for subscriptions and distributions.
+
+CRITICAL CONSTRAINTS:
+- This MVP is NOT an exchange/ATS/broker-dealer/custodian.
+- NO real payments. NO wallet connect. NO blockchain transactions.
+- Simulated USDC is an internal ledger only. It exists to demonstrate settlement + payouts visually.
+- KYC/accreditation are stubbed with a state machine, manual admin approval.
+
+Stack:
+- Next.js 14+ (App Router), TypeScript
+- Tailwind CSS
+- Prisma ORM
+- Postgres (Replit Postgres if available; otherwise SQLite fallback)
+- NextAuth Credentials (email + password) for MVP
+- Zod for validation
+- Recharts for charts
+- Optional shadcn/ui style components (or simple custom components)
+
+Branding / UI style:
+- Institutional fintech feel, minimal, not “crypto neon”
+- Primary: deep green #0B3D2E, emerald #16A34A
+- Highlight glow used sparingly: lime #A3E635
+- Background: dark cool gray gradient (#0B1220 -> #111827) with subtle green wash
+- Text: #E5E7EB
+- Buttons: solid green primary + outline secondary
+- Rounded corners, subtle shadows
+- Header must show text-based brand: “EcoXchange” + tagline “CLEAN ENERGY MARKET”
+- If /public/ecoxchange-logo.png exists, display it in header; otherwise fallback to text mark.
+
+Environment Toggles:
+- DEMO_STABLECOIN=true/false
+When true:
+- Show labels in UI as “USDC (Demo)”
+- Show a “Settlement” widget on investments and “Payout” widget on distributions.
+When false:
+- Show labels in UI as “USD Ledger” and hide settlement/payout widgets.
+
+User roles:
+- ISSUER, INVESTOR, ADMIN
+
+MUST-HAVE PAGES:
+Public
+- / Landing page with institutional copy and CTA: “For Issuers” and “For Investors”
+- /about
+- /compliance (Reg D MVP, KYC gating, transfer restrictions conceptually)
+
+Auth
+- /auth/signup
+- /auth/login
+- /logout
+
+Issuer dashboard
+- /issuer (overview metrics)
+- /issuer/projects (list)
+- /issuer/projects/new (create)
+- /issuer/projects/[id] (details + docs stub + CTA Create Offering)
+
+Offering creation
+- /issuer/offerings/new?projectId=
+Fields:
+  - offering name
+  - target raise
+  - min investment
+  - security type (equity/preferred)
+  - distribution frequency (quarterly default)
+  - expected IRR / target yield
+  - open/close dates
+  - jurisdiction (US only)
+Create as DRAFT
+
+Issuer offering detail
+- /issuer/offerings/[id] tabs:
+  - Summary
+  - Investors/Commitments
+  - Tokenization (simulated)
+  - Distributions
+Actions:
+  - Publish (OPEN)
+  - Close (CLOSED)
+  - Mint Tokens (SIMULATED): requires offering CLOSED; allocates tokens to confirmed commitments for KYC APPROVED & accredited investors
+  - Create Distribution: period + total amount -> creates payout records
+  - Mark Distribution Paid (changes payout statuses too)
+
+Investor portal
+- /investor (overview)
+- /investor/marketplace (list OPEN offerings + filters)
+- /investor/offerings/[id] (detail + KYC/accreditation gates + invest form)
+- /investor/portfolio (commitments + token allocations + distributions)
+
+Admin (minimal)
+- /admin (summary)
+- /admin/users (approve/reject KYC; set accredited)
+- /admin/offerings (list)
+
+DATA MODEL (Prisma):
+User:
+- id, email, passwordHash, role, createdAt
+InvestorProfile:
+- id, userId, kycStatus (NOT_STARTED/PENDING/APPROVED/REJECTED), accredited boolean, accreditedAt, fullName, entityName optional
+IssuerProfile:
+- id, userId, companyName, website optional
+
+Project:
+- id, issuerId, name, assetType (SOLAR/WIND/HYDROGEN/OTHER), location, capacityMW, status (INTAKE/UNDER_REVIEW/APPROVED),
+  ppaCounterparty, ppaTenorYears, ppaPrice optional, description
+
+Offering:
+- id, projectId, issuerId, name, status (DRAFT/OPEN/CLOSED), targetRaise, minInvestment, securityType,
+  distributionFrequency, expectedIrr optional, openDate, closeDate, jurisdiction, createdAt
+
+Commitment:
+- id, offeringId, investorId, amount, status (SUBMITTED/CONFIRMED/CANCELED), createdAt
+
+Tokenization:
+- id, offeringId, tokenStandard (ERC3643_SIM), tokenSymbol, tokenName, tokenContractAddress placeholder, mintedAt
+
+TokenAllocation:
+- id, tokenizationId, investorId, tokens decimal, createdAt
+
+Distribution:
+- id, offeringId, periodStart, periodEnd, totalAmount, status (PENDING/PAID), paidAt
+
+DistributionPayout:
+- id, distributionId, investorId, amount, status (PENDING/PAID), paidAt
+
+NEW: Stablecoin Ledger (SIMULATED)
+LedgerAccount:
+- id, userId, label (e.g., “USDC Demo Wallet” or “USD Ledger”), currency (USDC_DEMO or USD_LEDGER), createdAt
+LedgerEntry:
+- id, accountId, type (DEPOSIT/WITHDRAWAL/RESERVE/RELEASE/PAYOUT), amount, referenceType (COMMITMENT/DISTRIBUTION), referenceId, memo, createdAt
+
+Ledger Rules:
+- In DEMO_STABLECOIN=true mode:
+  - Each investor gets a LedgerAccount in currency=USDC_DEMO
+  - Seed investor starts with DEPOSIT of 250,000 USDC_DEMO
+  - When investor invests and is eligible (KYC APPROVED + accredited):
+      Create Commitment status=CONFIRMED AND create LedgerEntry type=RESERVE to earmark funds
+  - If investor cancels:
+      Create LedgerEntry type=RELEASE and set Commitment=CANCELED
+  - When Distribution marked PAID:
+      Create LedgerEntry type=PAYOUT into investor accounts based on DistributionPayout amounts
+- In DEMO_STABLECOIN=false mode:
+  - Do not show reserve/release/payout widgets; still write commitments/distributions records
+  - LedgerAccount can exist with USD_LEDGER but optional (keep it simple)
+
+BUSINESS LOGIC:
+- Only ISSUER can create projects/offerings for self
+- Only OPEN offerings appear in marketplace
+- Only INVESTOR with kycStatus=APPROVED and accredited=true can make CONFIRMED commitments
+- Minting tokens requires offering CLOSED and not already minted
+- Token allocations proportional to total confirmed commitments
+- Distribution payouts proportional to token allocations (or commitments if tokens not minted yet)
+
+UX REQUIREMENTS:
+- Top nav with brand and links
+- Sidebar dashboards
+- Status badges for offering + KYC
+- Toast notifications
+- Friendly empty states
+- In DEMO_STABLECOIN mode, show:
+  - Investor “Balance” card (sum deposits + payouts - withdrawals - reserves)
+  - On offering invest form, show “Available Balance”
+  - On commitment, show “Reserved”
+  - On distributions, show “Payout posted” entries
+
+SEED DATA:
+- 1 admin user (admin@ecoxchange.demo / password: Admin123!)
+- 1 issuer user (issuer@ecoxchange.demo / password: Issuer123!)
+- 1 investor user (investor@ecoxchange.demo / password: Investor123!)
+Investor:
+- KYC APPROVED, accredited true
+- In DEMO_STABLECOIN mode: seed balance 250,000 USDC_DEMO
+Issuer:
+- 1-2 projects, 1 OPEN offering, a few commitments, and an example distribution
+
+SCRIPTS:
+- “db:seed” to seed data
+- “db:reset” to reset + reseed
+
+IMPLEMENTATION NOTES:
+- Use Zod validation for all forms
+- Use server actions OR API routes consistently (choose one and stick to it)
+- Include README:
+  - setup
+  - env vars (DEMO_STABLECOIN)
+  - demo accounts
+  - what’s stubbed
+  - what’s next (custody, BD/ATS partners, real minting, fiat rails)
+- Keep code clean, typed, and structured.
+
+Deliver the full working codebase that runs on Replit.

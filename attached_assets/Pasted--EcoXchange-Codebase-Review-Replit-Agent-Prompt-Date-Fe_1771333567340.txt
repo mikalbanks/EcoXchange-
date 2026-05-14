@@ -1,0 +1,430 @@
+# EcoXchange Codebase Review & Replit Agent Prompt
+
+**Date:** February 17, 2026  
+**Reviewer:** Product/Engineering Advisor  
+**Scope:** Full-stack review of Demo-Builder codebase against NorthStar v4
+
+-----
+
+## Part 1: Codebase Review — Key Errors & Issues
+
+### CRITICAL — Security Vulnerabilities
+
+**1. SHA-256 Password Hashing (storage.ts:14-16)**  
+You’re using raw `crypto.createHash("sha256")` for password hashing. This is fundamentally broken for production — SHA-256 is a fast hash, meaning it’s trivially brute-forceable. Any investor-facing or securities-related platform needs bcrypt, scrypt, or Argon2 at minimum. This would be an instant red flag for any securities counsel or technical due diligence.
+
+```typescript
+// CURRENT (INSECURE)
+function hashPassword(password: string): string {
+  return createHash("sha256").update(password).digest("hex");
+}
+```
+
+**2. Hardcoded Session Secret (routes.ts:19)**  
+`"ecoxchange-demo-secret"` as a fallback session secret is a session hijacking vulnerability. In production this means any attacker who reads the source code (which is in your Replit) can forge session cookies.
+
+**3. Webhook Signature Validation is Optional (routes.ts:174)**  
+The Persona webhook handler silently proceeds if `PERSONA_WEBHOOK_SECRET` is not set. An attacker could forge webhook events to mark any user as KYC-verified. For a 506(c) platform where accredited investor verification is a legal requirement, this is a compliance-breaking vulnerability.
+
+**4. No CSRF Protection**  
+Express sessions with cookies but no CSRF token validation. Any malicious site could submit requests on behalf of an authenticated user.
+
+**5. No Rate Limiting**  
+No rate limiting on auth endpoints (`/api/auth/login`, `/api/auth/signup`). Brute-force attacks are trivial.
+
+-----
+
+### HIGH — Architectural Issues
+
+**6. MemoryStore for Sessions and All Data (storage.ts:196)**  
+The entire application runs on in-memory Maps. Every server restart wipes all users, projects, interests, and approval logs. This is expected for a prototype, but the schema.ts file defines full Postgres table schemas via Drizzle that are never actually used — meaning you have dead ORM code that creates confusion about what the actual persistence layer is.
+
+**7. Package Name Mismatch (package.json:2)**  
+`"name": "rest-express"` — this is a Replit template default, not your project name. Minor, but signals to anyone reviewing (accelerators, advisors) that the codebase was scaffolded rather than intentionally architected.
+
+**8. Express 5 Beta (package.json:52)**  
+You’re on `express@^5.0.1` which is still not stable. Express 5 has breaking changes from v4 in error handling and route parameter behavior. Given that this is a securities platform, using a beta web framework is unnecessary risk.
+
+**9. Tailwind v3 + v4 Conflict (package.json:84,99)**  
+You have `@tailwindcss/vite@^4.1.18` (Tailwind v4 plugin) alongside `tailwindcss@^3.4.17`. The Vite plugin is for Tailwind v4 but your config and usage patterns are v3. This creates build inconsistencies and will cause silent CSS failures when dependencies auto-update.
+
+**10. `persona` npm Package is Wrong (package.json:61)**  
+`"persona": "^5.5.0"` — this is the `persona` npm package, NOT Persona’s `@persona-id/client` or their embedded SDK. The Persona integration in routes.ts correctly uses fetch against their REST API, but this dependency is unused dead code that could confuse future developers.
+
+**11. staleTime: Infinity (queryClient.ts:49)**  
+All React Query queries are set to never go stale. This means once data is fetched, it will never auto-refresh. If an admin approves a project, the investor’s deal list won’t update until they hard refresh. For a demo this is fine, but it creates a misleading UX where actions appear to have no effect.
+
+-----
+
+### MEDIUM — Data Model & Business Logic Gaps
+
+**12. No Yield/Distribution Model in Schema**  
+The NorthStar identifies energy-to-yield infrastructure as the “most defensible technology advantage” (Pillar 2), but the schema has zero tables for: energy production data, PPA terms, revenue ingestion, yield calculations, distribution records, or investor payout history. The “Yield Simulation Dashboard” mentioned in the NorthStar doesn’t actually exist in the codebase.
+
+**13. Capital Stack is Oversimplified (storage.ts:187-192)**  
+`equityNeeded = totalCapex - taxCreditEstimated` — this ignores debt, developer equity, reserves, construction financing, and operating expenses. For a platform positioning itself to sophisticated accredited investors, this formula will immediately undermine credibility. Real project finance capital stacks have 4-6 layers.
+
+**14. Readiness Score Computed on Empty Docs (storage.ts:297-300)**  
+Seed data computes readiness scores for Project 1 with empty document and checklist arrays, even though it then creates documents and marks checklist items as UPLOADED. The displayed score doesn’t match the actual project state. The score is never recomputed after seeding.
+
+**15. No Foreign Key Constraints**  
+The schema defines `developerId`, `projectId`, `investorId` as plain varchar columns with no `.references()` calls. Drizzle supports FK constraints but none are used. This means orphaned records are possible and there’s no referential integrity.
+
+**16. Project Size Mismatch with NorthStar**  
+Seed data has a 25MW project at $28.5M capex. The NorthStar explicitly targets $1M-$5M projects that are “too small for institutional project finance.” A $28.5M project is exactly the type that traditional project finance DOES fund. Your demo data contradicts your thesis.
+
+-----
+
+### LOW — Code Quality & DX
+
+**17. `any` Types Everywhere (routes.ts)**  
+`req: any, res: any, next: any` throughout all route handlers. TypeScript is essentially turned off for the entire server layer.
+
+**18. Duplicated Utility Functions**  
+`formatCurrency`, `formatTimeline`, `formatDate` are duplicated across investor/dashboard.tsx, investor/deal-room.tsx, and other pages rather than extracted to a shared utils file.
+
+**19. No Error Boundaries**  
+No React error boundaries. Any uncaught rendering error will white-screen the entire app.
+
+**20. queryKey URL Joining (queryClient.ts:32)**  
+`queryKey.join("/")` means the query key `["/api/investor/deals", id]` produces `/api/investor/deals/[id]` — this only works if keys are structured as `[baseUrl, ...pathSegments]`. It’s fragile and non-standard for React Query.
+
+-----
+
+## Part 2: Replit Agent Prompt — Fix Errors & Build Energy-to-Yield Foundation
+
+Copy the prompt below into Replit’s agent. It’s structured as a single sequential directive.
+
+-----
+
+### REPLIT AGENT PROMPT
+
+```
+You are a senior full-stack engineer working on EcoXchange, a digital securities platform for renewable energy. The platform connects accredited investors with solar project developers through tokenized SPV membership interests under Reg D 506(c).
+
+This is a PHASED task. Complete each phase fully before moving to the next. DO NOT skip steps.
+
+═══════════════════════════════════════════════════════════════════════
+PHASE 1: CRITICAL BUG FIXES (Do all of these first)
+═══════════════════════════════════════════════════════════════════════
+
+1. **Fix password hashing** (server/storage.ts)
+   - Replace SHA-256 with bcrypt
+   - `npm install bcryptjs && npm install -D @types/bcryptjs`
+   - Replace hashPassword() with: `bcryptjs.hashSync(password, 12)`
+   - Replace verifyPassword() with: `bcryptjs.compareSync(password, hash)`
+   - Update seedData() — hashed passwords will now be bcrypt hashes
+   - Verify login still works for all three seed accounts
+
+2. **Fix session security** (server/routes.ts)
+   - Generate a random session secret on startup if env var is missing:
+     `const SESSION_SECRET = process.env.SESSION_SECRET || crypto.randomBytes(32).toString('hex');`
+   - Add `sameSite: 'lax'` to cookie config
+
+3. **Fix Persona webhook security** (server/routes.ts)
+   - If PERSONA_WEBHOOK_SECRET is not set, log a warning but still process (for demo mode)
+   - Add a comment: `// PRODUCTION: reject webhooks without valid signature`
+
+4. **Fix package.json**
+   - Change `"name"` from `"rest-express"` to `"ecoxchange-platform"`
+   - Remove the unused `"persona": "^5.5.0"` dependency
+
+5. **Fix seed data project sizes** (server/storage.ts)
+   - Project 1 "Sunfield Solar I": Change to 4.5MW, capex $5,200,000, ITC $1,560,000, equityNeeded $3,640,000
+   - Project 2 "Desert Sun Community Solar": Change to 2.8MW, capex $3,100,000, ITC $930,000, equityNeeded $2,170,000
+   - Update investor interest amount to $500,000 (not $5M)
+   - These numbers must be consistent: equityNeeded = totalCapex - taxCreditEstimated
+
+6. **Fix readiness score computation for seed data** (server/storage.ts)
+   - In seedData(), compute readiness scores AFTER creating documents and checklist items (not before)
+   - Project 1 score should reflect its complete document set and UPLOADED checklist status
+
+7. **Add rate limiting to auth routes** (server/routes.ts)
+   - `npm install express-rate-limit`
+   - Add rate limiter to /api/auth/login and /api/auth/signup: 10 requests per 15 minutes per IP
+   - Import and configure at the top of registerRoutes
+
+═══════════════════════════════════════════════════════════════════════
+PHASE 2: ENERGY-TO-YIELD DATA MODEL
+═══════════════════════════════════════════════════════════════════════
+
+This is EcoXchange's core differentiator. We need the schema foundation for ingesting energy production data and computing investor yield. Add the following to shared/schema.ts:
+
+8. **Add PPA (Power Purchase Agreement) table**
+```typescript
+export const ppas = pgTable("ppas", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  projectId: varchar("project_id").notNull(),
+  offtakerName: text("offtaker_name").notNull(),
+  contractType: text("contract_type").notNull().default("FIXED"), // FIXED, ESCALATING, INDEXED
+  ratePerMWh: decimal("rate_per_mwh", { precision: 10, scale: 4 }).notNull(),
+  annualEscalation: decimal("annual_escalation", { precision: 5, scale: 4 }).default("0"), // e.g., 0.02 = 2%
+  termYears: integer("term_years").notNull(),
+  startDate: timestamp("start_date"),
+  endDate: timestamp("end_date"),
+  status: text("status").notNull().default("DRAFT"), // DRAFT, EXECUTED, ACTIVE, EXPIRED
+  createdAt: timestamp("created_at").defaultNow(),
+});
+```
+
+1. **Add Energy Production table** (simulates SCADA data ingestion)
+
+```typescript
+export const energyProduction = pgTable("energy_production", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  projectId: varchar("project_id").notNull(),
+  periodStart: timestamp("period_start").notNull(),
+  periodEnd: timestamp("period_end").notNull(),
+  periodType: text("period_type").notNull().default("MONTHLY"), // HOURLY, DAILY, MONTHLY
+  productionMWh: decimal("production_mwh", { precision: 12, scale: 4 }).notNull(),
+  capacityFactor: decimal("capacity_factor", { precision: 5, scale: 4 }), // 0.0 to 1.0
+  irradianceKWhM2: decimal("irradiance_kwh_m2", { precision: 10, scale: 4 }), // solar resource
+  source: text("source").notNull().default("SIMULATED"), // SIMULATED, SCADA, MANUAL
+  createdAt: timestamp("created_at").defaultNow(),
+});
+```
+
+1. **Add Revenue Records table**
+
+```typescript
+export const revenueRecords = pgTable("revenue_records", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  projectId: varchar("project_id").notNull(),
+  periodStart: timestamp("period_start").notNull(),
+  periodEnd: timestamp("period_end").notNull(),
+  grossRevenue: decimal("gross_revenue", { precision: 15, scale: 2 }).notNull(),
+  operatingExpenses: decimal("operating_expenses", { precision: 15, scale: 2 }).notNull().default("0"),
+  debtService: decimal("debt_service", { precision: 15, scale: 2 }).notNull().default("0"),
+  reserves: decimal("reserves", { precision: 15, scale: 2 }).notNull().default("0"),
+  netDistributable: decimal("net_distributable", { precision: 15, scale: 2 }).notNull(),
+  productionMWh: decimal("production_mwh", { precision: 12, scale: 4 }),
+  ppaRateApplied: decimal("ppa_rate_applied", { precision: 10, scale: 4 }),
+  createdAt: timestamp("created_at").defaultNow(),
+});
+```
+
+1. **Add Distribution Records table**
+
+```typescript
+export const distributions = pgTable("distributions", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  projectId: varchar("project_id").notNull(),
+  investorId: varchar("investor_id").notNull(),
+  periodStart: timestamp("period_start").notNull(),
+  periodEnd: timestamp("period_end").notNull(),
+  grossAmount: decimal("gross_amount", { precision: 15, scale: 2 }).notNull(),
+  holdbackAmount: decimal("holdback_amount", { precision: 15, scale: 2 }).default("0"),
+  netAmount: decimal("net_amount", { precision: 15, scale: 2 }).notNull(),
+  ownershipPct: decimal("ownership_pct", { precision: 8, scale: 6 }).notNull(), // investor's % of SPV
+  status: text("status").notNull().default("CALCULATED"), // CALCULATED, APPROVED, DISTRIBUTED
+  distributedAt: timestamp("distributed_at"),
+  createdAt: timestamp("created_at").defaultNow(),
+});
+```
+
+1. **Add insert schemas and types for all new tables** following the existing pattern:
+
+```typescript
+export const insertPpaSchema = createInsertSchema(ppas).omit({ id: true, createdAt: true });
+export type InsertPpa = z.infer<typeof insertPpaSchema>;
+export type Ppa = typeof ppas.$inferSelect;
+// ... same pattern for energyProduction, revenueRecords, distributions
+```
+
+═══════════════════════════════════════════════════════════════════════
+PHASE 3: YIELD ENGINE (server/storage.ts)
+═══════════════════════════════════════════════════════════════════════
+
+1. **Add yield computation functions** to storage.ts:
+
+```typescript
+export function computeMonthlyRevenue(
+  productionMWh: number,
+  ppaRate: number,
+  opexPerMWh: number = 5.0, // $5/MWh default O&M
+  debtServiceMonthly: number = 0,
+  reserveRate: number = 0.05 // 5% reserve
+): {
+  grossRevenue: number;
+  operatingExpenses: number;
+  debtService: number;
+  reserves: number;
+  netDistributable: number;
+} {
+  const grossRevenue = productionMWh * ppaRate;
+  const operatingExpenses = productionMWh * opexPerMWh;
+  const reserves = grossRevenue * reserveRate;
+  const netDistributable = Math.max(
+    grossRevenue - operatingExpenses - debtServiceMonthly - reserves,
+    0
+  );
+  return { grossRevenue, operatingExpenses, debtService: debtServiceMonthly, reserves, netDistributable };
+}
+
+export function computeInvestorDistribution(
+  netDistributable: number,
+  investorOwnershipPct: number, // e.g., 0.15 for 15%
+  holdbackRate: number = 0.0 // optional holdback
+): {
+  grossAmount: number;
+  holdbackAmount: number;
+  netAmount: number;
+} {
+  const grossAmount = netDistributable * investorOwnershipPct;
+  const holdbackAmount = grossAmount * holdbackRate;
+  const netAmount = grossAmount - holdbackAmount;
+  return { grossAmount, holdbackAmount, netAmount };
+}
+
+export function generateSimulatedProduction(
+  capacityMW: number,
+  month: number, // 1-12
+  state: string // for regional solar resource estimation
+): { productionMWh: number; capacityFactor: number } {
+  // Monthly capacity factors by region (simplified)
+  const solarProfiles: Record<string, number[]> = {
+    "Texas":    [0.18, 0.20, 0.23, 0.25, 0.27, 0.28, 0.27, 0.26, 0.24, 0.22, 0.19, 0.17],
+    "Arizona":  [0.22, 0.24, 0.27, 0.29, 0.31, 0.30, 0.28, 0.27, 0.28, 0.26, 0.23, 0.21],
+    "Nevada":   [0.20, 0.23, 0.26, 0.28, 0.30, 0.31, 0.29, 0.28, 0.27, 0.24, 0.21, 0.19],
+    "California":[0.21, 0.23, 0.26, 0.28, 0.29, 0.28, 0.27, 0.27, 0.26, 0.24, 0.22, 0.20],
+  };
+  const defaultProfile = [0.16, 0.18, 0.21, 0.23, 0.25, 0.26, 0.25, 0.24, 0.22, 0.20, 0.17, 0.15];
+  const profile = solarProfiles[state] || defaultProfile;
+  const capacityFactor = profile[month - 1];
+  const hoursInMonth = 730; // average
+  const productionMWh = capacityMW * capacityFactor * hoursInMonth;
+  return { productionMWh: Math.round(productionMWh * 100) / 100, capacityFactor };
+}
+```
+
+1. **Add MemStorage methods** for the new tables in the MemStorage class:
+
+- Add private Maps: `ppas`, `energyProduction`, `revenueRecords`, `distributions`
+- Add CRUD methods following the existing patterns: getPpaByProject, createPpa, getProductionByProject, createProduction, getRevenueByProject, createRevenue, getDistributionsByProject, getDistributionsByInvestor, createDistribution
+- Add to IStorage interface
+
+1. **Add yield seed data** in seedData():
+
+- For Project 1 (Sunfield Solar I), create a PPA: offtakerName “Austin Energy”, ratePerMWh $45.00, termYears 20, status “ACTIVE”
+- Generate 12 months of simulated production data (Jan 2025 - Dec 2025) using generateSimulatedProduction
+- Compute monthly revenue records using computeMonthlyRevenue with the PPA rate
+- Create sample distribution records for the seed investor showing their pro-rata share
+
+═══════════════════════════════════════════════════════════════════════
+PHASE 4: YIELD API ROUTES (server/routes.ts)
+═══════════════════════════════════════════════════════════════════════
+
+1. **Add yield-related API routes:**
+
+```
+GET /api/investor/deals/:id/yield
+```
+
+Returns: { ppa, productionHistory, revenueHistory, myDistributions, yieldSummary }
+Where yieldSummary = { totalDistributed, avgMonthlyYield, projectedAnnualYield, currentAnnualizedReturn }
+Requires: INVESTOR role, project must be APPROVED
+
+```
+GET /api/developer/projects/:id/yield
+```
+
+Returns: { ppa, productionHistory, revenueHistory, totalDistributed, projectedAnnualRevenue }
+Requires: DEVELOPER role, must own the project
+
+```
+GET /api/admin/projects/:id/yield
+```
+
+Returns: full yield data for admin review
+Requires: ADMIN role
+
+═══════════════════════════════════════════════════════════════════════
+PHASE 5: YIELD DASHBOARD UI
+═══════════════════════════════════════════════════════════════════════
+
+1. **Create Yield Dashboard component** at client/src/components/yield-dashboard.tsx
+
+This is the MOST IMPORTANT UI component in the application — it’s the demo centerpiece.
+
+Design requirements:
+
+- Use the existing shadcn/ui Card components and recharts (already installed)
+- Match the existing dark theme styling (bg-gradient-dark, etc.)
+- Must work for both investor and developer views (pass role as prop)
+
+The component should display:
+
+**Section A: Production Performance**
+
+- Line chart showing monthly MWh production (12 months)
+- Display capacity factor as a secondary metric
+- Show cumulative production YTD
+
+**Section B: Revenue Waterfall**
+
+- Stacked bar chart showing: Gross Revenue → OpEx → Reserves → Net Distributable
+- Monthly breakdown
+
+**Section C: Investor Yield (investor view only)**
+
+- Card showing: Total Distributed, Avg Monthly, Projected Annual, Annualized Return %
+- Table showing distribution history by month: period, gross, holdback, net, status
+
+**Section D: PPA Terms Summary**
+
+- Offtaker name, rate/MWh, contract type, term, escalation, status
+
+Use these colors for consistency:
+
+- Production: emerald-400
+- Revenue: blue-400
+- Distributions: amber-400
+- Reserves/OpEx: muted foreground
+
+1. **Integrate Yield Dashboard into existing pages:**
+
+- Add as a new tab/section in InvestorDealRoom (deal-room.tsx) — show after terms gate
+- Add as a new tab/section in DeveloperProjectDetail (project-detail.tsx)
+- Add as a new tab/section in AdminProjectReview (project-review.tsx)
+
+1. **Add yield summary to deal cards** in InvestorDeals (deals.tsx):
+
+- Show projected annual yield % on each approved deal card
+- Show “Yield Active” or “Pre-Revenue” badge based on whether production data exists
+
+═══════════════════════════════════════════════════════════════════════
+PHASE 6: VERIFICATION & TESTING
+═══════════════════════════════════════════════════════════════════════
+
+1. After all phases, verify:
+
+- App starts without errors
+- Login works for all 3 seed accounts (admin@ecoxchange.demo / Admin123!, developer@ecoxchange.demo / Developer123!, investor@ecoxchange.demo / Investor123!)
+- Developer can see yield data on their project detail page
+- Investor can see yield dashboard in the deal room for Project 1
+- Admin can see yield data in project review
+- Yield charts render correctly with 12 months of data
+- All existing functionality (project wizard, interest submission, admin review) still works
+
+DO NOT modify the landing page, auth pages, or overall routing structure.
+DO NOT add new npm dependencies beyond bcryptjs, @types/bcryptjs, and express-rate-limit.
+DO NOT change the Vite config or build process.
+Preserve all existing data-testid attributes.
+
+```
+---
+
+## Part 3: Architecture Notes for Counsel & Investor Conversations
+
+Once the yield engine is built, here's how it maps to the NorthStar pillars:
+
+| NorthStar Pillar | What the Codebase Now Has | What's Still Needed |
+|---|---|---|
+| Pillar 1: Issuance | Project wizard, readiness scoring, admin approval | Cap table/token registry, offering lifecycle |
+| Pillar 2: Yield (Key Differentiator) | **PPA model, SCADA simulation, revenue waterfall, distribution engine** | Live SCADA integration, smart contract enforcement |
+| Pillar 3: Investment Infra | KYC/AML flow, deal room, interest submission | Subscription agreements, actual payment processing |
+| Pillar 4: Compliance | Persona integration, role-based access | BD partnership integration, transfer agent, blue sky |
+| Pillar 5: Liquidity | Not built | Phase 3 — ATS integration |
+
+The yield dashboard becomes your primary demo asset. When showing investors or accelerators, the flow should be: Landing → Investor Login → Browse Deals → Deal Room → **Yield Dashboard** (the money shot). The production-to-revenue-to-distribution pipeline, even with simulated data, demonstrates the core technical moat that separates EcoXchange from generic tokenization platforms.
+```

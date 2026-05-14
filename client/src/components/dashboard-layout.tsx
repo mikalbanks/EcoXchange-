@@ -1,0 +1,203 @@
+import { type ReactNode } from "react";
+import { Link, useLocation } from "wouter";
+import { useAuth } from "@/lib/auth";
+import { cn } from "@/lib/utils";
+import {
+  Sidebar,
+  SidebarContent,
+  SidebarGroup,
+  SidebarGroupContent,
+  SidebarGroupLabel,
+  SidebarHeader,
+  SidebarMenu,
+  SidebarMenuButton,
+  SidebarMenuItem,
+  SidebarProvider,
+  SidebarTrigger,
+} from "@/components/ui/sidebar";
+import {
+  LayoutDashboard,
+  FolderKanban,
+  FileSearch,
+  Users,
+  LogOut,
+  Shield,
+  ChevronRight,
+  Search,
+  ClipboardCheck,
+  TrendingUp,
+  BarChart3,
+  Activity,
+} from "lucide-react";
+
+const developerNavItems = [
+  { title: "Overview", url: "/developer", icon: LayoutDashboard },
+  { title: "Projects", url: "/developer/projects", icon: FolderKanban },
+  { title: "Performance", url: "/performance", icon: BarChart3 },
+  { title: "Operations", url: "/operations", icon: Activity },
+];
+
+const investorNavItems = [
+  { title: "Overview", url: "/investor", icon: LayoutDashboard },
+  { title: "Marketplace", url: "/investor/deals", icon: Search },
+  { title: "My Investments", url: "/investor/interests", icon: TrendingUp },
+  { title: "Performance", url: "/performance", icon: BarChart3 },
+];
+
+const adminNavItems = [
+  { title: "Overview", url: "/admin", icon: LayoutDashboard },
+  { title: "Review Queue", url: "/admin/projects", icon: ClipboardCheck },
+  { title: "Users", url: "/admin/users", icon: Users },
+  { title: "Performance", url: "/performance", icon: BarChart3 },
+  { title: "Operations", url: "/operations", icon: Activity },
+];
+
+interface DashboardLayoutProps {
+  children: ReactNode;
+  title?: string;
+  description?: string;
+  actions?: ReactNode;
+  breadcrumbs?: Array<{ label: string; href?: string }>;
+}
+
+export function DashboardLayout({ 
+  children, 
+  title, 
+  description,
+  actions,
+  breadcrumbs
+}: DashboardLayoutProps) {
+  const { user, logout } = useAuth();
+  const [location] = useLocation();
+
+  const navItems = user?.role === "ADMIN" 
+    ? adminNavItems 
+    : user?.role === "DEVELOPER" 
+    ? developerNavItems 
+    : investorNavItems;
+
+  const style = {
+    "--sidebar-width": "16rem",
+    "--sidebar-width-icon": "3rem",
+  };
+
+  return (
+    <SidebarProvider style={style as React.CSSProperties}>
+      <div className="flex min-h-screen w-full bg-muted/30 editorial-grid">
+        <Sidebar className="border-r border-sidebar-border bg-sidebar editorial-grid-dark">
+          <SidebarHeader className="p-4 border-b border-sidebar-border/80">
+            <Link href="/" className="flex items-center gap-2">
+              <div className="flex items-center gap-2">
+                <div className="flex h-8 w-8 items-center justify-center rounded-sm border border-primary/40 bg-primary">
+                  <span className="font-mono text-xs font-bold text-primary-foreground">E</span>
+                </div>
+                <span className="font-serif font-semibold text-sidebar-foreground text-sm tracking-tight" data-testid="text-sidebar-brand">EcoXchange</span>
+              </div>
+            </Link>
+          </SidebarHeader>
+          <SidebarContent>
+            <SidebarGroup>
+              <SidebarGroupLabel className="font-mono text-sidebar-foreground/45 text-[0.65rem] uppercase tracking-[0.2em]">
+                {user?.role === "ADMIN" ? "Administration" : user?.role === "DEVELOPER" ? "Issuer Portal" : "Investor Portal"}
+              </SidebarGroupLabel>
+              <SidebarGroupContent>
+                <SidebarMenu>
+                  {navItems.map((item) => {
+                    const isActive = location === item.url || 
+                      (item.url !== "/" && item.url !== "/developer" && item.url !== "/investor" && item.url !== "/admin" && location.startsWith(item.url));
+                    return (
+                      <SidebarMenuItem key={item.title}>
+                        <SidebarMenuButton 
+                          asChild 
+                          isActive={isActive}
+                          className={cn(
+                            "rounded-sm hover-elevate border border-transparent",
+                            isActive && "border-primary/50 bg-primary text-primary-foreground shadow-none"
+                          )}
+                        >
+                          <Link href={item.url} data-testid={`nav-${item.title.toLowerCase().replace(/\s/g, "-")}`}>
+                            <item.icon className="h-4 w-4" />
+                            <span>{item.title}</span>
+                          </Link>
+                        </SidebarMenuButton>
+                      </SidebarMenuItem>
+                    );
+                  })}
+                </SidebarMenu>
+              </SidebarGroupContent>
+            </SidebarGroup>
+
+            <SidebarGroup className="mt-auto">
+              <SidebarGroupContent>
+                <SidebarMenu>
+                  <SidebarMenuItem>
+                    <SidebarMenuButton 
+                      onClick={logout}
+                      className="text-destructive hover-elevate cursor-pointer rounded-md"
+                      data-testid="button-sidebar-logout"
+                    >
+                      <LogOut className="h-4 w-4" />
+                      <span>Sign out</span>
+                    </SidebarMenuButton>
+                  </SidebarMenuItem>
+                </SidebarMenu>
+              </SidebarGroupContent>
+            </SidebarGroup>
+          </SidebarContent>
+        </Sidebar>
+
+        <div className="flex flex-col flex-1 min-w-0">
+          <header className="sticky top-0 z-40 flex h-16 items-center gap-4 border-b border-border bg-background/95 backdrop-blur px-4">
+            <SidebarTrigger className="lg:hidden" data-testid="button-sidebar-toggle" />
+            
+            {breadcrumbs && breadcrumbs.length > 0 && (
+              <nav className="flex items-center gap-1 text-sm text-muted-foreground">
+                {breadcrumbs.map((crumb, index) => (
+                  <span key={index} className="flex items-center gap-1">
+                    {index > 0 && <ChevronRight className="h-3.5 w-3.5" />}
+                    {crumb.href ? (
+                      <Link href={crumb.href} className="hover:text-foreground transition-colors">
+                        {crumb.label}
+                      </Link>
+                    ) : (
+                      <span className="text-foreground">{crumb.label}</span>
+                    )}
+                  </span>
+                ))}
+              </nav>
+            )}
+
+            <div className="ml-auto flex items-center gap-3">
+              {user && (
+                <div className="flex items-center gap-2">
+                  <div className="flex items-center gap-1.5 rounded-sm border border-border px-2.5 py-1.5 bg-muted/40">
+                    <Shield className="h-3.5 w-3.5 text-muted-foreground" />
+                    <span className="font-mono text-[0.65rem] font-medium uppercase tracking-wide text-muted-foreground">{user.role === "DEVELOPER" ? "ISSUER" : user.role}</span>
+                  </div>
+                  <span className="text-sm text-muted-foreground hidden sm:inline" data-testid="text-header-email">
+                    {user.name || user.email}
+                  </span>
+                </div>
+              )}
+            </div>
+          </header>
+
+          <main className="flex-1 overflow-auto">
+            <div className="container mx-auto p-6 md:p-8 max-w-7xl">
+              {(title || actions) && (
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-8">
+                  <div>
+                    {title && <h1 className="font-serif text-3xl font-semibold tracking-tight" data-testid="text-page-title">{title}</h1>}
+                    {description && <p className="text-muted-foreground mt-1">{description}</p>}
+                  </div>
+                  {actions && <div className="flex items-center gap-2">{actions}</div>}
+                </div>
+              )}
+              {children}
+            </div>
+          </main>
+        </div>
+      </div>
+    </SidebarProvider>
+  );
+}

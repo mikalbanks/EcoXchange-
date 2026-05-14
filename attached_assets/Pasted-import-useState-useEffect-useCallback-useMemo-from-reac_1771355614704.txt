@@ -1,0 +1,733 @@
+import { useState, useEffect, useCallback, useMemo } from “react”;
+import { LineChart, Line, BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, Area, AreaChart, Cell, PieChart, Pie } from “recharts”;
+
+// ─── SYNTHETIC DATA ENGINE ───────────────────────────────────────────────────
+// Simulates 12 months of solar production data with realistic seasonal curves
+
+const MONTHS = [“Jan”, “Feb”, “Mar”, “Apr”, “May”, “Jun”, “Jul”, “Aug”, “Sep”, “Oct”, “Nov”, “Dec”];
+
+const PROJECT_CONFIG = {
+name: “Tonopah Solar Array I”,
+location: “Nye County, NV”,
+capacity_kw: 2500,
+ppa_rate: 0.078, // $/kWh
+ppa_escalator: 0.02, // 2% annual
+rec_price: 12.5, // $/MWh
+total_raise: 3000000,
+num_investors: 24,
+spv: “EcoXchange Solar SPV I, LLC”,
+};
+
+// Realistic monthly capacity factors for Nevada solar
+const MONTHLY_CF = [0.18, 0.21, 0.26, 0.30, 0.33, 0.35, 0.36, 0.34, 0.30, 0.25, 0.19, 0.16];
+
+function generateProductionData() {
+const hoursInMonth = [744, 672, 744, 720, 744, 720, 744, 744, 720, 744, 720, 744];
+return MONTHS.map((month, i) => {
+const jitter = 0.95 + Math.random() * 0.10;
+const production_kwh = PROJECT_CONFIG.capacity_kw * hoursInMonth[i] * MONTHLY_CF[i] * jitter;
+const production_mwh = production_kwh / 1000;
+return {
+month,
+monthIndex: i,
+production_kwh: Math.round(production_kwh),
+production_mwh: parseFloat(production_mwh.toFixed(1)),
+capacity_factor: parseFloat((MONTHLY_CF[i] * jitter).toFixed(3)),
+irradiance_kwh_m2: parseFloat((MONTHLY_CF[i] * jitter * 7.2).toFixed(1)),
+};
+});
+}
+
+function calculateRevenue(productionData) {
+return productionData.map((d) => {
+const ppa_revenue = d.production_kwh * PROJECT_CONFIG.ppa_rate;
+const rec_revenue = d.production_mwh * PROJECT_CONFIG.rec_price;
+const gross_revenue = ppa_revenue + rec_revenue;
+return {
+…d,
+ppa_revenue: parseFloat(ppa_revenue.toFixed(2)),
+rec_revenue: parseFloat(rec_revenue.toFixed(2)),
+gross_revenue: parseFloat(gross_revenue.toFixed(2)),
+};
+});
+}
+
+function applyWaterfall(revenueData) {
+return revenueData.map((d) => {
+const om = d.gross_revenue * 0.12;
+const insurance = d.gross_revenue * 0.035;
+const land_lease = 1800;
+const property_tax = 950;
+const debt_service = d.gross_revenue * 0.25;
+const asset_mgmt = d.gross_revenue * 0.02;
+const reserve = d.gross_revenue * 0.03;
+const platform_fee = d.gross_revenue * 0.006;
+const total_expenses = om + insurance + land_lease + property_tax + debt_service + asset_mgmt + reserve + platform_fee;
+const ndi = Math.max(0, d.gross_revenue - total_expenses);
+return {
+…d,
+expenses: {
+om: parseFloat(om.toFixed(2)),
+insurance: parseFloat(insurance.toFixed(2)),
+land_lease: 1800,
+property_tax: 950,
+debt_service: parseFloat(debt_service.toFixed(2)),
+asset_mgmt: parseFloat(asset_mgmt.toFixed(2)),
+reserve: parseFloat(reserve.toFixed(2)),
+platform_fee: parseFloat(platform_fee.toFixed(2)),
+},
+total_expenses: parseFloat(total_expenses.toFixed(2)),
+ndi: parseFloat(ndi.toFixed(2)),
+};
+});
+}
+
+function calculateDistributions(waterfallData) {
+const annual_ndi = waterfallData.reduce((sum, d) => sum + d.ndi, 0);
+const per_unit_annual = annual_ndi / PROJECT_CONFIG.total_raise;
+const avg_investor_stake = PROJECT_CONFIG.total_raise / PROJECT_CONFIG.num_investors;
+
+return {
+annual_ndi: parseFloat(annual_ndi.toFixed(2)),
+projected_yield: parseFloat((per_unit_annual * 100).toFixed(2)),
+avg_quarterly_distribution: parseFloat((annual_ndi / 4 / PROJECT_CONFIG.num_investors).toFixed(2)),
+avg_investor_stake,
+monthly_data: waterfallData,
+};
+}
+
+// ─── FORMATTING ──────────────────────────────────────────────────────────────
+
+const fmt = (n) => n.toLocaleString(“en-US”, { style: “currency”, currency: “USD”, minimumFractionDigits: 0, maximumFractionDigits: 0 });
+const fmtK = (n) => `$${(n / 1000).toFixed(1)}K`;
+const fmtPct = (n) => `${n.toFixed(1)}%`;
+
+// ─── CUSTOM TOOLTIP ──────────────────────────────────────────────────────────
+
+const CustomTooltip = ({ active, payload, label, formatter }) => {
+if (!active || !payload?.length) return null;
+return (
+<div style={{
+background: “rgba(10, 14, 20, 0.95)”,
+border: “1px solid rgba(45, 212, 160, 0.3)”,
+borderRadius: 8,
+padding: “10px 14px”,
+fontFamily: “‘JetBrains Mono’, monospace”,
+fontSize: 12,
+}}>
+<div style={{ color: “rgba(255,255,255,0.5)”, marginBottom: 6, fontSize: 11 }}>{label}</div>
+{payload.map((p, i) => (
+<div key={i} style={{ color: p.color, display: “flex”, gap: 8, alignItems: “center”, marginBottom: 2 }}>
+<span style={{ width: 8, height: 8, borderRadius: “50%”, background: p.color, display: “inline-block” }} />
+<span style={{ color: “rgba(255,255,255,0.7)” }}>{p.name}:</span>
+<span style={{ fontWeight: 600 }}>{formatter ? formatter(p.value) : fmt(p.value)}</span>
+</div>
+))}
+</div>
+);
+};
+
+// ─── ANIMATED COUNTER ────────────────────────────────────────────────────────
+
+const AnimatedNumber = ({ value, format = fmt, duration = 1200 }) => {
+const [display, setDisplay] = useState(0);
+useEffect(() => {
+let start = 0;
+const step = value / (duration / 16);
+const timer = setInterval(() => {
+start += step;
+if (start >= value) {
+setDisplay(value);
+clearInterval(timer);
+} else {
+setDisplay(start);
+}
+}, 16);
+return () => clearInterval(timer);
+}, [value, duration]);
+return <span>{format(display)}</span>;
+};
+
+// ─── PIPELINE STEP INDICATOR ─────────────────────────────────────────────────
+
+const PipelineStep = ({ number, label, sublabel, active, delay }) => (
+
+  <div style={{
+    display: "flex", flexDirection: "column", alignItems: "center", gap: 6,
+    opacity: active ? 1 : 0.3, transition: "all 0.6s ease", transitionDelay: `${delay}ms`,
+    transform: active ? "translateY(0)" : "translateY(8px)",
+  }}>
+    <div style={{
+      width: 40, height: 40, borderRadius: "50%",
+      background: active ? "linear-gradient(135deg, #2DD4A0, #0FA87B)" : "rgba(255,255,255,0.06)",
+      display: "flex", alignItems: "center", justifyContent: "center",
+      fontFamily: "'JetBrains Mono', monospace", fontWeight: 700, fontSize: 14,
+      color: active ? "#0A0E14" : "rgba(255,255,255,0.3)",
+      boxShadow: active ? "0 0 20px rgba(45, 212, 160, 0.3)" : "none",
+    }}>
+      {number}
+    </div>
+    <div style={{ textAlign: "center" }}>
+      <div style={{ fontSize: 11, fontWeight: 600, color: active ? "#E8ECF1" : "rgba(255,255,255,0.3)", fontFamily: "'JetBrains Mono', monospace", letterSpacing: "0.05em" }}>{label}</div>
+      <div style={{ fontSize: 10, color: active ? "rgba(255,255,255,0.4)" : "rgba(255,255,255,0.15)", marginTop: 2 }}>{sublabel}</div>
+    </div>
+  </div>
+);
+
+const PipelineArrow = ({ active, delay }) => (
+
+  <div style={{
+    color: active ? "#2DD4A0" : "rgba(255,255,255,0.1)",
+    fontSize: 18, transition: "all 0.6s ease", transitionDelay: `${delay}ms`,
+    marginTop: -16,
+  }}>→</div>
+);
+
+// ─── MAIN DASHBOARD ──────────────────────────────────────────────────────────
+
+export default function YieldSimulationDashboard() {
+const [loaded, setLoaded] = useState(false);
+const [activeView, setActiveView] = useState(“overview”);
+const [pipelineStep, setPipelineStep] = useState(0);
+
+const productionData = useMemo(() => generateProductionData(), []);
+const revenueData = useMemo(() => calculateRevenue(productionData), [productionData]);
+const waterfallData = useMemo(() => applyWaterfall(revenueData), [revenueData]);
+const distributions = useMemo(() => calculateDistributions(waterfallData), [waterfallData]);
+
+const annualProduction = productionData.reduce((s, d) => s + d.production_mwh, 0);
+const annualRevenue = revenueData.reduce((s, d) => s + d.gross_revenue, 0);
+const annualExpenses = waterfallData.reduce((s, d) => s + d.total_expenses, 0);
+
+// Waterfall breakdown for pie chart
+const expenseBreakdown = useMemo(() => {
+const totals = waterfallData.reduce((acc, d) => {
+Object.entries(d.expenses).forEach(([k, v]) => { acc[k] = (acc[k] || 0) + v; });
+return acc;
+}, {});
+const labels = {
+om: “O&M”, insurance: “Insurance”, land_lease: “Land Lease”, property_tax: “Property Tax”,
+debt_service: “Debt Service”, asset_mgmt: “Asset Mgmt”, reserve: “Reserves”, platform_fee: “Platform Fee”,
+};
+const colors = [”#2DD4A0”, “#0FA87B”, “#3B82F6”, “#6366F1”, “#F59E0B”, “#EF4444”, “#8B5CF6”, “#EC4899”];
+return Object.entries(totals).map(([k, v], i) => ({
+name: labels[k] || k, value: parseFloat(v.toFixed(0)), color: colors[i],
+}));
+}, [waterfallData]);
+
+useEffect(() => {
+setTimeout(() => setLoaded(true), 100);
+// Animate pipeline steps
+let step = 0;
+const interval = setInterval(() => {
+step++;
+if (step <= 4) setPipelineStep(step);
+else clearInterval(interval);
+}, 600);
+return () => clearInterval(interval);
+}, []);
+
+const TABS = [
+{ id: “overview”, label: “Overview” },
+{ id: “production”, label: “Production” },
+{ id: “waterfall”, label: “Waterfall” },
+{ id: “distributions”, label: “Distributions” },
+];
+
+return (
+<div style={{
+minHeight: “100vh”,
+background: “#0A0E14”,
+color: “#E8ECF1”,
+fontFamily: “‘DM Sans’, system-ui, sans-serif”,
+padding: “0 0 60px 0”,
+}}>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet" />
+
+```
+  {/* ─── HEADER ─── */}
+  <div style={{
+    borderBottom: "1px solid rgba(45, 212, 160, 0.12)",
+    background: "linear-gradient(180deg, rgba(45, 212, 160, 0.04) 0%, transparent 100%)",
+  }}>
+    <div style={{ maxWidth: 1200, margin: "0 auto", padding: "28px 32px 20px" }}>
+      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", flexWrap: "wrap", gap: 16 }}>
+        <div>
+          <div style={{
+            fontFamily: "'JetBrains Mono', monospace", fontSize: 11, fontWeight: 600,
+            color: "#2DD4A0", letterSpacing: "0.15em", marginBottom: 6, textTransform: "uppercase",
+          }}>
+            EcoXchange · Yield Simulation Engine
+          </div>
+          <h1 style={{
+            fontSize: 28, fontWeight: 700, margin: 0, lineHeight: 1.2,
+            background: "linear-gradient(135deg, #E8ECF1 0%, #2DD4A0 100%)",
+            WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent",
+          }}>
+            {PROJECT_CONFIG.name}
+          </h1>
+          <div style={{ fontSize: 13, color: "rgba(255,255,255,0.4)", marginTop: 4 }}>
+            {PROJECT_CONFIG.spv} · {PROJECT_CONFIG.location} · {PROJECT_CONFIG.capacity_kw} kW
+          </div>
+        </div>
+        <div style={{
+          display: "flex", gap: 8, padding: "4px 6px",
+          background: "rgba(255,255,255,0.04)", borderRadius: 10,
+          border: "1px solid rgba(255,255,255,0.06)",
+        }}>
+          {TABS.map((tab) => (
+            <button key={tab.id} onClick={() => setActiveView(tab.id)} style={{
+              padding: "8px 16px", borderRadius: 8, border: "none", cursor: "pointer",
+              fontFamily: "'JetBrains Mono', monospace", fontSize: 11, fontWeight: 600,
+              letterSpacing: "0.03em",
+              background: activeView === tab.id ? "rgba(45, 212, 160, 0.15)" : "transparent",
+              color: activeView === tab.id ? "#2DD4A0" : "rgba(255,255,255,0.4)",
+              transition: "all 0.2s ease",
+            }}>
+              {tab.label}
+            </button>
+          ))}
+        </div>
+      </div>
+
+      {/* Pipeline Visualization */}
+      <div style={{
+        display: "flex", alignItems: "center", justifyContent: "center", gap: 16,
+        marginTop: 24, padding: "16px 0",
+      }}>
+        <PipelineStep number="1" label="SCADA" sublabel="Production Data" active={pipelineStep >= 1} delay={0} />
+        <PipelineArrow active={pipelineStep >= 2} delay={200} />
+        <PipelineStep number="2" label="REVENUE" sublabel="PPA + RECs" active={pipelineStep >= 2} delay={400} />
+        <PipelineArrow active={pipelineStep >= 3} delay={600} />
+        <PipelineStep number="3" label="WATERFALL" sublabel="Expenses & Reserves" active={pipelineStep >= 3} delay={800} />
+        <PipelineArrow active={pipelineStep >= 4} delay={1000} />
+        <PipelineStep number="4" label="DISTRIBUTE" sublabel="Pro-Rata Yield" active={pipelineStep >= 4} delay={1200} />
+      </div>
+    </div>
+  </div>
+
+  {/* ─── CONTENT ─── */}
+  <div style={{
+    maxWidth: 1200, margin: "0 auto", padding: "24px 32px",
+    opacity: loaded ? 1 : 0, transform: loaded ? "translateY(0)" : "translateY(20px)",
+    transition: "all 0.8s ease 0.3s",
+  }}>
+
+    {/* ─── OVERVIEW ─── */}
+    {activeView === "overview" && (
+      <>
+        {/* KPI Cards */}
+        <div style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: 16, marginBottom: 28 }}>
+          {[
+            { label: "Annual Production", value: annualProduction, format: (v) => `${v.toFixed(0)} MWh`, accent: "#2DD4A0" },
+            { label: "Gross Revenue", value: annualRevenue, format: fmt, accent: "#3B82F6" },
+            { label: "Net Distributable", value: distributions.annual_ndi, format: fmt, accent: "#F59E0B" },
+            { label: "Projected Yield", value: distributions.projected_yield, format: (v) => `${v.toFixed(2)}%`, accent: "#EC4899" },
+          ].map((kpi, i) => (
+            <div key={i} style={{
+              background: "rgba(255,255,255,0.03)",
+              border: "1px solid rgba(255,255,255,0.06)",
+              borderRadius: 12, padding: "20px 22px",
+              borderTop: `2px solid ${kpi.accent}`,
+              transition: "all 0.3s ease", cursor: "default",
+            }}>
+              <div style={{
+                fontFamily: "'JetBrains Mono', monospace", fontSize: 10, fontWeight: 600,
+                color: "rgba(255,255,255,0.4)", letterSpacing: "0.1em", textTransform: "uppercase", marginBottom: 10,
+              }}>
+                {kpi.label}
+              </div>
+              <div style={{ fontSize: 26, fontWeight: 700, color: kpi.accent, fontFamily: "'JetBrains Mono', monospace" }}>
+                <AnimatedNumber value={kpi.value} format={kpi.format} />
+              </div>
+            </div>
+          ))}
+        </div>
+
+        {/* Revenue vs NDI Chart */}
+        <div style={{
+          background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.06)",
+          borderRadius: 12, padding: "24px", marginBottom: 20,
+        }}>
+          <div style={{
+            fontFamily: "'JetBrains Mono', monospace", fontSize: 11, fontWeight: 600,
+            color: "rgba(255,255,255,0.5)", letterSpacing: "0.1em", marginBottom: 16, textTransform: "uppercase",
+          }}>
+            Monthly Revenue → Net Distributable Income
+          </div>
+          <ResponsiveContainer width="100%" height={280}>
+            <AreaChart data={waterfallData} margin={{ top: 5, right: 20, left: 0, bottom: 5 }}>
+              <defs>
+                <linearGradient id="gradRevenue" x1="0" y1="0" x2="0" y2="1">
+                  <stop offset="0%" stopColor="#3B82F6" stopOpacity={0.3} />
+                  <stop offset="100%" stopColor="#3B82F6" stopOpacity={0} />
+                </linearGradient>
+                <linearGradient id="gradNDI" x1="0" y1="0" x2="0" y2="1">
+                  <stop offset="0%" stopColor="#2DD4A0" stopOpacity={0.4} />
+                  <stop offset="100%" stopColor="#2DD4A0" stopOpacity={0} />
+                </linearGradient>
+              </defs>
+              <XAxis dataKey="month" tick={{ fill: "rgba(255,255,255,0.3)", fontFamily: "'JetBrains Mono'", fontSize: 11 }} axisLine={{ stroke: "rgba(255,255,255,0.06)" }} tickLine={false} />
+              <YAxis tick={{ fill: "rgba(255,255,255,0.3)", fontFamily: "'JetBrains Mono'", fontSize: 10 }} axisLine={false} tickLine={false} tickFormatter={(v) => `$${(v/1000).toFixed(0)}K`} />
+              <Tooltip content={<CustomTooltip />} />
+              <Area type="monotone" dataKey="gross_revenue" name="Gross Revenue" stroke="#3B82F6" strokeWidth={2} fill="url(#gradRevenue)" />
+              <Area type="monotone" dataKey="ndi" name="Net Distributable" stroke="#2DD4A0" strokeWidth={2} fill="url(#gradNDI)" />
+            </AreaChart>
+          </ResponsiveContainer>
+        </div>
+
+        {/* Two-column: Expense breakdown + Investor snapshot */}
+        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 16 }}>
+          {/* Expense Pie */}
+          <div style={{
+            background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.06)",
+            borderRadius: 12, padding: "24px",
+          }}>
+            <div style={{
+              fontFamily: "'JetBrains Mono', monospace", fontSize: 11, fontWeight: 600,
+              color: "rgba(255,255,255,0.5)", letterSpacing: "0.1em", marginBottom: 16, textTransform: "uppercase",
+            }}>
+              Waterfall Expense Breakdown
+            </div>
+            <div style={{ display: "flex", alignItems: "center", gap: 20 }}>
+              <ResponsiveContainer width="50%" height={200}>
+                <PieChart>
+                  <Pie data={expenseBreakdown} dataKey="value" cx="50%" cy="50%" innerRadius={50} outerRadius={80} paddingAngle={2}>
+                    {expenseBreakdown.map((entry, i) => (
+                      <Cell key={i} fill={entry.color} />
+                    ))}
+                  </Pie>
+                  <Tooltip content={<CustomTooltip />} />
+                </PieChart>
+              </ResponsiveContainer>
+              <div style={{ display: "flex", flexDirection: "column", gap: 6, flex: 1 }}>
+                {expenseBreakdown.map((e, i) => (
+                  <div key={i} style={{ display: "flex", alignItems: "center", gap: 8, fontSize: 11 }}>
+                    <div style={{ width: 8, height: 8, borderRadius: 2, background: e.color, flexShrink: 0 }} />
+                    <span style={{ color: "rgba(255,255,255,0.5)", flex: 1 }}>{e.name}</span>
+                    <span style={{ fontFamily: "'JetBrains Mono'", color: "rgba(255,255,255,0.7)", fontWeight: 500 }}>{fmt(e.value)}</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+
+          {/* Investor Distribution Preview */}
+          <div style={{
+            background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.06)",
+            borderRadius: 12, padding: "24px",
+          }}>
+            <div style={{
+              fontFamily: "'JetBrains Mono', monospace", fontSize: 11, fontWeight: 600,
+              color: "rgba(255,255,255,0.5)", letterSpacing: "0.1em", marginBottom: 16, textTransform: "uppercase",
+            }}>
+              Investor Distribution Preview
+            </div>
+            <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
+              {[
+                { label: "Total Raise", value: fmt(PROJECT_CONFIG.total_raise) },
+                { label: "Number of Investors", value: PROJECT_CONFIG.num_investors },
+                { label: "Avg. Stake", value: fmt(distributions.avg_investor_stake) },
+                { label: "Projected Annual Yield", value: `${distributions.projected_yield}%`, highlight: true },
+                { label: "Avg. Quarterly Distribution", value: fmt(distributions.avg_quarterly_distribution), highlight: true },
+                { label: "Annual NDI (Total)", value: fmt(distributions.annual_ndi) },
+              ].map((row, i) => (
+                <div key={i} style={{
+                  display: "flex", justifyContent: "space-between", alignItems: "center",
+                  padding: "8px 12px", borderRadius: 8,
+                  background: row.highlight ? "rgba(45, 212, 160, 0.06)" : "transparent",
+                  border: row.highlight ? "1px solid rgba(45, 212, 160, 0.15)" : "1px solid transparent",
+                }}>
+                  <span style={{ fontSize: 12, color: "rgba(255,255,255,0.5)" }}>{row.label}</span>
+                  <span style={{
+                    fontFamily: "'JetBrains Mono'", fontSize: 13, fontWeight: 600,
+                    color: row.highlight ? "#2DD4A0" : "#E8ECF1",
+                  }}>
+                    {row.value}
+                  </span>
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+      </>
+    )}
+
+    {/* ─── PRODUCTION TAB ─── */}
+    {activeView === "production" && (
+      <>
+        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 16, marginBottom: 24 }}>
+          {[
+            { label: "Annual Production", value: `${annualProduction.toFixed(0)} MWh`, sub: `${PROJECT_CONFIG.capacity_kw} kW nameplate` },
+            { label: "Avg. Capacity Factor", value: fmtPct((productionData.reduce((s, d) => s + d.capacity_factor, 0) / 12) * 100), sub: "12-month average" },
+            { label: "Peak Month", value: `${Math.max(...productionData.map(d => d.production_mwh)).toFixed(0)} MWh`, sub: productionData.find(d => d.production_mwh === Math.max(...productionData.map(x => x.production_mwh)))?.month || "" },
+          ].map((kpi, i) => (
+            <div key={i} style={{
+              background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.06)",
+              borderRadius: 12, padding: "20px 22px",
+            }}>
+              <div style={{ fontFamily: "'JetBrains Mono'", fontSize: 10, color: "rgba(255,255,255,0.4)", letterSpacing: "0.1em", textTransform: "uppercase", marginBottom: 8 }}>{kpi.label}</div>
+              <div style={{ fontSize: 24, fontWeight: 700, color: "#2DD4A0", fontFamily: "'JetBrains Mono'" }}>{kpi.value}</div>
+              <div style={{ fontSize: 11, color: "rgba(255,255,255,0.3)", marginTop: 4 }}>{kpi.sub}</div>
+            </div>
+          ))}
+        </div>
+
+        <div style={{
+          background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.06)",
+          borderRadius: 12, padding: "24px", marginBottom: 20,
+        }}>
+          <div style={{ fontFamily: "'JetBrains Mono'", fontSize: 11, fontWeight: 600, color: "rgba(255,255,255,0.5)", letterSpacing: "0.1em", marginBottom: 16, textTransform: "uppercase" }}>
+            Monthly Energy Production (MWh)
+          </div>
+          <ResponsiveContainer width="100%" height={300}>
+            <BarChart data={productionData} margin={{ top: 5, right: 20, left: 0, bottom: 5 }}>
+              <defs>
+                <linearGradient id="barGrad" x1="0" y1="0" x2="0" y2="1">
+                  <stop offset="0%" stopColor="#2DD4A0" />
+                  <stop offset="100%" stopColor="#0FA87B" />
+                </linearGradient>
+              </defs>
+              <XAxis dataKey="month" tick={{ fill: "rgba(255,255,255,0.3)", fontFamily: "'JetBrains Mono'", fontSize: 11 }} axisLine={{ stroke: "rgba(255,255,255,0.06)" }} tickLine={false} />
+              <YAxis tick={{ fill: "rgba(255,255,255,0.3)", fontFamily: "'JetBrains Mono'", fontSize: 10 }} axisLine={false} tickLine={false} />
+              <Tooltip content={<CustomTooltip formatter={(v) => `${v.toFixed(1)} MWh`} />} />
+              <Bar dataKey="production_mwh" name="Production" fill="url(#barGrad)" radius={[4, 4, 0, 0]} />
+            </BarChart>
+          </ResponsiveContainer>
+        </div>
+
+        <div style={{
+          background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.06)",
+          borderRadius: 12, padding: "24px",
+        }}>
+          <div style={{ fontFamily: "'JetBrains Mono'", fontSize: 11, fontWeight: 600, color: "rgba(255,255,255,0.5)", letterSpacing: "0.1em", marginBottom: 16, textTransform: "uppercase" }}>
+            Capacity Factor Trend
+          </div>
+          <ResponsiveContainer width="100%" height={220}>
+            <LineChart data={productionData} margin={{ top: 5, right: 20, left: 0, bottom: 5 }}>
+              <XAxis dataKey="month" tick={{ fill: "rgba(255,255,255,0.3)", fontFamily: "'JetBrains Mono'", fontSize: 11 }} axisLine={{ stroke: "rgba(255,255,255,0.06)" }} tickLine={false} />
+              <YAxis tick={{ fill: "rgba(255,255,255,0.3)", fontFamily: "'JetBrains Mono'", fontSize: 10 }} axisLine={false} tickLine={false} tickFormatter={(v) => `${(v*100).toFixed(0)}%`} />
+              <Tooltip content={<CustomTooltip formatter={(v) => `${(v*100).toFixed(1)}%`} />} />
+              <Line type="monotone" dataKey="capacity_factor" name="Capacity Factor" stroke="#F59E0B" strokeWidth={2.5} dot={{ fill: "#F59E0B", r: 4 }} activeDot={{ r: 6, fill: "#F59E0B", stroke: "#0A0E14", strokeWidth: 2 }} />
+            </LineChart>
+          </ResponsiveContainer>
+        </div>
+      </>
+    )}
+
+    {/* ─── WATERFALL TAB ─── */}
+    {activeView === "waterfall" && (
+      <>
+        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 16, marginBottom: 24 }}>
+          {[
+            { label: "Gross Revenue", value: fmt(annualRevenue), accent: "#3B82F6" },
+            { label: "Total Expenses", value: fmt(annualExpenses), accent: "#EF4444" },
+            { label: "Net Distributable", value: fmt(distributions.annual_ndi), accent: "#2DD4A0" },
+          ].map((kpi, i) => (
+            <div key={i} style={{
+              background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.06)",
+              borderRadius: 12, padding: "20px 22px", borderTop: `2px solid ${kpi.accent}`,
+            }}>
+              <div style={{ fontFamily: "'JetBrains Mono'", fontSize: 10, color: "rgba(255,255,255,0.4)", letterSpacing: "0.1em", textTransform: "uppercase", marginBottom: 8 }}>{kpi.label}</div>
+              <div style={{ fontSize: 24, fontWeight: 700, color: kpi.accent, fontFamily: "'JetBrains Mono'" }}>{kpi.value}</div>
+            </div>
+          ))}
+        </div>
+
+        {/* Waterfall visual breakdown */}
+        <div style={{
+          background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.06)",
+          borderRadius: 12, padding: "24px", marginBottom: 20,
+        }}>
+          <div style={{ fontFamily: "'JetBrains Mono'", fontSize: 11, fontWeight: 600, color: "rgba(255,255,255,0.5)", letterSpacing: "0.1em", marginBottom: 20, textTransform: "uppercase" }}>
+            Annual Distribution Waterfall
+          </div>
+          {(() => {
+            const items = [
+              { label: "Gross Revenue", value: annualRevenue, color: "#3B82F6", type: "income" },
+              ...expenseBreakdown.map(e => ({ label: e.name, value: -e.value, color: e.color, type: "expense" })),
+              { label: "Net Distributable Income", value: distributions.annual_ndi, color: "#2DD4A0", type: "result" },
+            ];
+            const maxVal = annualRevenue;
+            return (
+              <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+                {items.map((item, i) => (
+                  <div key={i} style={{ display: "flex", alignItems: "center", gap: 12 }}>
+                    <div style={{
+                      width: 140, textAlign: "right", fontSize: 11,
+                      fontFamily: "'JetBrains Mono'", color: "rgba(255,255,255,0.5)", flexShrink: 0,
+                    }}>
+                      {item.label}
+                    </div>
+                    <div style={{ flex: 1, height: 28, background: "rgba(255,255,255,0.03)", borderRadius: 4, overflow: "hidden", position: "relative" }}>
+                      <div style={{
+                        height: "100%", borderRadius: 4,
+                        width: `${(Math.abs(item.value) / maxVal) * 100}%`,
+                        background: item.type === "result"
+                          ? "linear-gradient(90deg, #2DD4A0, #0FA87B)"
+                          : item.type === "expense"
+                            ? `${item.color}88`
+                            : item.color,
+                        transition: "width 1s ease",
+                        display: "flex", alignItems: "center", justifyContent: "flex-end", paddingRight: 8,
+                      }}>
+                        <span style={{
+                          fontFamily: "'JetBrains Mono'", fontSize: 10, fontWeight: 600,
+                          color: item.type === "result" ? "#0A0E14" : "#E8ECF1",
+                          whiteSpace: "nowrap",
+                        }}>
+                          {item.type === "expense" ? `−${fmt(Math.abs(item.value))}` : fmt(item.value)}
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            );
+          })()}
+        </div>
+
+        {/* Monthly stacked view */}
+        <div style={{
+          background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.06)",
+          borderRadius: 12, padding: "24px",
+        }}>
+          <div style={{ fontFamily: "'JetBrains Mono'", fontSize: 11, fontWeight: 600, color: "rgba(255,255,255,0.5)", letterSpacing: "0.1em", marginBottom: 16, textTransform: "uppercase" }}>
+            Monthly: Expenses vs Net Distributable
+          </div>
+          <ResponsiveContainer width="100%" height={280}>
+            <BarChart data={waterfallData} margin={{ top: 5, right: 20, left: 0, bottom: 5 }}>
+              <XAxis dataKey="month" tick={{ fill: "rgba(255,255,255,0.3)", fontFamily: "'JetBrains Mono'", fontSize: 11 }} axisLine={{ stroke: "rgba(255,255,255,0.06)" }} tickLine={false} />
+              <YAxis tick={{ fill: "rgba(255,255,255,0.3)", fontFamily: "'JetBrains Mono'", fontSize: 10 }} axisLine={false} tickLine={false} tickFormatter={(v) => `$${(v/1000).toFixed(0)}K`} />
+              <Tooltip content={<CustomTooltip />} />
+              <Bar dataKey="total_expenses" name="Expenses" stackId="a" fill="#EF444488" radius={[0, 0, 0, 0]} />
+              <Bar dataKey="ndi" name="Net Distributable" stackId="a" fill="#2DD4A0" radius={[4, 4, 0, 0]} />
+            </BarChart>
+          </ResponsiveContainer>
+        </div>
+      </>
+    )}
+
+    {/* ─── DISTRIBUTIONS TAB ─── */}
+    {activeView === "distributions" && (
+      <>
+        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 16, marginBottom: 24 }}>
+          <div style={{
+            background: "linear-gradient(135deg, rgba(45, 212, 160, 0.08), rgba(45, 212, 160, 0.02))",
+            border: "1px solid rgba(45, 212, 160, 0.2)",
+            borderRadius: 12, padding: "28px",
+          }}>
+            <div style={{ fontFamily: "'JetBrains Mono'", fontSize: 10, color: "#2DD4A0", letterSpacing: "0.1em", textTransform: "uppercase", marginBottom: 8 }}>Projected Annual Yield</div>
+            <div style={{ fontSize: 42, fontWeight: 700, color: "#2DD4A0", fontFamily: "'JetBrains Mono'" }}>
+              <AnimatedNumber value={distributions.projected_yield} format={(v) => `${v.toFixed(2)}%`} />
+            </div>
+            <div style={{ fontSize: 12, color: "rgba(255,255,255,0.4)", marginTop: 8 }}>
+              Based on {annualProduction.toFixed(0)} MWh annual production @ ${PROJECT_CONFIG.ppa_rate}/kWh PPA
+            </div>
+          </div>
+          <div style={{
+            background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.06)",
+            borderRadius: 12, padding: "28px",
+          }}>
+            <div style={{ fontFamily: "'JetBrains Mono'", fontSize: 10, color: "rgba(255,255,255,0.4)", letterSpacing: "0.1em", textTransform: "uppercase", marginBottom: 8 }}>Avg. Quarterly Distribution</div>
+            <div style={{ fontSize: 42, fontWeight: 700, color: "#E8ECF1", fontFamily: "'JetBrains Mono'" }}>
+              <AnimatedNumber value={distributions.avg_quarterly_distribution} format={fmt} />
+            </div>
+            <div style={{ fontSize: 12, color: "rgba(255,255,255,0.4)", marginTop: 8 }}>
+              Per investor · {PROJECT_CONFIG.num_investors} investors · {fmt(distributions.avg_investor_stake)} avg. stake
+            </div>
+          </div>
+        </div>
+
+        {/* Quarterly Distribution Simulation */}
+        <div style={{
+          background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.06)",
+          borderRadius: 12, padding: "24px", marginBottom: 20,
+        }}>
+          <div style={{ fontFamily: "'JetBrains Mono'", fontSize: 11, fontWeight: 600, color: "rgba(255,255,255,0.5)", letterSpacing: "0.1em", marginBottom: 20, textTransform: "uppercase" }}>
+            Quarterly Distribution Schedule (Simulated)
+          </div>
+          {(() => {
+            const quarters = ["Q1", "Q2", "Q3", "Q4"];
+            const qData = quarters.map((q, qi) => {
+              const months = waterfallData.slice(qi * 3, qi * 3 + 3);
+              const qNDI = months.reduce((s, m) => s + m.ndi, 0);
+              const perInvestor = qNDI / PROJECT_CONFIG.num_investors;
+              return { quarter: q, ndi: qNDI, perInvestor, production: months.reduce((s, m) => s + m.production_mwh, 0) };
+            });
+            return (
+              <div style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: 12 }}>
+                {qData.map((q, i) => (
+                  <div key={i} style={{
+                    background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.08)",
+                    borderRadius: 10, padding: "20px", textAlign: "center",
+                    borderLeft: `3px solid ${i === 1 || i === 2 ? "#2DD4A0" : "rgba(45, 212, 160, 0.4)"}`,
+                  }}>
+                    <div style={{ fontFamily: "'JetBrains Mono'", fontSize: 14, fontWeight: 700, color: "#E8ECF1", marginBottom: 12 }}>{q.quarter}</div>
+                    <div style={{ fontSize: 11, color: "rgba(255,255,255,0.4)", marginBottom: 4 }}>Total NDI</div>
+                    <div style={{ fontFamily: "'JetBrains Mono'", fontSize: 16, fontWeight: 600, color: "#2DD4A0", marginBottom: 12 }}>{fmt(q.ndi)}</div>
+                    <div style={{ fontSize: 11, color: "rgba(255,255,255,0.4)", marginBottom: 4 }}>Per Investor</div>
+                    <div style={{ fontFamily: "'JetBrains Mono'", fontSize: 14, fontWeight: 600, color: "#E8ECF1", marginBottom: 12 }}>{fmt(q.perInvestor)}</div>
+                    <div style={{ fontSize: 10, color: "rgba(255,255,255,0.3)" }}>{q.production.toFixed(0)} MWh produced</div>
+                  </div>
+                ))}
+              </div>
+            );
+          })()}
+        </div>
+
+        {/* 5-Year Projection */}
+        <div style={{
+          background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.06)",
+          borderRadius: 12, padding: "24px",
+        }}>
+          <div style={{ fontFamily: "'JetBrains Mono'", fontSize: 11, fontWeight: 600, color: "rgba(255,255,255,0.5)", letterSpacing: "0.1em", marginBottom: 16, textTransform: "uppercase" }}>
+            5-Year Cumulative Yield Projection
+          </div>
+          {(() => {
+            const years = [1, 2, 3, 4, 5].map((y) => {
+              const escalated = distributions.annual_ndi * Math.pow(1 + PROJECT_CONFIG.ppa_escalator, y - 1);
+              return { year: `Year ${y}`, annual_ndi: parseFloat(escalated.toFixed(0)), yield_pct: parseFloat(((escalated / PROJECT_CONFIG.total_raise) * 100).toFixed(2)) };
+            });
+            const cumulative = years.reduce((acc, y, i) => {
+              const prev = i > 0 ? acc[i - 1].cumulative : 0;
+              return [...acc, { ...y, cumulative: prev + y.annual_ndi }];
+            }, []);
+            return (
+              <ResponsiveContainer width="100%" height={280}>
+                <BarChart data={cumulative} margin={{ top: 5, right: 20, left: 0, bottom: 5 }}>
+                  <XAxis dataKey="year" tick={{ fill: "rgba(255,255,255,0.3)", fontFamily: "'JetBrains Mono'", fontSize: 11 }} axisLine={{ stroke: "rgba(255,255,255,0.06)" }} tickLine={false} />
+                  <YAxis tick={{ fill: "rgba(255,255,255,0.3)", fontFamily: "'JetBrains Mono'", fontSize: 10 }} axisLine={false} tickLine={false} tickFormatter={(v) => `$${(v/1000).toFixed(0)}K`} />
+                  <Tooltip content={<CustomTooltip />} />
+                  <Bar dataKey="cumulative" name="Cumulative Distributions" fill="url(#barGrad)" radius={[4, 4, 0, 0]}>
+                    {cumulative.map((_, i) => (
+                      <Cell key={i} fill={`rgba(45, 212, 160, ${0.3 + i * 0.15})`} />
+                    ))}
+                  </Bar>
+                </BarChart>
+              </ResponsiveContainer>
+            );
+          })()}
+        </div>
+      </>
+    )}
+
+    {/* ─── FOOTER ─── */}
+    <div style={{
+      marginTop: 32, padding: "16px 0",
+      borderTop: "1px solid rgba(255,255,255,0.06)",
+      display: "flex", justifyContent: "space-between", alignItems: "center",
+    }}>
+      <div style={{ fontFamily: "'JetBrains Mono'", fontSize: 10, color: "rgba(255,255,255,0.2)", letterSpacing: "0.05em" }}>
+        ECOXCHANGE YIELD SIMULATION · SYNTHETIC DATA · NOT A SECURITIES OFFERING
+      </div>
+      <div style={{ fontFamily: "'JetBrains Mono'", fontSize: 10, color: "rgba(255,255,255,0.2)" }}>
+        REG D 506(c) · ACCREDITED INVESTORS ONLY
+      </div>
+    </div>
+  </div>
+</div>
+```
+
+);
+}
