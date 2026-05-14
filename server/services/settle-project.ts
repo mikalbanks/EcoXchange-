@@ -13,6 +13,7 @@ export interface FullSettlementResult {
     distributedAmount?: number;
     error?: string;
   } | null;
+  skippedIntervals: number;
 }
 
 async function updateTransactionStatuses(txIds: string[], status: "COMPLETED" | "FAILED") {
@@ -33,7 +34,7 @@ export async function settleProject(
   const settlement = await settleIntervals(projectId, fromDate, toDate);
 
   if (settlement.daysSettled === 0) {
-    return { settlement, distribution: null };
+    return { settlement, distribution: null, skippedIntervals: settlement.skippedIntervals };
   }
 
   const investorYieldTotal = settlement.waterfallSummary["INVESTOR_YIELD"] || 0;
@@ -79,5 +80,5 @@ export async function settleProject(
     };
   }
 
-  return { settlement, distribution };
+  return { settlement, distribution, skippedIntervals: settlement.skippedIntervals };
 }

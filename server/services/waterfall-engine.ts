@@ -10,6 +10,9 @@ import {
   type Account,
 } from "@shared/schema";
 import { eq, sql, and, isNull, inArray, gte, lte } from "drizzle-orm";
+import { storage } from "../storage";
+
+const VERIFICATION_GATE_ENABLED = process.env.VERIFICATION_GATE_ENABLED !== "false";
 
 export interface WaterfallTier {
   accountCode: string;
@@ -37,6 +40,7 @@ export interface SettlementResult {
   totalRevenueUsd: number;
   waterfallSummary: Record<string, number>;
   dailySettlements: DailySettlement[];
+  skippedIntervals: number;
 }
 
 const PLATFORM_FEE_RATE = 0.015;
@@ -129,8 +133,8 @@ export async function settleIntervals(
     throw new Error(`Project not found: ${projectId}`);
   }
 
-  const ppaRatePerKwh = Number(project.ppaRate || 0);
-  if (ppaRatePerKwh <= 0) {
+  const legacyPpaRatePerKwh = Number(project.ppaRate || 0);
+  if (!VERIFICATION_GATE_ENABLED && legacyPpaRatePerKwh <= 0) {
     throw new Error(`Project ${projectId} has no PPA rate configured`);
   }
 
@@ -179,12 +183,36 @@ export async function settleIntervals(
     if (fromDate) conditions.push(gte(sgtIntervals.intervalStart, fromDate));
     if (toDate) conditions.push(lte(sgtIntervals.intervalEnd, toDate));
 
-    const unsettledIntervals = await tx
+    const candidateIntervals = await tx
       .select()
       .from(sgtIntervals)
       .where(and(...conditions))
       .orderBy(sgtIntervals.intervalStart)
       .for("update", { skipLocked: true });
+
+    // ── Verification gate ───────────────────────────────────────────────
+    // Only intervals with a VERIFIED verification run may post. Per-interval
+    // frozen price (verificationRuns.ppaRateUsdPerKwh) is the source of truth.
+    const unsettledIntervals: typeof candidateIntervals = [];
+    const intervalPriceByInterval = new Map<number, number>();
+    let skippedIntervals = 0;
+    for (const row of candidateIntervals) {
+      if (!VERIFICATION_GATE_ENABLED) {
+        unsettledIntervals.push(row);
+        intervalPriceByInterval.set(row.id, legacyPpaRatePerKwh);
+        continue;
+      }
+      const run = await storage.getVerificationRunByInterval(row.id);
+      if (!run || run.status !== "VERIFIED") {
+        skippedIntervals++;
+        console.log(
+          `🚦 [Settle Gate] Skipping interval ${row.id} (verification ${run?.status ?? "MISSING"})`,
+        );
+        continue;
+      }
+      unsettledIntervals.push(row);
+      intervalPriceByInterval.set(row.id, Number(run.ppaRateUsdPerKwh));
+    }
 
     if (unsettledIntervals.length === 0) {
       return {
@@ -200,6 +228,7 @@ export async function settleIntervals(
         totalRevenueUsd: 0,
         waterfallSummary: {},
         dailySettlements: [],
+        skippedIntervals,
       };
     }
 
@@ -211,17 +240,21 @@ export async function settleIntervals(
 
     const dailyGroups = new Map<
       string,
-      { intervalIds: number[]; totalGrossWh: number; count: number }
+      { intervalIds: number[]; totalGrossWh: number; totalRevenueUsd: number; count: number }
     >();
 
     for (const row of unsettledIntervals) {
       const dateKey = new Date(row.intervalStart).toISOString().slice(0, 10);
       if (!dailyGroups.has(dateKey)) {
-        dailyGroups.set(dateKey, { intervalIds: [], totalGrossWh: 0, count: 0 });
+        dailyGroups.set(dateKey, { intervalIds: [], totalGrossWh: 0, totalRevenueUsd: 0, count: 0 });
       }
       const group = dailyGroups.get(dateKey)!;
       group.intervalIds.push(row.id);
-      group.totalGrossWh += Number(row.syntheticGrossWh || 0);
+      const grossWh = Number(row.syntheticGrossWh || 0);
+      group.totalGrossWh += grossWh;
+      // Frozen per-interval price from verification run.
+      const price = intervalPriceByInterval.get(row.id) ?? legacyPpaRatePerKwh;
+      group.totalRevenueUsd += (grossWh / 1000) * price;
       group.count++;
     }
 
@@ -233,9 +266,17 @@ export async function settleIntervals(
 
     const revenueAccountId = accountsByType.get("REVENUE_CLEARING")!.id;
 
+    const verificationRunIdByInterval = new Map<number, string>();
+    if (VERIFICATION_GATE_ENABLED) {
+      for (const row of unsettledIntervals) {
+        const run = await storage.getVerificationRunByInterval(row.id);
+        if (run) verificationRunIdByInterval.set(row.id, run.id);
+      }
+    }
+
     for (const [dateKey, group] of Array.from(dailyGroups.entries()).sort()) {
       const grossKwh = group.totalGrossWh / 1000;
-      const dailyRevenue = grossKwh * ppaRatePerKwh;
+      const dailyRevenue = group.totalRevenueUsd;
 
       const waterfall = computeWaterfall(dailyRevenue, project, accountsByType);
 
@@ -267,6 +308,20 @@ export async function settleIntervals(
           amount: tier.amount.toFixed(4),
           direction: "CREDIT",
         });
+      }
+
+      // Mark each verification run as SETTLED and link to the transaction.
+      if (VERIFICATION_GATE_ENABLED) {
+        for (const intervalId of group.intervalIds) {
+          const runId = verificationRunIdByInterval.get(intervalId);
+          if (runId) {
+            await storage.updateVerificationRun(runId, {
+              status: "SETTLED",
+              settledTransactionId: txId,
+              settledAt: new Date(),
+            });
+          }
+        }
       }
 
       dailySettlements.push({
@@ -301,6 +356,7 @@ export async function settleIntervals(
       totalRevenueUsd,
       waterfallSummary,
       dailySettlements,
+      skippedIntervals,
     };
   });
 }

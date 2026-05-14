@@ -72,6 +72,7 @@ import AdminProjects from "@/pages/admin/projects";
 import AdminProjectReview from "@/pages/admin/project-review";
 import AdminExportPacket from "@/pages/admin/export-packet";
 import AdminUsers from "@/pages/admin/users";
+import AdminVerificationPage from "@/pages/admin/verification";
 import YieldSimulationPage from "@/pages/yield-simulation";
 
 import PerformancePage from "@/pages/performance";
@@ -177,6 +178,11 @@ function Router() {
       <Route path="/admin/projects/:id/export">
         <ProtectedRoute allowedRoles={["ADMIN"]}>
           <AdminExportPacket />
+        </ProtectedRoute>
+      </Route>
+      <Route path="/admin/projects/:id/verification">
+        <ProtectedRoute allowedRoles={["ADMIN"]}>
+          <AdminVerificationPage />
         </ProtectedRoute>
       </Route>
       <Route path="/admin/projects/:id">

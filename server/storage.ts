@@ -27,6 +27,9 @@ import {
   type Posting, type InsertPosting,
   type InterconnectionQueueEntry, type InsertInterconnectionQueueEntry,
   type QueueEntryAnalytics, type InsertQueueEntryAnalytics,
+  type IrradianceSnapshot, type InsertIrradianceSnapshot,
+  type VerificationRun, type InsertVerificationRun,
+  type AnomalyFlag, type InsertAnomalyFlag,
 } from "@shared/schema";
 
 export function hashPassword(password: string): string {
@@ -125,6 +128,25 @@ export interface IStorage {
   getQueueEntryAnalyticsByEntryId(entryId: string): Promise<QueueEntryAnalytics | undefined>;
   getAllQueueEntryAnalytics(): Promise<QueueEntryAnalytics[]>;
   upsertQueueEntryAnalytics(row: Partial<QueueEntryAnalytics> & { entryId: string }): Promise<QueueEntryAnalytics>;
+
+  // Verification engine
+  createIrradianceSnapshot(snapshot: InsertIrradianceSnapshot): Promise<IrradianceSnapshot>;
+  getIrradianceSnapshots(projectId: string, from?: Date, to?: Date): Promise<IrradianceSnapshot[]>;
+  getIrradianceSnapshotForInterval(projectId: string, intervalStart: Date): Promise<IrradianceSnapshot | undefined>;
+
+  createVerificationRun(run: InsertVerificationRun): Promise<VerificationRun>;
+  getVerificationRun(id: string): Promise<VerificationRun | undefined>;
+  getVerificationRuns(
+    projectId: string,
+    filters?: { from?: Date; to?: Date; status?: string; granularity?: string; limit?: number },
+  ): Promise<VerificationRun[]>;
+  getVerificationRunByInterval(intervalId: number): Promise<VerificationRun | undefined>;
+  updateVerificationRun(id: string, updates: Partial<VerificationRun>): Promise<VerificationRun | undefined>;
+
+  createAnomalyFlag(flag: InsertAnomalyFlag): Promise<AnomalyFlag>;
+  getAnomalyFlagsByRun(runId: string): Promise<AnomalyFlag[]>;
+  updateAnomalyFlag(id: number, updates: Partial<AnomalyFlag>): Promise<AnomalyFlag | undefined>;
+  getOpenAnomalies(projectId: string): Promise<AnomalyFlag[]>;
 }
 
 import { computeReadiness, generateChecklist, computeCapitalStack, computeRevenue, computeDistribution } from "./scoring-engine";
@@ -156,6 +178,11 @@ export class MemStorage implements IStorage {
   private interconnectionQueueEntries: Map<string, InterconnectionQueueEntry> = new Map();
   private queueEntryAnalytics: Map<string, QueueEntryAnalytics> = new Map();
   private postingSeq: number = 1;
+  private irradianceSnapshotsMap: Map<number, IrradianceSnapshot> = new Map();
+  private irradianceSnapshotSeq: number = 1;
+  private verificationRunsMap: Map<string, VerificationRun> = new Map();
+  private anomalyFlagsMap: Map<number, AnomalyFlag> = new Map();
+  private anomalyFlagSeq: number = 1;
 
   constructor() {
     this.seedData();
@@ -1672,6 +1699,183 @@ export class MemStorage implements IStorage {
     };
     this.queueEntryAnalytics.set(row.entryId, merged);
     return merged;
+  }
+
+  // ── Verification engine ────────────────────────────────────────────────
+
+  async createIrradianceSnapshot(snapshot: InsertIrradianceSnapshot): Promise<IrradianceSnapshot> {
+    const key = `${snapshot.projectId}|${new Date(snapshot.intervalStart).toISOString()}|${snapshot.satelliteSource}`;
+    for (const existing of this.irradianceSnapshotsMap.values()) {
+      const ek = `${existing.projectId}|${new Date(existing.intervalStart).toISOString()}|${existing.satelliteSource}`;
+      if (ek === key) return existing;
+    }
+    const id = this.irradianceSnapshotSeq++;
+    const row: IrradianceSnapshot = {
+      id,
+      projectId: snapshot.projectId,
+      meterId: snapshot.meterId ?? null,
+      latitude: snapshot.latitude ?? null,
+      longitude: snapshot.longitude ?? null,
+      capacityKw: snapshot.capacityKw,
+      pvEstimateKw: snapshot.pvEstimateKw,
+      irradianceWm2: snapshot.irradianceWm2 ?? null,
+      intervalStart: new Date(snapshot.intervalStart),
+      intervalEnd: new Date(snapshot.intervalEnd),
+      satelliteSource: snapshot.satelliteSource,
+      fetchedAt: new Date(),
+      rawResponseHash: snapshot.rawResponseHash,
+      rawResponseJson: (snapshot.rawResponseJson ?? null) as any,
+    };
+    this.irradianceSnapshotsMap.set(id, row);
+    return row;
+  }
+
+  async getIrradianceSnapshots(projectId: string, from?: Date, to?: Date): Promise<IrradianceSnapshot[]> {
+    return Array.from(this.irradianceSnapshotsMap.values())
+      .filter((s) => {
+        if (s.projectId !== projectId) return false;
+        if (from && s.intervalStart < from) return false;
+        if (to && s.intervalStart > to) return false;
+        return true;
+      })
+      .sort((a, b) => a.intervalStart.getTime() - b.intervalStart.getTime());
+  }
+
+  async getIrradianceSnapshotForInterval(projectId: string, intervalStart: Date): Promise<IrradianceSnapshot | undefined> {
+    const ts = new Date(intervalStart).getTime();
+    const sourceRank: Record<string, number> = {
+      SOLCAST_HISTORICAL: 4,
+      SOLCAST_LIVE: 3,
+      SOLCAST_ESTIMATED_ACTUALS: 2,
+      SYNTHETIC_FALLBACK: 1,
+    };
+    const candidates = Array.from(this.irradianceSnapshotsMap.values()).filter(
+      (s) => s.projectId === projectId && new Date(s.intervalStart).getTime() === ts,
+    );
+    candidates.sort((a, b) => (sourceRank[b.satelliteSource] ?? 0) - (sourceRank[a.satelliteSource] ?? 0));
+    return candidates[0];
+  }
+
+  async createVerificationRun(run: InsertVerificationRun): Promise<VerificationRun> {
+    const periodStartIso = new Date(run.periodStart).toISOString();
+    for (const existing of this.verificationRunsMap.values()) {
+      if (
+        existing.projectId === run.projectId &&
+        existing.granularity === run.granularity &&
+        existing.periodStart.toISOString() === periodStartIso
+      ) {
+        return existing;
+      }
+    }
+    const id = randomUUID();
+    const row: VerificationRun = {
+      id,
+      projectId: run.projectId,
+      intervalId: run.intervalId ?? null,
+      granularity: run.granularity,
+      periodStart: new Date(run.periodStart),
+      periodEnd: new Date(run.periodEnd),
+      expectedKwh: run.expectedKwh,
+      actualKwh: run.actualKwh,
+      variancePct: run.variancePct,
+      tolerancePct: run.tolerancePct,
+      ppaRateUsdPerKwh: run.ppaRateUsdPerKwh,
+      ppaSource: run.ppaSource,
+      offtakerClass: run.offtakerClass,
+      plantUse: run.plantUse,
+      grossRevenueUsd: run.grossRevenueUsd,
+      status: run.status ?? "PENDING",
+      evidenceHash: run.evidenceHash,
+      settledTransactionId: run.settledTransactionId ?? null,
+      runAt: new Date(),
+      clearedAt: null,
+      settledAt: null,
+      notes: run.notes ?? null,
+    };
+    this.verificationRunsMap.set(id, row);
+    return row;
+  }
+
+  async getVerificationRun(id: string): Promise<VerificationRun | undefined> {
+    return this.verificationRunsMap.get(id);
+  }
+
+  async getVerificationRuns(
+    projectId: string,
+    filters?: { from?: Date; to?: Date; status?: string; granularity?: string; limit?: number },
+  ): Promise<VerificationRun[]> {
+    const rows = Array.from(this.verificationRunsMap.values())
+      .filter((r) => {
+        if (r.projectId !== projectId) return false;
+        if (filters?.from && r.periodStart < filters.from) return false;
+        if (filters?.to && r.periodStart > filters.to) return false;
+        if (filters?.status && r.status !== filters.status) return false;
+        if (filters?.granularity && r.granularity !== filters.granularity) return false;
+        return true;
+      })
+      .sort((a, b) => b.periodStart.getTime() - a.periodStart.getTime());
+    return filters?.limit ? rows.slice(0, filters.limit) : rows;
+  }
+
+  async getVerificationRunByInterval(intervalId: number): Promise<VerificationRun | undefined> {
+    for (const r of this.verificationRunsMap.values()) {
+      if (r.intervalId === intervalId) return r;
+    }
+    return undefined;
+  }
+
+  async updateVerificationRun(id: string, updates: Partial<VerificationRun>): Promise<VerificationRun | undefined> {
+    const existing = this.verificationRunsMap.get(id);
+    if (!existing) return undefined;
+    const merged: VerificationRun = { ...existing, ...updates };
+    this.verificationRunsMap.set(id, merged);
+    return merged;
+  }
+
+  async createAnomalyFlag(flag: InsertAnomalyFlag): Promise<AnomalyFlag> {
+    // Hard guard: ML scorer flags can never be BLOCK severity.
+    if (flag.ruleCode === "ML_SCORER" && flag.severity === "BLOCK") {
+      throw new Error("ML_SCORER flags cannot have BLOCK severity (advisory only)");
+    }
+    const id = this.anomalyFlagSeq++;
+    const row: AnomalyFlag = {
+      id,
+      verificationRunId: flag.verificationRunId,
+      ruleCode: flag.ruleCode,
+      severity: flag.severity,
+      detail: flag.detail as any,
+      raisedAt: new Date(),
+      clearedAt: null,
+      clearedBy: flag.clearedBy ?? null,
+      clearedReason: flag.clearedReason ?? null,
+    };
+    this.anomalyFlagsMap.set(id, row);
+    return row;
+  }
+
+  async getAnomalyFlagsByRun(runId: string): Promise<AnomalyFlag[]> {
+    return Array.from(this.anomalyFlagsMap.values())
+      .filter((f) => f.verificationRunId === runId)
+      .sort((a, b) => a.raisedAt.getTime() - b.raisedAt.getTime());
+  }
+
+  async updateAnomalyFlag(id: number, updates: Partial<AnomalyFlag>): Promise<AnomalyFlag | undefined> {
+    const existing = this.anomalyFlagsMap.get(id);
+    if (!existing) return undefined;
+    const merged: AnomalyFlag = { ...existing, ...updates };
+    this.anomalyFlagsMap.set(id, merged);
+    return merged;
+  }
+
+  async getOpenAnomalies(projectId: string): Promise<AnomalyFlag[]> {
+    const projectRunIds = new Set(
+      Array.from(this.verificationRunsMap.values())
+        .filter((r) => r.projectId === projectId)
+        .map((r) => r.id),
+    );
+    return Array.from(this.anomalyFlagsMap.values())
+      .filter((f) => projectRunIds.has(f.verificationRunId) && f.clearedAt == null)
+      .sort((a, b) => b.raisedAt.getTime() - a.raisedAt.getTime());
   }
 }
 
