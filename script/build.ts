@@ -38,6 +38,13 @@ async function buildAll() {
   console.log("building client...");
   await viteBuild();
 
+  // Cloudflare Worker deploys only need the Vite SPA in dist/public —
+  // the Express server bundle below ships to Render only.
+  if (process.env.CF_PAGES || process.env.CLOUDFLARE_PAGES) {
+    console.log("skipping server bundle (Cloudflare deploy detected)");
+    return;
+  }
+
   console.log("building server...");
   const pkg = JSON.parse(await readFile("package.json", "utf-8"));
   const allDeps = [

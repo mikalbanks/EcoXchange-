@@ -31,3 +31,8 @@ Thumbs.db
 # Agent workspace
 .local/
 EcoXchange-clone/
+
+# Cloudflare Workers / Wrangler
+.wrangler/
+.dev.vars
+wrangler.dev.vars
