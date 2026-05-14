@@ -1,0 +1,21 @@
+{
+  "name": "ecoxchange-mcp",
+  "version": "1.0.0",
+  "private": true,
+  "description": "EcoXchange MCP servers: solar plant production + satellite irradiance",
+  "type": "module",
+  "workspaces": [
+    "packages/*"
+  ],
+  "scripts": {
+    "build": "npm run build --workspaces --if-present",
+    "clean": "rm -rf packages/*/dist packages/*/tsconfig.tsbuildinfo",
+    "dev:solar": "npm run dev -w @ecoxchange/solar-plant-mcp-server",
+    "dev:irradiance": "npm run dev -w @ecoxchange/irradiance-mcp-server",
+    "start:solar": "npm run start -w @ecoxchange/solar-plant-mcp-server",
+    "start:irradiance": "npm run start -w @ecoxchange/irradiance-mcp-server"
+  },
+  "engines": {
+    "node": ">=20"
+  }
+}
