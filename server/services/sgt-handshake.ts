@@ -5,6 +5,12 @@ import { getSatellitePowerEstimate, type SkyOracleResult } from "./solcast";
 import { getNetMeterShadow, type NetMeterShadowResult } from "./utility-shadow";
 import { addMinutes } from "date-fns";
 import { storage } from "../storage";
+import { archiveSolcastRead } from "./irradiance-archive";
+import {
+  runIntervalVerificationFor,
+  runDailyVerification,
+  type VerificationStatusCode,
+} from "./verification-engine";
 
 export interface SgtHandshakeResult {
   projectId: string;
@@ -19,6 +25,14 @@ export interface SgtHandshakeResult {
   };
   utilityShadow: NetMeterShadowResult;
   telemetrySources: string[];
+  verification?: {
+    runId: string;
+    status: VerificationStatusCode;
+    variancePct: number;
+    anomalyCount: number;
+    ppaSource: string;
+    ppaRateUsdPerKwh: number;
+  };
 }
 
 function generateSyntheticSolarEstimate(capacityKw: number): SkyOracleResult {
@@ -202,6 +216,49 @@ export async function runSgtHandshake(
   );
   console.log(hasRealData ? "Real SCADA Data Integrated: SGT Loop Closed." : "Utility Shadow Integrated: SGT Loop Closed.");
 
+  // ── Archive irradiance + run verification ────────────────────────────────
+  let verification: SgtHandshakeResult["verification"] | undefined;
+  try {
+    await archiveSolcastRead({
+      projectId: project.id,
+      meterId: activeMeter.id,
+      capacityKw,
+      latitude: project.latitude ? Number(project.latitude) : null,
+      longitude: project.longitude ? Number(project.longitude) : null,
+      result: skyResult,
+      intervalStart,
+      intervalEnd,
+      satelliteSource: solcastSource === "SOLCAST" ? "SOLCAST_LIVE" : "SYNTHETIC_FALLBACK",
+    });
+
+    const result = await runIntervalVerificationFor(inserted);
+    verification = {
+      runId: result.run.id,
+      status: result.status,
+      variancePct: Number(result.run.variancePct),
+      anomalyCount: result.anomalies.length,
+      ppaSource: result.run.ppaSource,
+      ppaRateUsdPerKwh: Number(result.run.ppaRateUsdPerKwh),
+    };
+    console.log(
+      `🔬 [Verification] Run ${result.run.id} → ${result.status} (variance ${result.run.variancePct}%, ${result.anomalies.length} flags)`,
+    );
+
+    // Trigger daily rollup at end of day (UTC).
+    if (intervalEnd.getUTCHours() === 23 && intervalEnd.getUTCMinutes() === 45) {
+      const dayStart = new Date(intervalStart);
+      dayStart.setUTCHours(0, 0, 0, 0);
+      const dayEnd = new Date(dayStart.getTime() + 24 * 3600 * 1000);
+      try {
+        await runDailyVerification(project.id, dayStart, dayEnd);
+      } catch (err: any) {
+        console.warn(`⚠️ [Verification] Daily rollup failed: ${err.message}`);
+      }
+    }
+  } catch (err: any) {
+    console.warn(`⚠️ [Verification] Interval verification failed: ${err.message}`);
+  }
+
   return {
     projectId: project.id,
     projectName: project.name,
@@ -215,5 +272,6 @@ export async function runSgtHandshake(
     },
     utilityShadow: utilityShadowResult,
     telemetrySources,
+    verification,
   };
 }

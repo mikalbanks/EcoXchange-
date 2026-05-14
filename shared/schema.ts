@@ -741,6 +741,185 @@ export const insertPostingSchema = createInsertSchema(postings).omit({
 export type InsertPosting = z.infer<typeof insertPostingSchema>;
 export type Posting = typeof postings.$inferSelect;
 
+// ─── Verification Engine ────────────────────────────────────────────────────
+
+export const SatelliteSource = {
+  SOLCAST_LIVE: "SOLCAST_LIVE",
+  SOLCAST_HISTORICAL: "SOLCAST_HISTORICAL",
+  SOLCAST_ESTIMATED_ACTUALS: "SOLCAST_ESTIMATED_ACTUALS",
+  SYNTHETIC_FALLBACK: "SYNTHETIC_FALLBACK",
+} as const;
+
+export const VerificationGranularity = {
+  INTERVAL_15M: "INTERVAL_15M",
+  DAILY: "DAILY",
+} as const;
+
+export const VerificationStatus = {
+  PENDING: "PENDING",
+  VERIFIED: "VERIFIED",
+  FLAGGED: "FLAGGED",
+  REJECTED: "REJECTED",
+  SETTLED: "SETTLED",
+} as const;
+
+export const PpaSource = {
+  FIXED_PPA: "FIXED_PPA",
+  CAISO_NP15_SPOT_PROXY: "CAISO_NP15_SPOT_PROXY",
+  CAISO_SP15_SPOT_PROXY: "CAISO_SP15_SPOT_PROXY",
+  JURISDICTION_BENCHMARK: "JURISDICTION_BENCHMARK",
+  LEVELTEN_P25_PROXY: "LEVELTEN_P25_PROXY",
+  NATIONAL_AVG: "NATIONAL_AVG",
+} as const;
+
+export const OfftakerClass = {
+  UTILITY: "UTILITY",
+  C_AND_I: "C_AND_I",
+  COMMUNITY_SOLAR: "COMMUNITY_SOLAR",
+  WHOLESALE_EXPORT: "WHOLESALE_EXPORT",
+  BEHIND_THE_METER: "BEHIND_THE_METER",
+} as const;
+
+export const PlantUse = {
+  BEHIND_THE_METER_OFFSET: "BEHIND_THE_METER_OFFSET",
+  WHOLESALE_EXPORT: "WHOLESALE_EXPORT",
+  HYBRID: "HYBRID",
+} as const;
+
+export const AnomalyRuleCode = {
+  VARIANCE_BAND: "VARIANCE_BAND",
+  CLEAR_SKY_CAP: "CLEAR_SKY_CAP",
+  CAPACITY_FACTOR: "CAPACITY_FACTOR",
+  METER_DRIFT: "METER_DRIFT",
+  DATA_GAP: "DATA_GAP",
+  DUPLICATE: "DUPLICATE",
+  ML_SCORER: "ML_SCORER",
+} as const;
+
+export const AnomalySeverity = {
+  INFO: "INFO",
+  WARN: "WARN",
+  BLOCK: "BLOCK",
+} as const;
+
+export const VerificationApprovalAction = {
+  CLEAR_ANOMALY: "CLEAR_ANOMALY",
+  REJECT_VERIFICATION: "REJECT_VERIFICATION",
+  MANUAL_VERIFICATION_RUN: "MANUAL_VERIFICATION_RUN",
+} as const;
+
+export const irradianceSnapshots = pgTable(
+  "irradiance_snapshots",
+  {
+    id: serial("id").primaryKey(),
+    projectId: varchar("project_id").notNull(),
+    meterId: varchar("meter_id"),
+    latitude: decimal("latitude", { precision: 10, scale: 6 }),
+    longitude: decimal("longitude", { precision: 10, scale: 6 }),
+    capacityKw: decimal("capacity_kw", { precision: 10, scale: 2 }).notNull(),
+    pvEstimateKw: decimal("pv_estimate_kw", { precision: 14, scale: 4 }).notNull(),
+    irradianceWm2: decimal("irradiance_wm2", { precision: 10, scale: 4 }),
+    intervalStart: timestamp("interval_start").notNull(),
+    intervalEnd: timestamp("interval_end").notNull(),
+    satelliteSource: text("satellite_source").notNull(),
+    fetchedAt: timestamp("fetched_at").notNull().defaultNow(),
+    rawResponseHash: text("raw_response_hash").notNull(),
+    rawResponseJson: jsonb("raw_response_json").$type<Record<string, unknown> | null>(),
+  },
+  (t) => ({
+    pidStartSourceIdx: uniqueIndex("irradiance_snapshots_pid_start_source_uid").on(
+      t.projectId,
+      t.intervalStart,
+      t.satelliteSource,
+    ),
+    pidStartIdx: index("irradiance_snapshots_pid_start_idx").on(t.projectId, t.intervalStart),
+  }),
+);
+
+export const insertIrradianceSnapshotSchema = createInsertSchema(irradianceSnapshots).omit({
+  id: true,
+  fetchedAt: true,
+});
+export type InsertIrradianceSnapshot = z.infer<typeof insertIrradianceSnapshotSchema>;
+export type IrradianceSnapshot = typeof irradianceSnapshots.$inferSelect;
+
+export const verificationRuns = pgTable(
+  "verification_runs",
+  {
+    id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+    projectId: varchar("project_id").notNull().references(() => projects.id),
+    intervalId: integer("interval_id").references(() => sgtIntervals.id),
+    granularity: text("granularity").notNull(),
+    periodStart: timestamp("period_start").notNull(),
+    periodEnd: timestamp("period_end").notNull(),
+    expectedKwh: decimal("expected_kwh", { precision: 14, scale: 4 }).notNull(),
+    actualKwh: decimal("actual_kwh", { precision: 14, scale: 4 }).notNull(),
+    variancePct: decimal("variance_pct", { precision: 8, scale: 4 }).notNull(),
+    tolerancePct: decimal("tolerance_pct", { precision: 6, scale: 4 }).notNull(),
+    ppaRateUsdPerKwh: decimal("ppa_rate_usd_per_kwh", { precision: 10, scale: 6 }).notNull(),
+    ppaSource: text("ppa_source").notNull(),
+    offtakerClass: text("offtaker_class").notNull(),
+    plantUse: text("plant_use").notNull(),
+    grossRevenueUsd: decimal("gross_revenue_usd", { precision: 15, scale: 4 }).notNull(),
+    status: text("status").notNull().default("PENDING"),
+    evidenceHash: text("evidence_hash").notNull(),
+    settledTransactionId: varchar("settled_transaction_id").references(() => transactions.id),
+    runAt: timestamp("run_at").notNull().defaultNow(),
+    clearedAt: timestamp("cleared_at"),
+    settledAt: timestamp("settled_at"),
+    notes: text("notes"),
+  },
+  (t) => ({
+    pidGranStartIdx: uniqueIndex("verification_runs_pid_gran_start_uid").on(
+      t.projectId,
+      t.granularity,
+      t.periodStart,
+    ),
+    pidStatusStartIdx: index("verification_runs_pid_status_start_idx").on(
+      t.projectId,
+      t.status,
+      t.periodStart,
+    ),
+    intervalIdx: index("verification_runs_interval_idx").on(t.intervalId),
+  }),
+);
+
+export const insertVerificationRunSchema = createInsertSchema(verificationRuns).omit({
+  id: true,
+  runAt: true,
+  clearedAt: true,
+  settledAt: true,
+});
+export type InsertVerificationRun = z.infer<typeof insertVerificationRunSchema>;
+export type VerificationRun = typeof verificationRuns.$inferSelect;
+
+export const anomalyFlags = pgTable(
+  "anomaly_flags",
+  {
+    id: serial("id").primaryKey(),
+    verificationRunId: varchar("verification_run_id").notNull().references(() => verificationRuns.id),
+    ruleCode: text("rule_code").notNull(),
+    severity: text("severity").notNull(),
+    detail: jsonb("detail").$type<Record<string, unknown>>().notNull(),
+    raisedAt: timestamp("raised_at").notNull().defaultNow(),
+    clearedAt: timestamp("cleared_at"),
+    clearedBy: varchar("cleared_by"),
+    clearedReason: text("cleared_reason"),
+  },
+  (t) => ({
+    runIdx: index("anomaly_flags_run_idx").on(t.verificationRunId),
+    ruleSeverityIdx: index("anomaly_flags_rule_severity_idx").on(t.ruleCode, t.severity, t.raisedAt),
+  }),
+);
+
+export const insertAnomalyFlagSchema = createInsertSchema(anomalyFlags).omit({
+  id: true,
+  raisedAt: true,
+  clearedAt: true,
+});
+export type InsertAnomalyFlag = z.infer<typeof insertAnomalyFlagSchema>;
+export type AnomalyFlag = typeof anomalyFlags.$inferSelect;
+
 // ─── Zod Validation Schemas ─────────────────────────────────────────────────
 
 export const loginSchema = z.object({

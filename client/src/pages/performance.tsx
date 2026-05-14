@@ -7,6 +7,7 @@ import { Link, useParams } from "wouter";
 import { useQuery } from "@tanstack/react-query";
 import { Skeleton } from "@/components/ui/skeleton";
 import { ProvenancePanel, type ScadaProvenance } from "@/components/scada/provenance-panel";
+import { HowVerifiedPanel } from "@/components/verification/how-verified-panel";
 import { Sun, MapPin, Zap, ArrowRight, BarChart3 } from "lucide-react";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 
@@ -169,6 +170,10 @@ export default function PerformancePage() {
         ) : summary?.provenance ? (
           <ProvenancePanel provenance={summary.provenance} />
         ) : null}
+      </section>
+
+      <section className="container mx-auto px-4 pb-8">
+        <HowVerifiedPanel projectId={projectId} />
       </section>
 
       <section className="container mx-auto px-4 pb-16">

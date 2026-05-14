@@ -11,6 +11,12 @@ import { generateROIPrediction, type ProjectFinancialData } from "./lib/ai-predi
 import * as scadaService from "./lib/scada-service";
 import { settleProject } from "./services/settle-project";
 import { runSgtHandshake } from "./services/sgt-handshake";
+import {
+  runVerification,
+  clearAnomalies,
+  rejectVerificationRun,
+} from "./services/verification-engine";
+import { VerificationApprovalAction } from "@shared/schema";
 import { csvConnector } from "./services/scada-connector";
 import { validateProjectAgainstEia923, type ValidationResult } from "./lib/validator";
 import { internalAgentRegistry } from "./services/internal-agents";
@@ -1607,6 +1613,282 @@ export async function registerRoutes(
     } catch (error: any) {
       console.error("Waterfall summary error:", error);
       res.status(500).json({ message: error.message || "Failed to get waterfall summary" });
+    }
+  });
+
+  // ═══ Verification Engine Routes ═══
+
+  app.get("/api/projects/:id/verification/runs", requireAuth, async (req: any, res) => {
+    try {
+      const projectId = req.params.id;
+      const project = await storage.getProject(projectId);
+      if (!project) return res.status(404).json({ message: "Project not found" });
+      const user = await storage.getUser(req.session.userId);
+      if (!user) return res.status(401).json({ message: "Unauthorized" });
+      if (user.role === "DEVELOPER" && project.developerId !== user.id) {
+        return res.status(403).json({ message: "Forbidden" });
+      }
+
+      const { from, to, status, granularity, limit } = req.query as any;
+      const filters: any = {};
+      if (from) filters.from = new Date(from);
+      if (to) filters.to = new Date(to);
+      if (status) filters.status = status;
+      if (granularity) filters.granularity = granularity;
+      filters.limit = limit ? Math.min(500, Number(limit)) : 100;
+
+      const runs = await storage.getVerificationRuns(projectId, filters);
+      res.json({ runs });
+    } catch (error: any) {
+      res.status(500).json({ message: error.message || "Failed to load verification runs" });
+    }
+  });
+
+  app.get("/api/projects/:id/verification/runs/:runId", requireAuth, async (req: any, res) => {
+    try {
+      const projectId = req.params.id;
+      const project = await storage.getProject(projectId);
+      if (!project) return res.status(404).json({ message: "Project not found" });
+      const run = await storage.getVerificationRun(req.params.runId);
+      if (!run || run.projectId !== projectId) return res.status(404).json({ message: "Run not found" });
+
+      const anomalies = await storage.getAnomalyFlagsByRun(run.id);
+      let snapshot = null;
+      try {
+        snapshot = await storage.getIrradianceSnapshotForInterval(projectId, run.periodStart);
+      } catch { /* ignore */ }
+
+      let transaction = null;
+      let postings: any[] = [];
+      if (run.settledTransactionId) {
+        transaction = await storage.getTransaction(run.settledTransactionId);
+        postings = await storage.getPostingsByTransaction(run.settledTransactionId);
+      }
+
+      res.json({ run, anomalies, snapshot, transaction, postings });
+    } catch (error: any) {
+      res.status(500).json({ message: error.message || "Failed to load verification run" });
+    }
+  });
+
+  app.post(
+    "/api/projects/:id/verification/runs/:runId/clear",
+    requireRole("ADMIN"),
+    async (req: any, res) => {
+      try {
+        const { reason, force } = req.body || {};
+        if (!reason || typeof reason !== "string") {
+          return res.status(400).json({ message: "Reason is required" });
+        }
+        const result = await clearAnomalies(req.params.runId, req.user.id, reason, Boolean(force));
+        await storage.createApprovalLog({
+          projectId: req.params.id,
+          adminId: req.user.id,
+          action: VerificationApprovalAction.CLEAR_ANOMALY,
+          notes: `runId=${req.params.runId} cleared=${result.cleared} force=${Boolean(force)} reason=${reason}`,
+        });
+        res.json(result);
+      } catch (error: any) {
+        res.status(500).json({ message: error.message || "Failed to clear anomalies" });
+      }
+    },
+  );
+
+  app.post(
+    "/api/projects/:id/verification/runs/:runId/reject",
+    requireRole("ADMIN"),
+    async (req: any, res) => {
+      try {
+        const { reason } = req.body || {};
+        if (!reason || typeof reason !== "string") {
+          return res.status(400).json({ message: "Reason is required" });
+        }
+        const run = await rejectVerificationRun(req.params.runId, reason);
+        await storage.createApprovalLog({
+          projectId: req.params.id,
+          adminId: req.user.id,
+          action: VerificationApprovalAction.REJECT_VERIFICATION,
+          notes: `runId=${run.id} reason=${reason}`,
+        });
+        res.json({ run });
+      } catch (error: any) {
+        res.status(500).json({ message: error.message || "Failed to reject run" });
+      }
+    },
+  );
+
+  app.post("/api/projects/:id/verification/run", requireRole("ADMIN"), async (req: any, res) => {
+    try {
+      const projectId = req.params.id;
+      const { from, to, granularity } = req.body || {};
+      if (!from || !to) return res.status(400).json({ message: "from and to are required" });
+      const fromDate = new Date(from);
+      const toDate = new Date(to);
+      if (isNaN(fromDate.getTime()) || isNaN(toDate.getTime())) {
+        return res.status(400).json({ message: "Invalid date(s)" });
+      }
+      const gran = granularity === "DAILY" ? "DAILY" : "INTERVAL_15M";
+      const results = await runVerification(projectId, fromDate, toDate, gran);
+      await storage.createApprovalLog({
+        projectId,
+        adminId: req.user.id,
+        action: VerificationApprovalAction.MANUAL_VERIFICATION_RUN,
+        notes: `from=${fromDate.toISOString()} to=${toDate.toISOString()} gran=${gran} runs=${results.length}`,
+      });
+      res.json({
+        runs: results.map((r) => ({ run: r.run, anomalyCount: r.anomalies.length, status: r.status })),
+        count: results.length,
+      });
+    } catch (error: any) {
+      res.status(500).json({ message: error.message || "Failed to run verification" });
+    }
+  });
+
+  app.get("/api/projects/:id/verification/summary", requireAuth, async (req: any, res) => {
+    try {
+      const projectId = req.params.id;
+      const project = await storage.getProject(projectId);
+      if (!project) return res.status(404).json({ message: "Project not found" });
+      const user = await storage.getUser(req.session.userId);
+      if (!user) return res.status(401).json({ message: "Unauthorized" });
+      if (user.role === "DEVELOPER" && project.developerId !== user.id) {
+        return res.status(403).json({ message: "Forbidden" });
+      }
+
+      const since = new Date();
+      since.setDate(since.getDate() - 30);
+      const runs = await storage.getVerificationRuns(projectId, { from: since, limit: 500 });
+      const counts: Record<string, number> = {};
+      for (const r of runs) counts[r.status] = (counts[r.status] || 0) + 1;
+      const verified = counts["VERIFIED"] || 0;
+      const settled = counts["SETTLED"] || 0;
+      const total = runs.length;
+      const pctVerified = total > 0 ? ((verified + settled) / total) * 100 : 0;
+      const openAnomalies = await storage.getOpenAnomalies(projectId);
+      const lastSettled = runs.find((r) => r.status === "SETTLED");
+      res.json({
+        countsByStatus: counts,
+        totalRuns30d: total,
+        pctVerified30d: Number(pctVerified.toFixed(2)),
+        openAnomalies: openAnomalies.slice(0, 20),
+        openAnomalyCount: openAnomalies.length,
+        lastSettledAt: lastSettled?.settledAt ?? null,
+      });
+    } catch (error: any) {
+      res.status(500).json({ message: error.message || "Failed to load verification summary" });
+    }
+  });
+
+  app.get(
+    "/api/public/projects/:id/verification/trace",
+    async (req, res) => {
+      try {
+        if (!FEATURED_PROJECT_IDS.has(req.params.id)) return res.status(404).json({ message: "Not found" });
+        const projectId = req.params.id;
+        const { runId, intervalId } = req.query as any;
+        let run = null as any;
+        if (runId) {
+          run = await storage.getVerificationRun(runId);
+        } else if (intervalId) {
+          run = await storage.getVerificationRunByInterval(Number(intervalId));
+        }
+        if (!run || run.projectId !== projectId) return res.status(404).json({ message: "Run not found" });
+
+        const anomalies = (await storage.getAnomalyFlagsByRun(run.id)).map((a) => ({
+          ruleCode: a.ruleCode,
+          severity: a.severity,
+          raisedAt: a.raisedAt,
+          clearedAt: a.clearedAt,
+          // omit clearedReason / detail PII
+        }));
+
+        const snapshot = await storage.getIrradianceSnapshotForInterval(projectId, run.periodStart);
+        const publicSnapshot = snapshot
+          ? {
+              satelliteSource: snapshot.satelliteSource,
+              pvEstimateKw: snapshot.pvEstimateKw,
+              irradianceWm2: snapshot.irradianceWm2,
+              intervalStart: snapshot.intervalStart,
+              intervalEnd: snapshot.intervalEnd,
+              rawResponseHash: snapshot.rawResponseHash.slice(0, 16),
+              // Coarsen coords to ~1.1 km
+              latitude: snapshot.latitude ? Number(snapshot.latitude).toFixed(2) : null,
+              longitude: snapshot.longitude ? Number(snapshot.longitude).toFixed(2) : null,
+            }
+          : null;
+
+        let transaction = null as any;
+        if (run.settledTransactionId) {
+          transaction = await storage.getTransaction(run.settledTransactionId);
+        }
+
+        res.json({
+          projectId,
+          run: {
+            id: run.id,
+            periodStart: run.periodStart,
+            periodEnd: run.periodEnd,
+            granularity: run.granularity,
+            expectedKwh: run.expectedKwh,
+            actualKwh: run.actualKwh,
+            variancePct: run.variancePct,
+            tolerancePct: run.tolerancePct,
+            ppaRateUsdPerKwh: run.ppaRateUsdPerKwh,
+            ppaSource: run.ppaSource,
+            offtakerClass: run.offtakerClass,
+            plantUse: run.plantUse,
+            grossRevenueUsd: run.grossRevenueUsd,
+            status: run.status,
+            evidenceHash: run.evidenceHash,
+            settledAt: run.settledAt,
+          },
+          snapshot: publicSnapshot,
+          anomalies,
+          transactionId: transaction?.id ?? null,
+        });
+      } catch (error: any) {
+        res.status(500).json({ message: error.message || "Failed to load trace" });
+      }
+    },
+  );
+
+  // Missing endpoint that performance.tsx already calls — return featured projects.
+  app.get("/api/public/projects/sgt-metrics", async (_req, res) => {
+    try {
+      const all = await storage.getAllProjects();
+      const featured = all.filter((p) => FEATURED_PROJECT_IDS.has(p.id));
+      const projectsOut = await Promise.all(
+        featured.map(async (p) => {
+          const summary = await (async () => {
+            try {
+              const since = new Date();
+              since.setDate(since.getDate() - 30);
+              const runs = await storage.getVerificationRuns(p.id, { from: since, limit: 500 });
+              const verified = runs.filter((r) => r.status === "VERIFIED" || r.status === "SETTLED").length;
+              const total = runs.length;
+              const pctVerified = total > 0 ? (verified / total) * 100 : 0;
+              return {
+                runs30d: total,
+                pctVerified30d: Number(pctVerified.toFixed(2)),
+              };
+            } catch {
+              return { runs30d: 0, pctVerified30d: 0 };
+            }
+          })();
+          return {
+            projectId: p.id,
+            projectName: p.name,
+            state: p.state,
+            county: p.county,
+            technology: p.technology,
+            capacityMW: p.capacityMW,
+            verification: summary,
+          };
+        }),
+      );
+      res.json({ projects: projectsOut });
+    } catch (error: any) {
+      res.status(500).json({ message: error.message || "Failed to load sgt-metrics" });
     }
   });
 
