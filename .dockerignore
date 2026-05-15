@@ -1,0 +1,16 @@
+.git
+.gitignore
+.github
+.claude
+node_modules
+dist
+.env
+.env.*
+*.log
+.DS_Store
+.vscode
+.idea
+coverage
+.cache
+tmp
+*.md
