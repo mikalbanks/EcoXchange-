@@ -2,9 +2,11 @@ import type { Express } from "express";
 import { createServer, type Server } from "http";
 import session from "express-session";
 import MemoryStore from "memorystore";
+import connectPgSimple from "connect-pg-simple";
 import crypto from "crypto";
 import rateLimit from "express-rate-limit";
 import { storage, verifyPassword, hashPassword, computeReadiness, generateChecklist, computeCapitalStack } from "./storage";
+import { pool } from "./db";
 import { loginSchema, signupSchema, projectWizardStep1Schema, projectWizardStep2Schema, projectWizardStep3Schema, investorInterestFormSchema } from "@shared/schema";
 import { z } from "zod";
 import { generateROIPrediction, type ProjectFinancialData } from "./lib/ai-predictions";
@@ -32,7 +34,12 @@ import {
 import multer from "multer";
 
 const SessionStore = MemoryStore(session);
+const PgSessionStore = connectPgSimple(session);
 const SESSION_SECRET = process.env.SESSION_SECRET || crypto.randomBytes(32).toString('hex');
+const IS_PRODUCTION = process.env.NODE_ENV === "production";
+const sessionStore = process.env.DATABASE_URL
+  ? new PgSessionStore({ pool, tableName: "session", createTableIfMissing: true })
+  : new SessionStore({ checkPeriod: 86400000 });
 
 function safeJsonParse<T>(json: string | null | undefined, fallback: T): T {
   if (!json) return fallback;
@@ -54,16 +61,20 @@ export async function registerRoutes(
 ): Promise<Server> {
   await internalAgentRegistry.bootstrapDefaultAgents();
 
-  app.set("trust proxy", 1);
+  app.set("trust proxy", 2);
   app.use(
     session({
       secret: SESSION_SECRET,
       resave: false,
       saveUninitialized: false,
-      store: new SessionStore({ checkPeriod: 86400000 }),
-      cookie: { secure: false, httpOnly: true, maxAge: 24 * 60 * 60 * 1000, sameSite: "lax" },
+      store: sessionStore,
+      cookie: { secure: IS_PRODUCTION, httpOnly: true, maxAge: 24 * 60 * 60 * 1000, sameSite: "lax" },
     })
   );
+
+  app.get("/api/health", (_req, res) => {
+    res.json({ ok: true, uptime: process.uptime() });
+  });
 
   const requireAuth = (req: any, res: any, next: any) => {
     if (!req.session.userId) return res.status(401).json({ message: "Unauthorized" });
