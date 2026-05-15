@@ -30,6 +30,7 @@ import {
   type IrradianceSnapshot, type InsertIrradianceSnapshot,
   type VerificationRun, type InsertVerificationRun,
   type AnomalyFlag, type InsertAnomalyFlag,
+  type MarketplaceMeta, type InsertMarketplaceMeta,
 } from "@shared/schema";
 
 export function hashPassword(password: string): string {
@@ -147,6 +148,10 @@ export interface IStorage {
   getAnomalyFlagsByRun(runId: string): Promise<AnomalyFlag[]>;
   updateAnomalyFlag(id: number, updates: Partial<AnomalyFlag>): Promise<AnomalyFlag | undefined>;
   getOpenAnomalies(projectId: string): Promise<AnomalyFlag[]>;
+
+  // Marketplace metadata (single-row kv keyed by 'global').
+  getMarketplaceMeta(key: string): Promise<MarketplaceMeta | undefined>;
+  upsertMarketplaceMeta(row: InsertMarketplaceMeta): Promise<MarketplaceMeta>;
 }
 
 import { computeReadiness, generateChecklist, computeCapitalStack, computeRevenue, computeDistribution } from "./scoring-engine";
@@ -183,6 +188,8 @@ export class MemStorage implements IStorage {
   private verificationRunsMap: Map<string, VerificationRun> = new Map();
   private anomalyFlagsMap: Map<number, AnomalyFlag> = new Map();
   private anomalyFlagSeq: number = 1;
+  private marketplaceMetaMap: Map<string, MarketplaceMeta> = new Map();
+  private marketplaceMetaSeq: number = 1;
 
   constructor() {
     this.seedData();
@@ -273,6 +280,7 @@ export class MemStorage implements IStorage {
       financialApyPct: "8.4200",
       marketPpaSource: "CAISO_SP15_SPOT_PROXY",
       marketPpaBenchmarkUsdPerMwh: "64.4900",
+      externalLinks: null,
       createdAt: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000),
       updatedAt: new Date(),
     });
@@ -390,6 +398,7 @@ export class MemStorage implements IStorage {
       financialApyPct: "6.9500",
       marketPpaSource: "LEVELTEN_P25_PROXY",
       marketPpaBenchmarkUsdPerMwh: "64.4900",
+      externalLinks: null,
       createdAt: new Date(Date.now() - 14 * 24 * 60 * 60 * 1000),
       updatedAt: new Date(),
     });
@@ -529,6 +538,7 @@ export class MemStorage implements IStorage {
       financialApyPct: "9.1800",
       marketPpaSource: "CAISO_SP15_SPOT_PROXY",
       marketPpaBenchmarkUsdPerMwh: "64.4900",
+      externalLinks: null,
       createdAt: new Date(Date.now() - 60 * 24 * 60 * 60 * 1000),
       updatedAt: new Date(),
     });
@@ -870,6 +880,7 @@ export class MemStorage implements IStorage {
         financialApyPct: String(apyBase.toFixed(4)),
         marketPpaSource: mppa,
         marketPpaBenchmarkUsdPerMwh: "64.4900",
+        externalLinks: null,
         createdAt: new Date(Date.now() - (30 + i) * 24 * 60 * 60 * 1000),
         updatedAt: new Date(),
       });
@@ -1135,6 +1146,7 @@ export class MemStorage implements IStorage {
       financialApyPct: project.financialApyPct || null,
       marketPpaSource: project.marketPpaSource || null,
       marketPpaBenchmarkUsdPerMwh: project.marketPpaBenchmarkUsdPerMwh || null,
+      externalLinks: (project.externalLinks ?? null) as any,
       createdAt: new Date(),
       updatedAt: new Date(),
     };
@@ -1876,6 +1888,27 @@ export class MemStorage implements IStorage {
     return Array.from(this.anomalyFlagsMap.values())
       .filter((f) => projectRunIds.has(f.verificationRunId) && f.clearedAt == null)
       .sort((a, b) => b.raisedAt.getTime() - a.raisedAt.getTime());
+  }
+
+  // ── Marketplace meta ───────────────────────────────────────────────────
+
+  async getMarketplaceMeta(key: string): Promise<MarketplaceMeta | undefined> {
+    return this.marketplaceMetaMap.get(key);
+  }
+
+  async upsertMarketplaceMeta(row: InsertMarketplaceMeta): Promise<MarketplaceMeta> {
+    const existing = this.marketplaceMetaMap.get(row.key);
+    const merged: MarketplaceMeta = {
+      id: existing?.id ?? this.marketplaceMetaSeq++,
+      key: row.key,
+      refreshedAt: row.refreshedAt ?? existing?.refreshedAt ?? null,
+      listingCount: row.listingCount ?? existing?.listingCount ?? 0,
+      lastRunStatus: row.lastRunStatus ?? existing?.lastRunStatus ?? null,
+      lastRunError: row.lastRunError ?? existing?.lastRunError ?? null,
+      computedAt: new Date(),
+    };
+    this.marketplaceMetaMap.set(row.key, merged);
+    return merged;
   }
 }
 

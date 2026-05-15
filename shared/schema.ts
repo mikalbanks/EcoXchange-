@@ -284,9 +284,17 @@ export const projects = pgTable("projects", {
   marketPpaSource: text("market_ppa_source"),
   /** LevelTen / desk benchmark used for tooltip (USD/MWh) */
   marketPpaBenchmarkUsdPerMwh: decimal("market_ppa_benchmark_usd_per_mwh", { precision: 10, scale: 4 }),
+  /** Structured external links surfaced in the marketplace listing (SEC filings, project page, news). */
+  externalLinks: jsonb("external_links").$type<MarketplaceExternalLink[] | null>(),
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
 });
+
+export interface MarketplaceExternalLink {
+  label: string;
+  url: string;
+  source: string;
+}
 
 export const insertProjectSchema = createInsertSchema(projects).omit({
   id: true,
@@ -919,6 +927,42 @@ export const insertAnomalyFlagSchema = createInsertSchema(anomalyFlags).omit({
 });
 export type InsertAnomalyFlag = z.infer<typeof insertAnomalyFlagSchema>;
 export type AnomalyFlag = typeof anomalyFlags.$inferSelect;
+
+// ─── Marketplace ─────────────────────────────────────────────────────────────
+
+export const MarketplaceListingSource = {
+  PROJECT: "PROJECT",
+  QUEUE: "QUEUE",
+} as const;
+
+export const FinancialConfidence = {
+  KNOWN: "KNOWN",
+  ESTIMATED: "ESTIMATED",
+  MARKET_PROXY: "MARKET_PROXY",
+} as const;
+
+export const MarketplaceRefreshStatus = {
+  OK: "OK",
+  PARTIAL: "PARTIAL",
+  FAILED: "FAILED",
+} as const;
+
+export const marketplaceMeta = pgTable("marketplace_meta", {
+  id: serial("id").primaryKey(),
+  key: text("key").notNull().unique(),
+  refreshedAt: timestamp("refreshed_at"),
+  listingCount: integer("listing_count").notNull().default(0),
+  lastRunStatus: text("last_run_status"),
+  lastRunError: text("last_run_error"),
+  computedAt: timestamp("computed_at").notNull().defaultNow(),
+});
+
+export const insertMarketplaceMetaSchema = createInsertSchema(marketplaceMeta).omit({
+  id: true,
+  computedAt: true,
+});
+export type InsertMarketplaceMeta = z.infer<typeof insertMarketplaceMetaSchema>;
+export type MarketplaceMeta = typeof marketplaceMeta.$inferSelect;
 
 // ─── Zod Validation Schemas ─────────────────────────────────────────────────
 

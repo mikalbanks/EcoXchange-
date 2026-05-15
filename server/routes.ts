@@ -1892,6 +1892,60 @@ export async function registerRoutes(
     }
   });
 
+  // ═══ Marketplace Routes ═══
+
+  app.get("/api/public/market/projects", async (req, res) => {
+    try {
+      const { listMarketplaceListings } = await import("./services/marketplace-listings");
+      const result = await listMarketplaceListings({
+        limit: req.query.limit ? Number(req.query.limit) : undefined,
+        state: req.query.state as string | undefined,
+        iso: req.query.iso as string | undefined,
+        technology: req.query.technology as string | undefined,
+        source: req.query.source === "QUEUE" || req.query.source === "PROJECT"
+          ? (req.query.source as "QUEUE" | "PROJECT")
+          : undefined,
+      });
+      res.json(result);
+    } catch (error: any) {
+      res.status(500).json({ message: error.message || "Failed to load marketplace" });
+    }
+  });
+
+  app.get("/api/public/market/projects/:id", async (req, res) => {
+    try {
+      const { getMarketplaceListing } = await import("./services/marketplace-listings");
+      const listing = await getMarketplaceListing(req.params.id);
+      if (!listing) return res.status(404).json({ message: "Listing not found" });
+      res.json(listing);
+    } catch (error: any) {
+      res.status(500).json({ message: error.message || "Failed to load listing" });
+    }
+  });
+
+  app.get("/api/public/market/refresh-status", async (_req, res) => {
+    try {
+      const meta = await storage.getMarketplaceMeta("global");
+      res.json({
+        refreshedAt: meta?.refreshedAt ?? null,
+        listingCount: meta?.listingCount ?? 0,
+        lastRunStatus: meta?.lastRunStatus ?? null,
+      });
+    } catch (error: any) {
+      res.status(500).json({ message: error.message || "Failed to load refresh status" });
+    }
+  });
+
+  app.post("/api/admin/marketplace/refresh", requireRole("ADMIN"), async (_req: any, res) => {
+    try {
+      const { refreshMarketplace } = await import("./services/marketplace-refresh");
+      const summary = await refreshMarketplace({ force: true });
+      res.json(summary);
+    } catch (error: any) {
+      res.status(500).json({ message: error.message || "Failed to refresh marketplace" });
+    }
+  });
+
   app.get("/api/public/backtest/report", async (req, res) => {
     try {
       const { getCachedBacktestReport } = await import("./services/backtest-engine");
