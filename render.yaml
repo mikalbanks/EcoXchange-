@@ -1,0 +1,21 @@
+# EcoXchange — Render Blueprint (web service: Express API + Vite React client)
+# https://render.com/docs/blueprint-spec
+
+services:
+  - type: web
+    name: ecoxchange
+    runtime: node
+    region: oregon
+    plan: free
+    buildCommand: npm install && npm run build
+    startCommand: npm start
+    healthCheckPath: /
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: NODE_VERSION
+        value: "20.19.0"
+      # Set in Render Dashboard (or link a Postgres instance):
+      # - DATABASE_URL
+      # - AI_INTEGRATIONS_OPENAI_API_KEY
+      # - SESSION_SECRET
