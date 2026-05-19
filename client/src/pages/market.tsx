@@ -2,6 +2,7 @@ import { useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Link } from "wouter";
 import { Header } from "@/components/header";
+import { InvestorOnboardingWizard } from "@/components/investor-onboarding-wizard";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -66,6 +67,30 @@ export default function PublicMarketPage() {
           <p className="text-muted-foreground">
             Public project discovery with surface-level due diligence, auction outcomes, and SGT-based illustrative yield metrics.
           </p>
+        </div>
+
+        <section id="onboard" className="scroll-mt-20">
+          <div className="mb-4 flex flex-col gap-2 md:flex-row md:items-end md:justify-between">
+            <div>
+              <p className="font-mono text-[0.65rem] uppercase tracking-[0.28em] text-muted-foreground">
+                Investor onboarding
+              </p>
+              <h2 className="font-serif text-2xl font-semibold md:text-3xl">
+                Begin onboarding before the next offering opens.
+              </h2>
+              <p className="mt-1 text-sm text-muted-foreground">
+                Five steps · accreditation, KYC, wallet, subscription, funding. Real flow at launch; preview today.
+              </p>
+            </div>
+          </div>
+          <InvestorOnboardingWizard />
+        </section>
+
+        <div className="border-t border-border pt-8">
+          <p className="mb-2 font-mono text-[0.65rem] uppercase tracking-[0.28em] text-muted-foreground">
+            Active pipeline
+          </p>
+          <h2 className="font-serif text-2xl font-semibold md:text-3xl">Browse current offerings</h2>
         </div>
 
         <Card>

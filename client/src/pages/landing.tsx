@@ -420,11 +420,12 @@ function InvestorSection() {
 
 function FeeStructureSection() {
   const rows = [
-    { label: "Annual management fee", ecox: "1% / year", competitor: "1–2% / year", ecoxGood: true },
-    { label: "Investor load charge", ecox: "None", competitor: "0–5% upfront", ecoxGood: true },
-    { label: "Production verification", ecox: "Physics-based", competitor: "Developer self-report", ecoxGood: true },
-    { label: "Yield exposure", ecox: "Direct, per-project", competitor: "Pooled, blended", ecoxGood: true },
-    { label: "Compliance handled", ecox: "On-platform", competitor: "By investor / advisor", ecoxGood: true },
+    { label: "Origination fee (one-time, at close)", ecox: "3% of equity raised", competitor: "4–8% placement + 1–3% warrants" },
+    { label: "Setup fee (one-time, at close)", ecox: "$15,000 fixed", competitor: "$80K–$250K legal + admin" },
+    { label: "Servicing fee (recurring)", ecox: "1.25% of AUA / year", competitor: "$10K–$25K/yr per project" },
+    { label: "Investor load charge", ecox: "None", competitor: "0–5% upfront" },
+    { label: "Production verification", ecox: "Physics-based, included", competitor: "$5K–$15K/yr third-party" },
+    { label: "Distribution cadence", ecox: "Monthly, USDC, auto", competitor: "Quarterly, manual, 30–90d" },
   ];
 
   return (
@@ -438,26 +439,31 @@ function FeeStructureSection() {
         <div className="grid grid-cols-1 items-start gap-12 lg:grid-cols-2 mt-10">
           <div>
             <p className="text-lg text-muted-foreground">
-              EcoXchange charges a <strong className="text-foreground font-semibold">5% origination fee to the project SPV
-              at offering close</strong> — paid from the capital raised, not from investor returns.
-              A <strong className="text-foreground font-semibold">1% annual management fee</strong> covers
-              ongoing platform servicing, distribution calculation, reporting, and audit delivery.
+              EcoXchange charges three fees, <strong className="text-foreground font-semibold">all borne by the project SPV
+              — not by investors directly</strong>. Investor returns are quoted net of these fees.
             </p>
             <p className="mt-4 text-muted-foreground">
-              After close, investor distributions are calculated entirely from verified production figures.
-              The origination fee is a one-time transaction charge; the annual management fee is the only
-              recurring cost and is lower than the industry standard of 1–2%.
+              A <strong className="text-foreground font-semibold">3% origination fee</strong> and a fixed{" "}
+              <strong className="text-foreground font-semibold">$15,000 setup fee</strong> are paid by the SPV at offering close
+              from the capital raised. A <strong className="text-foreground font-semibold">1.25% annual servicing fee on assets
+              under administration</strong> is billed monthly to the SPV thereafter — covering production verification,
+              smart-contract distribution infrastructure, investor reporting, and K-1 coordination.
             </p>
-            <div className="mt-8 grid grid-cols-2 gap-4">
+            <div className="mt-8 grid grid-cols-3 gap-4">
               <div className="rounded-md border border-primary/30 bg-primary/5 p-5">
-                <p className="font-mono text-[0.65rem] uppercase tracking-wider text-primary mb-2">Origination fee</p>
-                <p className="font-sans text-3xl font-bold text-primary">5%</p>
-                <p className="mt-2 text-xs text-muted-foreground">One-time. Charged to project SPV at close from capital raised.</p>
+                <p className="font-mono text-[0.6rem] uppercase tracking-wider text-primary mb-2">Origination</p>
+                <p className="font-sans text-3xl font-bold text-primary">3%</p>
+                <p className="mt-2 text-xs text-muted-foreground">Of equity raised. SPV pays at close.</p>
               </div>
               <div className="rounded-md border border-primary/30 bg-primary/5 p-5">
-                <p className="font-mono text-[0.65rem] uppercase tracking-wider text-primary mb-2">Management fee</p>
-                <p className="font-sans text-3xl font-bold text-primary">1%</p>
-                <p className="mt-2 text-xs text-muted-foreground">Annual. Covers servicing, reporting, and audit delivery.</p>
+                <p className="font-mono text-[0.6rem] uppercase tracking-wider text-primary mb-2">Setup</p>
+                <p className="font-sans text-3xl font-bold text-primary">$15K</p>
+                <p className="mt-2 text-xs text-muted-foreground">Fixed per offering. SPV pays at close.</p>
+              </div>
+              <div className="rounded-md border border-primary/30 bg-primary/5 p-5">
+                <p className="font-mono text-[0.6rem] uppercase tracking-wider text-primary mb-2">Servicing</p>
+                <p className="font-sans text-3xl font-bold text-primary">1.25%</p>
+                <p className="mt-2 text-xs text-muted-foreground">Of AUA / year. Billed monthly to SPV.</p>
               </div>
             </div>
           </div>
@@ -472,7 +478,7 @@ function FeeStructureSection() {
                 <p className="font-mono text-[0.6rem] uppercase tracking-wider text-primary font-semibold">EcoXchange</p>
               </div>
               <div className="px-4 py-2 border-l border-border">
-                <p className="font-mono text-[0.6rem] uppercase tracking-wider text-muted-foreground">Fund / REIT / Reg CF</p>
+                <p className="font-mono text-[0.6rem] uppercase tracking-wider text-muted-foreground">Traditional Reg D</p>
               </div>
             </div>
             {rows.map((row) => (
@@ -481,23 +487,17 @@ function FeeStructureSection() {
                   <p className="text-sm text-muted-foreground">{row.label}</p>
                 </div>
                 <div className="px-4 py-3 border-l border-border/60">
-                  <p className={`text-sm font-semibold ${row.ecoxGood ? "text-primary" : "text-foreground"}`}>{row.ecox}</p>
+                  <p className="text-sm font-semibold text-primary">{row.ecox}</p>
                 </div>
                 <div className="px-4 py-3 border-l border-border/60">
                   <p className="text-sm text-muted-foreground">{row.competitor}</p>
                 </div>
               </div>
             ))}
-            <div className="grid grid-cols-3 bg-primary/5 border-t border-primary/20">
-              <div className="px-4 py-3">
-                <p className="text-sm font-semibold text-foreground">Origination fee</p>
-              </div>
-              <div className="px-4 py-3 border-l border-primary/20">
-                <p className="text-sm font-semibold text-primary">5% — charged to SPV at close</p>
-              </div>
-              <div className="px-4 py-3 border-l border-primary/20">
-                <p className="text-sm text-muted-foreground">Varies — often embedded</p>
-              </div>
+            <div className="bg-muted/40 px-5 py-3 border-t border-border">
+              <p className="font-mono text-[0.6rem] uppercase tracking-wider text-muted-foreground">
+                All EcoXchange fees are paid by the project SPV, not by investors directly.
+              </p>
             </div>
           </div>
         </div>
@@ -918,16 +918,16 @@ function DeveloperSection() {
               No on-site verification hardware required.
             </p>
             <div className="mt-8">
-              <a href="mailto:contact@ecoxchange.net?subject=Developer%20submission">
+              <Link href="/develop">
                 <Button variant="outline">Submit a project →</Button>
-              </a>
+              </Link>
             </div>
           </div>
           <div className="grid grid-cols-2 gap-4">
             {[
               { value: "$1–5M", label: "Target project size" },
               { value: "0", label: "On-site sensors required" },
-              { value: "5% + 1%", label: "Origination + annual mgmt fee" },
+              { value: "3% + $15K + 1.25%", label: "Origination + setup + AUA servicing" },
               { value: "Auto", label: "Post-funding distributions" },
             ].map((metric) => (
               <Card key={metric.label} className="border-border bg-card">
@@ -1018,14 +1018,14 @@ function CtaBanner() {
                 Register your interest
               </Button>
             </a>
-            <a href="mailto:contact@ecoxchange.net?subject=Developer%20submission">
+            <Link href="/develop">
               <Button
                 variant="outline"
                 className="min-w-[200px] border-primary-foreground/30 bg-transparent text-primary-foreground/80 hover:bg-primary-foreground/10"
               >
                 Developer submission →
               </Button>
-            </a>
+            </Link>
           </div>
           <p className="mt-8 font-mono text-[0.6rem] text-primary-foreground/50 max-w-xl mx-auto">
             No offering is currently open. This page is for informational and pipeline-building purposes only
@@ -1167,7 +1167,7 @@ function FooterSection() {
     {
       heading: "Developers",
       links: [
-        { label: "Submit Project", href: "mailto:contact@ecoxchange.net?subject=Developer%20submission" },
+        { label: "Submit Project", href: "/develop" },
       ],
     },
     {
