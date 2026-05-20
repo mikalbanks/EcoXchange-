@@ -78,6 +78,11 @@ import YieldSimulationPage from "@/pages/yield-simulation";
 import PerformancePage from "@/pages/performance";
 import OperationsPage from "@/pages/operations";
 import BacktestReportPage from "@/pages/backtest-report";
+import DevelopPage from "@/pages/develop";
+import MethodPage from "@/pages/method";
+import FaqPage from "@/pages/faq";
+import InvestorDashboardPreview from "@/pages/invest-preview";
+import DeveloperDashboardPreview from "@/pages/develop-preview";
 
 function ProtectedRoute({ 
   children, 
@@ -122,6 +127,11 @@ function Router() {
       <Route path="/performance" component={PerformancePage} />
       <Route path="/backtest-report" component={BacktestReportPage} />
       <Route path="/privacy" component={PrivacyPolicy} />
+      <Route path="/develop" component={DevelopPage} />
+      <Route path="/develop/preview" component={DeveloperDashboardPreview} />
+      <Route path="/invest/preview" component={InvestorDashboardPreview} />
+      <Route path="/method" component={MethodPage} />
+      <Route path="/faq" component={FaqPage} />
       
       <Route path="/developer">
         <ProtectedRoute allowedRoles={["DEVELOPER"]}>

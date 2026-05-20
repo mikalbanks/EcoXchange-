@@ -28,7 +28,12 @@ export function Header() {
     location === "/performance" ||
     location === "/backtest-report" ||
     location === "/market" ||
-    location.startsWith("/market/");
+    location.startsWith("/market/") ||
+    location === "/develop" ||
+    location === "/develop/preview" ||
+    location === "/invest/preview" ||
+    location === "/method" ||
+    location === "/faq";
 
   const navClass = cn(
     "text-[0.7rem] font-semibold uppercase tracking-[0.22em] transition-colors",
@@ -53,17 +58,17 @@ export function Header() {
               <Link href="/" className={navClass} data-testid="link-home">
                 Home
               </Link>
-              <Link href="/market" className={navClass} data-testid="link-offerings">
+              <Link href="/market" className={navClass} data-testid="link-marketplace">
                 Marketplace
               </Link>
-              <Link href="/performance" className={navClass} data-testid="link-performance">
-                Projects
+              <Link href="/develop" className={navClass} data-testid="link-develop">
+                Develop
               </Link>
-              <Link href="/yield-simulation" className={navClass}>
-                Resources
+              <Link href="/method" className={navClass} data-testid="link-method">
+                Method
               </Link>
-              <Link href="/about" className={navClass}>
-                About
+              <Link href="/faq" className={navClass} data-testid="link-faq">
+                FAQ
               </Link>
             </nav>
 
@@ -83,14 +88,14 @@ export function Header() {
                     <Link href="/market" className={navClass} data-testid="link-mobile-marketplace">
                       Marketplace
                     </Link>
-                    <Link href="/performance" className={navClass} data-testid="link-mobile-performance">
-                      Projects
+                    <Link href="/develop" className={navClass} data-testid="link-mobile-develop">
+                      Develop
                     </Link>
-                    <Link href="/yield-simulation" className={navClass}>
-                      Resources
+                    <Link href="/method" className={navClass} data-testid="link-mobile-method">
+                      Method
                     </Link>
-                    <Link href="/about" className={navClass}>
-                      About
+                    <Link href="/faq" className={navClass} data-testid="link-mobile-faq">
+                      FAQ
                     </Link>
                     <Link href="/auth/signup">
                       <Button className="w-full" size="sm" data-testid="button-mobile-signup">
