@@ -1,0 +1,81 @@
+import type { ToleranceConfig } from "../config/tolerances.js";
+
+export interface ProjectConfig {
+  name?: string;
+  latitude: number;
+  longitude: number;
+  capacity_kw_dc: number;
+  tilt_deg: number;
+  azimuth_deg: number;
+  module_efficiency: number;
+  system_losses: number;
+  degradation_rate: number;
+  commissioning_date: string;
+}
+
+export interface DailyIrradiance {
+  date: string;
+  ghi_kwh_m2: number;
+  dni_kwh_m2: number;
+  dhi_kwh_m2: number;
+}
+
+export interface ExpectedGenerationInput extends ProjectConfig {
+  period_start: string;
+  period_end: string;
+  daily_irradiance: DailyIrradiance[];
+}
+
+export interface DailyExpected {
+  date: string;
+  ghi_kwh_m2: number;
+  poa_kwh_m2: number;
+  expected_kwh: number;
+}
+
+export interface ExpectedGenerationOutput {
+  period_start: string;
+  period_end: string;
+  expected_kwh: number;
+  daily_breakdown: DailyExpected[];
+  assumptions: {
+    degradation_factor: number;
+    system_losses: number;
+    albedo: number;
+    transposition_model: "hay_davies";
+  };
+}
+
+export type DataQuality = "complete" | "partial" | "missing" | "error";
+
+export interface RawReading {
+  kwh_gross?: number | null;
+  kwh_net?: number | null;
+  data_quality?: DataQuality;
+  quality_notes?: string;
+  raw_response?: unknown;
+}
+
+export interface ReconciliationInput {
+  project: ProjectConfig;
+  period_start: string;
+  period_end: string;
+  inverter_reading: RawReading | null;
+  utility_reading: RawReading | null;
+  expected_generation: ExpectedGenerationOutput;
+  tolerances: ToleranceConfig;
+}
+
+export type VerificationStatus = "verified" | "flagged" | "pending";
+
+export interface ReconciliationOutput {
+  status: VerificationStatus;
+  inverter_kwh: number | null;
+  utility_kwh: number | null;
+  expected_kwh: number;
+  inv_vs_expected_pct: number | null;
+  inv_vs_utility_pct: number | null;
+  util_vs_expected_pct: number | null;
+  flag_reasons: string[];
+  tolerance_config: ToleranceConfig;
+}
