@@ -1,0 +1,28 @@
+{
+  "name": "ecoxchange-reconciliation-engine",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "EcoXchange three-way solar production reconciliation engine (Phases A-C: physics, reconciliation, backtest)",
+  "scripts": {
+    "check": "tsc --noEmit",
+    "test": "vitest run --exclude '**/backtest-integration.test.ts'",
+    "test:watch": "vitest",
+    "backtest": "tsx src/index.ts backtest",
+    "backtest:validate": "RUN_NETWORK_TESTS=1 vitest run src/__tests__/backtest-integration.test.ts"
+  },
+  "dependencies": {
+    "axios": "^1.7.0",
+    "commander": "^12.1.0",
+    "date-fns": "^3.6.0",
+    "suncalc": "^1.9.0",
+    "zod": "^3.23.8"
+  },
+  "devDependencies": {
+    "@types/node": "^20.14.0",
+    "@types/suncalc": "^1.9.2",
+    "tsx": "^4.19.0",
+    "typescript": "^5.5.0",
+    "vitest": "^1.6.0"
+  }
+}
