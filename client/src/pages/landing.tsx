@@ -1,3 +1,4 @@
+import { Link } from "wouter";
 import { SunPathDiagram } from "@/components/landing/SunPathDiagram";
 import "./landing.css";
 
@@ -15,8 +16,8 @@ const STATS = [
     label: "Reg D exemption — verified accredited investors only",
   },
   {
-    num: "5%",
-    label: "Origination fee — charged to project SPV, not to investors",
+    num: "3% + $15K + 1.25%",
+    label: "Origination + setup + AUA servicing — all paid by SPV, not investors",
   },
 ] as const;
 
@@ -85,11 +86,12 @@ const INVESTOR_STATS = [
 ] as const;
 
 const FEE_ROWS = [
-  { label: "Annual management fee", eco: "None", other: "1–2% / year" },
+  { label: "Origination fee (one-time, at close)", eco: "3% of equity raised", other: "4–8% placement + 1–3% warrants" },
+  { label: "Setup fee (one-time, at close)", eco: "$15,000 fixed", other: "$80K–$250K legal + admin" },
+  { label: "Servicing fee (recurring)", eco: "1.25% of AUA / year", other: "$10K–$25K / year per project" },
   { label: "Investor load charge", eco: "None", other: "0–5% upfront" },
-  { label: "Production verification", eco: "Physics-based", other: "Developer self-report" },
-  { label: "Yield exposure", eco: "Direct, per-project", other: "Pooled, blended" },
-  { label: "Compliance handled", eco: "On-platform", other: "By investor / advisor" },
+  { label: "Production verification", eco: "Physics-based, included", other: "$5K–$15K / year third-party" },
+  { label: "Distribution cadence", eco: "Monthly, USDC, auto", other: "Quarterly, manual, 30–90d" },
 ] as const;
 
 export default function LandingPage() {
@@ -103,13 +105,14 @@ export default function LandingPage() {
             <span className="brand-tag">Clean Energy Market</span>
           </div>
           <nav>
-            <a href="#problem">The Gap</a>
-            <a href="#method">Method</a>
-            <a href="#investors">Investors</a>
-            <a href="#fee">Fees</a>
-            <a href="#access" className="nav-cta">
+            <Link href="/">Home</Link>
+            <Link href="/market">Marketplace</Link>
+            <Link href="/develop">Develop</Link>
+            <Link href="/method">Method</Link>
+            <Link href="/faq">FAQ</Link>
+            <Link href="/market#onboard" className="nav-cta">
               Request Access →
-            </a>
+            </Link>
           </nav>
         </div>
       </header>
@@ -129,12 +132,12 @@ export default function LandingPage() {
               crowdfunding platform can replicate.
             </p>
             <div className="hero-actions">
-              <a href="#access" className="btn btn-primary">
+              <Link href="/market#onboard" className="btn btn-primary">
                 Request Investor Access
-              </a>
-              <a href="#method" className="btn btn-outline">
+              </Link>
+              <Link href="/method" className="btn btn-outline">
                 See the Method →
-              </a>
+              </Link>
             </div>
           </div>
           <div className="hero-diagram">
@@ -220,9 +223,9 @@ export default function LandingPage() {
               What you are buying is a deterministic yield instrument grounded in physics — a return profile no
               pooled vehicle can structurally replicate.
             </p>
-            <a href="#access" className="btn btn-primary">
+            <Link href="/market#onboard" className="btn btn-primary">
               Request Investor Access →
-            </a>
+            </Link>
           </div>
           <div className="investors-stats">
             {INVESTOR_STATS.map((row) => (
@@ -244,18 +247,18 @@ export default function LandingPage() {
           <div className="fee-grid">
             <div className="fee-body">
               <p>
-                EcoXchange charges a <strong>5% origination fee to the project SPV at offering close</strong> —
-                paid from the capital raised, not from investor returns. Investors pay no management fee, no annual
-                platform fee, and no load charge.
+                EcoXchange charges three fees, <strong>all borne by the project SPV — not by investors directly</strong>.
+                Investor returns are quoted net of these fees.
               </p>
               <p>
-                The origination fee is a one-time transaction charge; it does not persist as an annual drag on yield.
-                EcoXchange&apos;s incentive is to put capital to work — not to hold it.
+                A <strong>3% origination fee</strong> and a fixed <strong>$15,000 setup fee</strong> are paid by the SPV
+                at offering close from the capital raised. Together they replace the 4–8% placement-agent commission and
+                $80K+ in soft costs typical of a traditional Reg D 506(c) raise.
               </p>
               <p>
-                An ongoing servicing fee is retained from the project SPV to cover distribution calculation,
-                reporting, and audit delivery throughout the life of the offering. Also borne by the project side,
-                not investors.
+                After close, a <strong>1.25% annual servicing fee on assets under administration</strong> is billed monthly
+                to the SPV — covering production verification, smart-contract distribution infrastructure, investor
+                reporting, and K-1 coordination throughout the life of the offering.
               </p>
             </div>
             <div>
@@ -274,9 +277,9 @@ export default function LandingPage() {
                   </div>
                 ))}
                 <div className="fee-row fee-total">
-                  <span>Origination fee</span>
-                  <span>5% — to project SPV at close</span>
-                  <span className="fee-no">Varies — often embedded</span>
+                  <span>Borne by</span>
+                  <span>Project SPV (not investors)</span>
+                  <span className="fee-no">Investor + SPV — varies</span>
                 </div>
               </div>
             </div>
@@ -294,19 +297,16 @@ export default function LandingPage() {
             mandate — we will respond personally within two business days.
           </p>
           <div className="access-actions">
-            <a
-              href="mailto:contact@ecoxchange.net?subject=Investor%20access%20inquiry"
-              className="btn btn-lime"
-            >
-              Investor Inquiry
-            </a>
-            <a
-              href="mailto:contact@ecoxchange.net?subject=Developer%20submission"
+            <Link href="/market#onboard" className="btn btn-lime">
+              Begin investor onboarding
+            </Link>
+            <Link
+              href="/develop"
               className="btn btn-outline"
               style={{ color: "#fff", borderColor: "rgba(255,255,255,.4)" }}
             >
               Developer Submission →
-            </a>
+            </Link>
           </div>
           <p className="access-legal">
             No offering is currently open. This page is for informational and pipeline-building purposes only
