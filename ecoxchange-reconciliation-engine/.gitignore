@@ -1,7 +1,7 @@
 node_modules/
 dist/
 .env
-reports/*.json
-reports/*.md
+reports/**/*.json
+reports/**/*.md
 !reports/.gitkeep
 !reports/README.md

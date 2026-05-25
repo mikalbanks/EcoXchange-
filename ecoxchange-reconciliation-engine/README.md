@@ -52,6 +52,35 @@ The daily-noon hour-angle approximation in spec §2.2 is preserved — daily int
 
 ## Next phases (not in this package)
 
-- Phase D: Supabase tables (`projects`, `raw_readings`, `verification_records`, `engine_runs`) and orchestration (`runMonthlyReconciliation`).
-- Phase E: CLI commands `reconcile --month`, `report --project`.
+- Phase E: CLI commands `reconcile --month`, `report --project`, full `monthly-run` orchestration.
 - Chainlink Functions oracle write.
+
+## Phase D — Supabase deployment
+
+Schema, RLS, storage bucket, and seed data live under `supabase/migrations/` and `supabase/seed/`. Apply order:
+
+1. `supabase/migrations/001_initial_schema.sql` — projects, raw_readings, verification_records, engine_runs.
+2. `supabase/migrations/002_rls.sql` — enables RLS and adds anon read policies.
+3. `supabase/migrations/003_storage_bucket.sql` — private `evidence` bucket (10 MB cap, JSON only).
+4. `supabase/seed/001_savannah_backtest.sql` — seeds the 5 MW Savannah project plus 12 monthly verification records from the 0% backtest run.
+
+Already deployed to project `npblqnynzeirmrifiwkd` (region us-east-1, postgres 17).
+
+### Engine wiring
+
+Set in `.env` (see `.env.example`):
+```
+SUPABASE_URL=https://<project-ref>.supabase.co
+SUPABASE_SERVICE_ROLE_KEY=...
+SUPABASE_ANON_KEY=...
+```
+
+DB modules per spec §5:
+- `src/db/client.ts` — service-role Supabase client.
+- `src/db/projects.ts` — `getActiveProjects`, `getProjectById`, `createProject`, `updateProjectStatus`.
+- `src/db/raw-readings.ts` — `storeRawReading` (upsert on `project_id,source,period_start`), `getReadingsForPeriod`.
+- `src/db/verification-records.ts` — `storeVerificationRecord` (upsert), `getVerificationRecord`, `getVerificationHistory`.
+- `src/db/engine-runs.ts` — `createEngineRun`, `updateRunCounter`, `completeEngineRun`, `logRunError`.
+- `src/orchestration/archive.ts` — uploads raw API responses to the `evidence` bucket.
+
+End-to-end smoke test: `npx tsx scripts/db-smoke.ts` (requires `.env`). Exercises every module against the live project.
