@@ -12,9 +12,11 @@
     "backtest:validate": "RUN_NETWORK_TESTS=1 vitest run src/__tests__/backtest-integration.test.ts"
   },
   "dependencies": {
+    "@supabase/supabase-js": "^2.106.1",
     "axios": "^1.7.0",
     "commander": "^12.1.0",
     "date-fns": "^3.6.0",
+    "dotenv": "^17.4.2",
     "suncalc": "^1.9.0",
     "zod": "^3.23.8"
   },
