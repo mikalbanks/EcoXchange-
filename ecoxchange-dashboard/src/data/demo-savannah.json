@@ -1,0 +1,40 @@
+{
+  "project": {
+    "id": "demo-savannah-5mw",
+    "name": "Savannah Community Solar 5MW",
+    "location": "Savannah, GA",
+    "latitude": 32.08,
+    "longitude": -81.09,
+    "capacity_kw": 5000,
+    "tilt_deg": 20,
+    "azimuth_deg": 180,
+    "module_efficiency": 0.20,
+    "system_losses": 0.14,
+    "commissioning_date": "2023-01-01",
+    "offtake_type": "community_solar",
+    "ppa_rate_per_kwh": 0.085,
+    "status": "active"
+  },
+  "verification_records": [
+    { "period_start": "2024-01-01", "inverter_kwh": 516016, "expected_kwh": 516016, "utility_kwh": 500535, "inv_vs_expected_pct": 0.0, "inv_vs_utility_pct": 3.0, "util_vs_expected_pct": -3.0, "status": "verified", "flag_reasons": [], "estimated_revenue": 43861, "ghi_kwh_m2": 93.7 },
+    { "period_start": "2024-02-01", "inverter_kwh": 546624, "expected_kwh": 546624, "utility_kwh": 530225, "inv_vs_expected_pct": 0.0, "inv_vs_utility_pct": 3.0, "util_vs_expected_pct": -3.0, "status": "verified", "flag_reasons": [], "estimated_revenue": 46463, "ghi_kwh_m2": 106.7 },
+    { "period_start": "2024-03-01", "inverter_kwh": 667163, "expected_kwh": 667163, "utility_kwh": 647148, "inv_vs_expected_pct": 0.0, "inv_vs_utility_pct": 3.0, "util_vs_expected_pct": -3.0, "status": "verified", "flag_reasons": [], "estimated_revenue": 56709, "ghi_kwh_m2": 140.5 },
+    { "period_start": "2024-04-01", "inverter_kwh": 836859, "expected_kwh": 836859, "utility_kwh": 811753, "inv_vs_expected_pct": 0.0, "inv_vs_utility_pct": 3.0, "util_vs_expected_pct": -3.0, "status": "verified", "flag_reasons": [], "estimated_revenue": 71133, "ghi_kwh_m2": 185.5 },
+    { "period_start": "2024-05-01", "inverter_kwh": 796045, "expected_kwh": 796045, "utility_kwh": 772164, "inv_vs_expected_pct": 0.0, "inv_vs_utility_pct": 3.0, "util_vs_expected_pct": -3.0, "status": "verified", "flag_reasons": [], "estimated_revenue": 67664, "ghi_kwh_m2": 184.9 },
+    { "period_start": "2024-06-01", "inverter_kwh": 858953, "expected_kwh": 858953, "utility_kwh": 833184, "inv_vs_expected_pct": 0.0, "inv_vs_utility_pct": 3.0, "util_vs_expected_pct": -3.0, "status": "verified", "flag_reasons": [], "estimated_revenue": 73011, "ghi_kwh_m2": 203.1 },
+    { "period_start": "2024-07-01", "inverter_kwh": 795158, "expected_kwh": 795158, "utility_kwh": 771303, "inv_vs_expected_pct": 0.0, "inv_vs_utility_pct": 3.0, "util_vs_expected_pct": -3.0, "status": "verified", "flag_reasons": [], "estimated_revenue": 67588, "ghi_kwh_m2": 186.8 },
+    { "period_start": "2024-08-01", "inverter_kwh": 776243, "expected_kwh": 776243, "utility_kwh": 752956, "inv_vs_expected_pct": 0.0, "inv_vs_utility_pct": 3.0, "util_vs_expected_pct": -3.0, "status": "verified", "flag_reasons": [], "estimated_revenue": 65981, "ghi_kwh_m2": 174.6 },
+    { "period_start": "2024-09-01", "inverter_kwh": 611196, "expected_kwh": 611196, "utility_kwh": 592860, "inv_vs_expected_pct": 0.0, "inv_vs_utility_pct": 3.0, "util_vs_expected_pct": -3.0, "status": "verified", "flag_reasons": [], "estimated_revenue": 51952, "ghi_kwh_m2": 131.3 },
+    { "period_start": "2024-10-01", "inverter_kwh": 721974, "expected_kwh": 721974, "utility_kwh": 700315, "inv_vs_expected_pct": 0.0, "inv_vs_utility_pct": 3.0, "util_vs_expected_pct": -3.0, "status": "verified", "flag_reasons": [], "estimated_revenue": 61368, "ghi_kwh_m2": 140.2 },
+    { "period_start": "2024-11-01", "inverter_kwh": 486701, "expected_kwh": 486701, "utility_kwh": 472100, "inv_vs_expected_pct": 0.0, "inv_vs_utility_pct": 3.0, "util_vs_expected_pct": -3.0, "status": "verified", "flag_reasons": [], "estimated_revenue": 41370, "ghi_kwh_m2": 90.0 },
+    { "period_start": "2024-12-01", "inverter_kwh": 489823, "expected_kwh": 489823, "utility_kwh": 475128, "inv_vs_expected_pct": 0.0, "inv_vs_utility_pct": 3.0, "util_vs_expected_pct": -3.0, "status": "verified", "flag_reasons": [], "estimated_revenue": 41635, "ghi_kwh_m2": 87.0 }
+  ],
+  "summary": {
+    "annual_production_mwh": 8102.8,
+    "capacity_factor_pct": 18.5,
+    "months_verified": 12,
+    "months_flagged": 0,
+    "total_revenue_estimate": 688735,
+    "ppa_rate": 0.085
+  }
+}
