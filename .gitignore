@@ -36,3 +36,8 @@ EcoXchange-clone/
 .wrangler/
 .dev.vars
 wrangler.dev.vars
+
+# gstack skills: only the `gstack` submodule is tracked. Everything else under
+# .claude/skills/ is created by `gstack setup` per-machine and must not be committed.
+.claude/skills/*
+!.claude/skills/gstack
