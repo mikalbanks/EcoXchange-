@@ -101,13 +101,19 @@ function ChartTooltip({
 }) {
   if (!active || !payload || payload.length === 0) return null;
   const d = payload[0].payload;
+  const actualColor = d.status === "flagged" ? palette.flagAmber : palette.medGreen;
+  const deviationKwh = Math.round(d.actual - d.expected);
+  const deviationSign = deviationKwh >= 0 ? "+" : "";
   return (
-    <div className="bg-white border border-paleGreen rounded-md shadow px-3 py-2 text-sm">
-      <div className="font-medium text-darkBg">{formatMonth(d.monthIso)}</div>
-      <div className="text-textMuted">Expected: {formatKwh(d.expected)}</div>
-      <div className="text-textMuted">Actual: {formatKwh(d.actual)}</div>
-      <div className="text-textMuted">
-        Deviation: {formatPct(d.deviation)}
+    <div className="bg-white border border-paleGreen rounded-md shadow-lg px-3 py-2 text-sm min-w-[200px]">
+      <div className="font-medium text-darkBg mb-1.5">
+        {formatMonth(d.monthIso)}
+      </div>
+      <Row dot={palette.lightGreen} label="Expected" value={formatKwh(Math.round(d.expected))} />
+      <Row dot={actualColor} label="Actual" value={formatKwh(Math.round(d.actual))} />
+      <div className="mt-1.5 pt-1.5 border-t border-paleGreen/60 text-textMuted">
+        Deviation: {deviationSign}
+        {deviationKwh.toLocaleString()} kWh ({formatPct(d.deviation)})
       </div>
       <div
         className={`mt-1 uppercase text-xs font-semibold ${
@@ -116,6 +122,29 @@ function ChartTooltip({
       >
         {d.status}
       </div>
+    </div>
+  );
+}
+
+function Row({
+  dot,
+  label,
+  value,
+}: {
+  dot: string;
+  label: string;
+  value: string;
+}) {
+  return (
+    <div className="flex items-center justify-between gap-3">
+      <span className="flex items-center gap-1.5 text-textMuted">
+        <span
+          className="h-2 w-2 rounded-full inline-block"
+          style={{ backgroundColor: dot }}
+        />
+        {label}
+      </span>
+      <span className="text-textDark tabular-nums">{value}</span>
     </div>
   );
 }

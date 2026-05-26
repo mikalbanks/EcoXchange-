@@ -44,7 +44,7 @@ function Comparison({
 }) {
   if (pct === null || pct === undefined) {
     return (
-      <div className="flex items-center justify-between bg-cream border border-paleGreen rounded-md px-3 py-2 text-sm">
+      <div className="flex flex-wrap items-center justify-between gap-2 bg-cream border border-paleGreen rounded-md px-3 py-2 text-sm">
         <span className="text-textMuted">{label}</span>
         <span className="text-textMuted">N/A · tolerance ±{tolerance}%</span>
       </div>
@@ -52,9 +52,9 @@ function Comparison({
   }
   const within = Math.abs(pct) <= tolerance;
   return (
-    <div className="flex items-center justify-between bg-white border border-paleGreen rounded-md px-3 py-2 text-sm">
+    <div className="flex flex-wrap items-center justify-between gap-2 bg-white border border-paleGreen rounded-md px-3 py-2 text-sm">
       <span className="text-textDark">{label}</span>
-      <span className="flex items-center gap-2">
+      <span className="flex items-center gap-2 tabular-nums">
         <span className="text-textDark">{formatPct(pct)}</span>
         <span className="text-textMuted">±{tolerance}%</span>
         {within ? (
