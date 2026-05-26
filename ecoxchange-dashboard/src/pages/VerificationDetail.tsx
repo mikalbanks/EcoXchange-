@@ -4,6 +4,7 @@ import { ArrowLeft } from "lucide-react";
 import { loadVerification } from "../data/index.js";
 import { ReconciliationDiagram } from "../components/ReconciliationDiagram.js";
 import { VerificationBadge } from "../components/VerificationBadge.js";
+import { CardSkeleton, Shimmer } from "../components/Skeleton.js";
 import { formatMonthLong } from "../utils/formatters.js";
 import type { ProjectMeta, VerificationRecord } from "../utils/types.js";
 
@@ -32,7 +33,7 @@ export function VerificationDetail() {
       <div>
         <Link
           to={`/project/${id}`}
-          className="inline-flex items-center gap-1 text-medGreen hover:text-darkBg"
+          className="inline-flex items-center gap-1 text-medGreen hover:text-darkBg transition-colors duration-150"
         >
           <ArrowLeft className="h-4 w-4" /> Back to Project
         </Link>
@@ -42,27 +43,39 @@ export function VerificationDetail() {
       </div>
     );
 
-  if (!state) return <div className="text-textMuted">Loading…</div>;
+  if (!state) {
+    return (
+      <div className="space-y-6">
+        <Shimmer className="h-5 w-36" />
+        <div className="space-y-2">
+          <Shimmer className="h-9 w-96 max-w-full" />
+          <Shimmer className="h-4 w-64" />
+        </div>
+        <CardSkeleton lines={6} />
+        <CardSkeleton lines={2} />
+      </div>
+    );
+  }
 
   const { project, record } = state;
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 animate-fade-in">
       <Link
         to={`/project/${id}`}
-        className="inline-flex items-center gap-1 text-medGreen hover:text-darkBg"
+        className="inline-flex items-center gap-1 text-medGreen hover:text-darkBg transition-colors duration-150"
       >
         <ArrowLeft className="h-4 w-4" /> Back to Project
       </Link>
 
-      <div className="flex flex-wrap items-start justify-between gap-4">
+      <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4">
         <div>
           <h1 className="font-heading text-3xl text-darkBg">
             Verification Detail: {formatMonthLong(record.period_start)}
           </h1>
           <p className="text-textMuted mt-1">{project.name}</p>
         </div>
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-3 self-start">
           <span className="text-sm text-textMuted">Verdict:</span>
           <VerificationBadge status={record.status} />
         </div>
@@ -71,7 +84,9 @@ export function VerificationDetail() {
       <ReconciliationDiagram record={record} />
 
       <div className="bg-white rounded-lg border border-paleGreen/60 p-5">
-        <h2 className="font-heading text-lg text-darkBg mb-3">Irradiance Data</h2>
+        <h2 className="font-heading text-lg text-darkBg mb-3">
+          Irradiance Data
+        </h2>
         <dl className="grid grid-cols-1 sm:grid-cols-3 gap-4 text-sm">
           <div>
             <dt className="text-textMuted">Monthly GHI</dt>
