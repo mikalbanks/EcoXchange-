@@ -51,21 +51,16 @@ export default function MarketProjectPage() {
   });
 
   return (
-    <div className="min-h-screen bg-gradient-dark-green">
+    <div className="public-page">
       <Header />
-      <main className="container mx-auto px-4 py-8 space-y-6">
-        <div className="flex items-center justify-between">
+      <main className="public-main">
+        <div className="py-8">
           <Link href="/market">
             <Button variant="outline" size="sm" className="gap-1">
               <ArrowLeft className="h-3.5 w-3.5" />
               Back to marketplace
             </Button>
           </Link>
-          {data?.source === "PROJECT" && (
-            <Link href={`/auth/login?redirect=/investor/deals/${id}`}>
-              <Button size="sm">Open investor deal room</Button>
-            </Link>
-          )}
         </div>
 
         {isLoading ? (
@@ -82,98 +77,118 @@ export default function MarketProjectPage() {
           </Card>
         ) : (
           <>
-            <Card>
-              <CardContent className="pt-6">
-                <div className="flex flex-wrap items-start justify-between gap-4">
-                  <div>
-                    <div className="flex items-center gap-2 mb-1">
-                      <h1 className="text-2xl font-bold">{data.name}</h1>
-                      <Badge variant={data.source === "PROJECT" ? "default" : "secondary"}>
-                        {data.source === "PROJECT" ? "Curated" : "Queue"}
-                      </Badge>
-                    </div>
-                    <p className="text-sm text-muted-foreground mt-1 flex flex-wrap items-center gap-3">
-                      <span className="flex items-center gap-1"><MapPin className="h-3 w-3" /> {data.county ?? "—"}, {data.state}</span>
-                      <span className="flex items-center gap-1"><Zap className="h-3 w-3" /> {data.capacityMW.toFixed(2)} MW</span>
-                      {data.technology && <span>{data.technology.replace(/_/g, " ")}</span>}
-                      {data.stage && <span>{data.stage.replace(/_/g, " ")}</span>}
-                    </p>
-                    {data.summary && (
-                      <p className="text-sm text-muted-foreground mt-4 max-w-3xl">{data.summary}</p>
-                    )}
-                  </div>
+            <section className="public-hero public-hero-split pt-4">
+              <div>
+                <p className="public-eyebrow">Project diligence</p>
+                <div className="mt-3 flex flex-wrap items-center gap-3">
+                  <h1 className="public-title mt-0 text-[clamp(2.8rem,5vw,4.5rem)]">{data.name}</h1>
+                  <Badge variant={data.source === "PROJECT" ? "default" : "secondary"}>
+                    {data.source === "PROJECT" ? "Curated" : "Queue"}
+                  </Badge>
                 </div>
-              </CardContent>
-            </Card>
+                <p className="mt-4 flex flex-wrap items-center gap-3 text-sm text-muted-foreground">
+                  <span className="flex items-center gap-1"><MapPin className="h-3 w-3" /> {data.county ?? "—"}, {data.state}</span>
+                  <span className="flex items-center gap-1"><Zap className="h-3 w-3" /> {data.capacityMW.toFixed(2)} MW</span>
+                  {data.technology && <span>{data.technology.replace(/_/g, " ")}</span>}
+                  {data.stage && <span>{data.stage.replace(/_/g, " ")}</span>}
+                </p>
+                {data.summary && <p className="public-copy">{data.summary}</p>}
+              </div>
+              <aside className="public-hero-aside">
+                <div className="public-mini-stat-grid">
+                  <div className="public-mini-stat">
+                    <span className="public-mini-stat-value">{data.irrProxyPct.value.toFixed(1)}%</span>
+                    <span className="public-mini-stat-label">IRR proxy</span>
+                  </div>
+                  <div className="public-mini-stat">
+                    <span className="public-mini-stat-value">${data.annualGrossRevenueUsd.value.toLocaleString("en-US", { maximumFractionDigits: 0 })}</span>
+                    <span className="public-mini-stat-label">Annual gross revenue</span>
+                  </div>
+                  {data.source === "PROJECT" && (
+                    <div className="public-mini-stat">
+                      <Link href={`/auth/login?redirect=/investor/deals/${id}`} className="public-btn public-btn-primary w-full">
+                        Open deal room
+                      </Link>
+                    </div>
+                  )}
+                </div>
+              </aside>
+            </section>
 
             {data.source === "QUEUE" && (
-              <Card className="border-amber-500/40 bg-amber-500/5">
-                <CardContent className="py-4 text-sm">
-                  This is an <strong>interconnection queue entry</strong>. Production and revenue are
-                  modeled from NSRDB satellite irradiance and market PPA proxies — not metered yet.
-                </CardContent>
-              </Card>
+              <div className="public-section py-6">
+                <Card className="border-amber-500/40 bg-amber-500/5">
+                  <CardContent className="py-4 text-sm">
+                    This is an <strong>interconnection queue entry</strong>. Production and revenue are modeled from
+                    NSRDB satellite irradiance and market PPA proxies — not metered yet.
+                  </CardContent>
+                </Card>
+              </div>
             )}
 
-            <Card>
-              <CardHeader>
-                <CardTitle className="text-base flex items-center gap-2">
-                  <Receipt className="h-4 w-4" />
-                  Financial breakdown
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <FinancialBreakdownTable
-                  rows={[
-                    { label: "Capacity", field: { ...data.capacityKw, value: data.capacityKw.value / 1000 } as any, format: "multiple" },
-                    { label: "PPA price", field: data.ppaPriceUsdPerKwh, format: "usd_per_kwh" },
-                    { label: "Annual production", field: data.annualKwh, format: "kwh" },
-                    { label: "Annual gross revenue", field: data.annualGrossRevenueUsd, format: "usd" },
-                    { label: "Monthly debt service", field: data.monthlyDebtServiceUsd, format: "usd" },
-                    { label: "Monthly opex", field: data.monthlyOpexUsd, format: "usd" },
-                    { label: "Capex", field: data.capexUsd, format: "usd" },
-                    { label: "IRR proxy", field: data.irrProxyPct, format: "pct" },
-                    { label: "MOIC proxy", field: data.moicProxy, format: "multiple" },
-                    { label: "Annual investor yield", field: data.annualInvestorYieldUsd, format: "usd" },
-                  ]}
-                />
-                <p className="text-xs text-muted-foreground mt-3">
-                  <strong>Known</strong> = sourced from contracted data or recorded operational results.{" "}
-                  <strong>Estimated</strong> = modeled from physical assumptions.{" "}
-                  <strong>Market proxy</strong> = derived from CAISO hub / LevelTen / jurisdiction benchmarks.
-                </p>
-                {data.evidenceHash && (
-                  <p className="text-[11px] text-muted-foreground mt-2 font-mono">
-                    Evidence hash: {data.evidenceHash.slice(0, 16)}…
-                  </p>
-                )}
-              </CardContent>
-            </Card>
-
-            {data.externalLinks.length > 0 && (
+            <section className="public-section">
               <Card>
                 <CardHeader>
-                  <CardTitle className="text-base">External references</CardTitle>
+                  <CardTitle className="text-base flex items-center gap-2">
+                    <Receipt className="h-4 w-4" />
+                    Financial breakdown
+                  </CardTitle>
                 </CardHeader>
                 <CardContent>
-                  <div className="flex flex-wrap gap-3">
-                    {data.externalLinks.map((link, i) => (
-                      <a
-                        key={i}
-                        href={link.url}
-                        target="_blank"
-                        rel="noopener noreferrer nofollow"
-                        className="inline-flex items-center gap-1 text-sm text-primary hover:underline"
-                        data-testid={`link-external-${i}`}
-                      >
-                        <ExternalLink className="h-3.5 w-3.5" />
-                        {link.label}
-                        <span className="text-xs text-muted-foreground ml-1">({link.source})</span>
-                      </a>
-                    ))}
-                  </div>
+                  <FinancialBreakdownTable
+                    rows={[
+                      { label: "Capacity", field: { ...data.capacityKw, value: data.capacityKw.value / 1000 } as any, format: "multiple" },
+                      { label: "PPA price", field: data.ppaPriceUsdPerKwh, format: "usd_per_kwh" },
+                      { label: "Annual production", field: data.annualKwh, format: "kwh" },
+                      { label: "Annual gross revenue", field: data.annualGrossRevenueUsd, format: "usd" },
+                      { label: "Monthly debt service", field: data.monthlyDebtServiceUsd, format: "usd" },
+                      { label: "Monthly opex", field: data.monthlyOpexUsd, format: "usd" },
+                      { label: "Capex", field: data.capexUsd, format: "usd" },
+                      { label: "IRR proxy", field: data.irrProxyPct, format: "pct" },
+                      { label: "MOIC proxy", field: data.moicProxy, format: "multiple" },
+                      { label: "Annual investor yield", field: data.annualInvestorYieldUsd, format: "usd" },
+                    ]}
+                  />
+                  <p className="text-xs text-muted-foreground mt-3">
+                    <strong>Known</strong> = sourced from contracted data or recorded operational results. {" "}
+                    <strong>Estimated</strong> = modeled from physical assumptions. {" "}
+                    <strong>Market proxy</strong> = derived from CAISO hub / LevelTen / jurisdiction benchmarks.
+                  </p>
+                  {data.evidenceHash && (
+                    <p className="text-[11px] text-muted-foreground mt-2 font-mono">
+                      Evidence hash: {data.evidenceHash.slice(0, 16)}…
+                    </p>
+                  )}
                 </CardContent>
               </Card>
+            </section>
+
+            {data.externalLinks.length > 0 && (
+              <section className="public-section pt-0">
+                <Card>
+                  <CardHeader>
+                    <CardTitle className="text-base">External references</CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="flex flex-wrap gap-3">
+                      {data.externalLinks.map((link, i) => (
+                        <a
+                          key={i}
+                          href={link.url}
+                          target="_blank"
+                          rel="noopener noreferrer nofollow"
+                          className="inline-flex items-center gap-1 text-sm text-primary hover:underline"
+                          data-testid={`link-external-${i}`}
+                        >
+                          <ExternalLink className="h-3.5 w-3.5" />
+                          {link.label}
+                          <span className="text-xs text-muted-foreground ml-1">({link.source})</span>
+                        </a>
+                      ))}
+                    </div>
+                  </CardContent>
+                </Card>
+              </section>
             )}
           </>
         )}
