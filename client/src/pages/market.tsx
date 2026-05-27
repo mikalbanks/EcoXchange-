@@ -75,172 +75,207 @@ export default function PublicMarketPage() {
   }, [data, search, sourceFilter]);
 
   return (
-    <div className="min-h-screen bg-gradient-dark-green">
+    <div className="public-page">
       <Header />
-      <main className="container mx-auto px-4 py-10 space-y-6">
-        <div className="flex items-end justify-between flex-wrap gap-2">
-          <div className="space-y-2">
-            <h1 className="text-3xl font-bold">Project Marketplace</h1>
-            <p className="text-muted-foreground">
+      <main className="public-main">
+        <section className="public-hero public-hero-split">
+          <div>
+            <p className="public-eyebrow">Project marketplace</p>
+            <h1 className="public-title">
+              Browse yield,
+              <br />
+              <em>before it lists.</em>
+            </h1>
+            <p className="public-copy">
               Real renewable-energy offerings — curated projects with verified financials and live
-              interconnection queue entries with modeled financials. Every dollar carries a
-              confidence tag.
+              interconnection queue entries with modeled financials. Every dollar carries a confidence tag.
             </p>
+            <div className="public-actions">
+              <a href="#onboard" className="public-btn public-btn-primary">
+                Begin investor onboarding
+              </a>
+              <a href="#pipeline" className="public-btn public-btn-outline">
+                Browse current pipeline →
+              </a>
+            </div>
           </div>
-          <Badge variant="outline" data-testid="badge-refreshed">
-            {timeAgo(data?.refreshedAt ?? null)}
-          </Badge>
-        </div>
+          <aside className="public-hero-aside">
+            <div className="public-mini-stat-grid">
+              <div className="public-mini-stat">
+                <span className="public-mini-stat-value">506(c)</span>
+                <span className="public-mini-stat-label">Verified accredited investors only</span>
+              </div>
+              <div className="public-mini-stat">
+                <span className="public-mini-stat-value">$10K</span>
+                <span className="public-mini-stat-label">Target minimum investment per offering</span>
+              </div>
+              <div className="public-mini-stat">
+                <span className="public-mini-stat-value">Monthly</span>
+                <span className="public-mini-stat-label">USDC distributions after data consensus</span>
+              </div>
+            </div>
+          </aside>
+        </section>
 
-        <section id="onboard" className="scroll-mt-20">
-          <div className="mb-4">
-            <p className="font-mono text-[0.65rem] uppercase tracking-[0.28em] text-muted-foreground">
-              Investor onboarding
-            </p>
-            <h2 className="font-serif text-2xl font-semibold md:text-3xl">
-              Begin onboarding before the next offering opens.
-            </h2>
-            <p className="mt-1 text-sm text-muted-foreground">
-              Five steps · accreditation, KYC, wallet, subscription, funding. Real flow at launch; preview today.
-            </p>
+        <section id="onboard" className="public-section scroll-mt-24">
+          <div className="public-section-header">
+            <span className="public-section-label">§ I</span>
+            <h2 className="public-section-title">Begin onboarding before the next offering opens.</h2>
           </div>
+          <p className="public-section-copy">
+            Five steps — accreditation, KYC, wallet, subscription, and funding. This is a preview of the real
+            launch flow, designed to make the investor path feel as polished as the home page.
+          </p>
           <InvestorOnboardingWizard />
         </section>
 
-        <div className="border-t border-border pt-6">
-          <p className="font-mono text-[0.65rem] uppercase tracking-[0.28em] text-muted-foreground">
-            Active pipeline
-          </p>
-          <h2 className="font-serif text-2xl font-semibold md:text-3xl">Browse current offerings</h2>
-        </div>
-
-        <Card>
-          <CardContent className="p-4 flex flex-wrap items-center gap-3">
-            <div className="flex items-center gap-3 flex-1 min-w-[200px]">
-              <Search className="h-4 w-4 text-muted-foreground" />
-              <Input
-                placeholder="Search by project, county, state, stage..."
-                value={search}
-                onChange={(e) => setSearch(e.target.value)}
-                data-testid="input-market-search"
-              />
-            </div>
-            <div className="flex items-center gap-2 text-sm">
-              {(["", "PROJECT", "QUEUE"] as const).map((src) => (
-                <Button
-                  key={src || "ALL"}
-                  size="sm"
-                  variant={sourceFilter === src ? "default" : "outline"}
-                  onClick={() => setSourceFilter(src)}
-                  data-testid={`filter-source-${src || "ALL"}`}
-                >
-                  {src === "" ? "All" : src === "PROJECT" ? "Curated" : "Queue"}
-                </Button>
-              ))}
-            </div>
-          </CardContent>
-        </Card>
-
-        {isLoading ? (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-            {[...Array(6)].map((_, i) => (
-              <Card key={i}><CardContent className="pt-6"><Skeleton className="h-40 w-full" /></CardContent></Card>
-            ))}
+        <section id="pipeline" className="public-section public-section-tight scroll-mt-24">
+          <div className="public-section-header">
+            <span className="public-section-label">§ II</span>
+            <h2 className="public-section-title">Browse current offerings.</h2>
           </div>
-        ) : !filtered.length ? (
-          <Card>
-            <CardContent>
-              <EmptyState
-                icon={BarChart3}
-                title="No listings found"
-                description="Try a different query or filter."
-              />
+
+          <Card className="public-toolbar-card mb-6">
+            <CardContent className="p-4 flex flex-wrap items-center gap-3">
+              <div className="flex items-center gap-3 flex-1 min-w-[220px]">
+                <Search className="h-4 w-4 text-muted-foreground" />
+                <Input
+                  placeholder="Search by project, county, state, stage..."
+                  value={search}
+                  onChange={(e) => setSearch(e.target.value)}
+                  data-testid="input-market-search"
+                />
+              </div>
+              <div className="flex items-center gap-2 text-sm">
+                {(["", "PROJECT", "QUEUE"] as const).map((src) => (
+                  <Button
+                    key={src || "ALL"}
+                    size="sm"
+                    variant={sourceFilter === src ? "default" : "outline"}
+                    onClick={() => setSourceFilter(src)}
+                    data-testid={`filter-source-${src || "ALL"}`}
+                  >
+                    {src === "" ? "All" : src === "PROJECT" ? "Curated" : "Queue"}
+                  </Button>
+                ))}
+              </div>
             </CardContent>
           </Card>
-        ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-            {filtered.map((l) => (
-              <Card key={l.id} className="h-full" data-testid={`card-listing-${l.id}`}>
-                <CardHeader className="pb-2">
-                  <div className="flex items-start justify-between gap-2">
-                    <CardTitle className="text-base leading-tight">{l.name}</CardTitle>
-                    <Badge variant={l.source === "PROJECT" ? "default" : "secondary"} className="shrink-0">
-                      {l.source === "PROJECT" ? "Curated" : "Queue"}
-                    </Badge>
-                  </div>
-                </CardHeader>
-                <CardContent className="space-y-3">
-                  <div className="flex flex-wrap items-center gap-2 text-sm text-muted-foreground">
-                    <span className="flex items-center gap-1"><MapPin className="h-3.5 w-3.5" />{l.county ?? "—"}, {l.state}</span>
-                    <span className="flex items-center gap-1"><Zap className="h-3.5 w-3.5" />{l.capacityMW.toFixed(1)} MW</span>
-                  </div>
-                  <div className="flex flex-wrap gap-2">
-                    {l.technology && <Badge variant="outline">{l.technology.replace(/_/g, " ")}</Badge>}
-                    {l.stage && <Badge variant="secondary">{l.stage.replace(/_/g, " ")}</Badge>}
-                  </div>
-                  <div className="space-y-1.5 text-sm">
-                    <div className="flex items-center justify-between">
-                      <span className="text-muted-foreground">PPA</span>
-                      <div className="flex items-center gap-2">
-                        <span className="font-mono">${l.ppaPriceUsdPerKwh.value.toFixed(4)}/kWh</span>
-                        <ConfidenceBadge
-                          confidence={l.ppaPriceUsdPerKwh.confidence}
-                          source={l.ppaPriceUsdPerKwh.source}
-                        />
-                      </div>
-                    </div>
-                    <div className="flex items-center justify-between">
-                      <span className="text-muted-foreground">Annual revenue</span>
-                      <div className="flex items-center gap-2">
-                        <span className="font-mono">
-                          ${l.annualGrossRevenueUsd.value.toLocaleString("en-US", { maximumFractionDigits: 0 })}
-                        </span>
-                        <ConfidenceBadge
-                          confidence={l.annualGrossRevenueUsd.confidence}
-                          source={l.annualGrossRevenueUsd.source}
-                        />
-                      </div>
-                    </div>
-                    <div className="flex items-center justify-between">
-                      <span className="text-muted-foreground">IRR proxy</span>
-                      <div className="flex items-center gap-2">
-                        <span className="font-mono">{l.irrProxyPct.value.toFixed(1)}%</span>
-                        <ConfidenceBadge
-                          confidence={l.irrProxyPct.confidence}
-                          source={l.irrProxyPct.source}
-                        />
-                      </div>
-                    </div>
-                  </div>
-                  {l.externalLinks.length > 0 && (
-                    <div className="flex flex-wrap gap-2 pt-1 border-t">
-                      {l.externalLinks.map((link, i) => (
-                        <a
-                          key={i}
-                          href={link.url}
-                          target="_blank"
-                          rel="noopener noreferrer nofollow"
-                          className="text-xs text-primary inline-flex items-center gap-1 hover:underline"
-                          data-testid={`link-external-${l.id}-${i}`}
-                        >
-                          <ExternalLink className="h-3 w-3" />
-                          {link.label}
-                        </a>
-                      ))}
-                    </div>
-                  )}
-                  <div className="flex items-center justify-between gap-2 pt-1">
-                    <Link href={l.detailHref}>
-                      <Button size="sm" className="gap-1" data-testid={`button-view-listing-${l.id}`}>
-                        View diligence <ArrowRight className="h-3.5 w-3.5" />
-                      </Button>
-                    </Link>
-                  </div>
-                </CardContent>
-              </Card>
-            ))}
+
+          <div className="mb-5 flex items-center justify-between gap-4">
+            <p className="font-mono text-[0.65rem] uppercase tracking-[0.28em] text-muted-foreground">
+              Active pipeline
+            </p>
+            <Badge variant="outline" data-testid="badge-refreshed">
+              {timeAgo(data?.refreshedAt ?? null)}
+            </Badge>
           </div>
-        )}
+
+          {isLoading ? (
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+              {[...Array(6)].map((_, i) => (
+                <Card key={i}>
+                  <CardContent className="pt-6">
+                    <Skeleton className="h-40 w-full" />
+                  </CardContent>
+                </Card>
+              ))}
+            </div>
+          ) : !filtered.length ? (
+            <Card>
+              <CardContent>
+                <EmptyState
+                  icon={BarChart3}
+                  title="No listings found"
+                  description="Try a different query or filter."
+                />
+              </CardContent>
+            </Card>
+          ) : (
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+              {filtered.map((l) => (
+                <Card key={l.id} className="public-listing-card" data-testid={`card-listing-${l.id}`}>
+                  <CardHeader className="pb-2">
+                    <div className="flex items-start justify-between gap-2">
+                      <CardTitle className="text-base leading-tight">{l.name}</CardTitle>
+                      <Badge variant={l.source === "PROJECT" ? "default" : "secondary"} className="shrink-0">
+                        {l.source === "PROJECT" ? "Curated" : "Queue"}
+                      </Badge>
+                    </div>
+                  </CardHeader>
+                  <CardContent className="space-y-3">
+                    <div className="flex flex-wrap items-center gap-2 text-sm text-muted-foreground">
+                      <span className="flex items-center gap-1"><MapPin className="h-3.5 w-3.5" />{l.county ?? "—"}, {l.state}</span>
+                      <span className="flex items-center gap-1"><Zap className="h-3.5 w-3.5" />{l.capacityMW.toFixed(1)} MW</span>
+                    </div>
+                    <div className="flex flex-wrap gap-2">
+                      {l.technology && <Badge variant="outline">{l.technology.replace(/_/g, " ")}</Badge>}
+                      {l.stage && <Badge variant="secondary">{l.stage.replace(/_/g, " ")}</Badge>}
+                    </div>
+                    <div className="space-y-1.5 text-sm">
+                      <div className="flex items-center justify-between gap-3">
+                        <span className="text-muted-foreground">PPA</span>
+                        <div className="flex items-center gap-2">
+                          <span className="font-mono">${l.ppaPriceUsdPerKwh.value.toFixed(4)}/kWh</span>
+                          <ConfidenceBadge
+                            confidence={l.ppaPriceUsdPerKwh.confidence}
+                            source={l.ppaPriceUsdPerKwh.source}
+                          />
+                        </div>
+                      </div>
+                      <div className="flex items-center justify-between gap-3">
+                        <span className="text-muted-foreground">Annual revenue</span>
+                        <div className="flex items-center gap-2">
+                          <span className="font-mono">
+                            ${l.annualGrossRevenueUsd.value.toLocaleString("en-US", { maximumFractionDigits: 0 })}
+                          </span>
+                          <ConfidenceBadge
+                            confidence={l.annualGrossRevenueUsd.confidence}
+                            source={l.annualGrossRevenueUsd.source}
+                          />
+                        </div>
+                      </div>
+                      <div className="flex items-center justify-between gap-3">
+                        <span className="text-muted-foreground">IRR proxy</span>
+                        <div className="flex items-center gap-2">
+                          <span className="font-mono">{l.irrProxyPct.value.toFixed(1)}%</span>
+                          <ConfidenceBadge
+                            confidence={l.irrProxyPct.confidence}
+                            source={l.irrProxyPct.source}
+                          />
+                        </div>
+                      </div>
+                    </div>
+                    {l.externalLinks.length > 0 && (
+                      <div className="flex flex-wrap gap-2 pt-1 border-t">
+                        {l.externalLinks.map((link, i) => (
+                          <a
+                            key={i}
+                            href={link.url}
+                            target="_blank"
+                            rel="noopener noreferrer nofollow"
+                            className="text-xs text-primary inline-flex items-center gap-1 hover:underline"
+                            data-testid={`link-external-${l.id}-${i}`}
+                          >
+                            <ExternalLink className="h-3 w-3" />
+                            {link.label}
+                          </a>
+                        ))}
+                      </div>
+                    )}
+                    <div className="flex items-center justify-between gap-2 pt-1">
+                      <Link href={l.detailHref}>
+                        <Button size="sm" className="gap-1" data-testid={`button-view-listing-${l.id}`}>
+                          View diligence <ArrowRight className="h-3.5 w-3.5" />
+                        </Button>
+                      </Link>
+                    </div>
+                  </CardContent>
+                </Card>
+              ))}
+            </div>
+          )}
+        </section>
       </main>
     </div>
   );
