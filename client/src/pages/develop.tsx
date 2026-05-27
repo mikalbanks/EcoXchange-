@@ -14,64 +14,84 @@ const costRows = [
 
 export default function DevelopPage() {
   return (
-    <div className="min-h-screen bg-background">
+    <div className="public-page">
       <Header />
-      <main className="container mx-auto px-4 py-12 space-y-12">
-        <section className="max-w-3xl">
-          <p className="mb-2 font-mono text-[0.65rem] uppercase tracking-[0.28em] text-muted-foreground">
-            For solar developers
-          </p>
-          <h1 className="font-serif text-4xl font-semibold tracking-tight md:text-5xl">
-            Submit a permitted project.
-          </h1>
-          <p className="mt-4 text-lg text-muted-foreground">
-            EcoXchange underwrites equity raises of <strong className="text-foreground">$1M–$5M</strong> for permitted
-            1–20 MW U.S. solar projects. Target intake-to-live offering timeline: <strong className="text-foreground">2–4 weeks</strong>.
-            No on-site verification hardware required — provide inverter portal and utility account access, and we
-            handle the rest.
-          </p>
+      <main className="public-main">
+        <section className="public-hero public-hero-split">
+          <div>
+            <p className="public-eyebrow">For solar developers</p>
+            <h1 className="public-title">
+              Submit a permitted
+              <br />
+              <em>solar project.</em>
+            </h1>
+            <p className="public-copy">
+              EcoXchange underwrites equity raises of <strong>$1M–$5M</strong> for permitted 1–20 MW U.S.
+              solar projects. Target intake-to-live offering timeline: <strong>2–4 weeks</strong>. No on-site
+              verification hardware required — provide inverter portal and utility account access, and we handle
+              the rest.
+            </p>
+            <div className="public-actions">
+              <a href="#submit" className="public-btn public-btn-primary">Start project intake</a>
+              <a href="#cost" className="public-btn public-btn-outline">Compare costs →</a>
+            </div>
+          </div>
+          <aside className="public-hero-aside">
+            <div className="public-mini-stat-grid">
+              <div className="public-mini-stat">
+                <span className="public-mini-stat-value">$1–5M</span>
+                <span className="public-mini-stat-label">Target equity raise per project</span>
+              </div>
+              <div className="public-mini-stat">
+                <span className="public-mini-stat-value">2–4 wks</span>
+                <span className="public-mini-stat-label">Target intake-to-live timeline</span>
+              </div>
+              <div className="public-mini-stat">
+                <span className="public-mini-stat-value">0</span>
+                <span className="public-mini-stat-label">New sensors required for verification</span>
+              </div>
+            </div>
+          </aside>
         </section>
 
-        <section>
+        <section id="submit" className="public-section scroll-mt-24">
+          <div className="public-section-header">
+            <span className="public-section-label">§ I</span>
+            <h2 className="public-section-title">Project intake.</h2>
+          </div>
           <DeveloperSubmissionWizard />
         </section>
 
-        <section>
-          <div className="mb-4">
-            <p className="font-mono text-[0.65rem] uppercase tracking-[0.28em] text-muted-foreground">
-              Cost comparison · $2.5M offering, first year
-            </p>
-            <h2 className="font-serif text-2xl font-semibold md:text-3xl">
-              ~55–65% lower all-in cost than a traditional Reg D raise.
-            </h2>
+        <section id="cost" className="public-section scroll-mt-24">
+          <div className="public-section-header">
+            <span className="public-section-label">§ II</span>
+            <h2 className="public-section-title">~55–65% lower all-in cost than a traditional Reg D raise.</h2>
           </div>
-          <Card className="border-border">
-            <CardContent className="p-0">
-              <div className="grid grid-cols-3 border-b border-border bg-muted/40 px-5 py-3">
-                <p className="font-mono text-[0.6rem] uppercase tracking-wider text-muted-foreground">Cost item</p>
-                <p className="font-mono text-[0.6rem] uppercase tracking-wider text-muted-foreground">
-                  Traditional Reg D 506(c)
-                </p>
-                <p className="font-mono text-[0.6rem] uppercase tracking-wider text-primary font-semibold">
-                  EcoXchange
-                </p>
-              </div>
-              {costRows.map((row, i) => (
-                <div
-                  key={row.item}
-                  className={`grid grid-cols-3 px-5 py-3 ${
-                    i < costRows.length - 1 ? "border-b border-border/60" : ""
-                  }`}
-                >
-                  <p className="text-sm text-muted-foreground">{row.item}</p>
-                  <p className="text-sm text-muted-foreground">{row.traditional}</p>
-                  <p className="text-sm font-semibold text-primary">{row.ecox}</p>
+          <Card className="public-table-card border-border">
+            <CardContent className="p-0 overflow-x-auto">
+              <div className="min-w-[720px]">
+                <div className="public-table-head grid grid-cols-3 border-b border-border px-5 py-3">
+                  <p className="font-mono text-[0.6rem] uppercase tracking-wider">Cost item</p>
+                  <p className="font-mono text-[0.6rem] uppercase tracking-wider">Traditional Reg D 506(c)</p>
+                  <p className="font-mono text-[0.6rem] uppercase tracking-wider">EcoXchange</p>
                 </div>
-              ))}
-              <div className="grid grid-cols-3 border-t-2 border-primary/20 bg-primary/5 px-5 py-4">
-                <p className="text-sm font-semibold text-foreground">All-in cost (Year 1)</p>
-                <p className="text-sm font-semibold text-foreground">$325K–$500K</p>
-                <p className="text-sm font-bold text-primary">~$125K–$175K</p>
+                {costRows.map((row, i) => (
+                  <div
+                    key={row.item}
+                    className={`grid grid-cols-3 px-5 py-3 ${
+                      i < costRows.length - 1 ? "border-b border-border/60" : ""
+                    }`}
+                  >
+                    <p className="text-sm text-muted-foreground">{row.item}</p>
+                    <p className="text-sm text-muted-foreground">{row.traditional}</p>
+                    <p className="text-sm font-semibold text-primary">{row.ecox}</p>
+                  </div>
+                ))}
+                <div className="public-total-row grid grid-cols-3 border-t-2 border-primary/20 px-5 py-4">
+                  <p className="text-sm font-semibold text-foreground">All-in cost (Year 1)</p>
+                  <p className="text-sm font-semibold text-foreground">$325K–$500K</p>
+                  <p className="text-sm font-bold text-primary">~$125K–$175K</p>
+                </div>
               </div>
             </CardContent>
           </Card>
