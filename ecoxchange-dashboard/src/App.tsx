@@ -3,6 +3,9 @@ import { Header } from "./components/Header.js";
 import { Portfolio } from "./pages/Portfolio.js";
 import { ProjectDetail } from "./pages/ProjectDetail.js";
 import { VerificationDetail } from "./pages/VerificationDetail.js";
+import { OnboardingWizard } from "./pages/OnboardingWizard.js";
+import { OnboardingStatus } from "./pages/OnboardingStatus.js";
+import { OnboardingReport } from "./pages/OnboardingReport.js";
 
 export function App() {
   return (
@@ -17,6 +20,9 @@ export function App() {
               path="/project/:id/verification/:period"
               element={<VerificationDetail />}
             />
+            <Route path="/onboard" element={<OnboardingWizard />} />
+            <Route path="/onboard/status/:id" element={<OnboardingStatus />} />
+            <Route path="/onboard/report/:id" element={<OnboardingReport />} />
           </Routes>
         </main>
       </div>
