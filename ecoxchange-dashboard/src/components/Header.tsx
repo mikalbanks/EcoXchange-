@@ -14,6 +14,12 @@ export function Header() {
         </Link>
         <div className="flex items-center gap-3">
           <Link
+            to="/reference"
+            className="hidden sm:inline text-sm text-paleGreen hover:text-white transition-colors duration-150"
+          >
+            Reference Library
+          </Link>
+          <Link
             to="/onboard"
             className="hidden sm:inline text-sm text-paleGreen hover:text-white transition-colors duration-150"
           >

@@ -6,6 +6,8 @@ import { VerificationDetail } from "./pages/VerificationDetail.js";
 import { OnboardingWizard } from "./pages/OnboardingWizard.js";
 import { OnboardingStatus } from "./pages/OnboardingStatus.js";
 import { OnboardingReport } from "./pages/OnboardingReport.js";
+import { ReferenceLibrary } from "./pages/ReferenceLibrary.js";
+import { ReferenceDetail } from "./pages/ReferenceDetail.js";
 
 export function App() {
   return (
@@ -23,6 +25,8 @@ export function App() {
             <Route path="/onboard" element={<OnboardingWizard />} />
             <Route path="/onboard/status/:id" element={<OnboardingStatus />} />
             <Route path="/onboard/report/:id" element={<OnboardingReport />} />
+            <Route path="/reference" element={<ReferenceLibrary />} />
+            <Route path="/reference/:id" element={<ReferenceDetail />} />
           </Routes>
         </main>
       </div>

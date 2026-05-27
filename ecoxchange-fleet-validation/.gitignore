@@ -1,0 +1,16 @@
+node_modules/
+dist/
+.env
+tsconfig.tsbuildinfo
+data/uspvdb/*
+data/eia860/*
+data/eia923/*
+data/pvdaq/*
+data/*.json
+!data/uspvdb/.gitkeep
+!data/eia860/.gitkeep
+!data/eia923/.gitkeep
+!data/pvdaq/.gitkeep
+reports/*.json
+reports/*.md
+!reports/.gitkeep
