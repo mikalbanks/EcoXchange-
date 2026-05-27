@@ -13,6 +13,12 @@ export function Header() {
           <span className="font-heading text-xl">EcoXchange</span>
         </Link>
         <div className="flex items-center gap-3">
+          <Link
+            to="/onboard"
+            className="hidden sm:inline text-sm text-paleGreen hover:text-white transition-colors duration-150"
+          >
+            Developer Onboarding
+          </Link>
           <span
             className={`inline-flex items-center gap-2 rounded-full px-2 py-0.5 text-xs font-medium ${
               liveMode
