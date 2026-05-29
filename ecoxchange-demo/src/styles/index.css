@@ -1,0 +1,34 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  body {
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    line-height: 1.5;
+  }
+
+  /* Editorial italic is the brand voice — keep weights honest. */
+  h1,
+  h2,
+  h3 {
+    font-family: theme("fontFamily.display");
+    font-style: italic;
+    font-weight: 400;
+    color: theme("colors.eco.text-primary");
+  }
+}
+
+@layer components {
+  .tracking-tag {
+    letter-spacing: theme("letterSpacing.tag");
+  }
+  .rule-thin {
+    border-bottom: 1px solid theme("colors.eco.line");
+  }
+  .figure-frame {
+    border: 1px solid theme("colors.eco.border");
+    background: theme("colors.white");
+  }
+}
