@@ -1,9 +1,11 @@
 import type { ReactNode } from "react";
+import { MetricLabel, type MetricKey } from "../ui/MetricExplainer.js";
 
 export interface StatItem {
   label: string;
   value: ReactNode;
   sublabel?: ReactNode;
+  metric?: MetricKey;
 }
 
 interface Props {
@@ -18,7 +20,11 @@ export function StatBand({ stats }: Props) {
           {stats.map((s) => (
             <div key={s.label} className="space-y-2">
               <p className="font-mono text-[10px] uppercase tracking-tag text-eco-text-light">
-                {s.label}
+                {s.metric ? (
+                  <MetricLabel metric={s.metric}>{s.label}</MetricLabel>
+                ) : (
+                  s.label
+                )}
               </p>
               <p className="font-body text-eco-lime text-[36px] sm:text-[42px] leading-none">
                 {s.value}

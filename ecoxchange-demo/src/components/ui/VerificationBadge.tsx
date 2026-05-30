@@ -19,6 +19,15 @@ export function VerificationBadge({
   periodStart,
   flaggedTail = "REVIEW PENDING",
 }: Props) {
+  if (status === "data_required") {
+    return (
+      <span className="inline-flex items-center gap-2 font-mono text-[11px] sm:text-[12px] uppercase tracking-tag text-eco-text-muted">
+        <span aria-hidden>?</span>
+        <span>DATA REQUIRED</span>
+      </span>
+    );
+  }
+
   if (status === "flagged") {
     return (
       <span className="inline-flex items-center gap-2 font-mono text-[11px] sm:text-[12px] uppercase tracking-tag text-eco-flagged">

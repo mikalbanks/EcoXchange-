@@ -92,7 +92,12 @@ export function ProductionChart({
 
   return (
     <div>
-      <div className="w-full" style={{ height: 360 }}>
+      <div
+        className="w-full"
+        style={{ height: 360 }}
+        role="img"
+        aria-label="Monthly solar production chart comparing inverter production to expected production"
+      >
         <ResponsiveContainer width="100%" height="100%">
           <ComposedChart
             data={data}

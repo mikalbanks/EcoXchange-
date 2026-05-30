@@ -14,11 +14,16 @@ export function formatUsd(n: number): string {
   return usd0.format(n);
 }
 
+export function formatNullableUsd(n: number | null | undefined): string {
+  return typeof n === "number" ? formatUsd(n) : "Data required";
+}
+
 export function formatUsdRate(n: number): string {
   return usdDecimal.format(n);
 }
 
-export function formatKwh(n: number): string {
+export function formatKwh(n: number | null | undefined): string {
+  if (typeof n !== "number") return "Data required";
   return `${Math.round(n).toLocaleString("en-US")} kWh`;
 }
 
@@ -33,9 +38,23 @@ export function formatKwhCompact(n: number): string {
   return `${Math.round(n)}`;
 }
 
-export function formatPct(n: number, digits = 1): string {
+export function formatPct(n: number | null | undefined, digits = 1): string {
+  if (typeof n !== "number") return "Data required";
   const sign = n > 0 ? "+" : "";
   return `${sign}${n.toFixed(digits)}%`;
+}
+
+export function formatPercentPlain(n: number | null | undefined, digits = 1): string {
+  if (typeof n !== "number") return "Data required";
+  return `${n.toFixed(digits)}%`;
+}
+
+export function formatRevenueType(value: string | null | undefined): string {
+  if (!value) return "Revenue type not connected";
+  return value
+    .split("_")
+    .map((part) => part.charAt(0).toUpperCase() + part.slice(1))
+    .join(" ");
 }
 
 const MONTH_LONG = [

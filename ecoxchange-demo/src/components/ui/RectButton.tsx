@@ -50,7 +50,7 @@ export function RectButton(props: Props) {
   const content = (
     <>
       <span>{props.children}</span>
-      {props.arrow ? <span aria-hidden>→</span> : null}
+      {props.arrow ? <span aria-hidden>-&gt;</span> : null}
     </>
   );
 

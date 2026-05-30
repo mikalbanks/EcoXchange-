@@ -1,56 +1,51 @@
 # @ecoxchange/demo
 
-Public investor dashboard demo for **demo.ecoxchange.net**. JSON-only, no auth, no backend — a Vite + React SPA that lifts the ecoxchange.net editorial brand (Playfair Display italic + IBM Plex Mono + dark green stat bands + rectangular CTAs) and walks a visitor through the Savannah 5MW community solar reference deal.
+Public EcoXchange demo portal for **demo.ecoxchange.net**. This is a Vite + React SPA deployed as a Cloudflare Worker. The demo is solar-only and focuses on one-project / one-SPV digital securities for production-verified solar yield.
 
 ## Pages
 
 | Route | Purpose |
 |---|---|
-| `/` | Portfolio overview — investor stat band + Savannah project card |
-| `/project/demo-savannah-5mw` | Project detail with monthly production chart + verification ledger |
-| `/project/demo-savannah-5mw/verification/2024-04-01` | Three-way reconciliation figure + supporting data |
-
-The header has a small **Demo · Verified/Flagged** toggle. Flipping to "Flagged" swaps the underlying JSON to a -20% deviation scenario so reviewers can see how the engine surfaces issues — bars turn amber, badges become `▲ FLAGGED`, the flag-reason callout appears.
+| `/` | Intro landing page for RIAs, solar developers, investors, and partners |
+| `/portfolio` | Investor portfolio and aggregation dashboard |
+| `/projects` | Supabase-backed solar project marketplace with filters |
+| `/methodology` | Verification engine explainer |
+| `/rias` | RIA workflow and dashboard surface |
+| `/developers` | Solar project developer workflow |
+| `/onboard` | Static demo request-access / solar project intake page |
+| `/project/:id` | Project detail with production chart and verification ledger |
+| `/project/:id/verification/:period` | Three-way reconciliation detail |
+| `/reference` | Demo route index |
 
 ## Scripts
 
-```
+```bash
 npm install
-npm run dev         # http://localhost:5173
-npm run build       # tsc -b && vite build → ./dist
-npm run preview     # serve dist on :4173
-npm run check       # tsc -b --noEmit
-npm run deploy:dry  # build + wrangler deploy --dry-run (no production push)
-npm run deploy      # build + wrangler deploy (publishes to demo.ecoxchange.net)
+npm run dev
+npm run check
+npm run build
+npm run smoke:supabase
+npm run deploy:dry
+npm run deploy
 ```
-
-## Deployment
-
-`wrangler.jsonc` is wired to deploy as a Cloudflare Worker named `ecoxchange-demo` with a `custom_domain` route on **demo.ecoxchange.net**. Cloudflare auto-issues the TLS cert on first deploy. The `ecoxchange.net` zone must be on the same Cloudflare account as the existing `ecoxchange1` Worker — based on the root `wrangler.jsonc`, it is.
-
-After the first successful `npm run deploy`, the demo is live at:
-
-- **Production:** https://demo.ecoxchange.net
-- **Workers preview:** `https://ecoxchange-demo.<account>.workers.dev`
-
-## Brand tokens
-
-All design tokens live in `tailwind.config.ts` under the `eco.*` color scale and the `display` / `body` / `mono` font families. Google Fonts are loaded from a single `<link>` in `index.html` — no font bundling.
-
-| Token | Hex | Used for |
-|---|---|---|
-| `eco-dark` | `#1B4D35` | Primary CTAs, table headers, dark stat band |
-| `eco-lime` | `#76C945` | Large stat numbers on dark bg, accents |
-| `eco-olive` | `#7A9B6D` | Section tags (`§ I`), mono labels |
-| `eco-flagged` | `#C17B1A` | Amber for flagged status |
-| `eco-pale` | `#E8F0EA` | Subtle row-hover fill |
 
 ## Data
 
-Two JSON files under `src/data/` carry the demo backtest — `demo-savannah.json` (verified) and `demo-savannah-flagged.json` (×0.78 inverter, status=flagged). Copied verbatim from `../ecoxchange-dashboard/src/data/`; intentionally duplicated to keep this package self-contained.
+When `VITE_SUPABASE_URL` and `VITE_SUPABASE_ANON_KEY` are configured, the app queries Supabase `projects` and `verification_records` through `@supabase/supabase-js`.
 
-## What this is not
+- `projects` is filtered to `status = active`.
+- Project records are further limited to solar records when a technology/category field exists.
+- `verification_records.expected_kwh` is treated as the persisted satellite/physics expected-production output.
+- The frontend reruns the pure reconciliation decision from inverter, utility, expected production, and `tolerance_config`.
+- If a persisted status differs from the recalculated status, the recalculated status is shown and a quiet mismatch note appears.
+- Projects without usable expected and inverter data are shown as `Data Required` or `Not Yet Verified`.
 
-- Not authenticated. Not gated. Public by design.
-- Not wallet-aware. No tokens, no chain IDs, no Web3 wording (acceptance #12).
-- Not wired to Supabase or the reconciliation engine — the spec called for a static demo that loads under 2 s on a cold cache.
+When Supabase is not configured, the Savannah 5MW community solar backtest remains the self-contained fallback dataset. The header demo toggle switches between verified and flagged fallback records only.
+
+## Deployment
+
+`wrangler.jsonc` deploys this package as the Cloudflare Worker named `ecoxchange-demo` with a custom domain on **demo.ecoxchange.net**.
+
+## Supabase Notes
+
+No schema changes are required in this pass. The Supabase Data API must expose the relevant tables to the publishable/anon key with appropriate RLS policies for read-only demo access.
