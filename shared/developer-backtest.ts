@@ -172,3 +172,54 @@ export interface BacktestCompletePayload {
   monthly_results: MonthlyBacktestResult[];
   generated_at: string;
 }
+
+// ── Report request (client → server, PDF generation) ─────────────────────────
+
+export const verificationStatusSchema = z.enum(["verified", "flagged", "pending"]);
+
+export const monthlyBacktestResultSchema = z.object({
+  month: z.string(),
+  expected_kwh: z.number(),
+  simulated_inverter_kwh: z.number(),
+  deviation_pct: z.number(),
+  status: verificationStatusSchema,
+  poa_irradiance_kwh_m2: z.number(),
+  cell_temperature_avg_c: z.number(),
+  capacity_factor: z.number(),
+  ghi_kwh_m2: z.number(),
+});
+
+export const backtestSummarySchema = z.object({
+  annual_expected_kwh: z.number(),
+  annual_capacity_factor: z.number(),
+  avg_monthly_yield_kwh: z.number(),
+  peak_month: z.string(),
+  low_month: z.string(),
+  peak_to_trough_ratio: z.number(),
+  months_verified: z.number(),
+  months_flagged: z.number(),
+  expected_engine: z.string(),
+  estimated_annual_revenue: z.number().optional(),
+  estimated_monthly_yield_usd: z.number().optional(),
+});
+
+export const backtestCompletePayloadSchema = z.object({
+  backtest_id: z.string(),
+  project_id: z.string(),
+  project: developerIntakeSchema,
+  summary: backtestSummarySchema,
+  monthly_results: z.array(monthlyBacktestResultSchema).min(1),
+  generated_at: z.string(),
+});
+
+/**
+ * POST /api/developer/report body — the full completed backtest payload plus an
+ * optional override for whether the Revenue page is included (defaults to
+ * "present when a PPA rate is set").
+ */
+export const reportRequestSchema = z.object({
+  payload: backtestCompletePayloadSchema,
+  include_revenue: z.boolean().optional(),
+});
+
+export type ReportRequest = z.infer<typeof reportRequestSchema>;
