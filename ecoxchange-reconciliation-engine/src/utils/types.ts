@@ -18,6 +18,11 @@ export interface DailyIrradiance {
   ghi_kwh_m2: number;
   dni_kwh_m2: number;
   dhi_kwh_m2: number;
+  // Required by the pvlib expected-generation service (temperature model).
+  // Optional here so older callers / cached records remain valid; the pvlib
+  // client supplies defaults (20°C / 1 m/s) when absent.
+  temp_air_c?: number;
+  wind_speed_m_s?: number;
 }
 
 export interface ExpectedGenerationInput extends ProjectConfig {
@@ -42,7 +47,8 @@ export interface ExpectedGenerationOutput {
     degradation_factor: number;
     system_losses: number;
     albedo: number;
-    transposition_model: "hay_davies";
+    // "hay_davies" for the in-process model, "perez" for the pvlib service.
+    transposition_model: string;
   };
 }
 

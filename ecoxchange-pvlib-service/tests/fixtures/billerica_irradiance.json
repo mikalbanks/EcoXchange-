@@ -1,0 +1,26 @@
+{
+  "name": "Billerica MA 2MW",
+  "latitude": 42.56,
+  "longitude": -71.27,
+  "project": {
+    "capacity_kw_dc": 2000,
+    "tilt_deg": 25,
+    "azimuth_deg": 180,
+    "commissioning_date": "2023-01-01"
+  },
+  "note": "Monthly NASA POWER climatological daily means (kWh/m2/day). Expanded to a full year of daily records by tests.fixtures.load_year.",
+  "monthly_normals": [
+    {"month": 1,  "ghi_kwh_m2": 1.9, "dni_kwh_m2": 3.2, "dhi_kwh_m2": 0.7, "temp_air_c": -3.0, "wind_speed_m_s": 3.6},
+    {"month": 2,  "ghi_kwh_m2": 2.8, "dni_kwh_m2": 3.9, "dhi_kwh_m2": 1.0, "temp_air_c": -1.5, "wind_speed_m_s": 3.7},
+    {"month": 3,  "ghi_kwh_m2": 3.9, "dni_kwh_m2": 4.4, "dhi_kwh_m2": 1.4, "temp_air_c": 3.0,  "wind_speed_m_s": 3.8},
+    {"month": 4,  "ghi_kwh_m2": 4.8, "dni_kwh_m2": 4.9, "dhi_kwh_m2": 1.7, "temp_air_c": 9.0,  "wind_speed_m_s": 3.6},
+    {"month": 5,  "ghi_kwh_m2": 5.5, "dni_kwh_m2": 5.3, "dhi_kwh_m2": 2.0, "temp_air_c": 15.0, "wind_speed_m_s": 3.2},
+    {"month": 6,  "ghi_kwh_m2": 5.9, "dni_kwh_m2": 5.6, "dhi_kwh_m2": 2.1, "temp_air_c": 20.0, "wind_speed_m_s": 3.0},
+    {"month": 7,  "ghi_kwh_m2": 6.0, "dni_kwh_m2": 5.8, "dhi_kwh_m2": 2.1, "temp_air_c": 23.0, "wind_speed_m_s": 2.9},
+    {"month": 8,  "ghi_kwh_m2": 5.2, "dni_kwh_m2": 5.4, "dhi_kwh_m2": 1.8, "temp_air_c": 22.0, "wind_speed_m_s": 2.8},
+    {"month": 9,  "ghi_kwh_m2": 4.2, "dni_kwh_m2": 5.0, "dhi_kwh_m2": 1.4, "temp_air_c": 18.0, "wind_speed_m_s": 3.0},
+    {"month": 10, "ghi_kwh_m2": 2.9, "dni_kwh_m2": 4.2, "dhi_kwh_m2": 1.0, "temp_air_c": 11.5, "wind_speed_m_s": 3.2},
+    {"month": 11, "ghi_kwh_m2": 1.9, "dni_kwh_m2": 3.2, "dhi_kwh_m2": 0.7, "temp_air_c": 5.5,  "wind_speed_m_s": 3.4},
+    {"month": 12, "ghi_kwh_m2": 1.6, "dni_kwh_m2": 2.9, "dhi_kwh_m2": 0.6, "temp_air_c": -0.5, "wind_speed_m_s": 3.6}
+  ]
+}

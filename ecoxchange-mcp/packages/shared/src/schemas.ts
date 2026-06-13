@@ -66,6 +66,7 @@ export const IrradianceRecordSchema = z.object({
   ghi_kwh_m2: z.number(),
   poa_kwh_m2: z.number().optional(),
   air_temp_c: z.number().optional(),
+  wind_speed_m_s: z.number().optional(),
   source: IrradianceSourceNameSchema,
   data_version: z.string().optional(),
 });

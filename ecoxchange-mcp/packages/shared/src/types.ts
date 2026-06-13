@@ -37,6 +37,8 @@ export interface IrradianceRecord {
   ghi_kwh_m2: number;
   poa_kwh_m2?: number;
   air_temp_c?: number;
+  // Daily-mean 10m wind speed (m/s); feeds the pvlib temperature model.
+  wind_speed_m_s?: number;
   source: IrradianceSourceName;
   data_version?: string;
 }
