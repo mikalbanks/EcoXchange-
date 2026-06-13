@@ -33,6 +33,7 @@ import {
 } from "./queue-data";
 import multer from "multer";
 import { registerDeveloperBacktestRoutes } from "./routes/developer-backtest";
+import { isSupabaseConfigured, probeSupabase } from "./services/backtest-supabase-writer";
 import { registerDeveloperReportRoutes } from "./routes/developer-report";
 
 const SessionStore = MemoryStore(session);
@@ -74,8 +75,33 @@ export async function registerRoutes(
     })
   );
 
-  app.get("/api/health", (_req, res) => {
-    res.json({ ok: true, uptime: process.uptime() });
+  app.get("/api/health", async (_req, res) => {
+    const pvlibUrl = process.env.PVLIB_SERVICE_URL ?? "http://localhost:3004";
+    const irradianceUrl =
+      process.env.IRRADIANCE_MCP_URL ?? "http://localhost:3002/mcp";
+    // The MCP server exposes /health alongside its /mcp transport endpoint.
+    const irradianceHealth = irradianceUrl.replace(/\/mcp\/?$/, "") + "/health";
+
+    const probe = async (url: string): Promise<"ok" | "unreachable"> => {
+      try {
+        const r = await fetch(url, { signal: AbortSignal.timeout(2000) });
+        return r.ok ? "ok" : "unreachable";
+      } catch {
+        return "unreachable";
+      }
+    };
+
+    const [pvlib, irradiance, supabase] = await Promise.all([
+      probe(`${pvlibUrl}/health`),
+      probe(irradianceHealth),
+      isSupabaseConfigured() ? probeSupabase() : Promise.resolve("not_configured"),
+    ]);
+
+    res.json({
+      ok: true,
+      uptime: process.uptime(),
+      services: { pvlib, irradiance, supabase },
+    });
   });
 
   const requireAuth = (req: any, res: any, next: any) => {

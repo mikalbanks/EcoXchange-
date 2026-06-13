@@ -11,6 +11,11 @@
  * Loop logic mirrors ecoxchange-reconciliation-engine/src/backtest/runner.ts.
  */
 import { randomUUID } from "crypto";
+import {
+  isSupabaseConfigured,
+  persistBacktest,
+  type ReconciliationRow,
+} from "./backtest-supabase-writer";
 import { fetchNasaPowerDaily } from "../../ecoxchange-reconciliation-engine/src/ingestion/nasa-power.js";
 import { calculateExpectedGeneration } from "../../ecoxchange-reconciliation-engine/src/physics/expected-generation.js";
 import { getExpectedGeneration } from "../../ecoxchange-reconciliation-engine/src/physics/pvlib-client.js";
@@ -177,6 +182,9 @@ export async function streamBacktest(
   const rng = seededRng(0xc0ffee);
 
   const results: MonthlyBacktestResult[] = [];
+  // Per-month reconciliation context retained for optional Supabase persistence
+  // (the shared MonthlyBacktestResult intentionally omits the full verdict).
+  const reconciliations: ReconciliationRow[] = [];
   let usedPvlib = false;
   let usedFallback = false;
 
@@ -281,6 +289,13 @@ export async function streamBacktest(
       ghi_kwh_m2: round2(irradiance.monthly_total_ghi),
     };
     results.push(monthResult);
+    reconciliations.push({
+      month: monthLabel,
+      period_start: m.start,
+      period_end: m.end,
+      verification,
+      simulated_utility_kwh,
+    });
 
     emit({
       stage: "running_reconciliation",
@@ -290,17 +305,37 @@ export async function streamBacktest(
     });
   }
 
+  const summary = buildSummary(results, request, usedPvlib, usedFallback);
+
+  // Env-gated persistence: only writes when SUPABASE_URL +
+  // SUPABASE_SERVICE_ROLE_KEY are set; otherwise the backtest stays in-memory.
+  let persistedProjectId: string | null = null;
+  if (!signal?.aborted && isSupabaseConfigured()) {
+    emit({
+      stage: "generating_report",
+      progress_pct: 94,
+      message: "Persisting verification records to database...",
+    });
+    const outcome = await persistBacktest({
+      request,
+      results,
+      summary,
+      reconciliations,
+      windowEndMonth: end_month,
+    });
+    persistedProjectId = outcome.projectId;
+  }
+
   emit({
     stage: "generating_report",
     progress_pct: 96,
     message: "Compiling verification report...",
   });
 
-  const summary = buildSummary(results, request, usedPvlib, usedFallback);
   const backtest_id = randomUUID();
   const result: BacktestResult = {
     backtest_id,
-    project_id: randomUUID(),
+    project_id: persistedProjectId ?? randomUUID(),
     project: request.project,
     summary,
     monthly_results: results,
