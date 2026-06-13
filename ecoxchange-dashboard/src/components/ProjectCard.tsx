@@ -6,7 +6,7 @@ import { formatMonthLong, formatMwh, formatUsd } from "../utils/formatters.js";
 
 export function ProjectCard({ project }: { project: PortfolioProject }) {
   return (
-    <div className="bg-white rounded-lg shadow-sm border border-paleGreen/60 p-6 flex flex-col gap-4">
+    <div className="bg-white rounded-xl shadow-sm border border-paleGreen/60 p-6 flex flex-col gap-4 transition-transform transition-shadow duration-150 hover:-translate-y-0.5 hover:shadow-md">
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div>
           <h2 className="font-heading text-2xl text-darkBg">{project.name}</h2>
@@ -44,7 +44,7 @@ export function ProjectCard({ project }: { project: PortfolioProject }) {
       </div>
 
       <Link
-        to={`/project/${project.id}`}
+        to={`/investor/project/${project.id}`}
         className="self-start inline-flex items-center gap-1 text-medGreen hover:text-darkBg font-medium"
       >
         View Project <ChevronRight className="h-4 w-4" />

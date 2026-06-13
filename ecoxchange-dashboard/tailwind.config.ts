@@ -26,15 +26,22 @@ export default {
           "Arial",
           "sans-serif",
         ],
+        mono: ["IBM Plex Mono", "SF Mono", "Fira Code", "monospace"],
       },
       keyframes: {
         "fade-in": {
           "0%": { opacity: "0", transform: "translateY(4px)" },
           "100%": { opacity: "1", transform: "translateY(0)" },
         },
+        "badge-pulse": {
+          "0%": { transform: "scale(0.8)", opacity: "0.4" },
+          "70%": { transform: "scale(1.06)", opacity: "1" },
+          "100%": { transform: "scale(1)", opacity: "1" },
+        },
       },
       animation: {
         "fade-in": "fade-in 250ms ease-out both",
+        "badge-pulse": "badge-pulse 600ms ease-out both",
       },
     },
   },
