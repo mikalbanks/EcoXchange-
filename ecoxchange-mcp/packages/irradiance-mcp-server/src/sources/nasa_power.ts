@@ -15,6 +15,7 @@ interface NasaPowerResponse {
     parameter?: {
       ALLSKY_SFC_SW_DWN?: Record<string, number>;
       T2M?: Record<string, number>;
+      WS10M?: Record<string, number>;
     };
   };
 }
@@ -29,7 +30,7 @@ export class NasaPowerSource implements IrradianceSource {
       method: "GET",
       url: `${NASA_POWER_BASE_URL}/daily/point`,
       params: {
-        parameters: "ALLSKY_SFC_SW_DWN,T2M",
+        parameters: "ALLSKY_SFC_SW_DWN,T2M,WS10M",
         community: "RE",
         longitude: params.lon,
         latitude: params.lat,
@@ -41,6 +42,7 @@ export class NasaPowerSource implements IrradianceSource {
 
     const ghiBucket = data.properties?.parameter?.ALLSKY_SFC_SW_DWN ?? {};
     const tempBucket = data.properties?.parameter?.T2M ?? {};
+    const windBucket = data.properties?.parameter?.WS10M ?? {};
     const usePoa =
       params.tilt_deg !== undefined && params.azimuth_deg !== undefined;
 
@@ -54,6 +56,11 @@ export class NasaPowerSource implements IrradianceSource {
         rawTemp === undefined || rawTemp === NASA_POWER_MISSING_SENTINEL
           ? undefined
           : rawTemp;
+      const rawWind = windBucket[key];
+      const wind =
+        rawWind === undefined || rawWind === NASA_POWER_MISSING_SENTINEL
+          ? undefined
+          : rawWind;
 
       const record: IrradianceRecord = {
         lat: params.lat,
@@ -64,6 +71,7 @@ export class NasaPowerSource implements IrradianceSource {
         data_version: "POWER/daily",
       };
       if (temp !== undefined) record.air_temp_c = temp;
+      if (wind !== undefined) record.wind_speed_m_s = wind;
       if (usePoa && !missing) {
         record.poa_kwh_m2 = ghiToPoa({
           ghi_kwh_m2: ghi,

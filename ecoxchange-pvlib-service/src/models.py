@@ -1,0 +1,95 @@
+"""Pydantic request/response models for the expected-generation endpoint."""
+
+from __future__ import annotations
+
+from datetime import date
+from typing import Any, Optional
+
+from pydantic import BaseModel, Field
+
+
+class DailyWeatherInput(BaseModel):
+    """One day of meteorological data from the irradiance MCP server."""
+
+    date: date
+    ghi_kwh_m2: float = Field(..., description="Global Horizontal Irradiance (kWh/m²/day)")
+    dni_kwh_m2: float = Field(..., description="Direct Normal Irradiance (kWh/m²/day)")
+    dhi_kwh_m2: float = Field(..., description="Diffuse Horizontal Irradiance (kWh/m²/day)")
+    temp_air_c: float = Field(default=20.0, description="Ambient air temperature (°C, daily mean)")
+    wind_speed_m_s: float = Field(default=1.0, description="Wind speed at 10m (m/s, daily mean)")
+
+
+class ProjectSystemInput(BaseModel):
+    """Solar PV system configuration — matches the projects table schema."""
+
+    latitude: float = Field(..., ge=-90, le=90)
+    longitude: float = Field(..., ge=-180, le=180)
+    capacity_kw_dc: float = Field(..., gt=0, description="Nameplate DC capacity in kW")
+    tilt_deg: float = Field(..., ge=0, le=90, description="Panel tilt angle in degrees")
+    azimuth_deg: float = Field(..., ge=0, le=360, description="Panel azimuth (180 = south)")
+    module_efficiency: float = Field(default=0.20, ge=0.05, le=0.30)
+    system_losses: float = Field(
+        default=0.14,
+        ge=0.0,
+        le=0.50,
+        description="Non-temperature system losses (soiling, wiring, mismatch, etc.)",
+    )
+    degradation_rate: float = Field(
+        default=0.0075, ge=0.0, le=0.05, description="Annual degradation rate"
+    )
+    commissioning_date: date
+
+    # Optional fields for higher-fidelity modeling.
+    module_type: Optional[str] = Field(
+        default="monocrystalline",
+        description="Module technology: monocrystalline, polycrystalline, thin_film, cdte",
+    )
+    inverter_efficiency: Optional[float] = Field(
+        default=0.96, ge=0.80, le=0.99, description="Weighted CEC inverter efficiency"
+    )
+    dc_ac_ratio: Optional[float] = Field(
+        default=1.2,
+        ge=0.8,
+        le=2.0,
+        description="DC/AC ratio (DC nameplate / AC inverter rating)",
+    )
+    albedo: Optional[float] = Field(
+        default=0.2,
+        ge=0.0,
+        le=0.9,
+        description="Ground reflectance (0.2 = vegetation, 0.5 = concrete, 0.8 = snow)",
+    )
+    racking_type: Optional[str] = Field(
+        default="open_rack",
+        description="Mounting type: open_rack, roof_mount, single_axis_tracker",
+    )
+
+
+class ExpectedGenerationRequest(BaseModel):
+    """Full request to calculate expected generation."""
+
+    project: ProjectSystemInput
+    daily_weather: list[DailyWeatherInput]
+
+
+class MonthlyBreakdown(BaseModel):
+    """Monthly expected generation breakdown."""
+
+    month: str  # "2024-01"
+    expected_kwh: float
+    poa_irradiance_kwh_m2: float
+    cell_temperature_avg_c: float
+    performance_ratio: float
+    capacity_factor: float
+    days_in_month: int
+    days_with_data: int
+
+
+class ExpectedGenerationResponse(BaseModel):
+    """Full response from the expected generation calculation."""
+
+    total_expected_kwh: float
+    monthly_breakdown: list[MonthlyBreakdown]
+    system_summary: dict[str, Any]
+    model_metadata: dict[str, Any]
+    warnings: list[str]

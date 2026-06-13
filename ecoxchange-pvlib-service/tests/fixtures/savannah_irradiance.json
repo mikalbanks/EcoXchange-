@@ -1,0 +1,26 @@
+{
+  "name": "Savannah GA 5MW",
+  "latitude": 32.08,
+  "longitude": -81.09,
+  "project": {
+    "capacity_kw_dc": 5000,
+    "tilt_deg": 20,
+    "azimuth_deg": 180,
+    "commissioning_date": "2023-01-01"
+  },
+  "note": "Monthly NASA POWER climatological daily means (kWh/m2/day). Expanded to a full year of daily records by tests.fixtures.load_year.",
+  "monthly_normals": [
+    {"month": 1,  "ghi_kwh_m2": 3.0, "dni_kwh_m2": 4.3, "dhi_kwh_m2": 0.9, "temp_air_c": 9.0,  "wind_speed_m_s": 2.6},
+    {"month": 2,  "ghi_kwh_m2": 3.8, "dni_kwh_m2": 4.8, "dhi_kwh_m2": 1.1, "temp_air_c": 11.0, "wind_speed_m_s": 2.7},
+    {"month": 3,  "ghi_kwh_m2": 4.9, "dni_kwh_m2": 5.4, "dhi_kwh_m2": 1.4, "temp_air_c": 14.5, "wind_speed_m_s": 2.8},
+    {"month": 4,  "ghi_kwh_m2": 5.9, "dni_kwh_m2": 6.2, "dhi_kwh_m2": 1.6, "temp_air_c": 18.5, "wind_speed_m_s": 2.7},
+    {"month": 5,  "ghi_kwh_m2": 6.3, "dni_kwh_m2": 6.4, "dhi_kwh_m2": 1.8, "temp_air_c": 23.0, "wind_speed_m_s": 2.4},
+    {"month": 6,  "ghi_kwh_m2": 6.3, "dni_kwh_m2": 6.2, "dhi_kwh_m2": 2.0, "temp_air_c": 26.5, "wind_speed_m_s": 2.2},
+    {"month": 7,  "ghi_kwh_m2": 6.1, "dni_kwh_m2": 5.9, "dhi_kwh_m2": 2.1, "temp_air_c": 28.0, "wind_speed_m_s": 2.1},
+    {"month": 8,  "ghi_kwh_m2": 5.7, "dni_kwh_m2": 5.7, "dhi_kwh_m2": 1.9, "temp_air_c": 27.5, "wind_speed_m_s": 2.0},
+    {"month": 9,  "ghi_kwh_m2": 5.0, "dni_kwh_m2": 5.4, "dhi_kwh_m2": 1.6, "temp_air_c": 25.0, "wind_speed_m_s": 2.2},
+    {"month": 10, "ghi_kwh_m2": 4.4, "dni_kwh_m2": 5.6, "dhi_kwh_m2": 1.2, "temp_air_c": 19.5, "wind_speed_m_s": 2.4},
+    {"month": 11, "ghi_kwh_m2": 3.5, "dni_kwh_m2": 5.0, "dhi_kwh_m2": 1.0, "temp_air_c": 14.5, "wind_speed_m_s": 2.5},
+    {"month": 12, "ghi_kwh_m2": 2.9, "dni_kwh_m2": 4.2, "dhi_kwh_m2": 0.9, "temp_air_c": 10.5, "wind_speed_m_s": 2.6}
+  ]
+}

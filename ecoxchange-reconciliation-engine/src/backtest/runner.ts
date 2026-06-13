@@ -1,11 +1,69 @@
 import { calculateExpectedGeneration } from "../physics/expected-generation.js";
+import { getExpectedGeneration } from "../physics/pvlib-client.js";
 import { reconcile } from "../reconciliation/reconcile.js";
 import { fetchNasaPowerDaily } from "../ingestion/nasa-power.js";
 import { DEFAULT_TOLERANCES, type ToleranceConfig } from "../config/tolerances.js";
 import { ENGINE_VERSION } from "../config/constants.js";
 import { monthRange } from "../utils/dates.js";
 import { randomNormal, seededRng } from "../utils/math.js";
-import type { ProjectConfig, VerificationStatus } from "../utils/types.js";
+import type {
+  DailyIrradiance,
+  ExpectedGenerationOutput,
+  ProjectConfig,
+  VerificationStatus,
+} from "../utils/types.js";
+
+type ExpectedEngine = "pvlib" | "hay_davies";
+
+/**
+ * Compute expected generation for one period. Prefers the pvlib microservice
+ * (physics-grade) and falls back to the in-process Hay-Davies model when the
+ * service is unreachable, so backtests still run if pvlib is down.
+ * Set PVLIB_DISABLED=1 to force the in-process model.
+ */
+async function computeExpected(
+  project: ProjectConfig,
+  period_start: string,
+  period_end: string,
+  daily: DailyIrradiance[],
+): Promise<{ output: ExpectedGenerationOutput; engine: ExpectedEngine }> {
+  const localFallback = (): ExpectedGenerationOutput =>
+    calculateExpectedGeneration({
+      ...project,
+      period_start,
+      period_end,
+      daily_irradiance: daily,
+    });
+
+  if (process.env.PVLIB_DISABLED === "1") {
+    return { output: localFallback(), engine: "hay_davies" };
+  }
+
+  try {
+    const r = await getExpectedGeneration(project, daily);
+    const output: ExpectedGenerationOutput = {
+      period_start,
+      period_end,
+      expected_kwh: r.total_expected_kwh,
+      daily_breakdown: [],
+      assumptions: {
+        degradation_factor: Number(r.system_summary.degradation_factor ?? 1),
+        system_losses: project.system_losses,
+        albedo: Number(r.system_summary.albedo ?? 0.2),
+        transposition_model: String(
+          r.model_metadata.transposition_model ?? "perez",
+        ),
+      },
+    };
+    return { output, engine: "pvlib" };
+  } catch (err) {
+    console.warn(
+      `pvlib service unavailable (${err instanceof Error ? err.message : err}); ` +
+        "falling back to in-process Hay-Davies model",
+    );
+    return { output: localFallback(), engine: "hay_davies" };
+  }
+}
 
 export interface BacktestSimulation {
   monthly_deviation_pct: number | "random_normal";
@@ -54,6 +112,7 @@ export interface BacktestReport {
     annual_expected_mwh: number;
     capacity_factor_pct: number;
     mean_deviation_pct: number;
+    expected_engine: string;
   };
   monthly_results: BacktestMonthResult[];
 }
@@ -63,6 +122,8 @@ export async function runBacktest(config: BacktestConfig): Promise<BacktestRepor
   const tolerances = config.tolerances ?? DEFAULT_TOLERANCES;
   const rng = seededRng(config.simulation.seed ?? 0xC0FFEE);
   const results: BacktestMonthResult[] = [];
+  let usedFallback = false;
+  let usedPvlib = false;
 
   for (const m of months) {
     const irradiance = await fetchNasaPowerDaily(
@@ -72,12 +133,14 @@ export async function runBacktest(config: BacktestConfig): Promise<BacktestRepor
       m.end,
     );
 
-    const expected = calculateExpectedGeneration({
-      ...config.project,
-      period_start: m.start,
-      period_end: m.end,
-      daily_irradiance: irradiance.daily,
-    });
+    const { output: expected, engine } = await computeExpected(
+      config.project,
+      m.start,
+      m.end,
+      irradiance.daily,
+    );
+    if (engine === "pvlib") usedPvlib = true;
+    else usedFallback = true;
 
     let deviation_pct: number;
     if (config.simulation.monthly_deviation_pct === "random_normal") {
@@ -174,6 +237,12 @@ export async function runBacktest(config: BacktestConfig): Promise<BacktestRepor
       annual_expected_mwh: annual_expected_kwh / 1000,
       capacity_factor_pct,
       mean_deviation_pct,
+      expected_engine:
+        usedPvlib && usedFallback
+          ? "mixed (pvlib + hay_davies fallback)"
+          : usedPvlib
+            ? "pvlib"
+            : "hay_davies",
     },
     monthly_results: results,
   };
