@@ -15,6 +15,7 @@ import {
   AlertTriangle,
   Plus,
   ArrowRight,
+  Zap,
 } from "lucide-react";
 
 interface DeveloperStats {
@@ -56,12 +57,20 @@ export default function DeveloperDashboard() {
       title="Issuer Dashboard"
       description="Manage your renewable energy project securities"
       actions={
-        <Link href="/developer/projects/new">
-          <Button className="gap-2" data-testid="button-new-project">
-            <Plus className="h-4 w-4" />
-            New Project
-          </Button>
-        </Link>
+        <div className="flex gap-2">
+          <Link href="/developer/onboard">
+            <Button variant="outline" className="gap-2" data-testid="button-run-backtest-cta">
+              <Zap className="h-4 w-4" />
+              Run a Backtest
+            </Button>
+          </Link>
+          <Link href="/developer/projects/new">
+            <Button className="gap-2" data-testid="button-new-project">
+              <Plus className="h-4 w-4" />
+              New Project
+            </Button>
+          </Link>
+        </div>
       }
     >
       <Card className="mb-6 border-yellow-500/30 bg-yellow-500/10">
@@ -70,6 +79,27 @@ export default function DeveloperDashboard() {
           <p className="text-sm text-yellow-500" data-testid="text-disclaimer-banner">
             EcoXchange is a regulated digital securities platform. All offerings must pass compliance checks and KYC/AML verification before listing.
           </p>
+        </CardContent>
+      </Card>
+
+      <Card className="mb-6 border-primary/30 bg-gradient-to-r from-primary/10 to-transparent">
+        <CardContent className="flex flex-col gap-3 p-5 sm:flex-row sm:items-center sm:justify-between">
+          <div>
+            <h3 className="flex items-center gap-2 font-semibold">
+              <Zap className="h-4 w-4 text-primary" />
+              Run a production backtest
+            </h3>
+            <p className="text-sm text-muted-foreground">
+              Enter your project's location and specs and watch a 12-month
+              backtest run against real NASA satellite data in ~60 seconds.
+            </p>
+          </div>
+          <Link href="/developer/onboard">
+            <Button className="gap-2 shrink-0" data-testid="button-onboard-cta">
+              Onboard a Project
+              <ArrowRight className="h-4 w-4" />
+            </Button>
+          </Link>
         </CardContent>
       </Card>
 
