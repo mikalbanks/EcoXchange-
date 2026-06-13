@@ -43,7 +43,7 @@ export function YieldTable({ projectId, records, investorSharePct = 2.0 }: Props
               </td>
               <td className="px-4 py-3 text-right">
                 <Link
-                  to={`/project/${projectId}/verification/${r.period_start}`}
+                  to={`/investor/project/${projectId}/verification/${r.period_start}`}
                   className="text-medGreen hover:text-darkBg font-medium"
                 >
                   Detail →
