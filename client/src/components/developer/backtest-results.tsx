@@ -187,7 +187,7 @@ export function BacktestResults({ result }: BacktestResultsProps) {
 
       {/* Action buttons */}
       <div className="flex flex-wrap gap-3">
-        <ReportDownloadButton />
+        <ReportDownloadButton result={result} />
         <Button variant="default" className="gap-2" data-testid="button-schedule-call">
           <CalendarClock className="h-4 w-4" />
           Schedule a Call with EcoXchange
