@@ -32,6 +32,7 @@ import {
   runBatchQueueAnalytics,
 } from "./queue-data";
 import multer from "multer";
+import { registerDeveloperBacktestRoutes } from "./routes/developer-backtest";
 
 const SessionStore = MemoryStore(session);
 const PgSessionStore = connectPgSimple(session);
@@ -346,6 +347,9 @@ export async function registerRoutes(
   });
 
   // ═══ Developer Routes ═══
+
+  // Developer Portal: project-intake backtest (SSE) — see routes/developer-backtest.ts
+  registerDeveloperBacktestRoutes(app, requireRole);
 
   // Developer stats
   app.get("/api/developer/stats", requireRole("DEVELOPER"), async (req: any, res) => {

@@ -59,6 +59,9 @@ import SignupPage from "@/pages/auth/signup";
 import DeveloperDashboard from "@/pages/developer/dashboard";
 import DeveloperProjectWizard from "@/pages/developer/project-wizard";
 import DeveloperProjectDetail from "@/pages/developer/project-detail";
+import DeveloperProjectIntake from "@/pages/developer/project-intake";
+import DeveloperBacktestView from "@/pages/developer/backtest-view";
+import DeveloperProjectDashboard from "@/pages/developer/project-dashboard";
 
 import PrivacyPolicy from "@/pages/privacy";
 import InvestorDashboard from "@/pages/investor/dashboard";
@@ -146,6 +149,21 @@ function Router() {
       <Route path="/developer/projects/new">
         <ProtectedRoute allowedRoles={["DEVELOPER"]}>
           <DeveloperProjectWizard />
+        </ProtectedRoute>
+      </Route>
+      <Route path="/developer/onboard">
+        <ProtectedRoute allowedRoles={["DEVELOPER"]}>
+          <DeveloperProjectIntake />
+        </ProtectedRoute>
+      </Route>
+      <Route path="/developer/backtest/:id">
+        <ProtectedRoute allowedRoles={["DEVELOPER"]}>
+          <DeveloperBacktestView />
+        </ProtectedRoute>
+      </Route>
+      <Route path="/developer/project/:id">
+        <ProtectedRoute allowedRoles={["DEVELOPER"]}>
+          <DeveloperProjectDashboard />
         </ProtectedRoute>
       </Route>
       <Route path="/developer/projects/:id">
