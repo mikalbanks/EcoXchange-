@@ -85,13 +85,8 @@ export function Projects() {
       <section className="mx-auto max-w-site px-6 sm:px-8 pt-10 sm:pt-14 pb-8 space-y-4">
         <MonoTag>Projects</MonoTag>
         <h1 className="font-display italic text-[36px] sm:text-[48px] leading-tight">
-          Supabase-backed solar project marketplace.
+          Solar project marketplace.
         </h1>
-        <p className="font-body text-[15px] sm:text-[16px] text-eco-text-body max-w-prose leading-relaxed">
-          This marketplace displays active solar projects from Supabase when
-          configured. Projects without usable expected and inverter production
-          data are marked Data Required rather than verified.
-        </p>
         {!liveMode ? (
           <p className="max-w-prose border-l-4 border-eco-line bg-eco-pale/60 px-4 py-3 font-body text-[13px] leading-6 text-eco-text-body">
             Supabase is not configured in this build, so the Savannah
