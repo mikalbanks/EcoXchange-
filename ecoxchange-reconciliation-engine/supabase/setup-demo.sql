@@ -1,6 +1,6 @@
 -- ============================================================================
 -- setup-demo.sql — one-shot Supabase setup for the demo (demo.ecoxchange.net)
--- Project: npblqnynzeirmrifiwkd
+-- Project: xgcrooajrdpcgpgoazti
 --
 -- Paste this entire file into the Supabase SQL Editor and Run. It applies the
 -- engine schema, RLS (anon read), pvlib/reference fields, and seeds the
