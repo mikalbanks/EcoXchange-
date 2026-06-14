@@ -14,7 +14,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { Zap, Gauge, Users, CalendarClock, Radio } from "lucide-react";
+import { Zap, Gauge, Users, CalendarClock, Radio, Database } from "lucide-react";
 import { ProductionChart } from "@/components/shared/production-chart";
 import { monthLabelLong, formatMwh } from "@/lib/backtest-format";
 import type { BacktestCompletePayload } from "@shared/developer-backtest";
@@ -27,6 +27,24 @@ export default function ProjectDashboard() {
   const { data, isLoading } = useQuery<BacktestCompletePayload>({
     queryKey: ["/api/developer/backtest", id],
   });
+
+  // Read-back of any records persisted to Supabase for this project. Degrades
+  // silently when Supabase is unconfigured (`configured: false`).
+  const { data: persisted } = useQuery<{
+    configured: boolean;
+    records: unknown[];
+  }>({
+    queryKey: [
+      "/api/developer/projects",
+      data?.project_id,
+      "verification-history",
+    ],
+    enabled: Boolean(data?.project_id),
+  });
+  const persistedCount =
+    persisted?.configured && Array.isArray(persisted.records)
+      ? persisted.records.length
+      : 0;
 
   if (isLoading) {
     return (
@@ -113,7 +131,19 @@ export default function ProjectDashboard() {
 
       <Card>
         <CardHeader>
-          <CardTitle className="text-lg">Verification History</CardTitle>
+          <div className="flex items-center justify-between gap-2">
+            <CardTitle className="text-lg">Verification History</CardTitle>
+            {persistedCount > 0 && (
+              <Badge
+                variant="outline"
+                className="gap-1 border-emerald-500/40 text-emerald-600"
+                data-testid="badge-persisted"
+              >
+                <Database className="h-3 w-3" />
+                Persisted to database ({persistedCount} {persistedCount === 1 ? "period" : "periods"})
+              </Badge>
+            )}
+          </div>
         </CardHeader>
         <CardContent>
           <Table>
