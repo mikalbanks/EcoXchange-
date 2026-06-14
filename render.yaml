@@ -1,5 +1,10 @@
 # EcoXchange — Render Blueprint (web service: Express API + Vite React client)
 # https://render.com/docs/blueprint-spec
+#
+# The Cloudflare Worker (worker/index.ts) serves the static React SPA and proxies
+# /api/* to this service. Once it's live, set API_ORIGIN in wrangler.jsonc (or
+# `wrangler secret put API_ORIGIN`) to this service's URL and redeploy the
+# `ecoxchange1` Worker.
 
 services:
   - type: web
@@ -7,15 +12,45 @@ services:
     runtime: node
     region: oregon
     plan: free
-    buildCommand: npm install && npm run build
+    # --include=dev is required: the build (vite + esbuild + tsx) needs devDeps,
+    # which npm omits when NODE_ENV=production is present in the environment.
+    buildCommand: npm install --include=dev && npm run build
     startCommand: npm start
-    healthCheckPath: /
+    healthCheckPath: /api/health
     envVars:
       - key: NODE_ENV
         value: production
       - key: NODE_VERSION
         value: "20.19.0"
-      # Set in Render Dashboard (or link a Postgres instance):
-      # - DATABASE_URL
-      # - AI_INTEGRATIONS_OPENAI_API_KEY
-      # - SESSION_SECRET
+      # Required. Postgres connection string. Use the Supabase "Session pooler"
+      # or direct connection (NOT transaction-mode pgbouncer) — connect-pg-simple
+      # needs session-level features. Must include sslmode=require.
+      - key: DATABASE_URL
+        sync: false
+      # Required. Signs session cookies; Render generates a strong value.
+      - key: SESSION_SECRET
+        generateValue: true
+      # Optional integrations — the app degrades gracefully if these are unset.
+      # AI ROI predictions (either var works; AI_INTEGRATIONS_* takes precedence):
+      - key: AI_INTEGRATIONS_OPENAI_API_KEY
+        sync: false
+      - key: OPENAI_API_KEY
+        sync: false
+      # Solcast satellite irradiance (SGT handshake / verification / backtest):
+      - key: SOLCAST_API_KEY
+        sync: false
+      # Persona KYC (falls back to demo mode if unset):
+      - key: PERSONA_API_KEY
+        sync: false
+      - key: PERSONA_TEMPLATE_ID
+        sync: false
+      - key: PERSONA_WEBHOOK_SECRET
+        sync: false
+      # GridStatus interconnection-queue sync (marketplace stays on seed data if unset):
+      - key: GRIDSTATUS_API_KEY
+        sync: false
+      # NREL / EIA institutional validation (optional):
+      - key: NREL_API_KEY
+        sync: false
+      - key: EIA_API_KEY
+        sync: false

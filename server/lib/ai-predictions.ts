@@ -1,9 +1,26 @@
 import OpenAI from "openai";
 
-const openai = new OpenAI({
-  apiKey: process.env.AI_INTEGRATIONS_OPENAI_API_KEY,
-  baseURL: process.env.AI_INTEGRATIONS_OPENAI_BASE_URL,
-});
+// Lazily construct the OpenAI client so the server can boot without an API key.
+// The key is only required when an AI prediction is actually requested — without
+// this, `new OpenAI()` throws at import time and crashes the whole process.
+let openaiClient: OpenAI | null = null;
+
+function getOpenAI(): OpenAI {
+  if (!openaiClient) {
+    const apiKey =
+      process.env.AI_INTEGRATIONS_OPENAI_API_KEY || process.env.OPENAI_API_KEY;
+    if (!apiKey) {
+      throw new Error(
+        "AI predictions are unavailable: set AI_INTEGRATIONS_OPENAI_API_KEY (or OPENAI_API_KEY) to enable them.",
+      );
+    }
+    openaiClient = new OpenAI({
+      apiKey,
+      baseURL: process.env.AI_INTEGRATIONS_OPENAI_BASE_URL,
+    });
+  }
+  return openaiClient;
+}
 
 export interface ProjectFinancialData {
   projectName: string;
@@ -40,7 +57,7 @@ export interface AIPrediction {
 export async function generateROIPrediction(data: ProjectFinancialData): Promise<AIPrediction> {
   const prompt = buildPrompt(data);
 
-  const response = await openai.chat.completions.create({
+  const response = await getOpenAI().chat.completions.create({
     model: "gpt-5-mini",
     messages: [
       {

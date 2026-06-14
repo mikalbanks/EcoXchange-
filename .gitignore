@@ -9,6 +9,8 @@ build/
 .env
 .env.local
 .env.*.local
+# Bare `env` file historically used to hold secrets — keep it untracked.
+/env
 
 # Logs
 *.log
