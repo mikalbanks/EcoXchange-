@@ -90,7 +90,7 @@ const FEE_ROWS = [
   { label: "Setup fee (one-time, at close)", eco: "$15,000 fixed", other: "$80K–$250K legal + admin" },
   { label: "Servicing fee (recurring)", eco: "1.25% of AUA / year", other: "$10K–$25K / year per project" },
   { label: "Investor load charge", eco: "None", other: "0–5% upfront" },
-  { label: "Production verification", eco: "Physics-based, included", other: "$5K–$15K / year third-party" },
+  { label: "Production verification", eco: "Production-based, included", other: "$5K–$15K / year third-party" },
   { label: "Distribution cadence", eco: "Monthly, USDC, auto", other: "Quarterly, manual, 30–90d" },
 ] as const;
 
@@ -120,7 +120,7 @@ export default function LandingPage() {
       <section>
         <div className="hero">
           <div className="hero-text">
-            <div className="label hero-eyebrow">Physics-Verified Yield · Reg D 506(c)</div>
+            <div className="label hero-eyebrow">Production-Verified Yield · Reg D 506(c)</div>
             <h1 className="hero-headline">
               Light,
               <br />
@@ -128,7 +128,7 @@ export default function LandingPage() {
             </h1>
             <p className="hero-sub">
               EcoXchange is a regulated digital-securities platform that gives accredited investors direct,
-              physics-verified yield on individual solar projects — a return profile no pooled fund, REIT, or
+              production-verified yield on individual solar projects — a return profile no pooled fund, REIT, or
               crowdfunding platform can replicate.
             </p>
             <div className="hero-actions">
@@ -163,7 +163,7 @@ export default function LandingPage() {
           <h2 className="section-title">The yield gap for accredited investors.</h2>
         </div>
         <p className="problem-intro">
-          Accredited investors have no direct, physics-verified yield instrument on individual solar projects.
+          Accredited investors have no direct, production-verified yield instrument on individual solar projects.
           Every available vehicle — pooled funds, REITs, yieldcos, Reg CF crowdfunding — delivers blended,
           fund-level performance. EcoXchange provides both the verification method and the regulated platform
           to change that.

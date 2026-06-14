@@ -8,7 +8,7 @@ Public EcoXchange demo portal for **demo.ecoxchange.net**. This is a Vite + Reac
 |---|---|
 | `/` | Intro landing page for RIAs, solar developers, investors, and partners |
 | `/portfolio` | Investor portfolio and aggregation dashboard |
-| `/projects` | Supabase-backed solar project marketplace with filters |
+| `/projects` | Solar project marketplace with filters |
 | `/methodology` | Verification engine explainer |
 | `/rias` | RIA workflow and dashboard surface |
 | `/developers` | Solar project developer workflow |
