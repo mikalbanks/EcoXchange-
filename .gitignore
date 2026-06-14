@@ -33,6 +33,8 @@ Thumbs.db
 # Agent workspace
 .local/
 EcoXchange-clone/
+# Claude Code machine-local settings (personal permissions, not shared)
+.claude/settings.local.json
 
 # Cloudflare Workers / Wrangler
 .wrangler/
