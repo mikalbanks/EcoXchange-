@@ -11,9 +11,7 @@
     "not_found_handling": "single-page-application"
   },
   "vars": {
-    // IMPORTANT: replace with your actual Render service origin before the first
-    // deploy, OR remove this block and run `npx wrangler secret put API_ORIGIN`
-    // instead. The Worker reads env.API_ORIGIN either way.
-    "API_ORIGIN": "https://REPLACE-ME.onrender.com"
+    // Render origin for the Express API. The Worker proxies /api/* here.
+    "API_ORIGIN": "https://ecoxchange-y6ah.onrender.com"
   }
 }
