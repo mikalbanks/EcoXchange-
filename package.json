@@ -10,7 +10,8 @@
     "check": "tsc",
     "test:queue-analytics": "tsx scripts/test-queue-analytics.ts",
     "catalog:import": "tsx scripts/import-ca-listings-csv.ts",
-    "db:push": "drizzle-kit push"
+    "db:push": "drizzle-kit push",
+    "db:push:ci": "drizzle-kit push --force"
   },
   "dependencies": {
     "@hookform/resolvers": "^3.10.0",
