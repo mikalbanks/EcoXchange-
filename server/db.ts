@@ -3,23 +3,29 @@ import pg from "pg";
 import { drizzle } from "drizzle-orm/node-postgres";
 import * as schema from "@shared/schema";
 
-// Supabase's connection poolers present a TLS certificate that isn't in Node's
-// default trust store, so node-postgres throws "self-signed certificate in
-// certificate chain" under a plain sslmode=require URL. Encrypt the connection
-// but skip CA verification for managed Postgres (Supabase / sslmode=require);
-// leave SSL off for local/unencrypted connections.
-function resolveSsl(): false | { rejectUnauthorized: boolean } {
-  const url = process.env.DATABASE_URL ?? "";
-  if (/sslmode=require/i.test(url) || /supabase\.(co|com)/i.test(url)) {
-    return { rejectUnauthorized: false };
+// node-postgres maps a connection-string `sslmode=require` to *verifying* TLS,
+// which rejects Supabase's pooler certificate ("self-signed certificate in
+// certificate chain") and wins over a Pool `ssl` option. So strip `sslmode`
+// from the URL and set `ssl` explicitly: encrypt without CA verification for
+// managed Postgres (Supabase / any sslmode), plain/unencrypted for local DBs.
+function buildPoolConfig(): pg.PoolConfig {
+  const raw = process.env.DATABASE_URL;
+  if (!raw) return {};
+  try {
+    const url = new URL(raw);
+    const wantsSsl =
+      url.searchParams.has("sslmode") || /supabase\.(co|com)$/i.test(url.hostname);
+    url.searchParams.delete("sslmode");
+    return {
+      connectionString: url.toString(),
+      ssl: wantsSsl ? { rejectUnauthorized: false } : false,
+    };
+  } catch {
+    return { connectionString: raw };
   }
-  return false;
 }
 
-export const pool = new pg.Pool({
-  connectionString: process.env.DATABASE_URL,
-  ssl: resolveSsl(),
-});
+export const pool = new pg.Pool(buildPoolConfig());
 
 export const db = drizzle(pool, { schema });
 
