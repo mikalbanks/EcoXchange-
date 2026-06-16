@@ -9,6 +9,7 @@ import { OfferingSummary } from "./pages/investor/OfferingSummary.js";
 import { Calculator } from "./pages/investor/Calculator.js";
 import { Impact } from "./pages/investor/Impact.js";
 import { Distributions } from "./pages/investor/Distributions.js";
+import { SuitabilityOnboarding } from "./pages/SuitabilityOnboarding.js";
 import { ProjectDetail } from "./pages/ProjectDetail.js";
 import { VerificationDetail } from "./pages/VerificationDetail.js";
 import { YieldHistory } from "./pages/investor/YieldHistory.js";
@@ -77,6 +78,16 @@ export function App() {
           <Route path="/investor/settings" element={<Settings />} />
           <Route path="/investor/onboard" element={<InvestorOnboarding />} />
         </Route>
+
+        {/* Standalone suitability questionnaire — focused flow, no sidebar */}
+        <Route
+          path="/onboarding"
+          element={
+            <HeaderLayout>
+              <SuitabilityOnboarding />
+            </HeaderLayout>
+          }
+        />
 
         {/* Legacy deep-link redirects */}
         <Route path="/project/*" element={<LegacyProjectRedirect />} />
