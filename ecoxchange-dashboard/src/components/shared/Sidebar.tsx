@@ -6,6 +6,7 @@ import {
   Calculator as CalculatorIcon,
   Leaf,
   Coins,
+  Sparkles,
   LineChart,
   FileText,
   Settings as SettingsIcon,
@@ -27,6 +28,7 @@ interface NavItem {
 
 const INVESTOR_NAV: NavItem[] = [
   { to: "/investor", label: "Portfolio", icon: LayoutDashboard, end: true },
+  { to: "/onboarding", label: "Recommendations", icon: Sparkles },
   { to: "/investor/marketplace", label: "Marketplace", icon: Store },
   { to: "/investor/calculator", label: "Calculator", icon: CalculatorIcon },
   { to: "/investor/impact", label: "Impact", icon: Leaf },

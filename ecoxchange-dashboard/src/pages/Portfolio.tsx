@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useState } from "react";
 import { Link } from "react-router-dom";
-import { ArrowRight, Leaf } from "lucide-react";
+import { ArrowRight, Leaf, Sparkles } from "lucide-react";
 import { StatCard } from "../components/StatCard.js";
 import { ProjectCard } from "../components/ProjectCard.js";
 import { PortfolioDistributions } from "../components/distributions/PortfolioDistributions.js";
@@ -137,6 +137,24 @@ export function Portfolio() {
       )}
 
       <PortfolioDistributions />
+
+      <Link
+        to="/onboarding"
+        className="flex items-center justify-between rounded-xl border border-paleGreen/60 bg-paleGreen/30 px-6 py-4 transition-colors duration-150 hover:bg-paleGreen/50"
+      >
+        <span className="flex items-center gap-3">
+          <Sparkles className="h-5 w-5 text-medGreen" />
+          <span>
+            <span className="block font-medium text-darkBg">
+              Get personalized offering recommendations
+            </span>
+            <span className="text-sm text-textMuted">
+              Answer 8 quick questions to find your best-fit offerings
+            </span>
+          </span>
+        </span>
+        <ArrowRight className="h-5 w-5 text-medGreen" />
+      </Link>
 
       <Link
         to="/investor/marketplace"
