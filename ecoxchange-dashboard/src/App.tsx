@@ -4,6 +4,8 @@ import { Header } from "./components/Header.js";
 import { AppLayout } from "./layouts/AppLayout.js";
 import { Landing } from "./pages/Landing.js";
 import { Portfolio } from "./pages/Portfolio.js";
+import { Marketplace } from "./pages/investor/Marketplace.js";
+import { OfferingSummary } from "./pages/investor/OfferingSummary.js";
 import { ProjectDetail } from "./pages/ProjectDetail.js";
 import { VerificationDetail } from "./pages/VerificationDetail.js";
 import { YieldHistory } from "./pages/investor/YieldHistory.js";
@@ -48,6 +50,11 @@ export function App() {
         {/* Investor experience — role-based shell */}
         <Route element={<AppLayout />}>
           <Route path="/investor" element={<Portfolio />} />
+          <Route path="/investor/marketplace" element={<Marketplace />} />
+          <Route
+            path="/investor/offering/:slug"
+            element={<OfferingSummary />}
+          />
           <Route path="/investor/project/:id" element={<ProjectDetail />} />
           <Route
             path="/investor/project/:id/verification/:period"

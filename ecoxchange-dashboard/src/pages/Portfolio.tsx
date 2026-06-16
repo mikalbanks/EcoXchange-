@@ -106,7 +106,7 @@ export function Portfolio() {
         <EmptyState
           title="No investments yet"
           message="When you subscribe to an offering, your projects will appear here."
-          cta={{ label: "Browse Available Projects", to: "/investor/onboard" }}
+          cta={{ label: "Browse Available Projects", to: "/investor/marketplace" }}
         />
       ) : (
         <div className="space-y-4">
@@ -118,14 +118,16 @@ export function Portfolio() {
       )}
 
       <Link
-        to="/investor/onboard"
+        to="/investor/marketplace"
         className="flex items-center justify-between rounded-xl border border-dashed border-paleGreen bg-white/60 px-6 py-5 text-textMuted hover:border-medGreen hover:text-darkBg transition-colors duration-150"
       >
         <span>
           <span className="block font-medium text-darkBg">
             Browse Available Projects
           </span>
-          <span className="text-sm">Coming soon — pending compliance setup</span>
+          <span className="text-sm">
+            Explore production-verified solar offerings
+          </span>
         </span>
         <ArrowRight className="h-5 w-5" />
       </Link>
