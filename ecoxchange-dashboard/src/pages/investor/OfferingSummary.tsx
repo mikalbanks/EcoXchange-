@@ -16,6 +16,7 @@ import {
 import { LegalDisclaimer } from "../../components/offering/LegalDisclaimer.js";
 import { ProjectMap } from "../../components/offering/ProjectMap.js";
 import { PhotoGallery } from "../../components/offering/PhotoGallery.js";
+import { ReturnsCalculator } from "../../components/calculator/ReturnsCalculator.js";
 import { ErrorState } from "../../components/shared/ErrorState.js";
 import { EmptyState } from "../../components/shared/EmptyState.js";
 import { CardSkeleton } from "../../components/shared/LoadingState.js";
@@ -121,6 +122,17 @@ export function OfferingSummary() {
 
       <Section id="financials" title="Financial Summary">
         <FinancialGrid offering={offering} />
+      </Section>
+
+      <Section id="calculator" title="Returns Calculator">
+        <ReturnsCalculator
+          offering={{
+            target_annual_yield: offering.target_annual_yield,
+            target_irr: offering.target_irr,
+            minimum_investment: offering.minimum_investment,
+            offering_name: offering.offering_name,
+          }}
+        />
       </Section>
 
       <Section id="documents" title="Documents">

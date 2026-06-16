@@ -6,6 +6,7 @@ import { Landing } from "./pages/Landing.js";
 import { Portfolio } from "./pages/Portfolio.js";
 import { Marketplace } from "./pages/investor/Marketplace.js";
 import { OfferingSummary } from "./pages/investor/OfferingSummary.js";
+import { Calculator } from "./pages/investor/Calculator.js";
 import { ProjectDetail } from "./pages/ProjectDetail.js";
 import { VerificationDetail } from "./pages/VerificationDetail.js";
 import { YieldHistory } from "./pages/investor/YieldHistory.js";
@@ -55,6 +56,7 @@ export function App() {
             path="/investor/offering/:slug"
             element={<OfferingSummary />}
           />
+          <Route path="/investor/calculator" element={<Calculator />} />
           <Route path="/investor/project/:id" element={<ProjectDetail />} />
           <Route
             path="/investor/project/:id/verification/:period"
