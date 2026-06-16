@@ -3,6 +3,7 @@ import { Link } from "react-router-dom";
 import { ArrowRight, Leaf } from "lucide-react";
 import { StatCard } from "../components/StatCard.js";
 import { ProjectCard } from "../components/ProjectCard.js";
+import { PortfolioDistributions } from "../components/distributions/PortfolioDistributions.js";
 import { AnimatedNumber } from "../components/shared/AnimatedNumber.js";
 import { ErrorState } from "../components/shared/ErrorState.js";
 import { EmptyState } from "../components/shared/EmptyState.js";
@@ -134,6 +135,8 @@ export function Portfolio() {
           ))}
         </div>
       )}
+
+      <PortfolioDistributions />
 
       <Link
         to="/investor/marketplace"

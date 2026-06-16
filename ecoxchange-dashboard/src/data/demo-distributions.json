@@ -1,0 +1,23 @@
+{
+  "holdings": [
+    {
+      "id": "demo-holding-savannah",
+      "investor_id": "demo-investor",
+      "offering_id": "demo-offering-savannah-solar-i",
+      "tokens_held": 100,
+      "cost_basis": 10000,
+      "offering_name": "Savannah Solar I ESN",
+      "offering_slug": "savannah-solar-i",
+      "target_annual_yield": 0.07,
+      "current_preference": "cash_out"
+    }
+  ],
+  "history": [
+    { "id": "d-2024-06", "investor_id": "demo-investor", "offering_id": "demo-offering-savannah-solar-i", "offering_name": "Savannah Solar I ESN", "period_start": "2024-06-01", "period_end": "2024-06-30", "gross_distribution": 58.33, "platform_fee": 0, "net_distribution": 58.33, "action_taken": "cash_out", "tokens_acquired": null, "reinvest_price": null, "tx_hash": null, "status": "completed", "created_at": "2024-06-30" },
+    { "id": "d-2024-05", "investor_id": "demo-investor", "offering_id": "demo-offering-savannah-solar-i", "offering_name": "Savannah Solar I ESN", "period_start": "2024-05-01", "period_end": "2024-05-31", "gross_distribution": 58.33, "platform_fee": 0, "net_distribution": 58.33, "action_taken": "cash_out", "tokens_acquired": null, "reinvest_price": null, "tx_hash": null, "status": "completed", "created_at": "2024-05-31" },
+    { "id": "d-2024-04", "investor_id": "demo-investor", "offering_id": "demo-offering-savannah-solar-i", "offering_name": "Savannah Solar I ESN", "period_start": "2024-04-01", "period_end": "2024-04-30", "gross_distribution": 58.33, "platform_fee": 0, "net_distribution": 58.33, "action_taken": "cash_out", "tokens_acquired": null, "reinvest_price": null, "tx_hash": null, "status": "completed", "created_at": "2024-04-30" },
+    { "id": "d-2024-03", "investor_id": "demo-investor", "offering_id": "demo-offering-savannah-solar-i", "offering_name": "Savannah Solar I ESN", "period_start": "2024-03-01", "period_end": "2024-03-31", "gross_distribution": 58.33, "platform_fee": 0, "net_distribution": 58.33, "action_taken": "cash_out", "tokens_acquired": null, "reinvest_price": null, "tx_hash": null, "status": "completed", "created_at": "2024-03-31" },
+    { "id": "d-2024-02", "investor_id": "demo-investor", "offering_id": "demo-offering-savannah-solar-i", "offering_name": "Savannah Solar I ESN", "period_start": "2024-02-01", "period_end": "2024-02-29", "gross_distribution": 58.33, "platform_fee": 0, "net_distribution": 58.33, "action_taken": "cash_out", "tokens_acquired": null, "reinvest_price": null, "tx_hash": null, "status": "completed", "created_at": "2024-02-29" },
+    { "id": "d-2024-01", "investor_id": "demo-investor", "offering_id": "demo-offering-savannah-solar-i", "offering_name": "Savannah Solar I ESN", "period_start": "2024-01-01", "period_end": "2024-01-31", "gross_distribution": 58.33, "platform_fee": 0, "net_distribution": 58.33, "action_taken": "cash_out", "tokens_acquired": null, "reinvest_price": null, "tx_hash": null, "status": "completed", "created_at": "2024-01-31" }
+  ]
+}

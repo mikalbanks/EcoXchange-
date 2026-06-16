@@ -8,6 +8,7 @@ import { Marketplace } from "./pages/investor/Marketplace.js";
 import { OfferingSummary } from "./pages/investor/OfferingSummary.js";
 import { Calculator } from "./pages/investor/Calculator.js";
 import { Impact } from "./pages/investor/Impact.js";
+import { Distributions } from "./pages/investor/Distributions.js";
 import { ProjectDetail } from "./pages/ProjectDetail.js";
 import { VerificationDetail } from "./pages/VerificationDetail.js";
 import { YieldHistory } from "./pages/investor/YieldHistory.js";
@@ -59,6 +60,7 @@ export function App() {
           />
           <Route path="/investor/calculator" element={<Calculator />} />
           <Route path="/investor/impact" element={<Impact />} />
+          <Route path="/investor/distributions" element={<Distributions />} />
           <Route path="/investor/project/:id" element={<ProjectDetail />} />
           <Route
             path="/investor/project/:id/verification/:period"
