@@ -18,6 +18,46 @@ h1, h2, h3 {
   font-family: Georgia, serif;
 }
 
+/* Returns calculator range sliders (Spec 07). Track fill is supplied inline via
+   a background gradient; thumb + base track styled here in the EcoXchange greens. */
+.eco-slider {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 100%;
+  height: 6px;
+  border-radius: 9999px;
+  background: #C8E8D4; /* paleGreen — overridden inline with the fill gradient */
+  outline: none;
+  cursor: pointer;
+}
+.eco-slider::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  height: 18px;
+  width: 18px;
+  border-radius: 9999px;
+  background: #76C945; /* accentBrt */
+  border: 2px solid #ffffff;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
+}
+.eco-slider::-moz-range-thumb {
+  height: 18px;
+  width: 18px;
+  border-radius: 9999px;
+  background: #76C945;
+  border: 2px solid #ffffff;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
+}
+.eco-slider::-moz-range-track {
+  height: 6px;
+  border-radius: 9999px;
+  background: transparent;
+}
+.eco-slider:focus-visible::-webkit-slider-thumb {
+  outline: 2px solid #2E7D52;
+  outline-offset: 2px;
+}
+
 /* Respect users who prefer reduced motion: disable count-ups, pulses,
    fades, and hover lifts everywhere. */
 @media (prefers-reduced-motion: reduce) {
