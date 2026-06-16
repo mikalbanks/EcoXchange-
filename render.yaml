@@ -14,12 +14,11 @@ services:
     plan: free
     # --include=dev is required: the build (vite + esbuild + tsx) needs devDeps,
     # which npm omits when NODE_ENV=production is present in the environment.
-    buildCommand: npm install --include=dev && npm run build
-    # Create/sync the Postgres schema (sessions, queue, waterfall, chat tables)
-    # from shared/schema.ts before each release, using DATABASE_URL. --force is
-    # non-interactive; on a fresh DB it only creates tables. Remove this once you
-    # switch to versioned migrations if you want stricter control.
-    preDeployCommand: npm run db:push:ci
+    # db:push:ci syncs the Postgres schema (sessions/queue/waterfall/chat) from
+    # shared/schema.ts using DATABASE_URL. It runs in the BUILD step (not
+    # preDeployCommand) because Render's free plan does not execute pre-deploy
+    # commands. --force is non-interactive; on a fresh DB it only creates tables.
+    buildCommand: npm install --include=dev && npm run build && npm run db:push:ci
     startCommand: npm start
     healthCheckPath: /api/health
     envVars:
