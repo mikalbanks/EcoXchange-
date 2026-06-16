@@ -1,0 +1,33 @@
+{
+  "verified_kwh": 6830,
+  "unverified_kwh": 0,
+  "period_start": "2024-01-01",
+  "period_end": "2024-12-01",
+  "months_verified": 12,
+  "months_flagged": 0,
+  "co2_avoided_kg": 2670.53,
+  "co2_avoided_metric_tons": 2.67,
+  "homes_powered_years": 0.65,
+  "trees_equivalent": 44.5,
+  "smartphone_charges": 569167,
+  "gallons_gas_avoided": 300.5,
+  "miles_driving_avoided": 6709.9,
+  "acres_forest_equivalent": 3.18,
+  "data_source": "production_verified",
+  "egrid_region": "SRSO",
+  "egrid_factor_used": 0.391,
+  "monthly_breakdown": [
+    { "period": "2024-01", "verified_kwh": 410, "co2_kg": 160.3 },
+    { "period": "2024-02", "verified_kwh": 430, "co2_kg": 168.1 },
+    { "period": "2024-03", "verified_kwh": 540, "co2_kg": 211.1 },
+    { "period": "2024-04", "verified_kwh": 620, "co2_kg": 242.4 },
+    { "period": "2024-05", "verified_kwh": 690, "co2_kg": 269.8 },
+    { "period": "2024-06", "verified_kwh": 710, "co2_kg": 277.6 },
+    { "period": "2024-07", "verified_kwh": 720, "co2_kg": 281.5 },
+    { "period": "2024-08", "verified_kwh": 700, "co2_kg": 273.7 },
+    { "period": "2024-09", "verified_kwh": 620, "co2_kg": 242.4 },
+    { "period": "2024-10", "verified_kwh": 540, "co2_kg": 211.1 },
+    { "period": "2024-11", "verified_kwh": 440, "co2_kg": 172.0 },
+    { "period": "2024-12", "verified_kwh": 410, "co2_kg": 160.3 }
+  ]
+}
