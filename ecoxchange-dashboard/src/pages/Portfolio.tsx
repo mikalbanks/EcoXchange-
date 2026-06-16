@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useState } from "react";
 import { Link } from "react-router-dom";
-import { ArrowRight } from "lucide-react";
+import { ArrowRight, Leaf } from "lucide-react";
 import { StatCard } from "../components/StatCard.js";
 import { ProjectCard } from "../components/ProjectCard.js";
 import { AnimatedNumber } from "../components/shared/AnimatedNumber.js";
@@ -101,6 +101,24 @@ export function Portfolio() {
           sublabel="USDC"
         />
       </div>
+
+      <Link
+        to="/investor/impact"
+        className="flex items-center justify-between rounded-xl border border-paleGreen/60 bg-paleGreen/30 px-6 py-4 transition-colors duration-150 hover:bg-paleGreen/50"
+      >
+        <span className="flex items-center gap-3">
+          <Leaf className="h-5 w-5 text-medGreen" />
+          <span>
+            <span className="block font-medium text-darkBg">
+              See your verified environmental impact
+            </span>
+            <span className="text-sm text-textMuted">
+              CO₂ avoided, homes powered, trees planted — from verified production
+            </span>
+          </span>
+        </span>
+        <ArrowRight className="h-5 w-5 text-medGreen" />
+      </Link>
 
       {data.projects.length === 0 ? (
         <EmptyState
