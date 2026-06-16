@@ -1,0 +1,118 @@
+{
+  "id": "demo-offering-savannah-solar-i",
+  "project_id": "a1b2c3d4-e5f6-7890-abcd-ef1234567890",
+  "offering_name": "Savannah Solar I ESN",
+  "slug": "savannah-solar-i",
+  "status": "open",
+
+  "target_raise": 2500000,
+  "minimum_investment": 10000,
+  "maximum_investment": null,
+  "total_subscribed": 750000,
+  "token_price": 100,
+  "total_tokens": 25000,
+  "tokens_remaining": 17500,
+
+  "target_annual_yield": 0.07,
+  "target_irr": 0.12,
+  "distribution_frequency": "monthly",
+  "ppa_term_years": 20,
+  "ppa_counterparty": "Georgia Power",
+  "ppa_escalator_pct": 0.02,
+  "itc_eligible": true,
+  "srec_eligible": false,
+  "srec_program": null,
+
+  "developer_name": "Lightstar Renewables",
+  "developer_bio": "Lightstar Renewables is a U.S.-based independent power producer specializing in distributed solar projects in the 1–20 MW range across the Southeast.",
+  "developer_track_record": "1 GW pipeline across 45+ projects; 12 operational plants totaling 38 MW",
+  "developer_website": null,
+  "developer_logo_url": null,
+
+  "headline": "5 MW Ground-Mount Solar — Savannah, GA",
+  "description": "A 5 MW (DC) ground-mount solar installation in Savannah, Georgia, interconnected to Georgia Power under a 20-year PPA with 2% annual escalator. The project sits on 25 leased acres with excellent irradiance (4.8 kWh/m²/day annual average) and is production-verified by EcoXchange's three-source reconciliation engine.",
+  "investment_thesis": "Savannah offers top-decile irradiance for the Southeast, a credit-worthy utility counterparty in Georgia Power, and a locked-in 20-year revenue stream with built-in inflation protection. The 1–20 MW segment remains structurally underserved by institutional capital — this project fills that gap.",
+  "risk_factors": [
+    "Solar production varies with weather conditions and may underperform projections in any given period",
+    "Georgia Power PPA is subject to utility credit risk over the 20-year term",
+    "Regulatory changes to net metering or solar incentives could affect project economics",
+    "Equipment degradation may exceed projected 0.75%/year rate",
+    "EcoXchange is a pre-revenue platform; this is among its first offerings",
+    "ESN tokens are illiquid — no secondary market is currently available",
+    "Past performance of similar projects does not guarantee future results"
+  ],
+  "hero_image_url": null,
+  "site_photos": [],
+
+  "offering_open_date": null,
+  "offering_close_date": null,
+  "target_cod_date": "2024-03-15",
+  "first_distribution_date": "2024-05-01",
+
+  "backtest_mean_deviation": 5.2,
+  "backtest_months_within_10pct": 0.92,
+
+  "created_at": "2024-01-01T00:00:00Z",
+  "updated_at": "2024-01-01T00:00:00Z",
+
+  "project": {
+    "latitude": 32.08,
+    "longitude": -81.09,
+    "capacity_kw_dc": 5000,
+    "tilt_deg": 20,
+    "azimuth_deg": 180,
+    "inverter_brand": "solaredge",
+    "commissioning_date": "2023-01-01",
+    "offtake_type": "community_solar"
+  },
+
+  "documents": [
+    {
+      "id": "demo-doc-financial-memo",
+      "offering_id": "demo-offering-savannah-solar-i",
+      "doc_type": "financial_memo",
+      "title": "Financial Summary",
+      "description": "Pro-forma cash flow projections and target returns",
+      "file_url": "/documents/savannah-solar-i/financial-memo.pdf",
+      "is_public": true,
+      "upload_date": "2024-01-01T00:00:00Z"
+    },
+    {
+      "id": "demo-doc-ppa-summary",
+      "offering_id": "demo-offering-savannah-solar-i",
+      "doc_type": "ppa_summary",
+      "title": "PPA Summary",
+      "description": "Key terms of the Georgia Power power purchase agreement",
+      "file_url": "/documents/savannah-solar-i/ppa-summary.pdf",
+      "is_public": true,
+      "upload_date": "2024-01-01T00:00:00Z"
+    },
+    {
+      "id": "demo-doc-verification-report",
+      "offering_id": "demo-offering-savannah-solar-i",
+      "doc_type": "verification_report",
+      "title": "Verification Backtest Report",
+      "description": "12-month historical production backtest results",
+      "file_url": "/documents/savannah-solar-i/verification-report.pdf",
+      "is_public": true,
+      "upload_date": "2024-01-01T00:00:00Z"
+    },
+    {
+      "id": "demo-doc-ppm",
+      "offering_id": "demo-offering-savannah-solar-i",
+      "doc_type": "ppm",
+      "title": "Private Placement Memorandum",
+      "description": "Full offering documents — available after subscription",
+      "file_url": "/documents/savannah-solar-i/ppm.pdf",
+      "is_public": false,
+      "upload_date": "2024-01-01T00:00:00Z"
+    }
+  ],
+
+  "verification_summary": {
+    "total_months_verified": 12,
+    "latest_status": "verified",
+    "latest_period": "2024-12-01",
+    "cumulative_kwh_verified": 8102755
+  }
+}

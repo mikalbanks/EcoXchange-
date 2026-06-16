@@ -2,6 +2,7 @@ import { NavLink } from "react-router-dom";
 import type { LucideIcon } from "lucide-react";
 import {
   LayoutDashboard,
+  Store,
   LineChart,
   FileText,
   Settings as SettingsIcon,
@@ -23,6 +24,7 @@ interface NavItem {
 
 const INVESTOR_NAV: NavItem[] = [
   { to: "/investor", label: "Portfolio", icon: LayoutDashboard, end: true },
+  { to: "/investor/marketplace", label: "Marketplace", icon: Store },
   { to: "/investor/performance", label: "Performance", icon: LineChart, disabled: true },
   { to: "/investor/documents", label: "Documents", icon: FileText, disabled: true },
   { to: "/investor/settings", label: "Settings", icon: SettingsIcon },
