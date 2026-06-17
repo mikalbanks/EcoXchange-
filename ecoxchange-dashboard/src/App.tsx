@@ -10,6 +10,8 @@ import { Calculator } from "./pages/investor/Calculator.js";
 import { Impact } from "./pages/investor/Impact.js";
 import { Distributions } from "./pages/investor/Distributions.js";
 import { SuitabilityOnboarding } from "./pages/SuitabilityOnboarding.js";
+import { Articles } from "./pages/Articles.js";
+import { ArticlePage } from "./pages/ArticlePage.js";
 import { ProjectDetail } from "./pages/ProjectDetail.js";
 import { VerificationDetail } from "./pages/VerificationDetail.js";
 import { YieldHistory } from "./pages/investor/YieldHistory.js";
@@ -85,6 +87,24 @@ export function App() {
           element={
             <HeaderLayout>
               <SuitabilityOnboarding />
+            </HeaderLayout>
+          }
+        />
+
+        {/* Public content hub (Journal) */}
+        <Route
+          path="/articles"
+          element={
+            <HeaderLayout>
+              <Articles />
+            </HeaderLayout>
+          }
+        />
+        <Route
+          path="/articles/:slug"
+          element={
+            <HeaderLayout>
+              <ArticlePage />
             </HeaderLayout>
           }
         />

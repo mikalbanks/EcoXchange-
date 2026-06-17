@@ -21,7 +21,9 @@
     "recharts": "^2.12.7",
     "leaflet": "^1.9.4",
     "react-leaflet": "^4.2.1",
-    "html2canvas": "^1.4.1"
+    "html2canvas": "^1.4.1",
+    "react-markdown": "^9.0.1",
+    "remark-gfm": "^4.0.0"
   },
   "devDependencies": {
     "@types/react": "^18.3.3",
@@ -34,6 +36,7 @@
     "vite": "^5.4.1",
     "@types/leaflet": "^1.9.12",
     "wrangler": "^4.20.0",
-    "vitest": "^2.1.0"
+    "vitest": "^2.1.0",
+    "@tailwindcss/typography": "^0.5.13"
   }
 }
