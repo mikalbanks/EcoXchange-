@@ -1,10 +1,19 @@
 services:
   pvlib-service:
-    build: .
+    # Build from the repo root so the image can install ../verification-engine
+    # (Engine A) alongside the service.
+    build:
+      context: ..
+      dockerfile: ecoxchange-pvlib-service/Dockerfile
     ports:
       - "3004:3004"
     environment:
       - PYTHONUNBUFFERED=1
+      # Engine A reconciliation/meter source (optional; service runs without them).
+      - NREL_API_KEY=${NREL_API_KEY:-}
+      - NREL_EMAIL=${NREL_EMAIL:-}
+      - SUPABASE_URL=${SUPABASE_URL:-}
+      - SUPABASE_SERVICE_ROLE_KEY=${SUPABASE_SERVICE_ROLE_KEY:-}
     restart: unless-stopped
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:3004/health"]
