@@ -928,6 +928,70 @@ export const insertAnomalyFlagSchema = createInsertSchema(anomalyFlags).omit({
 export type InsertAnomalyFlag = z.infer<typeof insertAnomalyFlagSchema>;
 export type AnomalyFlag = typeof anomalyFlags.$inferSelect;
 
+// ─── Engine A: expected-generation reports + site uncertainty cache ──────────
+// Distinct from `verification_runs` (the three-source VERIFIED/FLAGGED/PENDING
+// verdict table above). This holds Engine A's physics report — `report.to_dict()`
+// from verification_engine 2.0.0 — keyed by (project_id, period, config_hash).
+
+export const expectedGenerationReports = pgTable(
+  "expected_generation_reports",
+  {
+    id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+    projectId: varchar("project_id").notNull().references(() => projects.id),
+    period: text("period").notNull(), // e.g. "2023" (annual) or "2023-01" (monthly)
+    configHash: text("config_hash").notNull(),
+    p50Kwh: decimal("p50_kwh", { precision: 14, scale: 4 }).notNull(),
+    p90Kwh: decimal("p90_kwh", { precision: 14, scale: 4 }).notNull(),
+    combinedUncertaintyPct: decimal("combined_uncertainty_pct", { precision: 8, scale: 4 }).notNull(),
+    weatherSource: text("weather_source").notNull(),
+    engineVersion: text("engine_version").notNull(),
+    report: jsonb("report").$type<Record<string, unknown>>().notNull(),
+    createdAt: timestamp("created_at").notNull().defaultNow(),
+  },
+  (t) => ({
+    pidPeriodHashUid: uniqueIndex("expected_generation_reports_pid_period_hash_uid").on(
+      t.projectId,
+      t.period,
+      t.configHash,
+    ),
+    pidPeriodIdx: index("expected_generation_reports_pid_period_idx").on(t.projectId, t.period),
+  }),
+);
+
+export const insertExpectedGenerationReportSchema = createInsertSchema(expectedGenerationReports).omit({
+  id: true,
+  createdAt: true,
+});
+export type InsertExpectedGenerationReport = z.infer<typeof insertExpectedGenerationReportSchema>;
+export type ExpectedGenerationReport = typeof expectedGenerationReports.$inferSelect;
+
+export const siteUncertainty = pgTable(
+  "site_uncertainty",
+  {
+    id: serial("id").primaryKey(),
+    // Cache key: lat/lon rounded to a stable grid (e.g. "35.050,-106.540").
+    siteKey: text("site_key").notNull(),
+    latitude: decimal("latitude", { precision: 9, scale: 6 }).notNull(),
+    longitude: decimal("longitude", { precision: 9, scale: 6 }).notNull(),
+    // Per-site interannual variability (1-sigma fraction) computed from NSRDB years.
+    interannualVariability: decimal("interannual_variability", { precision: 8, scale: 5 }).notNull(),
+    nYears: integer("n_years").notNull(),
+    yearsCovered: text("years_covered").notNull(), // e.g. "1998-2023"
+    source: text("source").notNull().default("nsrdb"),
+    computedAt: timestamp("computed_at").notNull().defaultNow(),
+  },
+  (t) => ({
+    siteKeyUid: uniqueIndex("site_uncertainty_site_key_uid").on(t.siteKey),
+  }),
+);
+
+export const insertSiteUncertaintySchema = createInsertSchema(siteUncertainty).omit({
+  id: true,
+  computedAt: true,
+});
+export type InsertSiteUncertainty = z.infer<typeof insertSiteUncertaintySchema>;
+export type SiteUncertainty = typeof siteUncertainty.$inferSelect;
+
 // ─── Marketplace ─────────────────────────────────────────────────────────────
 
 export const MarketplaceListingSource = {

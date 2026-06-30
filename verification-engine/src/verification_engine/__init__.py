@@ -14,6 +14,7 @@ from .losses import apply_losses, apply_losses_series, degradation_factor, Water
 from .uncertainty import build_budget, UncertaintyBudget
 from .reconcile import reconcile, ReconciliationResult
 from .report import VerificationReport, build_audit_trail
+from .meter_source import load_meter_from_supabase
 
 __all__ = [
     "SystemConfig", "load_config", "Location", "ArrayConfig", "LossAssumptions",
@@ -23,5 +24,6 @@ __all__ = [
     "build_budget", "UncertaintyBudget",
     "reconcile", "ReconciliationResult",
     "VerificationReport", "build_audit_trail",
+    "load_meter_from_supabase",
 ]
 __version__ = "2.0.0"

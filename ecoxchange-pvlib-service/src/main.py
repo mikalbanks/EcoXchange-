@@ -37,6 +37,7 @@ async def expected_generation(request: ExpectedGenerationRequest):
         return calculate_expected_generation(
             project=request.project,
             daily_weather=request.daily_weather,
+            weather_source=request.weather_source,
         )
     except HTTPException:
         raise

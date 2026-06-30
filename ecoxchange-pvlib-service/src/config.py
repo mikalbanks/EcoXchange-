@@ -23,7 +23,9 @@ IAM_MODEL = "physical"
 CLEARSKY_MODEL = "ineichen"
 
 ENGINE_NAME = "ecoxchange-pvlib-service"
-ENGINE_VERSION = "1.0.0"
+# 2.0.0: the service is now a thin wrapper over the canonical verification engine
+# (Engine A). Kept in lockstep with verification_engine.__version__.
+ENGINE_VERSION = "2.0.0"
 
 # SAPM temperature-model parameters by racking type.
 # Source: pvlib.temperature.TEMPERATURE_MODEL_PARAMETERS["sapm"].
