@@ -74,7 +74,11 @@ def build_audit_trail(cfg: SystemConfig, sources_used: list,
             "pvlib": pvlib.__version__,
             "python": platform.python_version(),
         },
-        "model": "pvlib PVWatts ModelChain (aoi=physical, spectral=no_loss)",
+        "model": (
+            "pvlib PVWatts ModelChain "
+            "(transposition=perez, aoi=physical, spectral=no_loss, "
+            f"mount={'single-axis-tracker' if cfg.array.tracking else 'fixed'})"
+        ),
     }
     if extra:
         trail.update(extra)

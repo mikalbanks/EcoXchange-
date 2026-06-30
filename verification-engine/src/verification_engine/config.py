@@ -68,6 +68,16 @@ class ArrayConfig:
     gamma_pdc: float = -0.0035              # power temp coeff, 1/°C (mono-Si ~ -0.35%/°C)
     temperature_model: str = "open_rack_glass_glass"
 
+    # Single-axis tracking (§1.2). When False the array is a FixedMount at
+    # (surface_tilt, surface_azimuth); when True it is a horizontal single-axis
+    # tracker and surface_tilt/azimuth are ignored in favour of the tracker geometry.
+    tracking: bool = False
+    axis_tilt: float = 0.0                   # tracker rotation-axis tilt, deg
+    axis_azimuth: float = 180.0              # axis bearing; 180 = N–S axis (NH)
+    max_angle: float = 60.0                  # max tracker rotation from horizontal, deg
+    backtrack: bool = True                   # backtrack to avoid row-to-row shading
+    gcr: float = 0.35                        # ground-coverage ratio (drives backtracking)
+
     def ac_capacity(self) -> float:
         return self.ac_capacity_kw if self.ac_capacity_kw else self.dc_capacity_kw / 1.2
 

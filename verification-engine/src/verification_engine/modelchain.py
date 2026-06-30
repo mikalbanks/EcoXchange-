@@ -14,27 +14,53 @@ from __future__ import annotations
 import pandas as pd
 
 from pvlib.location import Location as PVLocation
-from pvlib.pvsystem import PVSystem
+from pvlib.pvsystem import PVSystem, Array, FixedMount, SingleAxisTrackerMount
 from pvlib.modelchain import ModelChain
 from pvlib.temperature import TEMPERATURE_MODEL_PARAMETERS
 
-from .config import SystemConfig
+from .config import SystemConfig, ArrayConfig
+
+
+def _build_mount(arr: ArrayConfig):
+    """Fixed-tilt vs single-axis tracker mount (§1.2).
+
+    A horizontal single-axis tracker keeps the plane-of-array near-normal to the
+    sun through the day, so a fixed-tilt model under-predicts a tracking site by
+    roughly 15-25%. Selecting the right mount is what closes that gap.
+    """
+    if arr.tracking:
+        return SingleAxisTrackerMount(
+            axis_tilt=arr.axis_tilt,
+            axis_azimuth=arr.axis_azimuth,
+            max_angle=arr.max_angle,
+            backtrack=arr.backtrack,
+            gcr=arr.gcr,
+        )
+    return FixedMount(
+        surface_tilt=arr.surface_tilt,
+        surface_azimuth=arr.surface_azimuth,
+    )
 
 
 def build_modelchain(cfg: SystemConfig) -> ModelChain:
     temp_params = TEMPERATURE_MODEL_PARAMETERS["sapm"][cfg.array.temperature_model]
 
-    system = PVSystem(
-        surface_tilt=cfg.array.surface_tilt,
-        surface_azimuth=cfg.array.surface_azimuth,
+    # Explicit Array(mount=...) form so fixed-tilt and single-axis tracking share
+    # one code path; module + temperature parameters live on the Array.
+    array = Array(
+        mount=_build_mount(cfg.array),
         module_parameters={
             "pdc0": cfg.array.dc_capacity_kw * 1000.0,   # W DC at STC
             "gamma_pdc": cfg.array.gamma_pdc,
         },
+        temperature_model_parameters=temp_params,
+    )
+
+    system = PVSystem(
+        arrays=[array],
         inverter_parameters={
             "pdc0": cfg.array.ac_capacity() * 1000.0,    # W AC nameplate
         },
-        temperature_model_parameters=temp_params,
         # Component losses are applied explicitly in losses.py so each shows up
         # as its own waterfall line; we therefore zero pvlib's internal losses.
         losses_parameters={k: 0.0 for k in [
@@ -51,6 +77,7 @@ def build_modelchain(cfg: SystemConfig) -> ModelChain:
 
     return ModelChain(
         system, pvloc,
+        transposition_model="perez",   # §1.1: Perez is the industry-standard sky-diffuse model
         aoi_model="physical",
         spectral_model="no_loss",
         dc_model="pvwatts",

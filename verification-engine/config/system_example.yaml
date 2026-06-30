@@ -15,6 +15,8 @@ array:
   ac_capacity_kw: 850    # DC/AC ~ 1.18
   gamma_pdc: -0.0035     # -0.35%/°C
   temperature_model: "open_rack_glass_glass"
+  tracking: false        # true = horizontal single-axis tracker (ignores tilt/azimuth)
+  # axis_azimuth: 180    # N–S axis (NH); max_angle/gcr/backtrack also configurable
 
 # Component losses in PERCENT (PVWatts defaults; override from IE report)
 losses:
