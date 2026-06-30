@@ -4,3 +4,4 @@ numpy>=1.24
 scipy>=1.10
 pyyaml>=6.0
 requests>=2.31
+openpyxl>=3.1  # EIA-860/923 .xlsx parsing in validate_eia_fleet.py
