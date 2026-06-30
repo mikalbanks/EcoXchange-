@@ -22,6 +22,9 @@ export const TOLERANCE_DAILY_PCT = 5;
 export const CLEAR_SKY_MAX_FACTOR = 1.05;
 export const METER_DRIFT_THRESHOLD_PCT = 3;
 export const DATA_GAP_BLOCK_PCT = 10;
+// Monthly fallback band used only when a site-specific P90 is unavailable
+// (§2.2). When P90 *is* available, monthly verdicts use it instead of this.
+export const TOLERANCE_MONTHLY_FALLBACK_PCT = 15;
 
 export type Granularity = "INTERVAL_15M" | "DAILY";
 
@@ -39,6 +42,7 @@ export type AnomalyRuleCodeT =
   | "METER_DRIFT"
   | "DATA_GAP"
   | "DUPLICATE"
+  | "P90_SHORTFALL"
   | "ML_SCORER";
 
 export type AnomalySeverityT = "INFO" | "WARN" | "BLOCK";
@@ -119,6 +123,77 @@ export function reconcileInterval(input: {
     variancePct: Number(variancePct.toFixed(4)),
     status: blocking ? "REJECTED" : "VERIFIED",
     blocking,
+  };
+}
+
+// ─── Monthly P90 threshold (§2.2) ────────────────────────────────────────────
+// Interval verdicts keep the tight static tolerance + robust-z anomaly path. At
+// MONTHLY granularity, the financial signal is underperformance against the
+// site's P90 (the level solar finance underwrites to): FLAG — not REJECT — when
+// metered energy falls below the site P90 from Engine A. Where no site P90 is
+// available we fall back to the static ±15% band. This EXTENDS the verdict; the
+// three-source VERIFIED/FLAGGED/PENDING authority still lives here in TS.
+
+export interface MonthlyP90Input {
+  actualKwh: number;
+  p50Kwh: number;
+  /** Site P90 expected energy for the month (from Engine A). Null => fallback. */
+  p90Kwh?: number | null;
+}
+
+export interface MonthlyP90Result {
+  status: "VERIFIED" | "FLAGGED";
+  variancePct: number; // (actual - p50) / p50, %
+  threshold: "P90" | "STATIC_15PCT";
+  thresholdKwh: number;
+  shortfall: boolean;
+  flag: NewAnomalyFlag | null;
+}
+
+export function reconcileMonthlyAgainstP90(input: MonthlyP90Input): MonthlyP90Result {
+  const variancePct =
+    input.p50Kwh > 0
+      ? Number((((input.actualKwh - input.p50Kwh) / input.p50Kwh) * 100).toFixed(4))
+      : 0;
+
+  const hasP90 = input.p90Kwh != null && input.p90Kwh > 0;
+  let threshold: "P90" | "STATIC_15PCT";
+  let thresholdKwh: number;
+  let shortfall: boolean;
+
+  if (hasP90) {
+    threshold = "P90";
+    thresholdKwh = input.p90Kwh as number;
+    // Underperformance vs the P90 floor is the flagging signal.
+    shortfall = input.actualKwh < thresholdKwh;
+  } else {
+    threshold = "STATIC_15PCT";
+    thresholdKwh = input.p50Kwh * (1 - TOLERANCE_MONTHLY_FALLBACK_PCT / 100);
+    shortfall = Math.abs(variancePct) > TOLERANCE_MONTHLY_FALLBACK_PCT;
+  }
+
+  const flag: NewAnomalyFlag | null = shortfall
+    ? {
+        ruleCode: "P90_SHORTFALL",
+        severity: "WARN",
+        detail: {
+          actualKwh: input.actualKwh,
+          p50Kwh: input.p50Kwh,
+          p90Kwh: input.p90Kwh ?? null,
+          threshold,
+          thresholdKwh: Number(thresholdKwh.toFixed(4)),
+          variancePct,
+        },
+      }
+    : null;
+
+  return {
+    status: shortfall ? "FLAGGED" : "VERIFIED",
+    variancePct,
+    threshold,
+    thresholdKwh: Number(thresholdKwh.toFixed(4)),
+    shortfall,
+    flag,
   };
 }
 
