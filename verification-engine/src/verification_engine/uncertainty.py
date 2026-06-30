@@ -21,13 +21,18 @@ from typing import Dict
 import math
 
 
+# Literature default for year-to-year weather variability. Replaced by a
+# per-site value computed from all available NSRDB years when one is available
+# (see site_uncertainty.py); kept here as the fallback.
+DEFAULT_INTERANNUAL_VARIABILITY = 0.035
+
 # Default relative uncertainties (1-sigma). These are conservative literature
 # values; tighten them with project-specific data and an IE report over time.
 DEFAULT_UNCERTAINTIES: Dict[str, float] = {
     "irradiance_source": 0.04,     # overridden by inter-source spread when available
     "transposition_model": 0.02,   # GHI -> plane-of-array
     "soiling_estimate": 0.015,
-    "interannual_variability": 0.035,  # year-to-year weather
+    "interannual_variability": DEFAULT_INTERANNUAL_VARIABILITY,  # year-to-year weather
     "power_model": 0.02,           # PVWatts DC/AC modeling
 }
 

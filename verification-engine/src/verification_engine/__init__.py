@@ -15,6 +15,9 @@ from .uncertainty import build_budget, UncertaintyBudget
 from .reconcile import reconcile, ReconciliationResult
 from .report import VerificationReport, build_audit_trail
 from .meter_source import load_meter_from_supabase
+from .site_uncertainty import (
+    get_or_compute_site_sigma, interannual_variability_from_annual_totals,
+)
 
 __all__ = [
     "SystemConfig", "load_config", "Location", "ArrayConfig", "LossAssumptions",
@@ -25,5 +28,6 @@ __all__ = [
     "reconcile", "ReconciliationResult",
     "VerificationReport", "build_audit_trail",
     "load_meter_from_supabase",
+    "get_or_compute_site_sigma", "interannual_variability_from_annual_totals",
 ]
 __version__ = "2.0.0"

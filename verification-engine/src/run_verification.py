@@ -29,6 +29,7 @@ from src.verification_engine import (
     load_config, triangulate, fetch_nsrdb, fetch_nasa_power, fetch_pvgis,
     expected_ac_energy, apply_losses, apply_losses_series, build_budget,
     reconcile, VerificationReport, build_audit_trail, load_meter_from_supabase,
+    get_or_compute_site_sigma,
 )
 
 
@@ -78,6 +79,9 @@ def main():
                          "(needs SUPABASE_URL + SUPABASE_SERVICE_ROLE_KEY)")
     ap.add_argument("--out", default="report.json")
     ap.add_argument("--pvgis", action="store_true", help="include PVGIS source")
+    ap.add_argument("--per-site-sigma", action="store_true",
+                    help="compute per-site interannual variability from NSRDB years "
+                         "(cached in site_uncertainty) instead of the 3.5%% default")
     args = ap.parse_args()
 
     cfg = load_config(args.config)
@@ -92,7 +96,15 @@ def main():
 
     as_of = pd.Timestamp(f"{args.year}-07-01").date()
     net_total, waterfall = apply_losses(cfg, gross_total, as_of)
-    budget = build_budget(net_total, irradiance_spread_frac=irr_result.ghi_spread_frac)
+
+    overrides = None
+    if args.per_site_sigma:
+        site_sigma = get_or_compute_site_sigma(cfg.location)
+        overrides = {"interannual_variability": site_sigma}
+        print(f"[info] Per-site interannual variability: {site_sigma*100:.2f}% "
+              f"(default {3.5:.1f}%)")
+    budget = build_budget(net_total, irradiance_spread_frac=irr_result.ghi_spread_frac,
+                          overrides=overrides)
 
     recon = None
     meter = None
