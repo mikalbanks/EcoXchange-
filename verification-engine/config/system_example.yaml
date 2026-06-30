@@ -1,0 +1,32 @@
+# Example PV system config — a 1 MW operating solar asset.
+# Replace with real project specs (from the EPC datasheet / IE report).
+name: "Sunfield 1MW — Example"
+
+location:
+  latitude: 35.05
+  longitude: -106.54     # Albuquerque, NM (high-irradiance reference site)
+  altitude: 1600
+  tz: "America/Denver"
+
+array:
+  surface_tilt: 30
+  surface_azimuth: 180   # due south
+  dc_capacity_kw: 1000
+  ac_capacity_kw: 850    # DC/AC ~ 1.18
+  gamma_pdc: -0.0035     # -0.35%/°C
+  temperature_model: "open_rack_glass_glass"
+
+# Component losses in PERCENT (PVWatts defaults; override from IE report)
+losses:
+  soiling: 2.0
+  shading: 3.0
+  snow: 0.0
+  mismatch: 2.0
+  wiring: 2.0
+  connections: 0.5
+  lid: 1.5
+  nameplate_rating: 1.0
+  availability: 3.0
+
+commission_date: "2021-06-01"
+degradation_rate_per_year: 0.005   # 0.5%/yr

@@ -1,0 +1,6 @@
+pvlib>=0.15  # irradiance.py uses get_nsrdb_psm4_aggregated (0.15.x+)
+pandas>=2.0
+numpy>=1.24
+scipy>=1.10
+pyyaml>=6.0
+requests>=2.31
