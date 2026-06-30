@@ -1,0 +1,11 @@
+__pycache__/
+*.pyc
+.pytest_cache/
+.env
+*.egg-info/
+.venv/
+report.json
+eia_fleet_report.json
+# downloaded federal datasets (large; fetch via scripts/download-data.sh)
+data/fleet/**
+!data/fleet/.gitkeep
