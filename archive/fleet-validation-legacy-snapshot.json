@@ -1,0 +1,17 @@
+{
+  "_warning": "CONTAMINATED BASELINE — NOT A TARGET. See fleet-validation-legacy-snapshot.md.",
+  "source_artifact": "ecoxchange-fleet-validation (artifact C, decommissioned)",
+  "physics": "hand-rolled Hay-Davies (not pvlib ModelChain)",
+  "tracking_model": "trackingBoost scalar multiplier (not real tracker geometry)",
+  "irradiance_source": "EcoXchange irradiance MCP (http://localhost:3002/mcp)",
+  "ground_truth": "EIA-923 monthly net generation",
+  "reproduced_in_merge_environment": false,
+  "not_reproduced_reason": "harness requires the :3002 irradiance MCP and the federal USPVDB/EIA-860/EIA-923 datasets, neither available in the merge environment; C's reports/ held no committed baseline.",
+  "figures_provenance": "transcribed from Spec 01-C and prior reporting, not freshly produced",
+  "legacy_figures": {
+    "median_deviation_pct": 15.45,
+    "sign_convention": "positive = model over-predicts vs actual",
+    "pct_within_10pct": 38
+  },
+  "replacement": "verification-engine/src/validate_eia_fleet.py (Engine A, real physics) — judged on absolute acceptance criteria, not relative to these figures."
+}
