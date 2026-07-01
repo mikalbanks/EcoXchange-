@@ -70,6 +70,10 @@ class ExpectedGenerationRequest(BaseModel):
 
     project: ProjectSystemInput
     daily_weather: list[DailyWeatherInput]
+    weather_source: str = Field(
+        default="irradiance_mcp",
+        description="Provenance of the supplied weather (e.g. irradiance_mcp, nsrdb, nasa_power)",
+    )
 
 
 class MonthlyBreakdown(BaseModel):
@@ -85,11 +89,33 @@ class MonthlyBreakdown(BaseModel):
     days_with_data: int
 
 
+class LossWaterfallLine(BaseModel):
+    """One step of the IE-style energy loss waterfall (from Engine A)."""
+
+    step: str
+    loss_pct: float
+    energy_after_kwh: float
+
+
 class ExpectedGenerationResponse(BaseModel):
-    """Full response from the expected generation calculation."""
+    """Full response from the expected generation calculation.
+
+    The ``p50_kwh`` / ``p90_kwh`` / ``combined_uncertainty_pct`` /
+    ``weather_source`` / ``engine_version`` / ``loss_waterfall`` fields are the
+    additive, back-compatible growth from wrapping Engine A — existing callers
+    that only read ``total_expected_kwh`` + ``monthly_breakdown`` are unaffected.
+    """
 
     total_expected_kwh: float
     monthly_breakdown: list[MonthlyBreakdown]
     system_summary: dict[str, Any]
     model_metadata: dict[str, Any]
     warnings: list[str]
+
+    # Additive Engine A fields.
+    p50_kwh: float
+    p90_kwh: float
+    combined_uncertainty_pct: float
+    weather_source: str
+    engine_version: str
+    loss_waterfall: list[LossWaterfallLine]

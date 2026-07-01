@@ -28,7 +28,8 @@ sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 from src.verification_engine import (
     load_config, triangulate, fetch_nsrdb, fetch_nasa_power, fetch_pvgis,
     expected_ac_energy, apply_losses, apply_losses_series, build_budget,
-    reconcile, VerificationReport, build_audit_trail,
+    reconcile, VerificationReport, build_audit_trail, load_meter_from_supabase,
+    get_or_compute_site_sigma,
 )
 
 
@@ -73,8 +74,14 @@ def main():
     ap.add_argument("--meter", help="CSV of metered energy (optional)")
     ap.add_argument("--meter-ts-col", default="timestamp")
     ap.add_argument("--meter-kwh-col", default="energy_kwh")
+    ap.add_argument("--meter-supabase", metavar="PROJECT_ID",
+                    help="load metered energy from Supabase for this project_id "
+                         "(needs SUPABASE_URL + SUPABASE_SERVICE_ROLE_KEY)")
     ap.add_argument("--out", default="report.json")
     ap.add_argument("--pvgis", action="store_true", help="include PVGIS source")
+    ap.add_argument("--per-site-sigma", action="store_true",
+                    help="compute per-site interannual variability from NSRDB years "
+                         "(cached in site_uncertainty) instead of the 3.5%% default")
     args = ap.parse_args()
 
     cfg = load_config(args.config)
@@ -89,12 +96,29 @@ def main():
 
     as_of = pd.Timestamp(f"{args.year}-07-01").date()
     net_total, waterfall = apply_losses(cfg, gross_total, as_of)
-    budget = build_budget(net_total, irradiance_spread_frac=irr_result.ghi_spread_frac)
+
+    overrides = None
+    if args.per_site_sigma:
+        site_sigma = get_or_compute_site_sigma(cfg.location)
+        overrides = {"interannual_variability": site_sigma}
+        print(f"[info] Per-site interannual variability: {site_sigma*100:.2f}% "
+              f"(default {3.5:.1f}%)")
+    budget = build_budget(net_total, irradiance_spread_frac=irr_result.ghi_spread_frac,
+                          overrides=overrides)
 
     recon = None
-    if args.meter:
+    meter = None
+    if args.meter_supabase:
+        meter = load_meter_from_supabase(
+            args.meter_supabase,
+            start=f"{args.year}-01-01T00:00:00Z",
+            end=f"{args.year + 1}-01-01T00:00:00Z",
+            tz=cfg.location.tz,
+        )
+    elif args.meter:
         meter = load_meter(args.meter, args.meter_ts_col, args.meter_kwh_col,
                            cfg.location.tz)
+    if meter is not None:
         modeled_net = apply_losses_series(cfg, gross_series)
         recon = reconcile(modeled_net, meter)
         print(f"[info] Reconciliation: PR={recon.performance_ratio:.3f} "

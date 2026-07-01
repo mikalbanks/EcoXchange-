@@ -45,5 +45,7 @@ export default defineConfig({
     "interconnection_queue_entries",
     "queue_entry_analytics",
     "jurisdiction_ppa_benchmarks",
+    "expected_generation_reports",
+    "site_uncertainty",
   ],
 });

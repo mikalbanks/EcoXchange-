@@ -26,12 +26,26 @@ const MonthlyBreakdownSchema = z.object({
   days_with_data: z.number(),
 });
 
+const LossWaterfallLineSchema = z.object({
+  step: z.string(),
+  loss_pct: z.number(),
+  energy_after_kwh: z.number(),
+});
+
 const ExpectedGenerationResponseSchema = z.object({
   total_expected_kwh: z.number(),
   monthly_breakdown: z.array(MonthlyBreakdownSchema),
   system_summary: z.record(z.unknown()),
   model_metadata: z.record(z.unknown()),
   warnings: z.array(z.string()),
+  // Additive Engine A (verification-engine 2.0.0) fields. Optional so the
+  // schema still parses responses from an older service deployment.
+  p50_kwh: z.number().optional(),
+  p90_kwh: z.number().optional(),
+  combined_uncertainty_pct: z.number().optional(),
+  weather_source: z.string().optional(),
+  engine_version: z.string().optional(),
+  loss_waterfall: z.array(LossWaterfallLineSchema).optional(),
 });
 
 export type PvlibExpectedGenerationResult = z.infer<
