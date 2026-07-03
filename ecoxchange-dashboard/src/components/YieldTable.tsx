@@ -1,6 +1,7 @@
 import { Link } from "react-router-dom";
 import type { VerificationRecord } from "../utils/types.js";
 import { VerificationBadge } from "./VerificationBadge.js";
+import { DataSourceAttribution } from "../compliance/components/DataSourceAttribution.js";
 import { formatKwh, formatMonthLong, formatUsd } from "../utils/formatters.js";
 
 interface Props {
@@ -21,7 +22,15 @@ export function YieldTable({ projectId, records, investorSharePct = 2.0 }: Props
           <tr>
             <th className="px-4 py-3 text-left">Month</th>
             <th className="px-4 py-3 text-right">Production</th>
-            <th className="px-4 py-3 text-right">Investor Yield</th>
+            <th className="px-4 py-3 text-right">
+              Investor Yield
+              <sup
+                className="ml-0.5 cursor-help text-[9px] normal-case"
+                title="Modeled estimate — not a guarantee of future performance"
+              >
+                †
+              </sup>
+            </th>
             <th className="px-4 py-3 text-left">Status</th>
             <th className="px-4 py-3" />
           </tr>
@@ -61,6 +70,15 @@ export function YieldTable({ projectId, records, investorSharePct = 2.0 }: Props
           ))}
         </tbody>
       </table>
+      <div className="px-4 pb-3">
+        <DataSourceAttribution
+          sources={[
+            { name: "EcoXchange Verification Engine", type: "model" },
+            { name: "GA Power SREC Schedule", type: "public_data" },
+          ]}
+          isEstimate
+        />
+      </div>
     </div>
   );
 }

@@ -16,6 +16,8 @@ import {
   StatCardSkeleton,
   TableSkeleton,
 } from "../components/shared/LoadingState.js";
+import { DataSourceAttribution } from "../compliance/components/DataSourceAttribution.js";
+import { ProjectionDisclosure } from "../compliance/components/ProjectionDisclosure.js";
 import { formatKwh, formatMonthLong, formatPct } from "../utils/formatters.js";
 import type { ProjectBundle } from "../utils/types.js";
 
@@ -131,6 +133,14 @@ export function ProjectDetail() {
           </h2>
           <div key={scenario} className="animate-fade-in">
             <ProductionChart records={records} />
+            <DataSourceAttribution
+              sources={[
+                { name: "NASA POWER", type: "satellite", dateRange: "Jan–Dec 2024" },
+                { name: "EcoXchange Verification Engine", type: "model" },
+              ]}
+              engineVersion="v2.0.0"
+              isEstimate
+            />
           </div>
         </div>
 
@@ -204,7 +214,9 @@ export function ProjectDetail() {
         <StatCard
           label="Est. IRR"
           value={
-            <AnimatedNumber value={estIrr} format={(n) => `~${n.toFixed(1)}%`} />
+            <ProjectionDisclosure context="Modeled from backtest production and placeholder capital assumptions">
+              <AnimatedNumber value={estIrr} format={(n) => `~${n.toFixed(1)}%`} />
+            </ProjectionDisclosure>
           }
           sublabel="modeled, illustrative"
         />

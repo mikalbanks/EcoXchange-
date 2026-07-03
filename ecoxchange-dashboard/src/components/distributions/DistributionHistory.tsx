@@ -1,5 +1,7 @@
 import { CheckCircle2, Clock, ExternalLink, XCircle } from "lucide-react";
 import { SwipeActionRow } from "../shared/SwipeActionRow.js";
+import { DataSourceAttribution } from "../../compliance/components/DataSourceAttribution.js";
+import { YieldDisclosure } from "../../compliance/components/YieldDisclosure.js";
 import { formatUsd } from "../../utils/formatters.js";
 import type { DistributionRecord } from "../../types/distributions.js";
 
@@ -64,7 +66,11 @@ export function DistributionHistory({
                 </div>
                 <div className="text-right">
                   <div className="font-mono tabular-nums text-darkBg">
-                    {formatUsd(r.net_distribution, true)}
+                    <YieldDisclosure
+                      value={formatUsd(r.net_distribution, true)}
+                      type="cash_distribution"
+                      basis="modeled"
+                    />
                   </div>
                   <div className="mt-0.5 text-xs">
                     <StatusPill status={r.status} />
@@ -116,7 +122,11 @@ export function DistributionHistory({
                 {r.offering_name ?? "—"}
               </td>
               <td className="px-4 py-3 text-right font-mono tabular-nums text-darkBg">
-                {formatUsd(r.net_distribution, true)}
+                <YieldDisclosure
+                  value={formatUsd(r.net_distribution, true)}
+                  type="cash_distribution"
+                  basis="modeled"
+                />
               </td>
               <td className="px-4 py-3 text-darkBg">
                 {r.action_taken === "reinvest" ? "Reinvest" : "Cash Out"}
@@ -128,6 +138,15 @@ export function DistributionHistory({
           ))}
         </tbody>
       </table>
+        <div className="px-4 pb-3">
+          <DataSourceAttribution
+            sources={[
+              { name: "EcoXchange Distribution Ledger", type: "model" },
+              { name: "Base Network", type: "public_data" },
+            ]}
+            isEstimate
+          />
+        </div>
       </div>
     </>
   );

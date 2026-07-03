@@ -5,6 +5,7 @@ import { fetchReport } from "../data/onboarding.js";
 import type { BacktestReportResponse } from "../utils/onboarding-types.js";
 import { StatCard } from "../components/StatCard.js";
 import { ProductionChartLazy as ProductionChart } from "../components/ProductionChartLazy.js";
+import { DataSourceAttribution } from "../compliance/components/DataSourceAttribution.js";
 import { CostComparisonTable } from "../components/onboarding/CostComparisonTable.js";
 import {
   CardSkeleton,
@@ -134,6 +135,14 @@ export function OnboardingReport() {
           Monthly Production
         </h2>
         <ProductionChart records={records} />
+        <DataSourceAttribution
+          sources={[
+            { name: "NASA POWER", type: "satellite" },
+            { name: "EcoXchange Verification Engine", type: "model" },
+          ]}
+          engineVersion="v2.0.0"
+          isEstimate
+        />
       </div>
 
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">

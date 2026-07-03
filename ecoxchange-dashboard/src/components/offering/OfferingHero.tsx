@@ -1,6 +1,9 @@
 import { Link } from "react-router-dom";
 import { Sun } from "lucide-react";
+import type { ReactNode } from "react";
 import type { OfferingSummary } from "../../types/offerings.js";
+import { YieldDisclosure } from "../../compliance/components/YieldDisclosure.js";
+import { ProjectionDisclosure } from "../../compliance/components/ProjectionDisclosure.js";
 import { formatUsd } from "../../utils/formatters.js";
 import { ratioPct } from "./format.js";
 import { FundingProgress } from "./FundingProgress.js";
@@ -37,8 +40,24 @@ export function OfferingHero({ offering }: { offering: OfferingSummary }) {
         </div>
 
         <dl className="mt-5 grid grid-cols-2 gap-x-4 gap-y-4 border-t border-paleGreen/50 pt-5">
-          <Metric label="Target Yield" value={ratioPct(offering.target_annual_yield)} />
-          <Metric label="Target IRR" value={ratioPct(offering.target_irr)} />
+          <Metric
+            label="Target Yield"
+            value={
+              <YieldDisclosure
+                value={ratioPct(offering.target_annual_yield)}
+                type="yield_rate"
+                basis="projected"
+              />
+            }
+          />
+          <Metric
+            label="Target IRR"
+            value={
+              <ProjectionDisclosure context="Target IRR — forward-looking projection">
+                {ratioPct(offering.target_irr)}
+              </ProjectionDisclosure>
+            }
+          />
           <Metric label="Min Investment" value={formatUsd(offering.minimum_investment)} />
           <Metric label="Token Price" value={formatUsd(offering.token_price)} />
         </dl>
@@ -64,7 +83,7 @@ export function OfferingHero({ offering }: { offering: OfferingSummary }) {
   );
 }
 
-function Metric({ label, value }: { label: string; value: string }) {
+function Metric({ label, value }: { label: string; value: ReactNode }) {
   return (
     <div>
       <dt className="text-xs uppercase tracking-wide text-textMuted">{label}</dt>

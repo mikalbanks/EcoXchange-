@@ -3,6 +3,7 @@ import { Link, useParams } from "react-router-dom";
 import { ArrowLeft } from "lucide-react";
 import { loadReferenceDetail } from "../data/reference.js";
 import { ProductionChartLazy as ProductionChart } from "../components/ProductionChartLazy.js";
+import { DataSourceAttribution } from "../compliance/components/DataSourceAttribution.js";
 import { StatCard } from "../components/StatCard.js";
 import { YieldTable } from "../components/YieldTable.js";
 import { EiaComparisonStats } from "../components/reference/EiaComparisonStats.js";
@@ -106,6 +107,15 @@ export function ReferenceDetail() {
           Monthly Production · EIA Actual vs Engine Expected
         </h2>
         <ProductionChart records={records} />
+        <DataSourceAttribution
+          sources={[
+            { name: "EIA Form 923", type: "public_data" },
+            { name: "USPVDB", type: "public_data" },
+            { name: "EcoXchange Verification Engine", type: "model" },
+          ]}
+          engineVersion="v2.0.0"
+          isEstimate
+        />
       </div>
 
       <EiaComparisonStats records={records} />
