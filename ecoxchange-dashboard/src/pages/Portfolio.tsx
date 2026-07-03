@@ -13,6 +13,7 @@ import {
   StatCardSkeleton,
 } from "../components/shared/LoadingState.js";
 import { SwipeActionRow } from "../components/shared/SwipeActionRow.js";
+import { YieldDisclosure } from "../compliance/components/YieldDisclosure.js";
 import { useData } from "../context/DataContext.js";
 import { useAuth } from "../context/AuthContext.js";
 import { useIsMobile } from "../hooks/useMediaQuery.js";
@@ -123,20 +124,32 @@ export function Portfolio() {
         <StatCard
           label="Monthly Yield"
           value={
-            <AnimatedNumber
-              value={data.portfolio.monthly_yield_usd}
-              format={(n) => formatUsd(n)}
-            />
+            <YieldDisclosure
+              value={formatUsd(data.portfolio.monthly_yield_usd)}
+              type="cash_distribution"
+              basis="modeled"
+            >
+              <AnimatedNumber
+                value={data.portfolio.monthly_yield_usd}
+                format={(n) => formatUsd(n)}
+              />
+            </YieldDisclosure>
           }
           sublabel="USDC"
         />
         <StatCard
           label="Lifetime Yield"
           value={
-            <AnimatedNumber
-              value={data.portfolio.lifetime_yield_usd}
-              format={(n) => formatUsd(n)}
-            />
+            <YieldDisclosure
+              value={formatUsd(data.portfolio.lifetime_yield_usd)}
+              type="cumulative_return"
+              basis="modeled"
+            >
+              <AnimatedNumber
+                value={data.portfolio.lifetime_yield_usd}
+                format={(n) => formatUsd(n)}
+              />
+            </YieldDisclosure>
           }
           sublabel="USDC"
         />

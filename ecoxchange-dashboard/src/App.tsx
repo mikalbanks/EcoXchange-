@@ -22,14 +22,22 @@ import { OnboardingStatus } from "./pages/OnboardingStatus.js";
 import { OnboardingReport } from "./pages/OnboardingReport.js";
 import { ReferenceLibrary } from "./pages/ReferenceLibrary.js";
 import { ReferenceDetail } from "./pages/ReferenceDetail.js";
+import { DemoModeBanner } from "./compliance/components/DemoModeBanner.js";
+import { RegDBanner } from "./compliance/components/RegDBanner.js";
+import { DisclaimerFooter } from "./compliance/components/DisclaimerFooter.js";
 
 // Public/developer routes keep the original top-bar Header layout.
+// Compliance banners at top, disclaimer footer at bottom; no accreditation
+// gate here (developer portal / public pages are ungated per the spec).
 function HeaderLayout({ children }: { children: ReactNode }) {
   return (
     <div className="min-h-screen flex flex-col">
+      <DemoModeBanner />
+      <RegDBanner />
       <Header />
       <main className="flex-1 w-full max-w-6xl mx-auto px-4 sm:px-6 py-6 sm:py-10">
         {children}
+        <DisclaimerFooter />
       </main>
     </div>
   );

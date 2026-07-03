@@ -2,6 +2,7 @@ import { Link } from "react-router-dom";
 import { ChevronRight } from "lucide-react";
 import type { PortfolioProject } from "../utils/types.js";
 import { VerificationBadge } from "./VerificationBadge.js";
+import { YieldDisclosure } from "../compliance/components/YieldDisclosure.js";
 import { formatMonthLong, formatMwh, formatUsd } from "../utils/formatters.js";
 
 export function ProjectCard({ project }: { project: PortfolioProject }) {
@@ -37,7 +38,11 @@ export function ProjectCard({ project }: { project: PortfolioProject }) {
             Monthly Yield
           </div>
           <div className="font-heading text-xl text-darkBg mt-1">
-            {formatUsd(project.monthly_yield_usd)}{" "}
+            <YieldDisclosure
+              value={formatUsd(project.monthly_yield_usd)}
+              type="cash_distribution"
+              basis="modeled"
+            />{" "}
             <span className="text-sm text-textMuted">USDC</span>
           </div>
         </div>

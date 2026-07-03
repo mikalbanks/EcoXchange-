@@ -3,6 +3,7 @@ import { Link, useParams } from "react-router-dom";
 import { ArrowLeft } from "lucide-react";
 import { useData } from "../context/DataContext.js";
 import { ReconciliationDiagram } from "../components/ReconciliationDiagram.js";
+import { DataSourceAttribution } from "../compliance/components/DataSourceAttribution.js";
 import { VerificationBadge } from "../components/VerificationBadge.js";
 import { ErrorState } from "../components/shared/ErrorState.js";
 import { CardSkeleton, Shimmer } from "../components/shared/LoadingState.js";
@@ -93,7 +94,17 @@ export function VerificationDetail() {
         </div>
       </div>
 
-      <ReconciliationDiagram record={record} />
+      <div>
+        <ReconciliationDiagram record={record} />
+        <DataSourceAttribution
+          sources={[
+            { name: "Inverter Telemetry", type: "inverter" },
+            { name: "Utility Meter", type: "utility" },
+            { name: "NASA POWER", type: "satellite" },
+          ]}
+          engineVersion="v2.0.0"
+        />
+      </div>
 
       <div className="bg-white rounded-xl border border-paleGreen/60 p-5">
         <h2 className="font-heading text-lg text-darkBg mb-3">Irradiance Data</h2>
