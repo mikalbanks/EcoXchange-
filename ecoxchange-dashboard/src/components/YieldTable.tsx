@@ -39,7 +39,15 @@ export function YieldTable({ projectId, records, investorSharePct = 2.0 }: Props
                 {formatUsd(r.estimated_revenue * share, true)}
               </td>
               <td className="px-4 py-3">
-                <VerificationBadge status={r.status} size="sm" />
+                <VerificationBadge
+                  status={r.status}
+                  size="sm"
+                  deviations={{
+                    inv_vs_expected_pct: r.inv_vs_expected_pct,
+                    inv_vs_utility_pct: r.inv_vs_utility_pct,
+                    util_vs_expected_pct: r.util_vs_expected_pct,
+                  }}
+                />
               </td>
               <td className="px-4 py-3 text-right">
                 <Link

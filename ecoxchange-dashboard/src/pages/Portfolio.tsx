@@ -47,8 +47,10 @@ export function Portfolio() {
           <Shimmer className="h-9 w-72" />
           <Shimmer className="h-4 w-40" />
         </div>
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-          <StatCardSkeleton />
+        <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 sm:gap-4">
+          <div className="col-span-2 sm:col-span-1">
+            <StatCardSkeleton />
+          </div>
           <StatCardSkeleton />
           <StatCardSkeleton />
         </div>
@@ -71,16 +73,19 @@ export function Portfolio() {
         </p>
       </div>
 
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-        <StatCard
-          label="Total Invested"
-          value={
-            <AnimatedNumber
-              value={data.portfolio.total_invested}
-              format={(n) => formatUsd(n)}
-            />
-          }
-        />
+      {/* Mobile: 2-col grid with the lead metric spanning the full first row. */}
+      <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 sm:gap-4">
+        <div className="col-span-2 sm:col-span-1">
+          <StatCard
+            label="Total Invested"
+            value={
+              <AnimatedNumber
+                value={data.portfolio.total_invested}
+                format={(n) => formatUsd(n)}
+              />
+            }
+          />
+        </div>
         <StatCard
           label="Monthly Yield"
           value={

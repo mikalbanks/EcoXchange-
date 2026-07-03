@@ -77,8 +77,10 @@ export function ProjectDetail() {
           </div>
           <CardSkeleton lines={5} />
         </div>
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-          <StatCardSkeleton />
+        <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 sm:gap-4">
+          <div className="col-span-2 sm:col-span-1">
+            <StatCardSkeleton />
+          </div>
           <StatCardSkeleton />
           <StatCardSkeleton />
         </div>
@@ -141,7 +143,14 @@ export function ProjectDetail() {
           </div>
           <div className="mt-2">
             <span key={`${scenario}-${latest.status}`} className="inline-block animate-badge-pulse">
-              <VerificationBadge status={latest.status} />
+              <VerificationBadge
+                status={latest.status}
+                deviations={{
+                  inv_vs_expected_pct: latest.inv_vs_expected_pct,
+                  inv_vs_utility_pct: latest.inv_vs_utility_pct,
+                  util_vs_expected_pct: latest.util_vs_expected_pct,
+                }}
+              />
             </span>
           </div>
           <dl className="mt-4 space-y-2 text-sm">
@@ -170,16 +179,19 @@ export function ProjectDetail() {
         </div>
       </div>
 
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-        <StatCard
-          label="Annual Output"
-          value={
-            <AnimatedNumber
-              value={summary.annual_production_mwh}
-              format={(n) => `${Math.round(n).toLocaleString()} MWh`}
-            />
-          }
-        />
+      {/* Mobile: 2-col grid with the lead metric spanning the full first row. */}
+      <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 sm:gap-4">
+        <div className="col-span-2 sm:col-span-1">
+          <StatCard
+            label="Annual Output"
+            value={
+              <AnimatedNumber
+                value={summary.annual_production_mwh}
+                format={(n) => `${Math.round(n).toLocaleString()} MWh`}
+              />
+            }
+          />
+        </div>
         <StatCard
           label="Capacity Factor"
           value={
