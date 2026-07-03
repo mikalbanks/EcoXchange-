@@ -4,7 +4,7 @@ import { ArrowLeft, Download, Mail } from "lucide-react";
 import { fetchReport } from "../data/onboarding.js";
 import type { BacktestReportResponse } from "../utils/onboarding-types.js";
 import { StatCard } from "../components/StatCard.js";
-import { ProductionChart } from "../components/ProductionChart.js";
+import { ProductionChartLazy as ProductionChart } from "../components/ProductionChartLazy.js";
 import { CostComparisonTable } from "../components/onboarding/CostComparisonTable.js";
 import {
   CardSkeleton,

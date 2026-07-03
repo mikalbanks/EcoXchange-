@@ -6,7 +6,7 @@ import { formatMonthLong, formatMwh, formatUsd } from "../utils/formatters.js";
 
 export function ProjectCard({ project }: { project: PortfolioProject }) {
   return (
-    <div className="bg-white rounded-xl shadow-sm border border-paleGreen/60 p-6 flex flex-col gap-4 transition-transform transition-shadow duration-150 hover:-translate-y-0.5 hover:shadow-md">
+    <div className="bg-white rounded-xl shadow-sm border border-paleGreen/60 p-4 sm:p-6 flex flex-col gap-4 transition-transform transition-shadow duration-150 hover:-translate-y-0.5 hover:shadow-md">
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div>
           <h2 className="font-heading text-2xl text-darkBg">{project.name}</h2>
@@ -43,9 +43,10 @@ export function ProjectCard({ project }: { project: PortfolioProject }) {
         </div>
       </div>
 
+      {/* Mobile: full-width outlined CTA (>=44px target). Desktop: text link. */}
       <Link
         to={`/investor/project/${project.id}`}
-        className="self-start inline-flex items-center gap-1 text-medGreen hover:text-darkBg font-medium"
+        className="inline-flex items-center gap-1 font-medium text-medGreen hover:text-darkBg w-full min-h-[44px] justify-center rounded-lg border border-medGreen sm:w-auto sm:min-h-0 sm:justify-start sm:self-start sm:rounded-none sm:border-0"
       >
         View Project <ChevronRight className="h-4 w-4" />
       </Link>

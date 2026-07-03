@@ -1,4 +1,5 @@
-import { CheckCircle2, Clock, XCircle } from "lucide-react";
+import { CheckCircle2, Clock, ExternalLink, XCircle } from "lucide-react";
+import { SwipeActionRow } from "../shared/SwipeActionRow.js";
 import { formatUsd } from "../../utils/formatters.js";
 import type { DistributionRecord } from "../../types/distributions.js";
 
@@ -44,7 +45,59 @@ export function DistributionHistory({
   }
 
   return (
-    <div className="overflow-x-auto rounded-xl border border-paleGreen/60 bg-white">
+    <>
+      {/* Mobile: stacked cards (the 5-column table is unreadable at 375px).
+          Swipe a card left to reveal View-on-Explorer when a tx hash exists. */}
+      <div className="space-y-3 md:hidden">
+        {records.map((r) => {
+          const card = (
+            <div className="rounded-xl border border-paleGreen/60 bg-white p-4">
+              <div className="flex items-start justify-between gap-3">
+                <div>
+                  <div className="font-medium text-darkBg">
+                    {periodLabel(r.period_start)}
+                  </div>
+                  <div className="mt-0.5 text-xs text-textMuted">
+                    {r.offering_name ?? "—"} ·{" "}
+                    {r.action_taken === "reinvest" ? "Reinvest" : "Cash Out"}
+                  </div>
+                </div>
+                <div className="text-right">
+                  <div className="font-mono tabular-nums text-darkBg">
+                    {formatUsd(r.net_distribution, true)}
+                  </div>
+                  <div className="mt-0.5 text-xs">
+                    <StatusPill status={r.status} />
+                  </div>
+                </div>
+              </div>
+            </div>
+          );
+          return r.tx_hash ? (
+            <SwipeActionRow
+              key={r.id}
+              action={
+                <a
+                  href={`https://basescan.org/tx/${r.tx_hash}`}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="flex w-full flex-col items-center justify-center gap-1 bg-darkBg px-2 text-center text-[10px] font-medium uppercase tracking-wide text-paleGreen"
+                >
+                  <ExternalLink className="h-4 w-4" />
+                  Explorer
+                </a>
+              }
+            >
+              {card}
+            </SwipeActionRow>
+          ) : (
+            <div key={r.id}>{card}</div>
+          );
+        })}
+      </div>
+
+      {/* Desktop / tablet: the original table. */}
+      <div className="hidden overflow-x-auto rounded-xl border border-paleGreen/60 bg-white md:block">
       <table className="w-full text-sm">
         <thead>
           <tr className="border-b border-paleGreen/50 text-left text-xs uppercase tracking-wide text-textMuted">
@@ -75,6 +128,7 @@ export function DistributionHistory({
           ))}
         </tbody>
       </table>
-    </div>
+      </div>
+    </>
   );
 }

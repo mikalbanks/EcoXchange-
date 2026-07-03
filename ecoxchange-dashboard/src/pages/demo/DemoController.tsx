@@ -1,5 +1,5 @@
 import { useNavigate } from "react-router-dom";
-import { Play } from "lucide-react";
+import { BellRing, Play } from "lucide-react";
 import { useAuth } from "../../context/AuthContext.js";
 import type { Role } from "../../context/AuthContext.js";
 import { useDemo } from "../../context/DemoContext.js";
@@ -118,13 +118,28 @@ export function DemoController() {
           </div>
         </section>
 
-        <button
-          type="button"
-          onClick={launch}
-          className="inline-flex items-center gap-2 rounded-md bg-medGreen px-6 py-3 text-white font-medium transition-colors duration-150 hover:bg-darkBg"
-        >
-          <Play className="h-5 w-5" /> Launch Demo
-        </button>
+        <div className="flex flex-wrap items-center gap-3">
+          <button
+            type="button"
+            onClick={launch}
+            className="inline-flex items-center gap-2 rounded-md bg-medGreen px-6 py-3 text-white font-medium transition-colors duration-150 hover:bg-darkBg"
+          >
+            <Play className="h-5 w-5" /> Launch Demo
+          </button>
+          <button
+            type="button"
+            onClick={() => {
+              enterDemo();
+              setRole("investor");
+              // AppLayout reads-and-clears this param and fires the
+              // distribution notification banner.
+              navigate("/investor?simulate_distribution=1");
+            }}
+            className="inline-flex items-center gap-2 rounded-md border border-medGreen px-6 py-3 text-medGreen font-medium transition-colors duration-150 hover:bg-paleGreen/40"
+          >
+            <BellRing className="h-5 w-5" /> Simulate Distribution
+          </button>
+        </div>
       </div>
     </div>
   );

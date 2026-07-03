@@ -67,16 +67,62 @@ function Comparison({
   );
 }
 
+/** Vertical connector shown between stacked source cards on mobile: a line
+ *  with the pairwise deviation as a pill badge, colored by tolerance. */
+function MobileConnector({
+  pct,
+  tolerance,
+}: {
+  pct: number | null | undefined;
+  tolerance: number;
+}) {
+  const within = pct != null && Math.abs(pct) <= tolerance;
+  return (
+    <div className="sm:hidden flex flex-col items-center" aria-hidden>
+      <span className="h-3 w-px bg-paleGreen" />
+      <span
+        className={`rounded-full border px-2.5 py-0.5 font-mono text-xs tabular-nums ${
+          pct == null
+            ? "border-paleGreen bg-cream text-textMuted"
+            : within
+              ? "border-medGreen/40 bg-paleGreen/50 text-medGreen"
+              : "border-flagAmber/40 bg-amber-50 text-flagAmber"
+        }`}
+      >
+        {pct == null ? "N/A" : `${formatPct(pct)} dev`}
+      </span>
+      <span className="h-3 w-px bg-paleGreen" />
+    </div>
+  );
+}
+
 export function ReconciliationDiagram({ record }: { record: VerificationRecord }) {
   return (
-    <div className="bg-white rounded-lg border border-paleGreen/60 p-6">
+    <div className="bg-white rounded-lg border border-paleGreen/60 p-4 sm:p-6">
       <h2 className="font-heading text-xl text-darkBg mb-4">
         Three-Way Reconciliation
       </h2>
-      <div className="flex flex-col sm:flex-row gap-3 mb-6">
-        <Source label="Inverter" value={record.inverter_kwh} />
-        <Source label="Utility Meter" value={record.utility_kwh} />
-        <Source label="Expected (Satellite)" value={record.expected_kwh} highlight />
+      {/* Mobile: vertical Inverter -> Expected -> Utility stack with deviation
+          connectors (DOM order = mobile order). Desktop (sm+): reordered via
+          sm:order-* back to the original Inverter / Utility / Expected row. */}
+      <div className="flex flex-col sm:flex-row gap-0 sm:gap-3 mb-6">
+        <div className="sm:order-1 flex-1 flex">
+          <Source label="Inverter" value={record.inverter_kwh} />
+        </div>
+        <MobileConnector
+          pct={record.inv_vs_expected_pct}
+          tolerance={TOL.inv_vs_expected}
+        />
+        <div className="sm:order-3 flex-1 flex">
+          <Source label="Expected (Satellite)" value={record.expected_kwh} highlight />
+        </div>
+        <MobileConnector
+          pct={record.util_vs_expected_pct}
+          tolerance={TOL.util_vs_expected}
+        />
+        <div className="sm:order-2 flex-1 flex">
+          <Source label="Utility Meter" value={record.utility_kwh} />
+        </div>
       </div>
       <div className="space-y-2">
         <Comparison
