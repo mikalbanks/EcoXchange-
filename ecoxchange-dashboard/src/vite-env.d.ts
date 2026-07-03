@@ -8,6 +8,8 @@ interface ImportMetaEnv {
   readonly VITE_COMPLIANCE_MODE?: string;
   /** Required 'true' for live compliance mode (securities counsel sign-off). */
   readonly VITE_COUNSEL_APPROVED?: string;
+  /** Explorer chain network: 'base-sepolia' (default) | 'base-mainnet'. */
+  readonly VITE_NETWORK?: string;
 }
 
 interface ImportMeta {

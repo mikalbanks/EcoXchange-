@@ -14,16 +14,18 @@
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.106.1",
+    "html2canvas": "^1.4.1",
+    "leaflet": "^1.9.4",
     "lucide-react": "^0.383.0",
     "react": "^18.3.1",
     "react-dom": "^18.3.1",
+    "react-leaflet": "^4.2.1",
     "react-router-dom": "^6.26.0",
     "recharts": "^2.12.7",
-    "leaflet": "^1.9.4",
-    "react-leaflet": "^4.2.1",
-    "html2canvas": "^1.4.1"
+    "viem": "^2.54.2"
   },
   "devDependencies": {
+    "@types/leaflet": "^1.9.12",
     "@types/react": "^18.3.3",
     "@types/react-dom": "^18.3.0",
     "@vitejs/plugin-react": "^4.3.1",
@@ -32,8 +34,7 @@
     "tailwindcss": "^3.4.10",
     "typescript": "^5.5.4",
     "vite": "^5.4.1",
-    "@types/leaflet": "^1.9.12",
-    "wrangler": "^4.20.0",
-    "vitest": "^2.1.0"
+    "vitest": "^2.1.0",
+    "wrangler": "^4.20.0"
   }
 }
