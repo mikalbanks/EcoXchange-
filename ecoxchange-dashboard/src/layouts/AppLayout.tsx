@@ -6,6 +6,10 @@ import { MobileNav } from "../components/shared/MobileNav.js";
 import { FloatingDemoBar } from "../components/shared/FloatingDemoBar.js";
 import { DistributionBanner } from "../components/shared/DistributionBanner.js";
 import { ErrorBoundary } from "../components/shared/ErrorBoundary.js";
+import { DemoModeBanner } from "../compliance/components/DemoModeBanner.js";
+import { RegDBanner } from "../compliance/components/RegDBanner.js";
+import { AccreditationGate } from "../compliance/components/AccreditationGate.js";
+import { DisclaimerFooter } from "../compliance/components/DisclaimerFooter.js";
 import { useAuth } from "../context/AuthContext.js";
 import { useDemo } from "../context/DemoContext.js";
 import {
@@ -77,6 +81,9 @@ function AppLayoutInner() {
       ) : null}
 
       <div className="flex-1 min-w-0 flex flex-col">
+        {/* Compliance banners: exactly one renders per compliance mode. */}
+        <DemoModeBanner />
+        <RegDBanner />
         <header className="sticky top-0 z-30 bg-darkBg text-white">
           <div className="flex items-center justify-between px-4 sm:px-6 py-3">
             <div className="flex items-center gap-3">
@@ -133,9 +140,13 @@ function AppLayoutInner() {
                 : ""
           }`}
         >
-          <ErrorBoundary>
-            <Outlet />
-          </ErrorBoundary>
+          <AccreditationGate>
+            <ErrorBoundary>
+              <Outlet />
+            </ErrorBoundary>
+            {/* Inside <main> so the mobile tab-bar bottom padding keeps it visible. */}
+            <DisclaimerFooter />
+          </AccreditationGate>
         </main>
       </div>
 

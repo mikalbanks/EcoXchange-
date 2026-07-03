@@ -2,6 +2,9 @@ import { useNavigate } from "react-router-dom";
 import { LineChart, Hammer, PlayCircle } from "lucide-react";
 import { useAuth } from "../context/AuthContext.js";
 import { useDemo } from "../context/DemoContext.js";
+import { DemoModeBanner } from "../compliance/components/DemoModeBanner.js";
+import { RegDBanner } from "../compliance/components/RegDBanner.js";
+import { DisclaimerFooter } from "../compliance/components/DisclaimerFooter.js";
 
 // Lightweight role-select entry point. Real auth (Privy) replaces this after
 // securities counsel; for now it just sets the mock role and routes in.
@@ -16,7 +19,10 @@ export function Landing() {
   };
 
   return (
-    <div className="min-h-screen flex flex-col items-center justify-center bg-darkBg text-white px-4 py-16">
+    <div className="min-h-screen flex flex-col">
+      <DemoModeBanner />
+      <RegDBanner />
+      <div className="flex-1 flex flex-col items-center justify-center bg-darkBg text-white px-4 py-16">
       <div className="flex items-center gap-3 mb-2">
         <img src="/ecoxchange-logo.svg" alt="EcoXchange" className="h-10 w-10" />
         <span className="font-heading text-3xl">EcoXchange</span>
@@ -65,6 +71,12 @@ export function Landing() {
             Presentation controls for live pitches.
           </p>
         </button>
+      </div>
+      </div>
+
+      {/* Light band so the disclaimer footer keeps its cream-palette styling. */}
+      <div className="bg-cream px-4 sm:px-6">
+        <DisclaimerFooter />
       </div>
     </div>
   );
