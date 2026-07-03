@@ -2,6 +2,18 @@
 @tailwind components;
 @tailwind utilities;
 
+/* Bottom padding that clears the fixed mobile tab bar (64px) plus the device
+   safe area; the -demo variant additionally clears the FloatingDemoBar (56px)
+   stacked above the tab bar. In @layer utilities so lg: variants override. */
+@layer utilities {
+  .pb-tabbar {
+    padding-bottom: calc(64px + env(safe-area-inset-bottom, 0px) + 16px);
+  }
+  .pb-tabbar-demo {
+    padding-bottom: calc(64px + env(safe-area-inset-bottom, 0px) + 16px + 56px);
+  }
+}
+
 html, body, #root {
   height: 100%;
   margin: 0;

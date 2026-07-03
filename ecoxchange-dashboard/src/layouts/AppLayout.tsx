@@ -2,6 +2,7 @@ import { useState } from "react";
 import { Outlet } from "react-router-dom";
 import { Menu, X } from "lucide-react";
 import { Sidebar } from "../components/shared/Sidebar.js";
+import { MobileNav } from "../components/shared/MobileNav.js";
 import { FloatingDemoBar } from "../components/shared/FloatingDemoBar.js";
 import { ErrorBoundary } from "../components/shared/ErrorBoundary.js";
 import { useAuth } from "../context/AuthContext.js";
@@ -87,8 +88,14 @@ export function AppLayout() {
         </header>
 
         <main
-          className={`flex-1 w-full max-w-6xl mx-auto px-4 sm:px-6 py-6 sm:py-10 ${
-            demoMode ? "pb-24" : ""
+          className={`flex-1 w-full lg:max-w-[1200px] mx-auto px-4 sm:px-6 py-6 sm:py-10 ${
+            role === "investor"
+              ? demoMode
+                ? "pb-tabbar-demo lg:pb-24"
+                : "pb-tabbar lg:pb-10"
+              : demoMode
+                ? "pb-24"
+                : ""
           }`}
         >
           <ErrorBoundary>
@@ -97,6 +104,7 @@ export function AppLayout() {
         </main>
       </div>
 
+      {role === "investor" ? <MobileNav /> : null}
       {demoMode ? <FloatingDemoBar /> : null}
     </div>
   );

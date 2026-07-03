@@ -10,8 +10,17 @@ export function FloatingDemoBar() {
   const { role } = useAuth();
   const { scenario, setScenario, exitDemo } = useDemo();
 
+  // Below lg the investor shell shows the bottom tab bar (64px + safe area);
+  // stack the demo bar directly above it so neither is obscured.
+  const bottomOffset =
+    role === "investor"
+      ? "bottom-[calc(64px+env(safe-area-inset-bottom,0px))] lg:bottom-0"
+      : "bottom-0";
+
   return (
-    <div className="fixed inset-x-0 bottom-0 z-40 bg-darkBg text-white border-t border-accentBrt/40 shadow-[0_-2px_12px_rgba(0,0,0,0.18)]">
+    <div
+      className={`fixed inset-x-0 ${bottomOffset} z-40 bg-darkBg text-white border-t border-accentBrt/40 shadow-[0_-2px_12px_rgba(0,0,0,0.18)]`}
+    >
       <div className="max-w-6xl mx-auto px-4 sm:px-6 py-2.5 flex flex-wrap items-center gap-x-4 gap-y-2 text-sm">
         <span className="inline-flex items-center gap-2 font-medium">
           <span className="h-2 w-2 rounded-full bg-accentBrt animate-pulse" />
