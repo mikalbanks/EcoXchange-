@@ -1,24 +1,59 @@
-import { useState } from "react";
-import { Outlet } from "react-router-dom";
+import { useEffect, useState } from "react";
+import { Outlet, useSearchParams } from "react-router-dom";
 import { Menu, X } from "lucide-react";
 import { Sidebar } from "../components/shared/Sidebar.js";
 import { MobileNav } from "../components/shared/MobileNav.js";
 import { FloatingDemoBar } from "../components/shared/FloatingDemoBar.js";
+import { DistributionBanner } from "../components/shared/DistributionBanner.js";
 import { ErrorBoundary } from "../components/shared/ErrorBoundary.js";
 import { useAuth } from "../context/AuthContext.js";
 import { useDemo } from "../context/DemoContext.js";
+import {
+  NotificationProvider,
+  useNotifications,
+} from "../context/NotificationContext.js";
 import { liveMode } from "../lib/supabase.js";
+import demoDistributions from "../data/demo-distributions.json";
+
+// Demo trigger: the Demo Controller navigates to /investor?simulate_distribution=1;
+// we read-and-clear the param here (inside the provider) and fire the banner
+// with the latest demo distribution amount.
+function SimulateDistributionTrigger() {
+  const [searchParams, setSearchParams] = useSearchParams();
+  const { showDistributionBanner } = useNotifications();
+
+  useEffect(() => {
+    if (searchParams.get("simulate_distribution") !== "1") return;
+    const latest = demoDistributions.history[0];
+    showDistributionBanner({ amountUsd: latest?.net_distribution ?? 0 });
+    const next = new URLSearchParams(searchParams);
+    next.delete("simulate_distribution");
+    setSearchParams(next, { replace: true });
+  }, [searchParams, setSearchParams, showDistributionBanner]);
+
+  return null;
+}
 
 // Role-based application shell: fixed sidebar (240px) on desktop, a slide-in
 // drawer on mobile, a slim top header, the routed page, and the floating demo
 // bar when demo mode is active.
 export function AppLayout() {
+  return (
+    <NotificationProvider>
+      <AppLayoutInner />
+    </NotificationProvider>
+  );
+}
+
+function AppLayoutInner() {
   const [drawerOpen, setDrawerOpen] = useState(false);
   const { user, role } = useAuth();
   const { demoMode } = useDemo();
 
   return (
     <div className="min-h-screen flex bg-cream">
+      <SimulateDistributionTrigger />
+      <DistributionBanner />
       {/* Desktop sidebar */}
       <aside className="hidden lg:block w-60 shrink-0">
         <div className="fixed inset-y-0 w-60">

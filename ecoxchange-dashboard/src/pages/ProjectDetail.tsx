@@ -2,7 +2,7 @@ import { useCallback, useEffect, useState } from "react";
 import { Link, useParams } from "react-router-dom";
 import { ArrowLeft, FileText, LineChart } from "lucide-react";
 import { useData } from "../context/DataContext.js";
-import { ProductionChart } from "../components/ProductionChart.js";
+import { ProductionChartLazy as ProductionChart } from "../components/ProductionChartLazy.js";
 import { StatCard } from "../components/StatCard.js";
 import { AnimatedNumber } from "../components/shared/AnimatedNumber.js";
 import { VerificationBadge } from "../components/VerificationBadge.js";

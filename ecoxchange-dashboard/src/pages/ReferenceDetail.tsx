@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { Link, useParams } from "react-router-dom";
 import { ArrowLeft } from "lucide-react";
 import { loadReferenceDetail } from "../data/reference.js";
-import { ProductionChart } from "../components/ProductionChart.js";
+import { ProductionChartLazy as ProductionChart } from "../components/ProductionChartLazy.js";
 import { StatCard } from "../components/StatCard.js";
 import { YieldTable } from "../components/YieldTable.js";
 import { EiaComparisonStats } from "../components/reference/EiaComparisonStats.js";
