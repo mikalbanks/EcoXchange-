@@ -1,3 +1,4 @@
+import { lazy, Suspense } from "react";
 import { BrowserRouter, Navigate, Route, Routes, useLocation } from "react-router-dom";
 import type { ReactNode } from "react";
 import { Header } from "./components/Header.js";
@@ -22,6 +23,17 @@ import { OnboardingStatus } from "./pages/OnboardingStatus.js";
 import { OnboardingReport } from "./pages/OnboardingReport.js";
 import { ReferenceLibrary } from "./pages/ReferenceLibrary.js";
 import { ReferenceDetail } from "./pages/ReferenceDetail.js";
+
+// Explorer pages are lazy-loaded so the viem chunk stays off the critical
+// path — it only downloads when someone opens /explorer.
+const Explorer = lazy(() =>
+  import("./pages/Explorer.js").then((m) => ({ default: m.Explorer })),
+);
+const ExplorerContract = lazy(() =>
+  import("./pages/ExplorerContract.js").then((m) => ({
+    default: m.ExplorerContract,
+  })),
+);
 import { DemoModeBanner } from "./compliance/components/DemoModeBanner.js";
 import { RegDBanner } from "./compliance/components/RegDBanner.js";
 import { DisclaimerFooter } from "./compliance/components/DisclaimerFooter.js";
@@ -85,6 +97,23 @@ export function App() {
           />
           <Route path="/investor/settings" element={<Settings />} />
           <Route path="/investor/onboard" element={<InvestorOnboarding />} />
+          {/* Smart Contract Explorer (Spec 08) — read-only on-chain transparency */}
+          <Route
+            path="/explorer"
+            element={
+              <Suspense fallback={null}>
+                <Explorer />
+              </Suspense>
+            }
+          />
+          <Route
+            path="/explorer/:contractType"
+            element={
+              <Suspense fallback={null}>
+                <ExplorerContract />
+              </Suspense>
+            }
+          />
         </Route>
 
         {/* Standalone suitability questionnaire — focused flow, no sidebar */}

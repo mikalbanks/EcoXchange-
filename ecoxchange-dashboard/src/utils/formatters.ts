@@ -52,3 +52,12 @@ export function formatMonthShort(iso: string): string {
   const d = new Date(iso);
   return d.toLocaleDateString("en-US", { month: "short", timeZone: "UTC" });
 }
+
+/** Relative time for explorer displays: "42s ago", "5 min ago", "3h ago", "2d ago". */
+export function formatTimeAgo(date: Date): string {
+  const seconds = Math.floor((Date.now() - date.getTime()) / 1000);
+  if (seconds < 60) return `${Math.max(0, seconds)}s ago`;
+  if (seconds < 3600) return `${Math.floor(seconds / 60)} min ago`;
+  if (seconds < 86400) return `${Math.floor(seconds / 3600)}h ago`;
+  return `${Math.floor(seconds / 86400)}d ago`;
+}

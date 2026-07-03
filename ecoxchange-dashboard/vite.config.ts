@@ -11,6 +11,7 @@ export default defineConfig({
           recharts: ["recharts"],
           router: ["react-router-dom"],
           supabase: ["@supabase/supabase-js"],
+          viem: ["viem"],
         },
       },
     },

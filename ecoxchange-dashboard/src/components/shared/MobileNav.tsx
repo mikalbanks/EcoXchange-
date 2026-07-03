@@ -1,6 +1,6 @@
 import { Link, useLocation } from "react-router-dom";
 import type { LucideIcon } from "lucide-react";
-import { LayoutDashboard, Store, Coins, Leaf } from "lucide-react";
+import { LayoutDashboard, Store, Coins, Leaf, Link2 } from "lucide-react";
 
 interface NavTab {
   id: string;
@@ -42,6 +42,14 @@ const TABS: NavTab[] = [
     icon: Leaf,
     to: "/investor/impact",
     matches: (p) => p.startsWith("/investor/impact"),
+  },
+  {
+    // Spec 08: on-chain transparency. 5 tabs is the mobile maximum.
+    id: "explorer",
+    label: "Chain",
+    icon: Link2,
+    to: "/explorer",
+    matches: (p) => p.startsWith("/explorer"),
   },
 ];
 

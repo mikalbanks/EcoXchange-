@@ -14,6 +14,7 @@ import {
   PlusCircle,
   BookOpen,
   PlayCircle,
+  Link2,
 } from "lucide-react";
 import { useAuth } from "../../context/AuthContext.js";
 import { useDemo } from "../../context/DemoContext.js";
@@ -35,6 +36,7 @@ const INVESTOR_NAV: NavItem[] = [
   { to: "/investor/distributions", label: "Distributions", icon: Coins },
   { to: "/investor/performance", label: "Performance", icon: LineChart, disabled: true },
   { to: "/investor/documents", label: "Documents", icon: FileText, disabled: true },
+  { to: "/explorer", label: "Explorer", icon: Link2 },
   { to: "/investor/settings", label: "Settings", icon: SettingsIcon },
 ];
 
