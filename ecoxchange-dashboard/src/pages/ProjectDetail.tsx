@@ -1,6 +1,6 @@
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { Link, useParams } from "react-router-dom";
-import { ArrowLeft, FileText, LineChart } from "lucide-react";
+import { ArrowLeft, Download, FileText, LineChart } from "lucide-react";
 import { useData } from "../context/DataContext.js";
 import { ProductionChartLazy as ProductionChart } from "../components/ProductionChartLazy.js";
 import { StatCard } from "../components/StatCard.js";
@@ -22,6 +22,7 @@ import { SectionTag } from "../components/ui/SectionTag.js";
 import { ProjectMap } from "../components/offering/ProjectMap.js";
 import { nextDistributionDate } from "../utils/distributions-summary.js";
 import { formatKwh, formatMonthLong, formatPct } from "../utils/formatters.js";
+import { VerificationReportTemplate } from "../reports/VerificationReportTemplate.js";
 import type { ProjectBundle } from "../utils/types.js";
 
 type ProjectTab = "overview" | "production" | "verification" | "documents";
@@ -41,6 +42,28 @@ export function ProjectDetail() {
   const [status, setStatus] = useState<"loading" | "ready" | "error" | "empty">(
     "loading",
   );
+  const [generatingReport, setGeneratingReport] = useState(false);
+  const reportRef = useRef<HTMLDivElement>(null);
+
+  const downloadReport = async () => {
+    if (!bundle || generatingReport) return;
+    setGeneratingReport(true);
+    try {
+      // Let the offscreen template mount and lay out before capture.
+      await new Promise((r) => setTimeout(r, 80));
+      const pages = Array.from(
+        reportRef.current?.querySelectorAll<HTMLElement>(".pdf-page") ?? [],
+      );
+      const { downloadPdfFromPages, slugForFilename } = await import("../reports/pdf.js");
+      const year = bundle.verification_records[0]?.period_start.slice(0, 4) ?? "";
+      await downloadPdfFromPages(
+        pages,
+        `EcoXchange_Verification_Report_${slugForFilename(bundle.project.name)}_${year}.pdf`,
+      );
+    } finally {
+      setGeneratingReport(false);
+    }
+  };
 
   const load = useCallback(() => {
     setStatus("loading");
@@ -143,8 +166,30 @@ export function ProjectDetail() {
           >
             <FileText className="h-4 w-4" /> Documents
           </Link>
+          <button
+            type="button"
+            onClick={() => void downloadReport()}
+            disabled={generatingReport}
+            data-testid="download-report"
+            className="inline-flex items-center gap-1.5 rounded-md border border-paleGreen/60 bg-white px-3 py-2 text-sm font-medium text-medGreen hover:bg-cream transition-colors duration-150 disabled:opacity-50"
+          >
+            <Download className="h-4 w-4" />
+            {generatingReport ? "Generating…" : "Download Report"}
+          </button>
         </div>
       </div>
+
+      {/* Offscreen A4 pages for the PDF pipeline — mounted only while generating. */}
+      {generatingReport ? (
+        <div ref={reportRef} className="fixed top-0 left-[-2000px] z-[-1]" aria-hidden>
+          <VerificationReportTemplate
+            project={project}
+            records={records}
+            summary={summary}
+            generatedAt={new Date()}
+          />
+        </div>
+      ) : null}
 
       {/* Tabbed sections (Spec 03 §5.2) — client-side, no route change. */}
       <div
