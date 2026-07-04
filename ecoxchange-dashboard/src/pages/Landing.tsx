@@ -2,6 +2,7 @@ import { useNavigate } from "react-router-dom";
 import { LineChart, Hammer, PlayCircle } from "lucide-react";
 import { useAuth } from "../context/AuthContext.js";
 import { useDemo } from "../context/DemoContext.js";
+import { SolarParticles } from "../components/ambient/SolarParticles.js";
 import { DemoModeBanner } from "../compliance/components/DemoModeBanner.js";
 import { RegDBanner } from "../compliance/components/RegDBanner.js";
 import { DisclaimerFooter } from "../compliance/components/DisclaimerFooter.js";
@@ -22,17 +23,27 @@ export function Landing() {
     <div className="min-h-screen flex flex-col">
       <DemoModeBanner />
       <RegDBanner />
-      <div className="flex-1 flex flex-col items-center justify-center bg-darkBg text-white px-4 py-16">
-      <div className="flex items-center gap-3 mb-2">
+      <div className="relative flex-1 flex flex-col items-center justify-center bg-darkBg text-white px-4 py-16 overflow-hidden">
+      <SolarParticles
+        count={30}
+        color="#76C945"
+        minSize={1}
+        maxSize={3}
+        speed={0.3}
+        direction="up"
+        opacity={0.2}
+        connectDistance={100}
+      />
+      <div className="relative flex items-center gap-3 mb-2">
         <img src="/ecoxchange-logo.svg" alt="EcoXchange" className="h-10 w-10" />
         <span className="font-heading text-3xl">EcoXchange</span>
       </div>
-      <p className="text-paleGreen mb-10 text-center max-w-md">
+      <p className="relative text-paleGreen mb-10 text-center max-w-md">
         Digital securities for renewable energy. Choose how you’d like to explore
         the platform.
       </p>
 
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 w-full max-w-3xl">
+      <div className="relative grid grid-cols-1 sm:grid-cols-3 gap-4 w-full max-w-3xl">
         <button
           type="button"
           onClick={() => go("investor", "/investor")}

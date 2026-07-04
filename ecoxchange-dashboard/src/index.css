@@ -26,8 +26,62 @@ body {
   -webkit-font-smoothing: antialiased;
 }
 
+/* Brand headline face (Spec 03): Playfair Display italic, Georgia fallback. */
 h1, h2, h3 {
-  font-family: Georgia, serif;
+  font-family: "Playfair Display", Georgia, serif;
+  font-style: italic;
+}
+
+/* Hero background: organic gradient mesh — sunlight through a canopy, not
+   flat cream. The slow drift animates background-position (custom-property
+   keyframes don't interpolate without @property support). */
+.hero-gradient {
+  position: relative;
+  background:
+    radial-gradient(ellipse at 20% 50%, rgba(200, 232, 212, 0.4) 0%, transparent 50%),
+    radial-gradient(ellipse at 80% 20%, rgba(118, 201, 69, 0.06) 0%, transparent 40%),
+    radial-gradient(ellipse at 60% 80%, rgba(141, 196, 164, 0.08) 0%, transparent 45%),
+    linear-gradient(180deg, #F7F3EE 0%, #F0EDE6 100%);
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .hero-gradient::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    background: radial-gradient(
+      ellipse 60% 50% at 50% 50%,
+      rgba(118, 201, 69, 0.05) 0%,
+      transparent 55%
+    );
+    background-size: 200% 200%;
+    animation: gradient-drift 60s ease-in-out infinite;
+  }
+
+  @keyframes gradient-drift {
+    0%, 100% { background-position: 20% 40%; }
+    33%      { background-position: 80% 25%; }
+    66%      { background-position: 50% 75%; }
+  }
+}
+
+/* Faint leaf silhouette watermark — desktop only, subliminal (opacity .03). */
+.page-watermark {
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Cpath d='M50 5 C 80 20 92 50 88 70 C 84 88 65 95 50 95 C 35 95 16 88 12 70 C 8 50 20 20 50 5 Z M50 12 L 50 90 M50 30 C 40 36 32 46 28 58 M50 30 C 60 36 68 46 72 58 M50 52 C 42 57 36 64 33 73 M50 52 C 58 57 64 64 67 73' fill='none' stroke='%231B4D35' stroke-width='2'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: bottom right;
+  background-size: 300px;
+  opacity: 0.03;
+  pointer-events: none;
+  position: absolute;
+  inset: 0;
+}
+
+@media (max-width: 1023px) {
+  .page-watermark {
+    display: none;
+  }
 }
 
 /* Returns calculator range sliders (Spec 07). Track fill is supplied inline via

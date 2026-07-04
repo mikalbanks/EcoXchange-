@@ -13,10 +13,12 @@ import {
   StatCardSkeleton,
 } from "../components/shared/LoadingState.js";
 import { SwipeActionRow } from "../components/shared/SwipeActionRow.js";
+import { SolarParticles } from "../components/ambient/SolarParticles.js";
+import { SectionTag } from "../components/ui/SectionTag.js";
 import { YieldDisclosure } from "../compliance/components/YieldDisclosure.js";
 import { useData } from "../context/DataContext.js";
 import { useAuth } from "../context/AuthContext.js";
-import { useIsMobile } from "../hooks/useMediaQuery.js";
+import { useIsMobile, useIsTablet } from "../hooks/useMediaQuery.js";
 import { usePullToRefresh } from "../hooks/usePullToRefresh.js";
 import type { Portfolio as PortfolioData } from "../utils/types.js";
 import { formatUsd } from "../utils/formatters.js";
@@ -25,6 +27,7 @@ export function Portfolio() {
   const { getPortfolio, scenario, mode } = useData();
   const { user } = useAuth();
   const isMobile = useIsMobile();
+  const isTablet = useIsTablet();
   const [data, setData] = useState<PortfolioData | null>(null);
   const [status, setStatus] = useState<"loading" | "ready" | "error">("loading");
 
@@ -67,10 +70,9 @@ export function Portfolio() {
           <Shimmer className="h-9 w-72" />
           <Shimmer className="h-4 w-40" />
         </div>
-        <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 sm:gap-4">
-          <div className="col-span-2 sm:col-span-1">
-            <StatCardSkeleton />
-          </div>
+        <div className="grid grid-cols-2 gap-3 sm:gap-4 xl:grid-cols-4">
+          <StatCardSkeleton />
+          <StatCardSkeleton />
           <StatCardSkeleton />
           <StatCardSkeleton />
         </div>
@@ -98,62 +100,94 @@ export function Portfolio() {
           </span>
         </div>
       )}
-      <div>
-        <h1 className="font-heading text-3xl text-darkBg">
-          Good to see you, {firstName}.
-        </h1>
-        <p className="text-textMuted mt-1">
-          {data.portfolio.active_projects} active project
-          {data.portfolio.active_projects === 1 ? "" : "s"}
-        </p>
-      </div>
+      {/* Hero band: organic gradient mesh + ambient solar particles (Spec 03).
+          Particle density scales with viewport: 30 desktop / 12 tablet / 0 mobile. */}
+      <section className="hero-gradient relative overflow-hidden border border-darkBg/5 p-5 sm:p-8">
+        <SolarParticles
+          count={isMobile ? 0 : isTablet ? 12 : 30}
+          color="#76C945"
+          minSize={1}
+          maxSize={3}
+          speed={0.3}
+          direction="up"
+          opacity={0.2}
+          connectDistance={100}
+        />
+        <div className="relative">
+          <SectionTag>Your Solar Portfolio</SectionTag>
+          <h1 className="font-heading text-3xl text-darkBg">
+            Good to see you, {firstName}.
+          </h1>
+          <p className="text-textMuted mt-1">
+            Production-verified income from U.S. solar assets ·{" "}
+            {data.portfolio.active_projects} active project
+            {data.portfolio.active_projects === 1 ? "" : "s"}
+          </p>
 
-      {/* Mobile: 2-col grid with the lead metric spanning the full first row. */}
-      <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 sm:gap-4">
-        <div className="col-span-2 sm:col-span-1">
-          <StatCard
-            label="Total Invested"
-            value={
-              <AnimatedNumber
-                value={data.portfolio.total_invested}
-                format={(n) => formatUsd(n)}
+          {/* 4-up stat grid (2x2 on mobile/tablet). Count-ups start on first
+              viewport entry. */}
+          <div className="mt-6 grid grid-cols-2 gap-3 sm:gap-4 xl:grid-cols-4">
+            <StatCard
+              label="Total Invested"
+              value={
+                <AnimatedNumber
+                  value={data.portfolio.total_invested}
+                  format={(n) => formatUsd(n)}
+                  startOnView
+                />
+              }
+            />
+            <StatCard
+              label="Monthly Yield"
+              value={
+                <YieldDisclosure
+                  value={formatUsd(data.portfolio.monthly_yield_usd)}
+                  type="cash_distribution"
+                  basis="modeled"
+                >
+                  <AnimatedNumber
+                    value={data.portfolio.monthly_yield_usd}
+                    format={(n) => formatUsd(n)}
+                    startOnView
+                  />
+                </YieldDisclosure>
+              }
+              sublabel="USDC"
+            />
+            <StatCard
+              label="Lifetime Yield"
+              value={
+                <YieldDisclosure
+                  value={formatUsd(data.portfolio.lifetime_yield_usd)}
+                  type="cumulative_return"
+                  basis="modeled"
+                >
+                  <AnimatedNumber
+                    value={data.portfolio.lifetime_yield_usd}
+                    format={(n) => formatUsd(n)}
+                    startOnView
+                  />
+                </YieldDisclosure>
+              }
+              sublabel="USDC"
+            />
+            {/* ESN token holdings — the on-chain settlement layer, visible. */}
+            <Link to="/explorer/token" className="block">
+              <StatCard
+                label="ESN Holdings"
+                value={
+                  <AnimatedNumber
+                    value={100}
+                    format={(n) => `${Math.round(n)} ESN`}
+                    startOnView
+                  />
+                }
+                sublabel="ERC-3643 · Savannah Solar I"
               />
-            }
-          />
+            </Link>
+          </div>
         </div>
-        <StatCard
-          label="Monthly Yield"
-          value={
-            <YieldDisclosure
-              value={formatUsd(data.portfolio.monthly_yield_usd)}
-              type="cash_distribution"
-              basis="modeled"
-            >
-              <AnimatedNumber
-                value={data.portfolio.monthly_yield_usd}
-                format={(n) => formatUsd(n)}
-              />
-            </YieldDisclosure>
-          }
-          sublabel="USDC"
-        />
-        <StatCard
-          label="Lifetime Yield"
-          value={
-            <YieldDisclosure
-              value={formatUsd(data.portfolio.lifetime_yield_usd)}
-              type="cumulative_return"
-              basis="modeled"
-            >
-              <AnimatedNumber
-                value={data.portfolio.lifetime_yield_usd}
-                format={(n) => formatUsd(n)}
-              />
-            </YieldDisclosure>
-          }
-          sublabel="USDC"
-        />
-      </div>
+      </section>
 
       <Link
         to="/investor/impact"
@@ -181,7 +215,10 @@ export function Portfolio() {
         />
       ) : (
         <div className="space-y-4">
-          <h2 className="font-heading text-xl text-darkBg">Your Projects</h2>
+          <div>
+            <SectionTag>Active Projects</SectionTag>
+            <h2 className="font-heading text-xl text-darkBg">Your Projects</h2>
+          </div>
           {data.projects.map((p) => (
             <SwipeActionRow
               key={p.id}
