@@ -6,6 +6,8 @@ import { MobileNav } from "../components/shared/MobileNav.js";
 import { FloatingDemoBar } from "../components/shared/FloatingDemoBar.js";
 import { DistributionBanner } from "../components/shared/DistributionBanner.js";
 import { ErrorBoundary } from "../components/shared/ErrorBoundary.js";
+import { WalletIndicator } from "../components/web3/WalletIndicator.js";
+import { PageTransition } from "../components/shared/PageTransition.js";
 import { DemoModeBanner } from "../compliance/components/DemoModeBanner.js";
 import { RegDBanner } from "../compliance/components/RegDBanner.js";
 import { AccreditationGate } from "../compliance/components/AccreditationGate.js";
@@ -103,6 +105,7 @@ function AppLayoutInner() {
             </div>
 
             <div className="flex items-center gap-3">
+              <WalletIndicator />
               <span
                 className={`inline-flex items-center gap-2 rounded-full px-2 py-0.5 text-xs font-medium ${
                   liveMode
@@ -130,7 +133,7 @@ function AppLayoutInner() {
         </header>
 
         <main
-          className={`flex-1 w-full lg:max-w-[1200px] mx-auto px-4 sm:px-6 py-6 sm:py-10 ${
+          className={`relative flex-1 w-full lg:max-w-[1200px] mx-auto px-4 sm:px-6 py-6 sm:py-10 ${
             role === "investor"
               ? demoMode
                 ? "pb-tabbar-demo lg:pb-24"
@@ -140,9 +143,13 @@ function AppLayoutInner() {
                 : ""
           }`}
         >
+          {/* Subliminal leaf watermark — desktop only, opacity 0.03. */}
+          <div className="page-watermark" aria-hidden data-testid="page-watermark" />
           <AccreditationGate>
             <ErrorBoundary>
-              <Outlet />
+              <PageTransition>
+                <Outlet />
+              </PageTransition>
             </ErrorBoundary>
             {/* Inside <main> so the mobile tab-bar bottom padding keeps it visible. */}
             <DisclaimerFooter />

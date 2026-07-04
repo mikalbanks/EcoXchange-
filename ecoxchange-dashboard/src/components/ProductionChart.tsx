@@ -146,6 +146,8 @@ export function ProductionChart({ records }: Props) {
               name="Actual production"
               radius={[4, 4, 0, 0]}
               barSize={isMobile ? 24 : undefined}
+              animationDuration={800}
+              animationEasing="ease-out"
             >
               {visible.map((d, idx) => (
                 <Cell
@@ -158,6 +160,8 @@ export function ProductionChart({ records }: Props) {
               type="monotone"
               dataKey="expected"
               name="Expected"
+              animationDuration={1000}
+              animationEasing="ease-out"
               stroke={palette.lightGreen}
               strokeDasharray="6 4"
               strokeWidth={2}

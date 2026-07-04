@@ -18,13 +18,26 @@ import {
 } from "../components/shared/LoadingState.js";
 import { DataSourceAttribution } from "../compliance/components/DataSourceAttribution.js";
 import { ProjectionDisclosure } from "../compliance/components/ProjectionDisclosure.js";
+import { SectionTag } from "../components/ui/SectionTag.js";
+import { ProjectMap } from "../components/offering/ProjectMap.js";
+import { nextDistributionDate } from "../utils/distributions-summary.js";
 import { formatKwh, formatMonthLong, formatPct } from "../utils/formatters.js";
 import type { ProjectBundle } from "../utils/types.js";
+
+type ProjectTab = "overview" | "production" | "verification" | "documents";
+
+const TABS: Array<{ id: ProjectTab; label: string }> = [
+  { id: "overview", label: "Overview" },
+  { id: "production", label: "Production" },
+  { id: "verification", label: "Verification" },
+  { id: "documents", label: "Documents" },
+];
 
 export function ProjectDetail() {
   const { id = "" } = useParams();
   const { getProject, scenario } = useData();
   const [bundle, setBundle] = useState<ProjectBundle | null>(null);
+  const [tab, setTab] = useState<ProjectTab>("overview");
   const [status, setStatus] = useState<"loading" | "ready" | "error" | "empty">(
     "loading",
   );
@@ -95,12 +108,19 @@ export function ProjectDetail() {
   const latest = records[records.length - 1];
   const estIrr = ((summary.total_revenue_estimate * 0.6) / 50_000_000) * 100; // rough placeholder
 
+  const nextDist = new Date(`${nextDistributionDate()}T00:00:00`);
+  const daysToDist = Math.max(
+    0,
+    Math.ceil((nextDist.getTime() - Date.now()) / 86_400_000),
+  );
+
   return (
     <div className="space-y-8 animate-fade-in">
       <BackLink />
 
       <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4">
         <div>
+          <SectionTag>Project Detail</SectionTag>
           <h1 className="font-heading text-3xl text-darkBg">{project.name}</h1>
           <p className="text-textMuted mt-1">
             {project.location} · {project.capacity_kw.toLocaleString()} kW DC ·{" "}
@@ -126,8 +146,121 @@ export function ProjectDetail() {
         </div>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
-        <div className="lg:col-span-2 bg-white rounded-xl border border-paleGreen/60 p-5">
+      {/* Tabbed sections (Spec 03 §5.2) — client-side, no route change. */}
+      <div
+        role="tablist"
+        aria-label="Project sections"
+        className="flex gap-1 overflow-x-auto border-b border-darkBg/10"
+      >
+        {TABS.map((t) => (
+          <button
+            key={t.id}
+            type="button"
+            role="tab"
+            aria-selected={tab === t.id}
+            onClick={() => setTab(t.id)}
+            className={`min-h-[44px] whitespace-nowrap px-4 font-mono text-[11px] uppercase tracking-wider transition-colors duration-150 ${
+              tab === t.id
+                ? "border-b-2 border-accentBrt text-darkBg"
+                : "text-textMuted hover:text-darkBg"
+            }`}
+          >
+            {t.label}
+          </button>
+        ))}
+      </div>
+
+      {tab === "overview" && (
+        <div className="space-y-8">
+          {/* Next-distribution countdown */}
+          <div className="inline-flex items-center gap-2 border border-paleGreen bg-paleGreen/30 px-4 py-2 font-mono text-xs text-darkBg">
+            <span aria-hidden className="h-2 w-2 rounded-full bg-accentBrt animate-pulse" />
+            Next distribution in {daysToDist} day{daysToDist === 1 ? "" : "s"} ·{" "}
+            {nextDist.toLocaleDateString("en-US", { month: "short", day: "numeric" })}
+          </div>
+
+          {/* Summary stats */}
+          <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 sm:gap-4">
+            <div className="col-span-2 sm:col-span-1">
+              <StatCard
+                label="Annual Output"
+                value={
+                  <AnimatedNumber
+                    value={summary.annual_production_mwh}
+                    format={(n) => `${Math.round(n).toLocaleString()} MWh`}
+                    startOnView
+                  />
+                }
+              />
+            </div>
+            <StatCard
+              label="Capacity Factor"
+              value={
+                <AnimatedNumber
+                  value={summary.capacity_factor_pct}
+                  format={(n) => `${n.toFixed(1)}%`}
+                  startOnView
+                />
+              }
+            />
+            <StatCard
+              label="Est. IRR"
+              value={
+                <ProjectionDisclosure context="Modeled from backtest production and placeholder capital assumptions">
+                  <AnimatedNumber value={estIrr} format={(n) => `~${n.toFixed(1)}%`} startOnView />
+                </ProjectionDisclosure>
+              }
+              sublabel="modeled, illustrative"
+            />
+          </div>
+
+          {/* System specifications (mono) + location mini-map */}
+          <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
+            <div className="rounded-xl border border-paleGreen/60 bg-white p-5">
+              <SectionTag>System Specifications</SectionTag>
+              <dl className="mt-2 space-y-2 font-mono text-xs">
+                <SpecRow label="DC Capacity" value={`${project.capacity_kw.toLocaleString()} kW`} />
+                <SpecRow label="Tilt / Azimuth" value={`${project.tilt_deg}° / ${project.azimuth_deg}°`} />
+                <SpecRow label="Module Efficiency" value={`${(project.module_efficiency * 100).toFixed(0)}%`} />
+                <SpecRow label="System Losses" value={`${(project.system_losses * 100).toFixed(0)}%`} />
+                <SpecRow label="Commissioned" value={project.commissioning_date} />
+                <SpecRow label="PPA Rate" value={`$${project.ppa_rate_per_kwh.toFixed(3)}/kWh`} />
+                <SpecRow
+                  label="Coordinates"
+                  value={`${project.latitude.toFixed(3)}, ${project.longitude.toFixed(3)}`}
+                />
+              </dl>
+            </div>
+            <div>
+              <ProjectMap
+                latitude={project.latitude}
+                longitude={project.longitude}
+                label={project.name}
+              />
+            </div>
+          </div>
+        </div>
+      )}
+
+      {tab === "documents" && (
+        <div className="rounded-xl border border-paleGreen/60 bg-white p-5">
+          <SectionTag>Documents</SectionTag>
+          <p className="mt-1 text-sm text-textMuted">
+            Offering documents, verification reports, and statements for this
+            project live in the document vault.
+          </p>
+          <Link
+            to={`/investor/project/${project.id}/documents`}
+            className="mt-3 inline-flex min-h-[44px] items-center gap-1.5 font-medium text-medGreen hover:text-darkBg"
+          >
+            <FileText className="h-4 w-4" /> Open document vault →
+          </Link>
+        </div>
+      )}
+
+      {tab === "production" && (
+        <div className="bg-white rounded-xl border border-paleGreen/60 p-5">
+          <SectionTag>Production</SectionTag>
           <h2 className="font-heading text-xl text-darkBg mb-3">
             Monthly Production
           </h2>
@@ -143,8 +276,10 @@ export function ProjectDetail() {
             />
           </div>
         </div>
+      )}
 
-        <div className="bg-white rounded-xl border border-paleGreen/60 p-5 flex flex-col">
+      {tab === "verification" && (
+        <div className="bg-white rounded-xl border border-paleGreen/60 p-5 flex flex-col lg:max-w-md">
           <div className="text-xs uppercase tracking-wide text-textMuted">
             Most recent verification
           </div>
@@ -187,45 +322,14 @@ export function ProjectDetail() {
             Open verification detail →
           </Link>
         </div>
-      </div>
+      )}
 
-      {/* Mobile: 2-col grid with the lead metric spanning the full first row. */}
-      <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 sm:gap-4">
-        <div className="col-span-2 sm:col-span-1">
-          <StatCard
-            label="Annual Output"
-            value={
-              <AnimatedNumber
-                value={summary.annual_production_mwh}
-                format={(n) => `${Math.round(n).toLocaleString()} MWh`}
-              />
-            }
-          />
+      {tab === "production" && (
+        <div>
+          <h2 className="font-heading text-xl text-darkBg mb-3">Monthly Yield</h2>
+          <YieldTable projectId={project.id} records={records} />
         </div>
-        <StatCard
-          label="Capacity Factor"
-          value={
-            <AnimatedNumber
-              value={summary.capacity_factor_pct}
-              format={(n) => `${n.toFixed(1)}%`}
-            />
-          }
-        />
-        <StatCard
-          label="Est. IRR"
-          value={
-            <ProjectionDisclosure context="Modeled from backtest production and placeholder capital assumptions">
-              <AnimatedNumber value={estIrr} format={(n) => `~${n.toFixed(1)}%`} />
-            </ProjectionDisclosure>
-          }
-          sublabel="modeled, illustrative"
-        />
-      </div>
-
-      <div>
-        <h2 className="font-heading text-xl text-darkBg mb-3">Monthly Yield</h2>
-        <YieldTable projectId={project.id} records={records} />
-      </div>
+      )}
     </div>
   );
 }
@@ -246,6 +350,15 @@ function Row({ label, value }: { label: string; value: string }) {
     <div className="flex justify-between text-textDark">
       <dt className="text-textMuted">{label}</dt>
       <dd>{value}</dd>
+    </div>
+  );
+}
+
+function SpecRow({ label, value }: { label: string; value: string }) {
+  return (
+    <div className="flex justify-between gap-4 border-b border-darkBg/5 pb-2 last:border-0 last:pb-0">
+      <dt className="uppercase tracking-wide text-textMuted">{label}</dt>
+      <dd className="tabular-nums text-textDark">{value}</dd>
     </div>
   );
 }

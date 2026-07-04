@@ -1,4 +1,5 @@
 import { useCompliance } from "../ComplianceProvider.js";
+import { ChainHeartbeat } from "../../components/web3/ChainHeartbeat.js";
 
 const TEXT = "font-mono text-[10px] leading-[1.6] tracking-[0.01em] text-textMuted";
 
@@ -52,11 +53,14 @@ export function DisclaimerFooter() {
           </p>
         </div>
 
-        {/* Platform identification */}
-        <div className="mt-4 flex items-center gap-2">
-          <span className={`${TEXT} !text-medGreen`}>EcoXchange</span>
-          <span className={TEXT}>·</span>
-          <span className={TEXT}>{MODE_LABEL[mode]}</span>
+        {/* Platform identification + settlement-chain heartbeat */}
+        <div className="mt-4 flex flex-wrap items-center justify-between gap-2">
+          <div className="flex items-center gap-2">
+            <span className={`${TEXT} !text-medGreen`}>EcoXchange</span>
+            <span className={TEXT}>·</span>
+            <span className={TEXT}>{MODE_LABEL[mode]}</span>
+          </div>
+          <ChainHeartbeat />
         </div>
       </div>
     </footer>

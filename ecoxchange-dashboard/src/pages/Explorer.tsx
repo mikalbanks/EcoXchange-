@@ -2,6 +2,7 @@ import { NetworkStatus } from "../components/explorer/NetworkStatus.js";
 import { ContractCard } from "../components/explorer/ContractCard.js";
 import { ActivityFeed } from "../components/explorer/ActivityFeed.js";
 import { DataSourceAttribution } from "../compliance/components/DataSourceAttribution.js";
+import { SectionTag } from "../components/ui/SectionTag.js";
 import { explorerContracts } from "../data/explorer-contracts.js";
 import { demoActivity } from "../data/explorer-activity.js";
 
@@ -14,8 +15,9 @@ export function Explorer() {
   return (
     <div className="space-y-8 animate-fade-in">
       <div>
+        <SectionTag>Smart Contract Infrastructure</SectionTag>
         <h1 className="font-heading text-3xl text-darkBg">
-          § Smart Contract Infrastructure
+          On-Chain Infrastructure
         </h1>
         <p className="mt-1 text-textMuted">
           On-chain transparency for EcoXchange Solar Notes
