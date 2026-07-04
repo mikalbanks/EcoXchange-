@@ -34,6 +34,11 @@ const ExplorerContract = lazy(() =>
     default: m.ExplorerContract,
   })),
 );
+// Distribution simulation shares the lazy web3 chunk boundary — its executor
+// dynamically imports viem, so /distribute stays off the critical path too.
+const Distribute = lazy(() =>
+  import("./pages/Distribute.js").then((m) => ({ default: m.Distribute })),
+);
 import { DemoModeBanner } from "./compliance/components/DemoModeBanner.js";
 import { RegDBanner } from "./compliance/components/RegDBanner.js";
 import { DisclaimerFooter } from "./compliance/components/DisclaimerFooter.js";
@@ -83,6 +88,15 @@ export function App() {
           <Route path="/investor/calculator" element={<Calculator />} />
           <Route path="/investor/impact" element={<Impact />} />
           <Route path="/investor/distributions" element={<Distributions />} />
+          {/* USDC distribution simulation — verification -> oracle -> settlement */}
+          <Route
+            path="/distribute"
+            element={
+              <Suspense fallback={null}>
+                <Distribute />
+              </Suspense>
+            }
+          />
           <Route path="/investor/project/:id" element={<ProjectDetail />} />
           <Route
             path="/investor/project/:id/verification/:period"
