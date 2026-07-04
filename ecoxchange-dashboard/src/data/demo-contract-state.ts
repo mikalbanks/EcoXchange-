@@ -8,7 +8,7 @@ export const demoContractState: Record<string, Record<string, string>> = {
   [activeNetwork.contracts.token]: {
     "name()": "EcoXchange Solar Note — Savannah 5MW",
     "symbol()": "ESN-SAV-5MW",
-    "totalSupply()": "500",
+    "totalSupply()": "5,000",
     "decimals()": "0",
     "owner()": "0xABCD…1234 (SPV Admin)",
     "paused()": "false",

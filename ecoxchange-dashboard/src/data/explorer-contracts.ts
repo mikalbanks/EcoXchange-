@@ -1,6 +1,6 @@
 // Contract card definitions for the Smart Contract Explorer (Spec 08).
-// Stats echo the demo world: 500 ESN, 12 verified holders, $4,248 USDC
-// distributed, verification engine v2.0.0.
+// Stats echo the demo world: 5,000 ESN at $100 (the demo investor's 100 ESN
+// = 2.0%), 12 verified holders, $4,248 USDC distributed, engine v2.0.0.
 import type { LucideIcon } from "lucide-react";
 import { ArrowRightLeft, Coins, Radio, ShieldCheck } from "lucide-react";
 import { activeNetwork, isDeployed } from "../config/contracts.js";
@@ -33,7 +33,7 @@ export const explorerContracts: ExplorerContract[] = [
     status: statusOf(activeNetwork.contracts.token),
     icon: Coins,
     stats: [
-      { label: "Total Supply", value: "500 ESN" },
+      { label: "Total Supply", value: "5,000 ESN" },
       { label: "Holders", value: "12" },
       { label: "Min Investment", value: "$10,000" },
       { label: "Token Price", value: "$100.00" },

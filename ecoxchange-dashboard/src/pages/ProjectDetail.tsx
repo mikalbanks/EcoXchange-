@@ -20,6 +20,7 @@ import { DataSourceAttribution } from "../compliance/components/DataSourceAttrib
 import { ProjectionDisclosure } from "../compliance/components/ProjectionDisclosure.js";
 import { SectionTag } from "../components/ui/SectionTag.js";
 import { ProjectMap } from "../components/offering/ProjectMap.js";
+import { LiveProductionMeter } from "../components/production/LiveProductionMeter.js";
 import { nextDistributionDate } from "../utils/distributions-summary.js";
 import { formatKwh, formatMonthLong, formatPct } from "../utils/formatters.js";
 import { VerificationReportTemplate } from "../reports/VerificationReportTemplate.js";
@@ -223,6 +224,15 @@ export function ProjectDetail() {
             Next distribution in {daysToDist} day{daysToDist === 1 ? "" : "s"} ·{" "}
             {nextDist.toLocaleDateString("en-US", { month: "short", day: "numeric" })}
           </div>
+
+          {/* Live production gauge (simulated; differentiation spec §2) */}
+          <LiveProductionMeter
+            projectName={project.name}
+            latitude={project.latitude}
+            longitude={project.longitude}
+            capacityKw={project.capacity_kw}
+            monthlyKwh={latest?.inverter_kwh ?? 0}
+          />
 
           {/* Summary stats */}
           <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 sm:gap-4">

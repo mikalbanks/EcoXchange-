@@ -78,3 +78,24 @@ export function TableSkeleton({ rows = 6 }: { rows?: number }) {
     </div>
   );
 }
+
+/** Map placeholder: rectangular area with a faint grid overlay (spec §5.2). */
+export function MapSkeleton({ height = 400 }: { height?: number }) {
+  return (
+    <div
+      className="relative overflow-hidden border border-paleGreen/60 bg-paleGreen/20 animate-pulse"
+      style={{ height }}
+      aria-hidden
+      data-testid="map-skeleton"
+    >
+      <div
+        className="absolute inset-0 opacity-40"
+        style={{
+          backgroundImage:
+            "linear-gradient(to right, rgba(46,125,82,0.12) 1px, transparent 1px), linear-gradient(to bottom, rgba(46,125,82,0.12) 1px, transparent 1px)",
+          backgroundSize: "48px 48px",
+        }}
+      />
+    </div>
+  );
+}

@@ -8,4 +8,5 @@ export {
   ChartSkeleton,
   CardSkeleton,
   TableSkeleton,
+  MapSkeleton,
 } from "../Skeleton.js";

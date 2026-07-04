@@ -5,6 +5,7 @@ import { ProjectDetails } from "../components/onboarding/ProjectDetails.js";
 import { InverterSetup } from "../components/onboarding/InverterSetup.js";
 import { OfftakeAndRaise } from "../components/onboarding/OfftakeAndRaise.js";
 import { StepNav } from "../components/onboarding/StepNav.js";
+import { CostComparison } from "../components/developer/CostComparison.js";
 import { submitIntake } from "../data/onboarding.js";
 import {
   DEFAULT_INTAKE,
@@ -123,6 +124,10 @@ export function OnboardingWizard() {
           submitting={submitting}
         />
       </div>
+
+      {/* Value-prop calculator below the wizard: see the savings before you
+          finish intake (differentiation spec §3). */}
+      <CostComparison />
     </div>
   );
 }
