@@ -3,7 +3,21 @@ import { SwipeActionRow } from "../shared/SwipeActionRow.js";
 import { DataSourceAttribution } from "../../compliance/components/DataSourceAttribution.js";
 import { YieldDisclosure } from "../../compliance/components/YieldDisclosure.js";
 import { formatUsd } from "../../utils/formatters.js";
+import { activeNetwork } from "../../config/contracts.js";
 import type { DistributionRecord } from "../../types/distributions.js";
+
+// Pre-deployment simulation runs carry pseudo tx hashes: label them and never
+// link to BaseScan (the hash does not exist on-chain).
+function SimulatedTag() {
+  return (
+    <span
+      className="ml-2 border border-flagAmber/40 bg-flagAmber/10 px-1.5 py-0.5 font-mono text-[10px] uppercase tracking-wider text-flagAmber"
+      title="Produced by the distribution simulation before contract deployment — not an on-chain transaction"
+    >
+      Simulated
+    </span>
+  );
+}
 
 function periodLabel(iso: string): string {
   return new Date(`${iso}T00:00:00Z`).toLocaleDateString("en-US", {
@@ -58,6 +72,7 @@ export function DistributionHistory({
                 <div>
                   <div className="font-medium text-darkBg">
                     {periodLabel(r.period_start)}
+                    {r.simulated ? <SimulatedTag /> : null}
                   </div>
                   <div className="mt-0.5 text-xs text-textMuted">
                     {r.offering_name ?? "—"} ·{" "}
@@ -79,12 +94,12 @@ export function DistributionHistory({
               </div>
             </div>
           );
-          return r.tx_hash ? (
+          return r.tx_hash && !r.simulated ? (
             <SwipeActionRow
               key={r.id}
               action={
                 <a
-                  href={`https://basescan.org/tx/${r.tx_hash}`}
+                  href={`${activeNetwork.explorerUrl}/tx/${r.tx_hash}`}
                   target="_blank"
                   rel="noreferrer"
                   className="flex w-full flex-col items-center justify-center gap-1 bg-darkBg px-2 text-center text-[10px] font-medium uppercase tracking-wide text-paleGreen"
@@ -117,7 +132,10 @@ export function DistributionHistory({
         <tbody>
           {records.map((r) => (
             <tr key={r.id} className="border-b border-paleGreen/30 last:border-0">
-              <td className="px-4 py-3 text-darkBg">{periodLabel(r.period_start)}</td>
+              <td className="px-4 py-3 text-darkBg">
+                {periodLabel(r.period_start)}
+                {r.simulated ? <SimulatedTag /> : null}
+              </td>
               <td className="px-4 py-3 text-textMuted">
                 {r.offering_name ?? "—"}
               </td>

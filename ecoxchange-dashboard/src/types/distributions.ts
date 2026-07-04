@@ -28,6 +28,9 @@ export interface DistributionRecord {
   created_at: string;
   // Convenience for the history table (joined / demo).
   offering_name?: string;
+  /** True for runs produced by the /distribute simulation before contracts
+   *  are deployed — the table labels these and never links their tx hash. */
+  simulated?: boolean;
 }
 
 export interface InvestorHolding {
