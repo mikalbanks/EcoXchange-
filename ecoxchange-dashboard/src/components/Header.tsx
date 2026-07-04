@@ -25,6 +25,12 @@ export function Header() {
           >
             Developer Onboarding
           </Link>
+          <Link
+            to="/developer/loi"
+            className="hidden sm:inline text-sm text-paleGreen hover:text-white transition-colors duration-150"
+          >
+            LOI Builder
+          </Link>
           <span
             className={`inline-flex items-center gap-2 rounded-full px-2 py-0.5 text-xs font-medium ${
               liveMode
