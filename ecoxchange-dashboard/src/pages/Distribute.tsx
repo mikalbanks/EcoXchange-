@@ -24,6 +24,8 @@ import { useNotifications } from "../context/NotificationContext.js";
 import { useMediaQuery, useIsMobile } from "../hooks/useMediaQuery.js";
 import { formatUsd, formatKwh } from "../utils/formatters.js";
 
+const formatSignedPct = (pct: number) => `${pct >= 0 ? "+" : ""}${pct.toFixed(1)}%`;
+
 const INITIAL_STEPS: Record<SimStepId, StepState> = {
   verification: { status: "pending" },
   oracle: { status: "pending" },
@@ -115,7 +117,9 @@ export function Distribute() {
             {DEMO_DISTRIBUTION.verdict}
           </span>
           <span className="font-mono text-xs text-textMuted">
-            INV→EXP 0.0% · INV→UTL 3.0% · Engine {DEMO_DISTRIBUTION.engineVersion}
+            INV→EXP {formatSignedPct(DEMO_DISTRIBUTION.invVsExpectedPct)} · INV→UTL{" "}
+            {formatSignedPct(DEMO_DISTRIBUTION.invVsUtilityPct)} · Engine{" "}
+            {DEMO_DISTRIBUTION.engineVersion}
           </span>
         </div>
       </SimulationStepCard>

@@ -24,6 +24,12 @@ import { OnboardingReport } from "./pages/OnboardingReport.js";
 import { ReferenceLibrary } from "./pages/ReferenceLibrary.js";
 import { ReferenceDetail } from "./pages/ReferenceDetail.js";
 
+// LOI builder is lazy: an infrequent developer surface whose document
+// template shouldn't weigh down the entry bundle.
+const DeveloperLOI = lazy(() =>
+  import("./pages/DeveloperLOI.js").then((m) => ({ default: m.DeveloperLOI })),
+);
+
 // Explorer pages are lazy-loaded so the viem chunk stays off the critical
 // path — it only downloads when someone opens /explorer.
 const Explorer = lazy(() =>
@@ -166,6 +172,17 @@ export function App() {
           element={
             <HeaderLayout>
               <OnboardingReport />
+            </HeaderLayout>
+          }
+        />
+        {/* Developer LOI builder — non-binding template, counsel review pending */}
+        <Route
+          path="/developer/loi"
+          element={
+            <HeaderLayout>
+              <Suspense fallback={null}>
+                <DeveloperLOI />
+              </Suspense>
             </HeaderLayout>
           }
         />

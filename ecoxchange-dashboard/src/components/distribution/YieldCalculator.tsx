@@ -16,6 +16,7 @@ import { ProjectionDisclosure } from "../../compliance/components/ProjectionDisc
 import { DataSourceAttribution } from "../../compliance/components/DataSourceAttribution.js";
 import { computeProForma, type ProFormaInputs } from "../../utils/proforma.js";
 import { palette } from "../../config/palette.js";
+import { ENGINE_VERSION } from "../../config/engine.js";
 import { formatUsd } from "../../utils/formatters.js";
 
 const DEBOUNCE_MS = 100;
@@ -214,7 +215,7 @@ export function YieldCalculator() {
           { name: "2024 verified production (demo dataset)", type: "model" },
           { name: "Pro-forma PPA economics (modeled)", type: "model" },
         ]}
-        engineVersion="v2.0.0"
+        engineVersion={ENGINE_VERSION}
       />
     </section>
   );

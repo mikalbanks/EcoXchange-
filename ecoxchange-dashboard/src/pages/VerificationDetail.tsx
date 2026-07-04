@@ -8,6 +8,7 @@ import { VerificationBadge } from "../components/VerificationBadge.js";
 import { ErrorState } from "../components/shared/ErrorState.js";
 import { CardSkeleton, Shimmer } from "../components/shared/LoadingState.js";
 import { formatMonthLong } from "../utils/formatters.js";
+import { ENGINE_VERSION } from "../config/engine.js";
 import type { ProjectMeta, VerificationRecord } from "../utils/types.js";
 
 export function VerificationDetail() {
@@ -102,7 +103,7 @@ export function VerificationDetail() {
             { name: "Utility Meter", type: "utility" },
             { name: "NASA POWER", type: "satellite" },
           ]}
-          engineVersion="v2.0.0"
+          engineVersion={ENGINE_VERSION}
         />
       </div>
 
@@ -123,7 +124,7 @@ export function VerificationDetail() {
           </div>
           <div>
             <dt className="text-textMuted">Engine Version</dt>
-            <dd className="text-textDark mt-1 font-mono">0.1.0</dd>
+            <dd className="text-textDark mt-1 font-mono">{ENGINE_VERSION}</dd>
           </div>
         </dl>
       </div>

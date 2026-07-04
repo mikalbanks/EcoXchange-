@@ -5,6 +5,7 @@ import { DataSourceAttribution } from "../compliance/components/DataSourceAttrib
 import { SectionTag } from "../components/ui/SectionTag.js";
 import { explorerContracts } from "../data/explorer-contracts.js";
 import { demoActivity } from "../data/explorer-activity.js";
+import { ENGINE_VERSION } from "../config/engine.js";
 
 /**
  * Smart Contract Explorer (Spec 08): a read-only, purpose-built view of
@@ -42,7 +43,7 @@ export function Explorer() {
             { name: "Base Sepolia RPC", type: "public_data" },
             { name: "Simulated contract activity (pre-deployment)", type: "model" },
           ]}
-          engineVersion="v2.0.0"
+          engineVersion={ENGINE_VERSION}
         />
       </div>
     </div>

@@ -35,7 +35,7 @@ export const demoContractState: Record<string, Record<string, string>> = {
   // Oracle bridge
   [activeNetwork.contracts.oracleBridge]: {
     "lastVerifiedPeriod()": "2024-12",
-    "lastVerifiedKwh()": "489,823",
+    "lastVerifiedKwh()": "501,618",
     "oracleWriteCount()": "12",
     "engineVersion()": "v2.0.0",
     "verificationStatus()": "VERIFIED",

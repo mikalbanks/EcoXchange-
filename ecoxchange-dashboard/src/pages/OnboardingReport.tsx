@@ -187,12 +187,12 @@ export function OnboardingReport() {
           <li>{r.next_steps.step_4}</li>
         </ol>
         <div className="mt-4 flex flex-wrap items-center gap-3">
-          <a
-            href={`mailto:${r.next_steps.contact_email}?subject=ESN%20Backtest%20${id}%20-%20Proceed%20to%20LOI`}
+          <Link
+            to="/developer/loi"
             className="inline-flex items-center gap-2 rounded-md bg-medGreen text-white px-4 py-2 hover:bg-darkBg transition-colors duration-150"
           >
             <Mail className="h-4 w-4" /> Proceed to LOI
-          </a>
+          </Link>
           <a
             href={data.report_meta.json_signed_url}
             target="_blank"

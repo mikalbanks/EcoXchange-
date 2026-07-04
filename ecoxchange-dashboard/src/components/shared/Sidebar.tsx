@@ -44,6 +44,7 @@ const INVESTOR_NAV: NavItem[] = [
 
 const DEVELOPER_NAV: NavItem[] = [
   { to: "/onboard", label: "Add Project", icon: PlusCircle },
+  { to: "/developer/loi", label: "Letter of Intent", icon: FileText },
   { to: "/reference", label: "Reference Library", icon: BookOpen },
   { to: "/developer/settings", label: "Settings", icon: SettingsIcon, disabled: true },
 ];

@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { StatCard } from "../components/StatCard.js";
 import { ReferenceCard } from "../components/reference/ReferenceCard.js";
+import { EngineBenchmark } from "../components/verification/EngineBenchmark.js";
 import {
   loadReferenceLibrary,
   type ReferenceLibrary as Lib,
@@ -45,6 +46,7 @@ export function ReferenceLibrary() {
     return (
       <div className="space-y-4">
         <h1 className="font-heading text-3xl text-darkBg">Reference Library</h1>
+        <EngineBenchmark />
         <div className="rounded-md bg-amber-50 border border-flagAmber/40 px-4 py-3 text-flagAmber text-sm">
           {error}
         </div>
@@ -83,6 +85,8 @@ export function ReferenceLibrary() {
           Form 923 metered net generation.
         </p>
       </div>
+
+      <EngineBenchmark />
 
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
         <StatCard

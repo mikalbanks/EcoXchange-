@@ -1,13 +1,13 @@
 """EIA fleet re-validation harness — benchmark Engine A against federal actuals.
 
-This is the parallel of ``validate_pvdaq.py`` but at fleet scale, and it is the
-only thing that proves the old "+15.45% / 38%-within-±10%" yardstick has moved.
-That prior figure came from the now-decommissioned TypeScript fleet-validation
-harness, which ran its own hand-rolled Hay-Davies physics plus a ``trackingBoost``
-multiplier off an uncommitted baseline — it is a *contaminated* reference, not a
-target to beat. This harness runs the **real** Engine A pipeline
-(``expected_ac_energy`` -> ``apply_losses``) so the result is the first clean
-benchmark on real physics.
+This is the parallel of ``validate_pvdaq.py`` but at fleet scale. The prior
+yardstick came from the now-decommissioned TypeScript fleet-validation harness,
+which ran its own hand-rolled Hay-Davies physics plus a ``trackingBoost``
+multiplier off an uncommitted baseline — a *contaminated* reference, never a
+target to beat, and never to be cited (it is preserved once, quarantined, in
+``archive/fleet-validation-legacy-snapshot.*``). This harness runs the **real**
+Engine A pipeline (``expected_ac_energy`` -> ``apply_losses``) so the result is
+the first clean benchmark on real physics, stated in absolute terms.
 
 Ground truth is free, public-domain federal data:
 
@@ -23,8 +23,7 @@ operating year; plausibility bounds on capacity factor; exclude storage hybrids;
 tag high-curtailment balancing authorities as a separate cohort.
 
 The standing run is **two-way**: Engine A on NASA POWER vs Engine A on NSRDB.
-That isolates the irradiance-source upgrade. (The legacy TS number is retained
-only as ``archive/fleet-validation-legacy-snapshot.*`` for provenance.)
+That isolates the irradiance-source upgrade.
 
 NOTE FOR CLAUDE CODE / OPERATORS: the federal-file column names and the live
 NASA POWER / NSRDB fetch signatures must be confirmed against the downloaded
