@@ -68,6 +68,33 @@ export function isDeployed(address: string): boolean {
   return address.length > 0;
 }
 
+/**
+ * The Spec-08 placeholder convention: pre-deployment addresses use the
+ * 0xE5C0… sentinel prefix so they format/copy/link realistically while being
+ * distinguishable from real deployments. Anything with this prefix must never
+ * be the target of a real transaction.
+ */
+export function isSimulatedAddress(address: string): boolean {
+  return address.toLowerCase().startsWith("0xe5c0");
+}
+
+/**
+ * Live on-chain execution for the distribution simulation requires BOTH real
+ * (non-sentinel) contract addresses AND a build-time signer key. The key is
+ * baked into the shipped bundle, so it must only ever be a throwaway
+ * zero-value Base Sepolia demo key — see contracts/README.md.
+ */
+export function isLiveDistributionEnabled(): boolean {
+  const { oracleBridge, distributionContract } = activeNetwork.contracts;
+  return (
+    isDeployed(oracleBridge) &&
+    isDeployed(distributionContract) &&
+    !isSimulatedAddress(oracleBridge) &&
+    !isSimulatedAddress(distributionContract) &&
+    Boolean(import.meta.env.VITE_DISTRIBUTION_SIGNER_KEY)
+  );
+}
+
 /** Truncate an address for display: 0x1234…abcd */
 export function shortAddress(address: string): string {
   if (address.length <= 12) return address;
