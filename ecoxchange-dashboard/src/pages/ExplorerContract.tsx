@@ -4,9 +4,12 @@ import { ArrowLeft } from "lucide-react";
 import { NetworkStatus } from "../components/explorer/NetworkStatus.js";
 import { ActivityFeed } from "../components/explorer/ActivityFeed.js";
 import { EmptyState } from "../components/shared/EmptyState.js";
+import { Shimmer } from "../components/shared/LoadingState.js";
+import { OwnershipVisualization } from "../components/token/OwnershipVisualization.js";
 import { DataSourceAttribution } from "../compliance/components/DataSourceAttribution.js";
 import { useContractRead } from "../hooks/useContractRead.js";
 import { activeNetwork } from "../config/contracts.js";
+import { ENGINE_VERSION } from "../config/engine.js";
 import { getExplorerContract } from "../data/explorer-contracts.js";
 import { demoActivity } from "../data/explorer-activity.js";
 import { demoContractState } from "../data/demo-contract-state.js";
@@ -16,9 +19,11 @@ function StateRow({ address, fn }: { address: string; fn: string }) {
   return (
     <div className="flex flex-wrap items-center justify-between gap-2 border-b border-darkBg/5 px-4 py-2.5 last:border-0">
       <code className="font-mono text-xs text-textMuted">{fn}</code>
-      <span className="font-mono text-xs text-textDark tabular-nums">
-        {isLoading ? "…" : result}
-      </span>
+      {isLoading ? (
+        <Shimmer className="h-3.5 w-20" />
+      ) : (
+        <span className="font-mono text-xs text-textDark tabular-nums">{result}</span>
+      )}
     </div>
   );
 }
@@ -114,6 +119,14 @@ export function ExplorerContract() {
         )}
       </div>
 
+      {/* Token cap table (differentiation spec §4) — token contract only. */}
+      {contract.id === "token" ? (
+        <div>
+          <h2 className="mb-3 font-heading text-lg text-darkBg">Token Holders</h2>
+          <OwnershipVisualization />
+        </div>
+      ) : null}
+
       {/* Read-only contract state */}
       {stateFns.length > 0 ? (
         <div>
@@ -127,7 +140,7 @@ export function ExplorerContract() {
             sources={[
               { name: "Simulated contract state (pre-deployment)", type: "model" },
             ]}
-            engineVersion="v2.0.0"
+            engineVersion={ENGINE_VERSION}
           />
         </div>
       ) : null}

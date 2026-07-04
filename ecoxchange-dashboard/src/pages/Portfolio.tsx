@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from "react";
+import { lazy, Suspense, useCallback, useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { ArrowRight, Leaf, Sparkles } from "lucide-react";
 import { StatCard } from "../components/StatCard.js";
@@ -15,13 +15,25 @@ import {
 import { SwipeActionRow } from "../components/shared/SwipeActionRow.js";
 import { SolarParticles } from "../components/ambient/SolarParticles.js";
 import { SectionTag } from "../components/ui/SectionTag.js";
+import { LazyMount } from "../components/shared/LazyMount.js";
+import { PipelineMap } from "../components/map/PipelineMap.js";
+import { MapSkeleton } from "../components/shared/LoadingState.js";
 import { YieldDisclosure } from "../compliance/components/YieldDisclosure.js";
+import { DataSourceAttribution } from "../compliance/components/DataSourceAttribution.js";
 import { useData } from "../context/DataContext.js";
 import { useAuth } from "../context/AuthContext.js";
 import { useIsMobile, useIsTablet } from "../hooks/useMediaQuery.js";
 import { usePullToRefresh } from "../hooks/usePullToRefresh.js";
 import type { Portfolio as PortfolioData } from "../utils/types.js";
 import { formatUsd } from "../utils/formatters.js";
+
+// Recharts stays out of the initial Portfolio render path: the donut only
+// loads (and its chunk only downloads) once the section scrolls into view.
+const OwnershipVisualization = lazy(() =>
+  import("../components/token/OwnershipVisualization.js").then((m) => ({
+    default: m.OwnershipVisualization,
+  })),
+);
 
 export function Portfolio() {
   const { getPortfolio, scenario, mode } = useData();
@@ -238,6 +250,42 @@ export function Portfolio() {
       )}
 
       <PortfolioDistributions />
+
+      {/* Token cap table (differentiation spec §4) — recharts stays below-fold. */}
+      <section className="space-y-3">
+        <div>
+          <SectionTag>Token Holders</SectionTag>
+          <h2 className="font-heading text-xl text-darkBg">Ownership</h2>
+        </div>
+        <LazyMount placeholder={<Shimmer className="h-72 w-full" />}>
+          <Suspense fallback={<Shimmer className="h-72 w-full" />}>
+            <OwnershipVisualization />
+          </Suspense>
+        </LazyMount>
+      </section>
+
+      {/* Pipeline & target markets map (differentiation spec §1). */}
+      <section className="space-y-3">
+        <div>
+          <SectionTag>Pipeline &amp; Target Markets</SectionTag>
+          <h2 className="font-heading text-xl text-darkBg">Where We Deploy</h2>
+          <p className="mt-1 text-sm text-textMuted">
+            EcoXchange focuses on high-yield state programs with long-term contracted
+            revenue
+          </p>
+        </div>
+        <LazyMount placeholder={<MapSkeleton />}>
+          <PipelineMap />
+        </LazyMount>
+        <DataSourceAttribution
+          sources={[
+            { name: "Target state programs", type: "model" },
+            { name: "DSIRE database", type: "public_data" },
+            { name: "EcoXchange analysis", type: "model" },
+          ]}
+          isEstimate
+        />
+      </section>
 
       <Link
         to="/onboarding"

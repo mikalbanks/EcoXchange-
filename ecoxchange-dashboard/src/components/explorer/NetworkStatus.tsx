@@ -65,12 +65,17 @@ export function NetworkStatus() {
         <p className="font-mono text-xs text-paleGreen tabular-nums">
           Block: {blockNumber !== null ? blockNumber.toLocaleString() : "—"}
         </p>
-        <p className="font-mono text-[10px] text-lightGreen">
-          {isConnected && lastUpdated
-            ? `Updated ${formatTimeAgo(lastUpdated)}`
-            : isConnected
-              ? "Connecting…"
-              : "RPC unreachable"}
+        <p className="flex items-center justify-end gap-1.5 font-mono text-[10px] text-lightGreen">
+          {isConnected && lastUpdated ? (
+            `Updated ${formatTimeAgo(lastUpdated)}`
+          ) : isConnected ? (
+            <>
+              <span className="h-1.5 w-1.5 rounded-full bg-paleGreen animate-pulse" aria-hidden />
+              Connecting
+            </>
+          ) : (
+            "RPC unreachable"
+          )}
         </p>
       </div>
 
