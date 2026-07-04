@@ -41,7 +41,7 @@ export const demoActivity: ChainActivity[] = [
     type: "oracle_write",
     from: "Chainlink Functions",
     to: "Oracle Bridge",
-    value: "489,823 kWh (verified)",
+    value: "501,618 kWh (verified)",
     timestamp: new Date(Date.now() - 26 * 3600 * 1000),
     blockNumber: 14520142,
     status: "confirmed",

@@ -15,7 +15,9 @@
 // distribution chunk so viem never reaches the entry bundle.
 
 import { isLiveDistributionEnabled } from "../../config/contracts.js";
+import { ENGINE_VERSION } from "../../config/engine.js";
 import { DEMO_HOLDERS, holderAmountUsd } from "../../data/demo-wallets.js";
+import demoSavannah from "../../data/demo-savannah.json";
 import { runSimulatedStep } from "./simulated-run.js";
 import { runLiveOracleWrite, runLiveDistribution } from "./live-run.js";
 
@@ -47,20 +49,27 @@ export interface DistributionRun {
   completedAt: string; // ISO timestamp
 }
 
-/** Canonical demo scenario: December 2024, Savannah 5MW. */
+// Latest verified month from the canonical dataset — derived, not hardcoded,
+// so regenerating the seed data can never leave this scenario stale.
+const latestRecord =
+  demoSavannah.verification_records[demoSavannah.verification_records.length - 1];
+
+/** Canonical demo scenario: the latest verified Savannah month (Dec 2024). */
 export const DEMO_DISTRIBUTION = {
-  period: "2024-12",
-  periodStartUnix: Math.floor(Date.parse("2024-12-01T00:00:00Z") / 1000),
+  period: latestRecord.period_start.slice(0, 7),
+  periodStartUnix: Math.floor(Date.parse(`${latestRecord.period_start}T00:00:00Z`) / 1000),
   /**
    * Monthly pool for the whole project. The demo investor persona holds 2%
    * (200 bps), receiving $354.00 — consistent with Portfolio's Monthly Yield.
    */
   totalPoolUsd: 17700,
-  verifiedKwh: 489823,
-  expectedKwh: 489823,
-  utilityKwh: 475128,
-  deviationBps: 0,
-  engineVersion: "v2.0.0",
+  verifiedKwh: latestRecord.inverter_kwh,
+  expectedKwh: latestRecord.expected_kwh,
+  utilityKwh: latestRecord.utility_kwh,
+  invVsExpectedPct: latestRecord.inv_vs_expected_pct,
+  invVsUtilityPct: latestRecord.inv_vs_utility_pct,
+  deviationBps: Math.round(latestRecord.inv_vs_expected_pct * 100),
+  engineVersion: ENGINE_VERSION,
   verdict: "VERIFIED" as const,
 };
 
