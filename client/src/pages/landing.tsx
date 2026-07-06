@@ -110,6 +110,7 @@ export default function LandingPage() {
             <Link href="/develop">Develop</Link>
             <Link href="/method">Method</Link>
             <Link href="/faq">FAQ</Link>
+            <a href="https://demo.ecoxchange.net/">Live Demo</a>
             <Link href="/market#onboard" className="nav-cta">
               Request Access →
             </Link>
@@ -132,7 +133,10 @@ export default function LandingPage() {
               crowdfunding platform can replicate.
             </p>
             <div className="hero-actions">
-              <Link href="/market#onboard" className="btn btn-primary">
+              <a href="https://demo.ecoxchange.net/" className="btn btn-primary">
+                View the Live Demo
+              </a>
+              <Link href="/market#onboard" className="btn btn-outline">
                 Request Investor Access
               </Link>
               <Link href="/method" className="btn btn-outline">

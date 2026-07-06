@@ -3,13 +3,14 @@
   "version": "0.1.0",
   "private": true,
   "type": "module",
-  "description": "EcoXchange public investor demo dashboard — Reg D 506(c) marketplace preview at demo.ecoxchange.net.",
+  "description": "Deploy shim for demo.ecoxchange.net — builds and serves ../ecoxchange-dashboard (see DEPRECATED-app.md; legacy demo app retired in place).",
   "engines": {
     "node": ">=20"
   },
   "scripts": {
     "dev": "vite",
-    "build": "tsc -b && vite build",
+    "build": "node scripts/build-from-dashboard.mjs",
+    "build:legacy": "tsc -b && vite build",
     "preview": "vite preview --port 4173",
     "check": "tsc -b --noEmit",
     "smoke:supabase": "node --env-file=.env scripts/supabase-smoke.mjs",
