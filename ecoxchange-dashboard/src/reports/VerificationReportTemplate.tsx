@@ -10,6 +10,8 @@ export interface ReportInput {
   records: VerificationRecord[];
   summary: ProjectSummary;
   generatedAt: Date;
+  /** "live" = expected series from the deployed pvlib engine at generation time. */
+  dataSource?: "live" | "cached";
 }
 
 const fmtInt = (n: number) => Math.round(n).toLocaleString("en-US");
@@ -65,7 +67,13 @@ function SpecRow({ label, value }: { label: string; value: string }) {
  * the html2canvas -> jsPDF pipeline (src/reports/pdf.ts). Rendered in an
  * offscreen container only while a download is in flight.
  */
-export function VerificationReportTemplate({ project, records, summary, generatedAt }: ReportInput) {
+export function VerificationReportTemplate({
+  project,
+  records,
+  summary,
+  generatedAt,
+  dataSource = "cached",
+}: ReportInput) {
   const totalExpected = records.reduce((s, r) => s + r.expected_kwh, 0);
   const totalInverter = records.reduce((s, r) => s + r.inverter_kwh, 0);
   const meanDev = records.reduce((s, r) => s + r.inv_vs_expected_pct, 0) / records.length;
@@ -383,7 +391,10 @@ export function VerificationReportTemplate({ project, records, summary, generate
         </dl>
         <p className="mt-3 font-mono text-[9px] text-medGreen">
           § Methodology-documented estimates · EcoXchange proprietary verification engine{" "}
-          {ENGINE_VERSION}
+          {ENGINE_VERSION} ·{" "}
+          {dataSource === "live"
+            ? `Expected generation computed by live engine ${ENGINE_VERSION} at report time`
+            : "Expected generation from cached backtest data"}
         </p>
 
         <div className="mt-10 border-t border-paleGreen pt-3 font-mono text-[9px] text-textMuted">

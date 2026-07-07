@@ -11,6 +11,11 @@ interface ImportMetaEnv {
   /** Explorer chain network: 'base-sepolia' (default) | 'base-mainnet'. */
   readonly VITE_NETWORK?: string;
   /**
+   * Base URL of the deployed pvlib verification engine
+   * (ecoxchange-pvlib-service). Unset = seed-data fallback, no engine calls.
+   */
+  readonly VITE_ENGINE_URL?: string;
+  /**
    * TESTNET-ONLY throwaway signer key enabling live distribution execution.
    * Baked into the bundle at build time — must never hold real value.
    */

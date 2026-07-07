@@ -76,6 +76,18 @@ class ExpectedGenerationRequest(BaseModel):
     )
 
 
+class SiteExpectedGenerationRequest(ProjectSystemInput):
+    """Site-level convenience request (dashboard client, /api/expected-generation).
+
+    Flat project specs plus a date range — the service fetches NASA POWER
+    daily weather itself and delegates to the canonical engine path. Kept as
+    a subclass of ProjectSystemInput so the spec fields stay in one place.
+    """
+
+    start_date: date
+    end_date: date
+
+
 class MonthlyBreakdown(BaseModel):
     """Monthly expected generation breakdown."""
 

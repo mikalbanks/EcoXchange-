@@ -1,4 +1,4 @@
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Download, Eye, PencilLine } from "lucide-react";
 import { SectionTag } from "../components/ui/SectionTag.js";
 import { Button } from "../components/ui/Button.js";
@@ -13,6 +13,7 @@ import {
   type LOIData,
 } from "../types/loi.js";
 import type { IntakeForm } from "../utils/onboarding-types.js";
+import { engineClient } from "../services/engineClient.js";
 
 const INTAKE_KEY = "ecoxchange.onboarding.form";
 
@@ -119,6 +120,51 @@ export function DeveloperLOI() {
       [key]: { ...(prev[key] as object), ...(value as object) },
       generatedDate: today(),
     }));
+
+  // Live-engine pre-fill for Estimated Annual Production: run the pvlib
+  // engine on the prefilled site over the last full calendar year. Applied
+  // only while the field still holds its initial rough estimate, so a value
+  // the developer typed is never overwritten. No-op when VITE_ENGINE_URL is
+  // unset or the engine is unreachable (rough estimate stays).
+  const initialEstimateRef = useRef(data.project.estimatedAnnualProductionMwh);
+  useEffect(() => {
+    const { latitude, longitude, capacityKwDc, commissioningDate } = data.project;
+    if (!engineClient.isConfigured() || !latitude || !longitude || !capacityKwDc) return;
+
+    let cancelled = false;
+    const lastFullYear = new Date().getFullYear() - 1;
+    void engineClient
+      .getExpectedGeneration({
+        latitude,
+        longitude,
+        capacity_kw_dc: capacityKwDc,
+        tilt_deg: 20,
+        azimuth_deg: 180,
+        module_efficiency: 0.2,
+        system_losses: 0.14,
+        degradation_rate: 0.0075,
+        commissioning_date: commissioningDate || `${lastFullYear}-01-01`,
+        start_date: `${lastFullYear}-01-01`,
+        end_date: `${lastFullYear}-12-31`,
+      })
+      .then((result) => {
+        if (cancelled || !result) return;
+        const liveMwh = Math.round(result.total_expected_kwh / 1000);
+        setData((prev) =>
+          prev.project.estimatedAnnualProductionMwh === initialEstimateRef.current
+            ? {
+                ...prev,
+                project: { ...prev.project, estimatedAnnualProductionMwh: liveMwh },
+              }
+            : prev,
+        );
+      });
+    return () => {
+      cancelled = true;
+    };
+    // Intentionally mount-only: one pre-fill pass over the initial site specs.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const downloadPdf = async () => {
     if (downloading) return;

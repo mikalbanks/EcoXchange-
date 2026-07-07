@@ -1,5 +1,6 @@
 import { useCompliance } from "../ComplianceProvider.js";
 import { ChainHeartbeat } from "../../components/web3/ChainHeartbeat.js";
+import { EngineHealth } from "../../components/EngineHealth.js";
 
 const TEXT = "font-mono text-[10px] leading-[1.6] tracking-[0.01em] text-textMuted";
 
@@ -60,7 +61,10 @@ export function DisclaimerFooter() {
             <span className={TEXT}>·</span>
             <span className={TEXT}>{MODE_LABEL[mode]}</span>
           </div>
-          <ChainHeartbeat />
+          <div className="flex items-center gap-4">
+            <EngineHealth />
+            <ChainHeartbeat />
+          </div>
         </div>
       </div>
     </footer>
