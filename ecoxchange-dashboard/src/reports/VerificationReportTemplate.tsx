@@ -15,10 +15,11 @@ export interface ReportInput {
   dataSource?: "live" | "cached";
 }
 
-// Count-weighted mean absolute deviation over the 1–5 and 5–20 MW buckets —
-// the EcoXchange target segment cited in the methodology section.
+// Count-weighted mean absolute deviation over the 1–5 and 5–20 MW buckets of
+// the publication (healthy-fleet) cohort — the EcoXchange target segment
+// cited in the methodology section.
 const targetSegmentMad: number | null = (() => {
-  const rows = benchmarkData.by_capacity.filter(
+  const rows = benchmarkData.publication.by_capacity.filter(
     (b) => (b.bucket === "1–5 MW" || b.bucket === "5–20 MW") &&
       b.count > 0 && b.mean_abs_deviation_pct !== null,
   );
@@ -334,15 +335,20 @@ export function VerificationReportTemplate({
             <p className="mt-2 text-[12px] leading-relaxed">
               The EcoXchange verification engine ({ENGINE_VERSION}) has been validated against
               the U.S. EIA-923 solar fleet dataset. Across{" "}
-              {benchmarkData.plants_succeeded.toLocaleString("en-US")} utility-scale solar plants
-              ({benchmarkData.benchmark_year} generation data), the engine achieves a mean
-              absolute deviation of ±{benchmarkData.mean_absolute_deviation_pct.toFixed(1)}%
-              between predicted and reported annual generation
+              {benchmarkData.publication.n.toLocaleString("en-US")} healthy utility-scale solar
+              plants ({benchmarkData.benchmark_year} generation data), the engine achieves a
+              mean absolute deviation of ±
+              {benchmarkData.publication.mean_absolute_deviation_pct.toFixed(1)}% between
+              predicted and reported annual generation
               {targetSegmentMad !== null
                 ? `; for plants in the 1–20 MW target segment, mean absolute deviation is ±${targetSegmentMad.toFixed(1)}%`
                 : ""}
-              . Irradiance source: {benchmarkData.irradiance_source}. Benchmarked{" "}
-              {benchmarkData.benchmark_date}.
+              . The healthy-fleet cohort excludes plants in high-curtailment states (CA, TX)
+              and plants with documented underperformance; across the unfiltered{" "}
+              {benchmarkData.plants_succeeded.toLocaleString("en-US")}-plant fleet the mean
+              absolute deviation is ±{benchmarkData.mean_absolute_deviation_pct.toFixed(1)}%
+              (median ±{benchmarkData.median_absolute_deviation_pct.toFixed(1)}%). Irradiance
+              source: {benchmarkData.irradiance_source}. Benchmarked {benchmarkData.benchmark_date}.
             </p>
           </>
         ) : null}

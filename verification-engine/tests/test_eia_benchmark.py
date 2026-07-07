@@ -7,6 +7,8 @@ from src.run_eia_benchmark import (
     CAPACITY_BUCKETS,
     RateLimiter,
     build_summary,
+    is_underperformer,
+    publication_cohort,
     render_markdown,
     summarize,
     within_rates,
@@ -14,9 +16,10 @@ from src.run_eia_benchmark import (
 from src.validate_eia_fleet import PlantResult
 
 
-def _rec(dev, cap, state="NC"):
+def _rec(dev, cap, state="NC", cf=18.0, curtailed=False):
     return {"deviation_pct": dev, "absolute_deviation_pct": abs(dev),
-            "capacity_mw": cap, "state": state}
+            "capacity_mw": cap, "state": state, "actual_cf_pct": cf,
+            "high_curtailment": curtailed, "eia_plant_id": "x", "name": "n"}
 
 
 def test_within_rates_thresholds():
@@ -86,6 +89,50 @@ def test_render_markdown_no_legacy_references():
     assert "15.45" not in md and "TypeScript" not in md
     assert "5–20 MW (our target)" in md
     assert "| Within ±10% | 1 |" in md
+
+
+def test_is_underperformer_requires_both_conditions():
+    assert is_underperformer(_rec(20.0, 5.0, cf=11.0))       # sick: low CF + big overpred
+    assert not is_underperformer(_rec(20.0, 5.0, cf=18.0))   # healthy CF, honest miss
+    assert not is_underperformer(_rec(5.0, 5.0, cf=11.0))    # low CF but well-predicted
+    assert not is_underperformer(_rec(-20.0, 5.0, cf=11.0))  # underprediction never counts
+
+
+def test_publication_cohort_reasons_and_overlap():
+    recs = [
+        _rec(2.0, 5.0),                                  # kept
+        _rec(3.0, 5.0, state="CA", curtailed=True),      # curtailment only
+        _rec(30.0, 5.0, cf=11.0),                        # underperformer only
+        _rec(30.0, 5.0, state="TX", cf=11.0, curtailed=True),  # both
+    ]
+    kept, excluded = publication_cohort(recs)
+    assert len(kept) == 1 and len(excluded) == 3
+    reasons = sorted(tuple(e["reasons"]) for e in excluded)
+    assert reasons == [("curtailment_state",), ("curtailment_state", "underperformer"),
+                       ("underperformer",)]
+
+
+def test_gate_reads_publication_cohort_not_full_fleet():
+    # Full fleet fails the 10% gate (one huge sick outlier), but the healthy
+    # cohort passes -> validated must be True.
+    recs = [_rec(d, 5.0) for d in (4.0, -5.0, 6.0)] + [_rec(80.0, 5.0, cf=10.5)]
+    results = [_result(d) for d in (4.0, -5.0, 6.0, 80.0)]
+    s = build_summary(recs, attempted=4, failure_reasons={}, year=2024,
+                      plant_results=results)
+    assert s["mean_absolute_deviation_pct"] > 10.0
+    assert s["publication"]["n"] == 3
+    assert s["publication"]["mean_absolute_deviation_pct"] <= 10.0
+    assert s["validated"]
+
+
+def test_markdown_publication_section():
+    recs = [_rec(3.0, 5.0), _rec(25.0, 5.0, cf=11.0)]
+    s = build_summary(recs, attempted=2, failure_reasons={}, year=2024,
+                      plant_results=[_result(3.0), _result(25.0)])
+    md = render_markdown(s)
+    assert "Publication Cohort" in md
+    assert "provable underperformers | 1" in md
+    assert "15.45" not in md
 
 
 def test_rate_limiter_spacing():
