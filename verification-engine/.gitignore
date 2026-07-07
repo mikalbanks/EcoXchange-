@@ -6,6 +6,9 @@ __pycache__/
 .venv/
 report.json
 eia_fleet_report.json
+# per-plant crash-recovery checkpoint (intermediate; the committed artifact is
+# reports/eia_fleet_benchmark_results.json)
+reports/eia_fleet_checkpoint.jsonl
 # downloaded federal datasets (large; fetch via scripts/download-data.sh)
 data/fleet/**
 !data/fleet/.gitkeep

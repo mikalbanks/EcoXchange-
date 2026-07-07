@@ -1,4 +1,5 @@
 import { ENGINE_VERSION } from "../../config/engine.js";
+import benchmark from "../../data/benchmark-results.json";
 
 export interface BenchmarkDisplayProps {
   engineVersion?: string;
@@ -7,7 +8,18 @@ export interface BenchmarkDisplayProps {
   /** null until the clean fleet validation completes. */
   meanDeviation?: number | null;
   status?: "pending" | "in_progress" | "validated";
+  benchmarkDate?: string | null;
 }
+
+// Defaults come from the committed benchmark artifact
+// (src/data/benchmark-results.json, produced by the engine repo's
+// run_eia_benchmark and mirrored to public/benchmark-results.json).
+// "validated" is asserted by the artifact itself only when the run met the
+// ≥80% success floor AND mean absolute deviation ≤ 10%.
+const FLEET_STATUS: BenchmarkDisplayProps["status"] = benchmark.validated
+  ? "validated"
+  : "pending";
+const FLEET_SOURCE = `EIA-923 Fleet (${benchmark.plants_succeeded.toLocaleString("en-US")} plants, ${benchmark.benchmark_year} data)`;
 
 /**
  * EIA fleet benchmark framing for engine v2.0.0 (polish spec §A.2).
@@ -18,9 +30,10 @@ export interface BenchmarkDisplayProps {
  */
 export function EngineBenchmark({
   engineVersion = ENGINE_VERSION,
-  benchmarkSource = "EIA-923 Fleet (4,407 plants)",
-  meanDeviation = null,
-  status = "pending",
+  benchmarkSource = FLEET_SOURCE,
+  meanDeviation = benchmark.mean_absolute_deviation_pct,
+  status = FLEET_STATUS,
+  benchmarkDate = benchmark.benchmark_date,
 }: BenchmarkDisplayProps) {
   return (
     <div
@@ -41,7 +54,9 @@ export function EngineBenchmark({
       </p>
       <p className="mt-1 text-xs text-textMuted">
         {status === "validated"
-          ? "Validated against pvlib ModelChain with NASA POWER irradiance data."
+          ? `Validated against pvlib ModelChain with NASA POWER irradiance data${
+              benchmarkDate ? ` · Benchmarked ${benchmarkDate}` : ""
+            }.`
           : "This is the first benchmark run using the canonical pvlib physics model."}
       </p>
     </div>

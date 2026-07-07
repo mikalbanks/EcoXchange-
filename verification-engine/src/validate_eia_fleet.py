@@ -521,6 +521,13 @@ def parse_uspvdb(csv_path: str) -> List[USPVDBRecord]:
     return out
 
 
+def _clean_header(cell) -> str:
+    """Collapse internal whitespace: 2024 EIA workbooks embed newlines in
+    headers ("Reported\\nFuel Type Code"), older revisions use spaces."""
+    import re
+    return re.sub(r"\s+", " ", str(cell or "")).strip()
+
+
 def _read_eia_grid(xlsx_path: str, header_token: str, sheet_match: Optional[str] = None):
     """Read an EIA workbook into (headers, rows), skipping its banner rows."""
     import openpyxl  # optional dep; only needed for live runs
@@ -529,8 +536,8 @@ def _read_eia_grid(xlsx_path: str, header_token: str, sheet_match: Optional[str]
                 wb.sheetnames[0])
     grid = [list(row) for row in wb[name].iter_rows(values_only=True)]
     header_row = next((i for i in range(min(len(grid), 6))
-                       if any(str(c or "").strip() == header_token for c in grid[i])), 0)
-    headers = [str(c or "").strip() for c in grid[header_row]]
+                       if any(_clean_header(c) == header_token for c in grid[i])), 0)
+    headers = [_clean_header(c) for c in grid[header_row]]
     return headers, grid[header_row + 1:]
 
 

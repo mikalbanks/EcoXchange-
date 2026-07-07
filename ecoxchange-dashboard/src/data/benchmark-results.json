@@ -1,0 +1,158 @@
+{
+ "engine_version": "v2.0.0",
+ "benchmark_date": "2026-07-07",
+ "benchmark_year": 2024,
+ "data_source": "EIA-923 / EIA-860 / USPVDB",
+ "irradiance_source": "NASA POWER",
+ "plants_attempted": 200,
+ "plants_succeeded": 200,
+ "plants_failed": 0,
+ "success_rate_pct": 100.0,
+ "benchmark_valid": true,
+ "validation_gate_pct": 10.0,
+ "validated": false,
+ "failure_reasons": {},
+ "mean_absolute_deviation_pct": 13.52,
+ "median_absolute_deviation_pct": 8.68,
+ "std_deviation_pct": 18.87,
+ "mean_signed_deviation_pct": 3.88,
+ "within_5_pct": 62,
+ "within_5_pct_rate": 31.0,
+ "within_10_pct": 116,
+ "within_10_pct_rate": 58.0,
+ "within_15_pct": 141,
+ "within_15_pct_rate": 70.5,
+ "within_20_pct": 157,
+ "within_20_pct_rate": 78.5,
+ "by_state": [
+  {
+   "state": "CA",
+   "count": 24,
+   "mean_abs_deviation_pct": 22.1,
+   "median_abs_deviation_pct": 12.8
+  },
+  {
+   "state": "NC",
+   "count": 23,
+   "mean_abs_deviation_pct": 10.5,
+   "median_abs_deviation_pct": 6.7
+  },
+  {
+   "state": "MA",
+   "count": 17,
+   "mean_abs_deviation_pct": 7.9,
+   "median_abs_deviation_pct": 4.0
+  },
+  {
+   "state": "NY",
+   "count": 14,
+   "mean_abs_deviation_pct": 12.1,
+   "median_abs_deviation_pct": 10.6
+  },
+  {
+   "state": "MN",
+   "count": 13,
+   "mean_abs_deviation_pct": 7.7,
+   "median_abs_deviation_pct": 6.1
+  },
+  {
+   "state": "TX",
+   "count": 9,
+   "mean_abs_deviation_pct": 16.6,
+   "median_abs_deviation_pct": 12.2
+  },
+  {
+   "state": "IL",
+   "count": 9,
+   "mean_abs_deviation_pct": 13.1,
+   "median_abs_deviation_pct": 13.1
+  },
+  {
+   "state": "FL",
+   "count": 7,
+   "mean_abs_deviation_pct": 13.6,
+   "median_abs_deviation_pct": 7.7
+  },
+  {
+   "state": "SC",
+   "count": 6,
+   "mean_abs_deviation_pct": 16.7,
+   "median_abs_deviation_pct": 10.6
+  },
+  {
+   "state": "CO",
+   "count": 6,
+   "mean_abs_deviation_pct": 13.1,
+   "median_abs_deviation_pct": 10.3
+  }
+ ],
+ "by_capacity": [
+  {
+   "bucket": "< 1 MW",
+   "count": 0,
+   "mean_abs_deviation_pct": null
+  },
+  {
+   "bucket": "1\u20135 MW",
+   "count": 100,
+   "mean_abs_deviation_pct": 13.1
+  },
+  {
+   "bucket": "5\u201320 MW",
+   "count": 61,
+   "mean_abs_deviation_pct": 12.8
+  },
+  {
+   "bucket": "20\u2013100 MW",
+   "count": 19,
+   "mean_abs_deviation_pct": 20.0
+  },
+  {
+   "bucket": "100+ MW",
+   "count": 20,
+   "mean_abs_deviation_pct": 11.8
+  }
+ ],
+ "cohorts": {
+  "all": {
+   "n": 200,
+   "mean_deviation_pct": 3.88,
+   "median_deviation_pct": 1.24,
+   "mean_abs_deviation_pct": 13.52,
+   "p25_deviation_pct": -6.76,
+   "p75_deviation_pct": 11.43,
+   "pct_within_10": 58.0,
+   "pct_within_5": 31.0
+  },
+  "clean_fixed": {
+   "n": 87,
+   "mean_deviation_pct": -2.6,
+   "median_deviation_pct": -2.78,
+   "mean_abs_deviation_pct": 10.64,
+   "p25_deviation_pct": -7.73,
+   "p75_deviation_pct": 3.84,
+   "pct_within_10": 69.0,
+   "pct_within_5": 41.4
+  },
+  "tracking": {
+   "n": 80,
+   "mean_deviation_pct": 5.3,
+   "median_deviation_pct": 4.98,
+   "mean_abs_deviation_pct": 13.74,
+   "p25_deviation_pct": -7.5,
+   "p75_deviation_pct": 14.31,
+   "pct_within_10": 51.2,
+   "pct_within_5": 18.8
+  },
+  "curtailed": {
+   "n": 33,
+   "mean_deviation_pct": 17.56,
+   "median_deviation_pct": 12.25,
+   "mean_abs_deviation_pct": 20.6,
+   "p25_deviation_pct": -1.55,
+   "p75_deviation_pct": 33.45,
+   "pct_within_10": 45.5,
+   "pct_within_5": 33.3
+  }
+ }
+}
