@@ -19,6 +19,21 @@ stated in absolute terms against federal reported generation.
 | Std Dev of Deviations | 18.8% |
 | Mean Signed Deviation | +3.4% (overprediction bias) |
 
+## Publication Cohort (headline figure)
+
+| Metric | Value |
+|---|---|
+| Healthy-fleet Mean Absolute Deviation | ±9.8% |
+| Healthy-fleet Median Absolute Deviation | ±7.0% |
+| Plants in cohort | 3,882 of 5,065 |
+| Within ±10% | 66.3% |
+| Within ±15% | 81.4% |
+| Excluded — high-curtailment states (CA, TX) | 796 |
+| Excluded — provable underperformers | 436 |
+| (both reasons) | 49 |
+
+Rule: Excludes plants in high-curtailment states (CA, TX) and plants reporting a capacity factor below 12.5% with more than 15.0% overprediction (presumed availability/curtailment issues, not model error). All exclusions are listed with reasons in the results JSON; full-fleet figures are published alongside.
+
 ## Accuracy Distribution
 
 | Threshold | Plants | Rate |
