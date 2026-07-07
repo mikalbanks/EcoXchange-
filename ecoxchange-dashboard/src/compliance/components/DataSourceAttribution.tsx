@@ -19,6 +19,11 @@ interface DataSourceAttributionProps {
   engineVersion?: string;
   /** Adds the "§ Methodology-documented estimate" prefix. */
   isEstimate?: boolean;
+  /**
+   * Where the expected-generation numbers came from: "live" = the deployed
+   * pvlib engine answered this session, "cached" = baked-in backtest data.
+   */
+  sourceMode?: "live" | "cached";
 }
 
 /**
@@ -29,6 +34,7 @@ export function DataSourceAttribution({
   sources,
   engineVersion,
   isEstimate,
+  sourceMode,
 }: DataSourceAttributionProps) {
   return (
     <div className="mt-2 pt-2 border-t border-darkBg/10">
@@ -47,6 +53,15 @@ export function DataSourceAttribution({
           </span>
         ))}
         {engineVersion && ` · Engine ${engineVersion}`}
+        {sourceMode === "live" && (
+          <span className="text-medGreen" data-testid="attribution-live">
+            {" "}
+            · Live Engine v2.0.0
+          </span>
+        )}
+        {sourceMode === "cached" && (
+          <span data-testid="attribution-cached"> · Cached backtest data</span>
+        )}
       </p>
     </div>
   );

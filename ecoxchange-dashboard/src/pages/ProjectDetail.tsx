@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Link, useParams } from "react-router-dom";
 import { ArrowLeft, Download, FileText, LineChart } from "lucide-react";
 import { useData } from "../context/DataContext.js";
@@ -24,6 +24,8 @@ import { LiveProductionMeter } from "../components/production/LiveProductionMete
 import { nextDistributionDate } from "../utils/distributions-summary.js";
 import { formatKwh, formatMonthLong, formatPct } from "../utils/formatters.js";
 import { VerificationReportTemplate } from "../reports/VerificationReportTemplate.js";
+import { useEngineData } from "../hooks/useEngineData.js";
+import { engineParamsForProject, mergeEngineExpected } from "../utils/engine-params.js";
 import type { ProjectBundle } from "../utils/types.js";
 
 type ProjectTab = "overview" | "production" | "verification" | "documents";
@@ -45,6 +47,25 @@ export function ProjectDetail() {
   );
   const [generatingReport, setGeneratingReport] = useState(false);
   const reportRef = useRef<HTMLDivElement>(null);
+
+  // Live pvlib engine: when VITE_ENGINE_URL is configured and the service
+  // answers, overlay its expected-generation series onto the seed records.
+  // Unconfigured or unreachable → displayRecords === seed records unchanged.
+  const engineParams = useMemo(
+    () =>
+      bundle
+        ? engineParamsForProject(bundle.project, bundle.verification_records)
+        : null,
+    [bundle],
+  );
+  const { data: engineData, isFromEngine } = useEngineData(engineParams);
+  const displayRecords = useMemo(
+    () =>
+      bundle && engineData
+        ? mergeEngineExpected(bundle.verification_records, engineData)
+        : bundle?.verification_records ?? [],
+    [bundle, engineData],
+  );
 
   const downloadReport = async () => {
     if (!bundle || generatingReport) return;
@@ -185,9 +206,10 @@ export function ProjectDetail() {
         <div ref={reportRef} className="fixed top-0 left-[-2000px] z-[-1]" aria-hidden>
           <VerificationReportTemplate
             project={project}
-            records={records}
+            records={displayRecords}
             summary={summary}
             generatedAt={new Date()}
+            dataSource={isFromEngine ? "live" : "cached"}
           />
         </div>
       ) : null}
@@ -320,14 +342,14 @@ export function ProjectDetail() {
             Monthly Production
           </h2>
           <div key={scenario} className="animate-fade-in">
-            <ProductionChart records={records} />
+            <ProductionChart records={displayRecords} />
             <DataSourceAttribution
               sources={[
                 { name: "NASA POWER", type: "satellite", dateRange: "Jan–Dec 2024" },
                 { name: "EcoXchange Verification Engine", type: "model" },
               ]}
-              engineVersion="v2.0.0"
               isEstimate
+              sourceMode={isFromEngine ? "live" : "cached"}
             />
           </div>
         </div>

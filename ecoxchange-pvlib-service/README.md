@@ -86,3 +86,46 @@ python benchmarks/pvwatts_comparison.py --year 2023
 See `src/config.py`. Defaults: Perez transposition, SAPM temperature model,
 physical IAM, monocrystalline module coefficients, 14% system losses, 1.2
 DC/AC ratio, 0.96 inverter efficiency, 0.2 albedo, open-rack mounting.
+
+## Site-level convenience endpoint (dashboard client)
+
+`POST /api/expected-generation` — flat project specs + a date range; the
+service fetches NASA POWER daily weather itself (no API key) and delegates
+to the same canonical engine path. Response shape identical to
+`/expected-generation`.
+
+```jsonc
+{
+  "latitude": 32.08, "longitude": -81.09,
+  "capacity_kw_dc": 5000, "tilt_deg": 20, "azimuth_deg": 180,
+  "module_efficiency": 0.20, "system_losses": 0.14,
+  "degradation_rate": 0.0075, "commissioning_date": "2023-01-01",
+  "start_date": "2024-01-01", "end_date": "2024-12-31"
+}
+```
+
+`GET /health` → `{ status, engine_version, model, transposition, pvlib_version }`.
+
+CORS allows localhost dev ports, the ecoxchange.net domains, and
+`*.onrender.com` / `*.workers.dev` previews (see `src/main.py`).
+
+## Deploying to Render
+
+**Recommended: Docker runtime.** The Dockerfile installs the canonical
+engine from `../verification-engine`, so the build context must be the
+REPO ROOT:
+
+- New Web Service → this repo → Runtime: **Docker**
+- Dockerfile path: `ecoxchange-pvlib-service/Dockerfile`, context: repo root
+- No env vars required. Health check path: `/health`.
+
+**Native Python runtime alternative** (root directory = repo root):
+
+- Build: `pip install ./verification-engine && pip install -r ecoxchange-pvlib-service/requirements.txt`
+- Start: `cd ecoxchange-pvlib-service && uvicorn src.main:app --host 0.0.0.0 --port $PORT`
+- `Procfile` / `runtime.txt` in this directory cover the case where the
+  service directory itself is the root (engine install must then be added
+  to the build command as `pip install ../verification-engine` — requires
+  "Include all repository files" enabled).
+
+After deploy, point the dashboard at it with `VITE_ENGINE_URL=https://<service>.onrender.com`.
