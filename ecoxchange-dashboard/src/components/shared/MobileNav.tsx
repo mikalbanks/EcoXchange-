@@ -27,7 +27,9 @@ const TABS: NavTab[] = [
     icon: Store,
     to: "/investor/marketplace",
     matches: (p) =>
-      p.startsWith("/investor/marketplace") || p.startsWith("/investor/offering"),
+      p.startsWith("/investor/marketplace") ||
+      p.startsWith("/investor/offering") ||
+      p.startsWith("/investor/catalog"),
   },
   {
     id: "yield",
