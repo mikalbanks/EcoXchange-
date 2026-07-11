@@ -46,6 +46,13 @@ def test_summarize_core_metrics_and_buckets():
     assert {b[0] for b in CAPACITY_BUCKETS} == set(buckets)
 
 
+def test_summarize_mode_absolute_deviation():
+    # Three plants at |dev| 5.0, one at 15.0 -> mode bin (0.1% resolution) is 5.0.
+    recs = [_rec(5.0, 2.0), _rec(-5.0, 2.0), _rec(5.0, 2.0), _rec(15.0, 2.0)]
+    s = summarize(recs)
+    assert s["mode_absolute_deviation_pct"] == 5.0
+
+
 def test_summarize_state_breakdown_sorted_by_count():
     recs = [_rec(4.0, 2.0, "NC")] * 3 + [_rec(6.0, 2.0, "CA")] * 2 + [_rec(1.0, 2.0, "MA")]
     rows = summarize(recs)["by_state"]

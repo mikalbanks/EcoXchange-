@@ -145,6 +145,15 @@ def record_for(plant: JoinedPlant, result: PlantResult) -> dict:
     rec["deviation_pct"] = round(result.deviation_pct, 2)
     rec["expected_mwh"] = round(result.expected_mwh, 1)
     rec["actual_mwh"] = round(result.actual_mwh, 1)
+    rec["latitude"] = round(plant.latitude, 6)
+    rec["longitude"] = round(plant.longitude, 6)
+    rec["tilt_deg"] = round(plant.tilt_deg, 1)
+    rec["azimuth_deg"] = round(plant.azimuth_deg, 1)
+    rec["tilt_source"] = plant.tilt_source
+    rec["azimuth_source"] = plant.azimuth_source
+    rec["commissioning_year"] = plant.commissioning_year
+    rec["panel_technology"] = plant.panel_technology
+    rec["capacity_ac_mw"] = round(plant.capacity_ac_mw, 3) if plant.capacity_ac_mw else None
     return rec
 
 
@@ -214,9 +223,13 @@ def summarize(records: Sequence[dict]) -> dict:
                 round(float(np.mean(np.abs(sub))), 1) if sub else None,
         })
 
+    rounded_abs = [round(float(d), 1) for d in abs_devs]
+    mode_abs_dev = Counter(rounded_abs).most_common(1)[0][0] if rounded_abs else None
+
     return {
         "mean_absolute_deviation_pct": round(float(np.mean(abs_devs)), 2),
         "median_absolute_deviation_pct": round(float(np.median(abs_devs)), 2),
+        "mode_absolute_deviation_pct": mode_abs_dev,
         "std_deviation_pct": round(float(np.std(devs)), 2),
         "mean_signed_deviation_pct": round(float(np.mean(devs)), 2),
         **within_rates(devs),

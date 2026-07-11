@@ -30,6 +30,14 @@ const DeveloperLOI = lazy(() =>
   import("./pages/DeveloperLOI.js").then((m) => ({ default: m.DeveloperLOI })),
 );
 
+// EIA catalog is lazy: its 2 MB plant dataset (dynamic import inside the data
+// loader) and page chunk only download when someone opens /investor/catalog.
+const EiaCatalog = lazy(() =>
+  import("./pages/investor/EiaCatalog.js").then((m) => ({
+    default: m.EiaCatalog,
+  })),
+);
+
 // Explorer pages are lazy-loaded so the viem chunk stays off the critical
 // path — it only downloads when someone opens /explorer.
 const Explorer = lazy(() =>
@@ -87,6 +95,14 @@ export function App() {
         <Route element={<AppLayout />}>
           <Route path="/investor" element={<Portfolio />} />
           <Route path="/investor/marketplace" element={<Marketplace />} />
+          <Route
+            path="/investor/catalog"
+            element={
+              <Suspense fallback={null}>
+                <EiaCatalog />
+              </Suspense>
+            }
+          />
           <Route
             path="/investor/offering/:slug"
             element={<OfferingSummary />}

@@ -16,6 +16,7 @@ import {
   PlayCircle,
   Link2,
   Zap,
+  Sun,
 } from "lucide-react";
 import { useAuth } from "../../context/AuthContext.js";
 import { useDemo } from "../../context/DemoContext.js";
@@ -32,6 +33,7 @@ const INVESTOR_NAV: NavItem[] = [
   { to: "/investor", label: "Portfolio", icon: LayoutDashboard, end: true },
   { to: "/onboarding", label: "Recommendations", icon: Sparkles },
   { to: "/investor/marketplace", label: "Marketplace", icon: Store },
+  { to: "/investor/catalog", label: "Solar Catalog", icon: Sun },
   { to: "/investor/calculator", label: "Calculator", icon: CalculatorIcon },
   { to: "/investor/impact", label: "Impact", icon: Leaf },
   { to: "/investor/distributions", label: "Distributions", icon: Coins },
