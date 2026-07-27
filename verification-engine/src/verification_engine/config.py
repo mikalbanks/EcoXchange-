@@ -90,6 +90,10 @@ class SystemConfig:
     losses: LossAssumptions = field(default_factory=LossAssumptions)
     commission_date: date = date(2022, 1, 1)
     degradation_rate_per_year: float = 0.0075  # 0.75%/yr (NREL); aligns w/ projects table
+    # "linear" keeps the historical behavior (geometric (1-r)**years despite
+    # the name — kept for API back-compat, do not change its math);
+    # "piecewise_nrel" uses the NREL-informed segments in losses.py.
+    degradation_model: str = "linear"
 
     def years_since_commission(self, as_of: date) -> float:
         return max(0.0, (as_of - self.commission_date).days / 365.25)
@@ -130,4 +134,5 @@ def load_config(path: str) -> SystemConfig:
         losses=losses,
         commission_date=cd,
         degradation_rate_per_year=raw.get("degradation_rate_per_year", 0.0075),
+        degradation_model=raw.get("degradation_model", "linear"),
     )

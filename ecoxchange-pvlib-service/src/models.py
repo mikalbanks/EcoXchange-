@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 from datetime import date
-from typing import Any, Optional
+from typing import Any, Literal, Optional
 
 from pydantic import BaseModel, Field
 
@@ -36,6 +36,14 @@ class ProjectSystemInput(BaseModel):
     )
     degradation_rate: float = Field(
         default=0.0075, ge=0.0, le=0.05, description="Annual degradation rate"
+    )
+    degradation_model: Literal["linear", "piecewise_nrel"] = Field(
+        default="linear",
+        description=(
+            'Degradation model: "linear" (historical default, back-compat) '
+            'or "piecewise_nrel" (NREL-informed: 2% LID yr 0-1, 0.7%/yr '
+            "yr 1-5, 0.5%/yr yr 5-25, 0.8%/yr yr 25+)"
+        ),
     )
     commissioning_date: date
 

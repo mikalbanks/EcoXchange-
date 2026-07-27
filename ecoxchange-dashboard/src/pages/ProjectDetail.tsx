@@ -6,6 +6,9 @@ import { ProductionChartLazy as ProductionChart } from "../components/Production
 import { StatCard } from "../components/StatCard.js";
 import { AnimatedNumber } from "../components/shared/AnimatedNumber.js";
 import { VerificationBadge } from "../components/VerificationBadge.js";
+import { VerificationTimeline } from "../components/verification/VerificationTimeline.js";
+import { FlagReasonCard } from "../components/verification/FlagReasonCard.js";
+import { ReconciliationDiagram } from "../components/ReconciliationDiagram.js";
 import { YieldTable } from "../components/YieldTable.js";
 import { ErrorState } from "../components/shared/ErrorState.js";
 import { EmptyState } from "../components/shared/EmptyState.js";
@@ -26,7 +29,7 @@ import { formatKwh, formatMonthLong, formatPct } from "../utils/formatters.js";
 import { VerificationReportTemplate } from "../reports/VerificationReportTemplate.js";
 import { useEngineData } from "../hooks/useEngineData.js";
 import { engineParamsForProject, mergeEngineExpected } from "../utils/engine-params.js";
-import type { ProjectBundle } from "../utils/types.js";
+import type { ProjectBundle, VerificationRecord } from "../utils/types.js";
 
 type ProjectTab = "overview" | "production" | "verification" | "documents";
 
@@ -42,6 +45,10 @@ export function ProjectDetail() {
   const { getProject, scenario } = useData();
   const [bundle, setBundle] = useState<ProjectBundle | null>(null);
   const [tab, setTab] = useState<ProjectTab>("overview");
+  // Month picked on the verification timeline; expands the reconciliation
+  // diagram (and flag card when flagged) inline below the timeline.
+  const [selectedVerification, setSelectedVerification] =
+    useState<VerificationRecord | null>(null);
   const [status, setStatus] = useState<"loading" | "ready" | "error" | "empty">(
     "loading",
   );
@@ -356,6 +363,52 @@ export function ProjectDetail() {
       )}
 
       {tab === "verification" && (
+        <div className="space-y-6">
+          {/* 12-month verification timeline (Spec 3) with click-to-expand */}
+          <div className="bg-white rounded-xl border border-paleGreen/60 p-5">
+            <SectionTag>Verification History</SectionTag>
+            <p className="mb-4 text-sm text-textMuted">
+              Click a month to open its three-source reconciliation.
+            </p>
+            <VerificationTimeline
+              records={displayRecords}
+              selectedPeriod={selectedVerification?.period_start ?? null}
+              onSelect={(r) =>
+                setSelectedVerification((prev) =>
+                  prev?.period_start === r.period_start ? null : r,
+                )
+              }
+            />
+          </div>
+
+          {selectedVerification ? (
+            <div key={selectedVerification.period_start} className="space-y-4">
+              <ReconciliationDiagram
+                record={selectedVerification}
+                animate
+                showFlagReasons={selectedVerification.status !== "flagged"}
+              />
+              {selectedVerification.status === "flagged" ? (
+                <FlagReasonCard record={selectedVerification} />
+              ) : null}
+            </div>
+          ) : null}
+
+          <VerificationLatestCard />
+        </div>
+      )}
+
+      {tab === "production" && (
+        <div>
+          <h2 className="font-heading text-xl text-darkBg mb-3">Monthly Yield</h2>
+          <YieldTable projectId={project.id} records={records} />
+        </div>
+      )}
+    </div>
+  );
+
+  function VerificationLatestCard() {
+    return (
         <div className="bg-white rounded-xl border border-paleGreen/60 p-5 flex flex-col lg:max-w-md">
           <div className="text-xs uppercase tracking-wide text-textMuted">
             Most recent verification
@@ -399,16 +452,8 @@ export function ProjectDetail() {
             Open verification detail →
           </Link>
         </div>
-      )}
-
-      {tab === "production" && (
-        <div>
-          <h2 className="font-heading text-xl text-darkBg mb-3">Monthly Yield</h2>
-          <YieldTable projectId={project.id} records={records} />
-        </div>
-      )}
-    </div>
-  );
+    );
+  }
 }
 
 function BackLink() {

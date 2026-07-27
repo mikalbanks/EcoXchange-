@@ -2,6 +2,7 @@ import type {
   ReconciliationInput,
   ReconciliationOutput,
 } from "../utils/types.js";
+import { classifyAnomaly } from "./classify.js";
 
 /**
  * Three-way reconciliation: inverter ↔ utility meter ↔ expected (satellite).
@@ -142,5 +143,16 @@ export function reconcile(input: ReconciliationInput): ReconciliationOutput {
     util_vs_expected_pct,
     flag_reasons,
     tolerance_config: tolerances,
+    // Diagnosis only — the verdict above is already decided (spec 7).
+    ...(status === "flagged"
+      ? {
+          classification: classifyAnomaly(
+            inv_vs_expected_pct,
+            inv_vs_utility_pct,
+            util_vs_expected_pct,
+            input.classification_context,
+          ),
+        }
+      : {}),
   };
 }

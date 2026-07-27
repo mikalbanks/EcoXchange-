@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { computeCostComparison } from "./cost-comparison.js";
+import { SPEC_COST, computeCostComparison } from "./cost-comparison.js";
 
 describe("computeCostComparison", () => {
   it("reproduces the spec's $2.5M example exactly", () => {
@@ -29,6 +29,19 @@ describe("computeCostComparison", () => {
       expect(r.savingsPct).toBeGreaterThanOrEqual(50);
       expect(r.savingsPct).toBeLessThanOrEqual(80);
     }
+  });
+
+  it("SPEC_COST headline agrees with the line-item model at the $2.5M raise", () => {
+    // The spec's $90K origination figure and the computed EcoXchange total
+    // must be the same number — chart, table, and model may never diverge.
+    const r = computeCostComparison(2_500_000);
+    expect(r.ecoxchangeTotal).toBe(SPEC_COST.ecoxchangeUpfrontUsd);
+    expect(SPEC_COST.traditionalLowUsd).toBeLessThan(
+      SPEC_COST.traditionalHighUsd,
+    );
+    expect(SPEC_COST.ecoxchangeUpfrontUsd).toBeLessThan(
+      SPEC_COST.traditionalLowUsd,
+    );
   });
 
   it("zero-cost EcoXchange lines carry their display labels", () => {

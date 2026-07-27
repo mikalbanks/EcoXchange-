@@ -1,3 +1,5 @@
+import { SPEC_COST } from "../../utils/cost-comparison.js";
+
 interface Row {
   label: string;
   traditional: string;
@@ -5,23 +7,25 @@ interface Row {
   savings: string;
 }
 
+const usd = (n: number) => `$${n.toLocaleString("en-US")}`;
+
 const ROWS: Row[] = [
   {
     label: "All-in cost (Year 1, $2.5M raise)",
-    traditional: "$325,000–$500,000",
-    ecoxchange: "~$125,000–$175,000",
-    savings: "55–65%",
+    traditional: `${usd(SPEC_COST.traditionalLowUsd)}–${usd(SPEC_COST.traditionalHighUsd)}`,
+    ecoxchange: `${usd(SPEC_COST.ecoxchangeUpfrontUsd)} origination`,
+    savings: SPEC_COST.lifetimeSavingsLabel,
   },
   {
     label: "Time to capital",
-    traditional: "3–9 months",
-    ecoxchange: "2–6 weeks",
+    traditional: SPEC_COST.timeToCapital.traditional,
+    ecoxchange: SPEC_COST.timeToCapital.ecoxchange,
     savings: "—",
   },
   {
     label: "Ongoing annual admin",
     traditional: "$25,000–$40,000/yr",
-    ecoxchange: "~$31,000/yr (platform)",
+    ecoxchange: `${usd(SPEC_COST.ecoxchangeAnnualUsd)}/yr platform fee`,
     savings: "—",
   },
 ];

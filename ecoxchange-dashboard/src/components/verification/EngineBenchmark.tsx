@@ -1,3 +1,4 @@
+import { Link } from "react-router-dom";
 import { ENGINE_VERSION } from "../../config/engine.js";
 import benchmark from "../../data/benchmark-results.json";
 
@@ -64,6 +65,12 @@ export function EngineBenchmark({
             }.`
           : "This is the first benchmark run using the canonical pvlib physics model."}
       </p>
+      <Link
+        to="/benchmark"
+        className="mt-1.5 inline-block font-mono text-xs font-medium text-medGreen underline-offset-2 hover:underline"
+      >
+        View full benchmark →
+      </Link>
     </div>
   );
 }

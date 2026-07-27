@@ -3,6 +3,7 @@ import { Link, useParams } from "react-router-dom";
 import { ArrowLeft } from "lucide-react";
 import { useData } from "../context/DataContext.js";
 import { ReconciliationDiagram } from "../components/ReconciliationDiagram.js";
+import { FlagReasonCard } from "../components/verification/FlagReasonCard.js";
 import { DataSourceAttribution } from "../compliance/components/DataSourceAttribution.js";
 import { VerificationBadge } from "../components/VerificationBadge.js";
 import { ErrorState } from "../components/shared/ErrorState.js";
@@ -96,7 +97,11 @@ export function VerificationDetail() {
       </div>
 
       <div>
-        <ReconciliationDiagram record={record} />
+        <ReconciliationDiagram
+          record={record}
+          animate
+          showFlagReasons={record.status !== "flagged"}
+        />
         <DataSourceAttribution
           sources={[
             { name: "Inverter Telemetry", type: "inverter" },
@@ -106,6 +111,8 @@ export function VerificationDetail() {
           engineVersion={ENGINE_VERSION}
         />
       </div>
+
+      {record.status === "flagged" ? <FlagReasonCard record={record} /> : null}
 
       <div className="bg-white rounded-xl border border-paleGreen/60 p-5">
         <h2 className="font-heading text-lg text-darkBg mb-3">Irradiance Data</h2>
