@@ -45,3 +45,7 @@ wrangler.dev.vars
 # .claude/skills/ is created by `gstack setup` per-machine and must not be committed.
 .claude/skills/*
 !.claude/skills/gstack
+
+# gstack working output (/qa reports, screenshots, generated PDFs). Regenerable
+# per-run evidence — findings live in the PR description, not in the repo.
+.gstack/
