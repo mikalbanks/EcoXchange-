@@ -4,7 +4,7 @@
 //   2. How much will this save me vs. traditional capital?  (cost comparison)
 //   3. What happens next?                                   (LOI CTA)
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import {
   Bar,
@@ -15,7 +15,7 @@ import {
   XAxis,
   YAxis,
 } from "recharts";
-import { ArrowRight, RefreshCcw } from "lucide-react";
+import { ArrowRight, FileDown, RefreshCcw } from "lucide-react";
 import {
   loadBacktestResult,
   type StoredBacktestResult,
@@ -35,6 +35,8 @@ import { palette } from "../../config/palette.js";
 import { formatMonthShort } from "../../utils/formatters.js";
 import { SAVANNAH_VERIFICATION_HISTORY } from "../../data/demo-verification.js";
 import { DegradationCurve } from "../../components/developer/DegradationCurve.js";
+import { VerificationReportDoc } from "../../reports/VerificationReportDoc.js";
+import { buildVerificationReportModel } from "../../reports/report-utils/report-model.js";
 import { VerificationTimeline } from "../../components/verification/VerificationTimeline.js";
 import { FlagReasonCard } from "../../components/verification/FlagReasonCard.js";
 import { ReconciliationDiagram } from "../../components/ReconciliationDiagram.js";
@@ -89,6 +91,35 @@ export function BacktestResults() {
   );
   const [selectedVerification, setSelectedVerification] =
     useState<VerificationRecord | null>(null);
+  const [generatingReport, setGeneratingReport] = useState(false);
+  const reportRef = useRef<HTMLDivElement>(null);
+
+  // The pitch leave-behind (report PDF spec): pure model from the stored
+  // result; pages mount offscreen only while generating.
+  const reportModel = useMemo(
+    () => (result ? buildVerificationReportModel(result) : null),
+    [result],
+  );
+
+  const downloadReport = async () => {
+    if (!reportModel || generatingReport) return;
+    setGeneratingReport(true);
+    try {
+      // Wait a tick for the offscreen template to mount before capture.
+      await new Promise((r) => setTimeout(r, 0));
+      const { generateVerificationReport } = await import(
+        "../../reports/report-utils/generateVerificationReport.js"
+      );
+      if (reportRef.current) {
+        await generateVerificationReport(
+          reportRef.current,
+          reportModel.filename,
+        );
+      }
+    } finally {
+      setGeneratingReport(false);
+    }
+  };
 
   useEffect(() => {
     if (!result) navigate("/developer/demo", { replace: true });
@@ -307,6 +338,34 @@ export function BacktestResults() {
       {/* ── Q3: What happens next? ────────────────────────────────────── */}
       <section>
         <SectionTag>NEXT STEP</SectionTag>
+
+        {/* Lower-commitment action first: take the numbers to your team. */}
+        <Card variant="bordered" padding="standard" className="mb-4">
+          <div className="flex flex-wrap items-center justify-between gap-3">
+            <div>
+              <h3 className="font-heading text-lg text-darkBg">
+                Take this report to your team
+              </h3>
+              <p className="mt-0.5 text-sm text-textMuted">
+                4-page branded PDF with your project's numbers — production
+                profile, verification methodology, and cost comparison.
+              </p>
+            </div>
+            <Button
+              variant="secondary"
+              size="md"
+              loading={generatingReport}
+              onClick={() => void downloadReport()}
+              data-testid="verification-report-download"
+            >
+              <span className="inline-flex items-center gap-1.5">
+                <FileDown className="h-4 w-4" /> Download Verification Report
+                (PDF)
+              </span>
+            </Button>
+          </div>
+        </Card>
+
         <Card variant="dark" padding="spacious">
           <h2 className="font-heading text-2xl text-cream">
             Sign a non-binding Letter of Intent
@@ -341,6 +400,18 @@ export function BacktestResults() {
           </p>
         </Card>
       </section>
+
+      {/* Offscreen US-Letter pages for the PDF pipeline — mounted only
+          while generating (same pattern as DeveloperLOI / Benchmark). */}
+      {generatingReport && reportModel ? (
+        <div
+          ref={reportRef}
+          className="fixed top-0 left-[-2000px] z-[-1]"
+          aria-hidden
+        >
+          <VerificationReportDoc model={reportModel} />
+        </div>
+      ) : null}
     </div>
   );
 }
