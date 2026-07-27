@@ -26,6 +26,12 @@ export function Header() {
             Projects
           </Link>
           <Link
+            to="/benchmark"
+            className="hidden sm:inline text-sm text-paleGreen hover:text-white transition-colors duration-150"
+          >
+            Benchmark
+          </Link>
+          <Link
             to="/developer/demo"
             className="hidden sm:inline text-sm text-paleGreen hover:text-white transition-colors duration-150"
           >

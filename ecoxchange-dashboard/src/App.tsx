@@ -48,6 +48,11 @@ const ProjectsOverview = lazy(() =>
   })),
 );
 
+// EIA fleet benchmark presentation (Spec 4).
+const Benchmark = lazy(() =>
+  import("./pages/Benchmark.js").then((m) => ({ default: m.Benchmark })),
+);
+
 // EIA catalog is lazy: its 2 MB plant dataset (dynamic import inside the data
 // loader) and page chunk only download when someone opens /investor/catalog.
 const EiaCatalog = lazy(() =>
@@ -206,6 +211,17 @@ export function App() {
           element={
             <HeaderLayout>
               <OnboardingReport />
+            </HeaderLayout>
+          }
+        />
+        {/* EIA fleet benchmark presentation (Spec 4) */}
+        <Route
+          path="/benchmark"
+          element={
+            <HeaderLayout>
+              <Suspense fallback={null}>
+                <Benchmark />
+              </Suspense>
             </HeaderLayout>
           }
         />
