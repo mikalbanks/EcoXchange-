@@ -1,4 +1,8 @@
 import type { ToleranceConfig } from "../config/tolerances.js";
+import type {
+  AnomalyClassification,
+  ClassificationContext,
+} from "../reconciliation/classify.js";
 
 export interface ProjectConfig {
   name?: string;
@@ -70,6 +74,9 @@ export interface ReconciliationInput {
   utility_reading: RawReading | null;
   expected_generation: ExpectedGenerationOutput;
   tolerances: ToleranceConfig;
+  /** Optional monthly context for anomaly classification (upgrade spec 7).
+   *  Absent context degrades gracefully — deviation-only rules still run. */
+  classification_context?: ClassificationContext;
 }
 
 export type VerificationStatus = "verified" | "flagged" | "pending";
@@ -84,4 +91,7 @@ export interface ReconciliationOutput {
   util_vs_expected_pct: number | null;
   flag_reasons: string[];
   tolerance_config: ToleranceConfig;
+  /** Present only when status is "flagged" (upgrade spec 7). Additive:
+   *  adds diagnosis context, never changes the verdict. */
+  classification?: AnomalyClassification;
 }
