@@ -33,6 +33,11 @@ import { SectionTag } from "../../components/ui/SectionTag.js";
 import { SPEC_COST } from "../../utils/cost-comparison.js";
 import { palette } from "../../config/palette.js";
 import { formatMonthShort } from "../../utils/formatters.js";
+import { SAVANNAH_VERIFICATION_HISTORY } from "../../data/demo-verification.js";
+import { VerificationTimeline } from "../../components/verification/VerificationTimeline.js";
+import { FlagReasonCard } from "../../components/verification/FlagReasonCard.js";
+import { ReconciliationDiagram } from "../../components/ReconciliationDiagram.js";
+import type { VerificationRecord } from "../../utils/types.js";
 
 function monthShort(month: string): string {
   return formatMonthShort(`${month}-01`);
@@ -81,6 +86,8 @@ export function BacktestResults() {
   const [result] = useState<StoredBacktestResult | null>(() =>
     loadBacktestResult(),
   );
+  const [selectedVerification, setSelectedVerification] =
+    useState<VerificationRecord | null>(null);
 
   useEffect(() => {
     if (!result) navigate("/developer/demo", { replace: true });
@@ -239,6 +246,46 @@ export function BacktestResults() {
             <TimeToCapitalStrip />
           </div>
         </Card>
+      </section>
+
+      {/* ── What ongoing verification looks like (Spec 3 preview) ─────── */}
+      <section>
+        <SectionTag>ONGOING VERIFICATION</SectionTag>
+        <h2 className="font-heading text-2xl text-darkBg">
+          What 12 Months of Operation Look Like
+        </h2>
+        <p className="mt-1 max-w-2xl text-sm text-textMuted">
+          Once listed, every month is reconciled across inverter, utility
+          meter, and satellite before distributions release. This is the
+          Savannah reference site's last operating year — including the
+          month the engine caught.
+        </p>
+        <Card variant="bordered" padding="standard" className="mt-4">
+          <VerificationTimeline
+            records={SAVANNAH_VERIFICATION_HISTORY}
+            selectedPeriod={selectedVerification?.period_start ?? null}
+            onSelect={(r) =>
+              setSelectedVerification((prev) =>
+                prev?.period_start === r.period_start ? null : r,
+              )
+            }
+          />
+        </Card>
+        {selectedVerification ? (
+          <div
+            key={selectedVerification.period_start}
+            className="mt-4 space-y-4"
+          >
+            <ReconciliationDiagram
+              record={selectedVerification}
+              animate
+              showFlagReasons={selectedVerification.status !== "flagged"}
+            />
+            {selectedVerification.status === "flagged" ? (
+              <FlagReasonCard record={selectedVerification} />
+            ) : null}
+          </div>
+        ) : null}
       </section>
 
       {/* ── Q3: What happens next? ────────────────────────────────────── */}

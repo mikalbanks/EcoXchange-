@@ -33,27 +33,34 @@ export interface BadgeDeviations {
   util_vs_expected_pct?: number | null;
 }
 
+const SIZE_CLASSES: Record<"sm" | "md" | "lg", { pad: string; dot: string }> =
+  {
+    sm: { pad: "px-2 py-0.5 text-xs", dot: "h-2 w-2" },
+    md: { pad: "px-3 py-1 text-sm", dot: "h-2 w-2" },
+    lg: { pad: "px-4 py-1.5 text-base", dot: "h-2.5 w-2.5" },
+  };
+
 export function VerificationBadge({
   status,
   size = "md",
   deviations,
 }: {
   status: VerificationStatus;
-  size?: "sm" | "md";
+  size?: "sm" | "md" | "lg";
   /** When provided on a touch device, the badge becomes tap-to-expand and
    *  reveals the three-way deviation percentages. Omit for the classic badge. */
   deviations?: BadgeDeviations;
 }) {
   const s = styles[status];
-  const padding = size === "sm" ? "px-2 py-0.5 text-xs" : "px-3 py-1 text-sm";
+  const sizing = SIZE_CLASSES[size];
   const hoverCapable = useHoverCapable();
   const [expanded, setExpanded] = useState(false);
 
   const badge = (
     <span
-      className={`inline-flex items-center gap-2 rounded-full ${padding} font-medium ${s.bg} ${s.text}`}
+      className={`inline-flex items-center gap-2 rounded-full ${sizing.pad} font-medium ${s.bg} ${s.text}`}
     >
-      <span className={`h-2 w-2 rounded-full ${s.dot}`} />
+      <span className={`${sizing.dot} rounded-full ${s.dot}`} />
       {s.label}
     </span>
   );

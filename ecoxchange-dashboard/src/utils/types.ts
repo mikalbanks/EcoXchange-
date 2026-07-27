@@ -1,5 +1,23 @@
 export type VerificationStatus = "verified" | "flagged" | "pending";
 
+export type AnomalyCategory =
+  | "weather_anomaly"
+  | "inverter_fault"
+  | "soiling"
+  | "curtailment"
+  | "meter_error"
+  | "degradation"
+  | "unknown";
+
+/** Heuristic classification of a FLAGGED month (Spec 7). Additive context
+ *  only — never changes the verified/flagged/pending verdict. */
+export interface AnomalyClassification {
+  category: AnomalyCategory;
+  confidence: "high" | "medium" | "low";
+  reasoning: string;
+  recommended_action: string;
+}
+
 export interface PortfolioSummary {
   total_invested: number;
   monthly_yield_usd: number;
@@ -54,6 +72,8 @@ export interface VerificationRecord {
   flag_reasons: string[];
   estimated_revenue: number;
   ghi_kwh_m2?: number;
+  /** Present only on flagged records when the classifier has run (Spec 7). */
+  classification?: AnomalyClassification;
 }
 
 export interface ProjectSummary {

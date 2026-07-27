@@ -1,4 +1,5 @@
 import { Check, X } from "lucide-react";
+import type { CSSProperties } from "react";
 import type { VerificationRecord } from "../utils/types.js";
 import { formatKwh, formatPct } from "../utils/formatters.js";
 
@@ -96,7 +97,38 @@ function MobileConnector({
   );
 }
 
-export function ReconciliationDiagram({ record }: { record: VerificationRecord }) {
+/** Staggered CSS entrance (Spec 3): fade the source cards in one by one,
+ *  slide the comparison rows down, pulse the flag box once. CSS-only per
+ *  house style; animationFillMode backwards hides elements until their
+ *  delayed animation starts. */
+function staggerClass(animateOn: boolean): string {
+  return animateOn ? " animate-fade-in" : "";
+}
+
+function staggerStyle(
+  animateOn: boolean,
+  delayMs: number,
+): CSSProperties | undefined {
+  if (!animateOn) return undefined;
+  return {
+    animationDelay: `${delayMs}ms`,
+    animationFillMode: "backwards",
+  };
+}
+
+export function ReconciliationDiagram({
+  record,
+  animate = false,
+  showFlagReasons = true,
+}: {
+  record: VerificationRecord;
+  /** Opt-in entrance animation for click-to-expand contexts (default off,
+   *  so existing pages render exactly as before). */
+  animate?: boolean;
+  /** Set false when a FlagReasonCard is rendered alongside, to avoid
+   *  repeating the same reasons twice. */
+  showFlagReasons?: boolean;
+}) {
   return (
     <div className="bg-white rounded-lg border border-paleGreen/60 p-4 sm:p-6">
       <h2 className="font-heading text-xl text-darkBg mb-4">
@@ -106,43 +138,61 @@ export function ReconciliationDiagram({ record }: { record: VerificationRecord }
           connectors (DOM order = mobile order). Desktop (sm+): reordered via
           sm:order-* back to the original Inverter / Utility / Expected row. */}
       <div className="flex flex-col sm:flex-row gap-0 sm:gap-3 mb-6">
-        <div className="sm:order-1 flex-1 flex">
+        <div
+          className={`sm:order-1 flex-1 flex${staggerClass(animate)}`}
+          style={staggerStyle(animate, 0)}
+        >
           <Source label="Inverter" value={record.inverter_kwh} />
         </div>
         <MobileConnector
           pct={record.inv_vs_expected_pct}
           tolerance={TOL.inv_vs_expected}
         />
-        <div className="sm:order-3 flex-1 flex">
+        <div
+          className={`sm:order-3 flex-1 flex${staggerClass(animate)}`}
+          style={staggerStyle(animate, 240)}
+        >
           <Source label="Expected (Satellite)" value={record.expected_kwh} highlight />
         </div>
         <MobileConnector
           pct={record.util_vs_expected_pct}
           tolerance={TOL.util_vs_expected}
         />
-        <div className="sm:order-2 flex-1 flex">
+        <div
+          className={`sm:order-2 flex-1 flex${staggerClass(animate)}`}
+          style={staggerStyle(animate, 120)}
+        >
           <Source label="Utility Meter" value={record.utility_kwh} />
         </div>
       </div>
       <div className="space-y-2">
-        <Comparison
-          label="Inverter vs Expected"
-          pct={record.inv_vs_expected_pct}
-          tolerance={TOL.inv_vs_expected}
-        />
-        <Comparison
-          label="Inverter vs Utility"
-          pct={record.inv_vs_utility_pct}
-          tolerance={TOL.inv_vs_utility}
-        />
-        <Comparison
-          label="Utility vs Expected"
-          pct={record.util_vs_expected_pct}
-          tolerance={TOL.util_vs_expected}
-        />
+        {(
+          [
+            ["Inverter vs Expected", record.inv_vs_expected_pct, TOL.inv_vs_expected],
+            ["Inverter vs Utility", record.inv_vs_utility_pct, TOL.inv_vs_utility],
+            ["Utility vs Expected", record.util_vs_expected_pct, TOL.util_vs_expected],
+          ] as const
+        ).map(([label, pct, tolerance], i) => (
+          <div
+            key={label}
+            className={animate ? "animate-slide-down" : undefined}
+            style={staggerStyle(animate, 360 + i * 100)}
+          >
+            <Comparison label={label} pct={pct} tolerance={tolerance} />
+          </div>
+        ))}
       </div>
-      {record.flag_reasons.length > 0 ? (
-        <div className="mt-6 rounded-md bg-amber-50 border border-flagAmber/40 p-4">
+      {showFlagReasons && record.flag_reasons.length > 0 ? (
+        <div
+          className={`mt-6 rounded-md bg-amber-50 border border-flagAmber/40 p-4 ${
+            animate ? "animate-badge-pulse" : ""
+          }`}
+          style={
+            animate
+              ? { animationDelay: "700ms", animationFillMode: "backwards" }
+              : undefined
+          }
+        >
           <div className="text-xs uppercase tracking-wide text-flagAmber font-semibold mb-2">
             Flag Reasons
           </div>
