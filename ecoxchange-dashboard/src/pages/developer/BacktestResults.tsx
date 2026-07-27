@@ -34,6 +34,7 @@ import { SPEC_COST } from "../../utils/cost-comparison.js";
 import { palette } from "../../config/palette.js";
 import { formatMonthShort } from "../../utils/formatters.js";
 import { SAVANNAH_VERIFICATION_HISTORY } from "../../data/demo-verification.js";
+import { DegradationCurve } from "../../components/developer/DegradationCurve.js";
 import { VerificationTimeline } from "../../components/verification/VerificationTimeline.js";
 import { FlagReasonCard } from "../../components/verification/FlagReasonCard.js";
 import { ReconciliationDiagram } from "../../components/ReconciliationDiagram.js";
@@ -245,6 +246,21 @@ export function BacktestResults() {
           <div className="mt-3">
             <TimeToCapitalStrip />
           </div>
+        </Card>
+      </section>
+
+      {/* ── Degradation intelligence (Spec 6) ─────────────────────────── */}
+      <section>
+        <SectionTag>DEGRADATION INTELLIGENCE</SectionTag>
+        <h2 className="font-heading text-2xl text-darkBg">
+          How Output Evolves Over the Asset Life
+        </h2>
+        <Card variant="bordered" padding="standard" className="mt-4">
+          <DegradationCurve
+            commissioningDate={result.intake.commissioning_date}
+            annualMwhYear1={summary.annual_mwh}
+            ppaRate={result.intake.ppa_rate_per_kwh}
+          />
         </Card>
       </section>
 

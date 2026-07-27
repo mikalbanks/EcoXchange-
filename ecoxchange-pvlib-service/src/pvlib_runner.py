@@ -113,6 +113,7 @@ def calculate_expected_generation(
             "tracking": cfg.array.tracking,
             "system_losses_pct": project.system_losses * 100,
             "degradation_factor": round(degradation_factor(cfg, as_of)[0], 4),
+            "degradation_model": cfg.degradation_model,
             "years_since_commissioning": round(cfg.years_since_commission(as_of), 1),
             "racking_type": project.racking_type or DEFAULT_RACKING_TYPE,
         },
@@ -172,6 +173,7 @@ def _system_config(project: ProjectSystemInput) -> SystemConfig:
         losses=_loss_assumptions_from_total(project.system_losses),
         commission_date=project.commissioning_date,
         degradation_rate_per_year=project.degradation_rate,
+        degradation_model=project.degradation_model,
     )
 
 

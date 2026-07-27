@@ -29,6 +29,8 @@ export interface ExpectedGenerationRequest {
   module_efficiency: number;
   system_losses: number;
   degradation_rate: number;
+  /** Optional: "linear" (service default) or "piecewise_nrel" (Spec 6). */
+  degradation_model?: "linear" | "piecewise_nrel";
   commissioning_date: string; // YYYY-MM-DD
   start_date: string; // YYYY-MM-DD
   end_date: string; // YYYY-MM-DD
