@@ -92,6 +92,9 @@ export function BacktestResults() {
   const [selectedVerification, setSelectedVerification] =
     useState<VerificationRecord | null>(null);
   const [generatingReport, setGeneratingReport] = useState(false);
+  const [reportProgress, setReportProgress] = useState<[number, number] | null>(
+    null,
+  );
   const reportRef = useRef<HTMLDivElement>(null);
 
   // The pitch leave-behind (report PDF spec): pure model from the stored
@@ -104,6 +107,7 @@ export function BacktestResults() {
   const downloadReport = async () => {
     if (!reportModel || generatingReport) return;
     setGeneratingReport(true);
+    setReportProgress(null);
     try {
       // Wait a tick for the offscreen template to mount before capture.
       await new Promise((r) => setTimeout(r, 0));
@@ -111,13 +115,17 @@ export function BacktestResults() {
         "../../reports/report-utils/generateVerificationReport.js"
       );
       if (reportRef.current) {
+        // Rasterizing four print pages takes several seconds each — report
+        // page-by-page progress so the wait never looks like a hang.
         await generateVerificationReport(
           reportRef.current,
           reportModel.filename,
+          (done, total) => setReportProgress([done, total]),
         );
       }
     } finally {
       setGeneratingReport(false);
+      setReportProgress(null);
     }
   };
 
@@ -351,18 +359,31 @@ export function BacktestResults() {
                 profile, verification methodology, and cost comparison.
               </p>
             </div>
-            <Button
-              variant="secondary"
-              size="md"
-              loading={generatingReport}
-              onClick={() => void downloadReport()}
-              data-testid="verification-report-download"
-            >
-              <span className="inline-flex items-center gap-1.5">
-                <FileDown className="h-4 w-4" /> Download Verification Report
-                (PDF)
-              </span>
-            </Button>
+            <div className="flex flex-col items-start gap-1.5 sm:items-end">
+              <Button
+                variant="secondary"
+                size="md"
+                loading={generatingReport}
+                onClick={() => void downloadReport()}
+                data-testid="verification-report-download"
+              >
+                <span className="inline-flex items-center gap-1.5">
+                  <FileDown className="h-4 w-4" /> Download Verification Report
+                  (PDF)
+                </span>
+              </Button>
+              {generatingReport ? (
+                <p
+                  className="font-mono text-[11px] text-textMuted"
+                  aria-live="polite"
+                  data-testid="report-progress"
+                >
+                  {reportProgress
+                    ? `Rendering page ${reportProgress[0]} of ${reportProgress[1]}…`
+                    : "Preparing report…"}
+                </p>
+              ) : null}
+            </div>
           </div>
         </Card>
 

@@ -76,11 +76,13 @@ function DistributionBars() {
 
 export function Benchmark() {
   const [generating, setGenerating] = useState(false);
+  const [progress, setProgress] = useState<[number, number] | null>(null);
   const docRef = useRef<HTMLDivElement>(null);
 
   const downloadPdf = async () => {
     if (generating) return;
     setGenerating(true);
+    setProgress(null);
     try {
       await new Promise((r) => setTimeout(r, 80));
       const pages = Array.from(
@@ -90,9 +92,12 @@ export function Benchmark() {
       await downloadPdfFromPages(
         pages,
         `EcoXchange_Engine_Benchmark_${benchmark.benchmark_date}.pdf`,
+        "a4",
+        (done, total) => setProgress([done, total]),
       );
     } finally {
       setGenerating(false);
+      setProgress(null);
     }
   };
 
@@ -366,6 +371,17 @@ export function Benchmark() {
               <Download className="h-4 w-4" /> Download as PDF
             </span>
           </Button>
+          {generating ? (
+            <p
+              className="font-mono text-[11px] text-textMuted"
+              aria-live="polite"
+              data-testid="benchmark-pdf-progress"
+            >
+              {progress
+                ? `Rendering page ${progress[0]} of ${progress[1]}…`
+                : "Preparing report…"}
+            </p>
+          ) : null}
           <div className="flex-1 min-w-[280px]">
             <EngineBenchmark />
           </div>

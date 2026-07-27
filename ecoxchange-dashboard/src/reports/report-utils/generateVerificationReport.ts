@@ -7,6 +7,7 @@ import { downloadPdfFromPages } from "../pdf.js";
 export async function generateVerificationReport(
   container: HTMLElement,
   filename: string,
+  onProgress?: (completed: number, total: number) => void,
 ): Promise<void> {
   // Playfair Display / IBM Plex Mono must be resolved before capture or
   // html2canvas rasterizes fallback fonts.
@@ -20,5 +21,5 @@ export async function generateVerificationReport(
   const pages = Array.from(
     container.querySelectorAll<HTMLElement>(".pdf-page"),
   );
-  await downloadPdfFromPages(pages, filename, "letter");
+  await downloadPdfFromPages(pages, filename, "letter", onProgress);
 }

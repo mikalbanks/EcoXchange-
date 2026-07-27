@@ -25,6 +25,7 @@ export async function downloadPdfFromPages(
   pages: HTMLElement[],
   filename: string,
   format: PdfPageFormat = "a4",
+  onProgress?: (completed: number, total: number) => void,
 ): Promise<void> {
   if (pages.length === 0) throw new Error("No pages to render");
 
@@ -52,6 +53,10 @@ export async function downloadPdfFromPages(
       pageWidthMm,
       pageHeightMm,
     );
+    onProgress?.(i + 1, pages.length);
+    // Rasterizing a page blocks the main thread for seconds; yield so the
+    // caller's progress UI actually repaints between pages.
+    await new Promise((r) => setTimeout(r, 0));
   }
 
   doc.save(filename);
