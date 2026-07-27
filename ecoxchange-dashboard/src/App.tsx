@@ -30,6 +30,17 @@ const DeveloperLOI = lazy(() =>
   import("./pages/DeveloperLOI.js").then((m) => ({ default: m.DeveloperLOI })),
 );
 
+// Run Demo flow is lazy: it pulls the Leaflet chunk for the site map, which
+// should only download when the guided demo is opened.
+const RunDemo = lazy(() =>
+  import("./pages/developer/RunDemo.js").then((m) => ({ default: m.RunDemo })),
+);
+const DemoBacktestResults = lazy(() =>
+  import("./pages/developer/BacktestResults.js").then((m) => ({
+    default: m.BacktestResults,
+  })),
+);
+
 // EIA catalog is lazy: its 2 MB plant dataset (dynamic import inside the data
 // loader) and page chunk only download when someone opens /investor/catalog.
 const EiaCatalog = lazy(() =>
@@ -188,6 +199,27 @@ export function App() {
           element={
             <HeaderLayout>
               <OnboardingReport />
+            </HeaderLayout>
+          }
+        />
+        {/* Guided demo flow (Spec 1) — offline-safe pitch backtest */}
+        <Route
+          path="/developer/demo"
+          element={
+            <HeaderLayout>
+              <Suspense fallback={null}>
+                <RunDemo />
+              </Suspense>
+            </HeaderLayout>
+          }
+        />
+        <Route
+          path="/developer/demo/results"
+          element={
+            <HeaderLayout>
+              <Suspense fallback={null}>
+                <DemoBacktestResults />
+              </Suspense>
             </HeaderLayout>
           }
         />

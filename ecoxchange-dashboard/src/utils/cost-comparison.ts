@@ -23,6 +23,24 @@ export interface CostComparisonResult {
 export const TRADITIONAL_PLACEMENT_FEE_PCT = 0.06; // 4–8% range, midpoint
 export const ECOXCHANGE_ORIGINATION_FEE_PCT = 0.03;
 
+// Product-spec §3.3 headline figures (single source of truth — the savings
+// chart, the comparison table, and the results page all cite these; keep
+// them in one place so the pitch can't contradict itself mid-demo).
+export const SPEC_COST = {
+  /** Traditional Reg D 506(c) all-in first-year cost range (USD). */
+  traditionalLowUsd: 325_000,
+  traditionalHighUsd: 500_000,
+  /** EcoXchange: origination at close + annual platform fee (USD). */
+  ecoxchangeUpfrontUsd: 90_000,
+  ecoxchangeAnnualUsd: 12_500,
+  /** Headline lifetime savings claim. */
+  lifetimeSavingsLabel: "~$300K–$500K over asset life",
+  timeToCapital: {
+    traditional: "3–9 months",
+    ecoxchange: "2–6 weeks",
+  },
+} as const;
+
 export function computeCostComparison(equityRaise: number): CostComparisonResult {
   const lines: CostLine[] = [
     {

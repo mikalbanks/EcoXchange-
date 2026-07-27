@@ -130,6 +130,17 @@ export function DemoController() {
             type="button"
             onClick={() => {
               enterDemo();
+              setRole("developer");
+              navigate("/developer/demo");
+            }}
+            className="inline-flex items-center gap-2 rounded-md border border-medGreen px-6 py-3 text-medGreen font-medium transition-colors duration-150 hover:bg-paleGreen/40"
+          >
+            <Play className="h-5 w-5" /> Developer Backtest Demo
+          </button>
+          <button
+            type="button"
+            onClick={() => {
+              enterDemo();
               setRole("investor");
               // AppLayout reads-and-clears this param and fires the
               // distribution notification banner.

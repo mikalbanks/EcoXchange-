@@ -1,5 +1,6 @@
 import type { ReactNode } from "react";
 import { formatUsd } from "../../utils/formatters.js";
+import { ENGINE_VERSION } from "../../config/engine.js";
 import {
   INTERCONNECTION_LABELS,
   OFFTAKE_LABELS,
@@ -18,8 +19,9 @@ function Page({ children, page, total }: { children: ReactNode; page: number; to
       style={{ fontFamily: "-apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif" }}
     >
       <div className="flex-1">{children}</div>
-      <div className="mt-6 flex items-center justify-between border-t border-paleGreen pt-3 font-mono text-[9px] uppercase tracking-[0.08em] text-textMuted">
+      <div className="mt-6 flex items-center justify-between gap-2 border-t border-paleGreen pt-3 font-mono text-[9px] uppercase tracking-[0.08em] text-textMuted">
         <span>EcoXchange · Non-Binding Letter of Intent</span>
+        <span>Powered by EcoXchange Verification Engine {ENGINE_VERSION}</span>
         <span>Page {page} of {total}</span>
       </div>
     </div>
@@ -114,6 +116,9 @@ export function LOIDocument({ data }: { data: LOIData }) {
           />
           <TermRow label="Expected Commissioning" value={project.commissioningDate} />
           <TermRow label="Inverter" value={project.inverterBrand} />
+          {data.reportId ? (
+            <TermRow label="Verified Backtest" value={data.reportId} />
+          ) : null}
         </dl>
 
         <SectionHeading n={3}>Proposed EcoXchange Services</SectionHeading>
@@ -182,6 +187,12 @@ export function LOIDocument({ data }: { data: LOIData }) {
           Template language pending securities counsel review. This document is a non-binding
           expression of mutual interest only; it is not an offer to sell or a solicitation of an
           offer to buy any security.
+        </p>
+        <p className="mt-2 font-mono text-[8.5px] leading-[1.7] text-textMuted">
+          Powered by EcoXchange Verification Engine {ENGINE_VERSION} — expected generation is
+          modeled with pvlib ModelChain against NASA POWER satellite irradiance and reconciled
+          across three independent sources (inverter, utility meter, satellite) before any
+          distribution is released.
         </p>
       </Page>
     </>

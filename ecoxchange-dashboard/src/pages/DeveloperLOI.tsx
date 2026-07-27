@@ -14,16 +14,30 @@ import {
 } from "../types/loi.js";
 import type { IntakeForm } from "../utils/onboarding-types.js";
 import { engineClient } from "../services/engineClient.js";
+import { loadBacktestResult } from "../utils/backtest-store.js";
 
 const INTAKE_KEY = "ecoxchange.onboarding.form";
 
 const today = () =>
   new Date().toLocaleDateString("en-US", { month: "long", day: "numeric", year: "numeric" });
 
+const BRAND_LABELS: Record<string, string> = {
+  solaredge: "SolarEdge",
+  enphase: "Enphase",
+  fronius: "Fronius",
+  sma: "SMA",
+  other: "Other",
+};
+
+function coordsLabel(lat: number, lng: number): string {
+  return `${Math.abs(lat).toFixed(2)}°${lat >= 0 ? "N" : "S"}, ${Math.abs(lng).toFixed(2)}°${lng >= 0 ? "E" : "W"}`;
+}
+
 /**
- * Prefill: the developer's own intake (sessionStorage, written by the
- * onboarding wizard) when present, else the Savannah demo project so the
- * builder always demos meaningfully.
+ * Prefill priority (Spec 1D): the developer's own intake (sessionStorage,
+ * written by the onboarding wizard) → the most recent Run Demo backtest
+ * result (with its real modeled annual MWh + run id) → the Savannah demo
+ * project so the builder always demos meaningfully.
  */
 function initialLoiData(): LOIData {
   let intake: Partial<IntakeForm> | null = null;
@@ -34,49 +48,102 @@ function initialLoiData(): LOIData {
     intake = null;
   }
   const hasIntake = Boolean(intake?.project_name);
+  const backtest = loadBacktestResult();
+
+  if (hasIntake) {
+    // A backtest run for the same project refines the rough estimate.
+    const matchingBacktest =
+      backtest && backtest.project_name === intake!.project_name
+        ? backtest
+        : null;
+    return {
+      developer: {
+        companyName: intake?.developer_company ?? "",
+        contactName: intake?.developer_name ?? "",
+        contactEmail: intake?.developer_email ?? "",
+        contactTitle: "",
+      },
+      project: {
+        name: intake!.project_name!,
+        location:
+          intake!.latitude != null && intake!.longitude != null
+            ? coordsLabel(intake!.latitude!, intake!.longitude!)
+            : "",
+        latitude: intake!.latitude ?? 0,
+        longitude: intake!.longitude ?? 0,
+        capacityKwDc: intake!.capacity_kw_dc ?? 0,
+        // Rough pre-backtest estimate unless a matching Run Demo backtest
+        // supplies the modeled number.
+        estimatedAnnualProductionMwh: matchingBacktest
+          ? Math.round(matchingBacktest.summary.annual_mwh)
+          : Math.round((intake!.capacity_kw_dc ?? 0) * 1.62),
+        offtakeType: intake!.offtake_type ?? "community_solar",
+        ppaRate: intake!.ppa_rate_per_kwh,
+        ppaEscalator: intake!.ppa_escalator,
+        interconnectionStatus: "pending",
+        commissioningDate: intake!.commissioning_date ?? "",
+        inverterBrand: intake!.inverter_brand ?? "other",
+      },
+      terms: { ...DEFAULT_TERMS, equityRaiseTarget: intake?.equity_raise_target ?? 2_500_000 },
+      generatedDate: today(),
+      reportId: matchingBacktest?.report_id,
+    };
+  }
+
+  if (backtest) {
+    const bi = backtest.intake;
+    return {
+      developer: {
+        companyName: bi.developer_company ?? "",
+        contactName: bi.developer_name,
+        contactEmail: bi.developer_email,
+        contactTitle: "",
+      },
+      project: {
+        name: backtest.project_name,
+        location: coordsLabel(bi.latitude, bi.longitude),
+        latitude: bi.latitude,
+        longitude: bi.longitude,
+        capacityKwDc: bi.capacity_kw_dc,
+        estimatedAnnualProductionMwh: Math.round(backtest.summary.annual_mwh),
+        offtakeType: bi.offtake_type ?? "community_solar",
+        ppaRate: bi.ppa_rate_per_kwh,
+        ppaEscalator: bi.ppa_escalator,
+        interconnectionStatus: "pending",
+        commissioningDate: bi.commissioning_date,
+        inverterBrand: BRAND_LABELS[bi.inverter_brand] ?? bi.inverter_brand,
+      },
+      terms: {
+        ...DEFAULT_TERMS,
+        equityRaiseTarget: bi.equity_raise_target ?? 2_500_000,
+      },
+      generatedDate: today(),
+      reportId: backtest.report_id,
+    };
+  }
 
   return {
     developer: {
-      companyName: intake?.developer_company ?? "",
-      contactName: intake?.developer_name ?? "",
-      contactEmail: intake?.developer_email ?? "",
+      companyName: "",
+      contactName: "",
+      contactEmail: "",
       contactTitle: "",
     },
-    project: hasIntake
-      ? {
-          name: intake!.project_name!,
-          location:
-            intake!.latitude != null && intake!.longitude != null
-              ? `${Math.abs(intake!.latitude!).toFixed(2)}°${intake!.latitude! >= 0 ? "N" : "S"}, ${Math.abs(intake!.longitude!).toFixed(2)}°${intake!.longitude! >= 0 ? "E" : "W"}`
-              : "",
-          latitude: intake!.latitude ?? 0,
-          longitude: intake!.longitude ?? 0,
-          capacityKwDc: intake!.capacity_kw_dc ?? 0,
-          // Rough pre-backtest estimate: the wizard doesn't persist a backtest
-          // result, so approximate from capacity at the Savannah-like CF.
-          estimatedAnnualProductionMwh: Math.round((intake!.capacity_kw_dc ?? 0) * 1.62),
-          offtakeType: intake!.offtake_type ?? "community_solar",
-          ppaRate: intake!.ppa_rate_per_kwh,
-          ppaEscalator: intake!.ppa_escalator,
-          interconnectionStatus: "pending",
-          commissioningDate: intake!.commissioning_date ?? "",
-          inverterBrand: intake!.inverter_brand ?? "other",
-        }
-      : {
-          name: demoSavannah.project.name,
-          location: demoSavannah.project.location,
-          latitude: demoSavannah.project.latitude,
-          longitude: demoSavannah.project.longitude,
-          capacityKwDc: demoSavannah.project.capacity_kw,
-          estimatedAnnualProductionMwh: Math.round(demoSavannah.summary.annual_production_mwh),
-          offtakeType: demoSavannah.project.offtake_type as LOIData["project"]["offtakeType"],
-          ppaRate: demoSavannah.project.ppa_rate_per_kwh,
-          ppaEscalator: 0.02,
-          interconnectionStatus: "approved",
-          commissioningDate: demoSavannah.project.commissioning_date,
-          inverterBrand: "SolarEdge",
-        },
-    terms: { ...DEFAULT_TERMS, equityRaiseTarget: intake?.equity_raise_target ?? 2_500_000 },
+    project: {
+      name: demoSavannah.project.name,
+      location: demoSavannah.project.location,
+      latitude: demoSavannah.project.latitude,
+      longitude: demoSavannah.project.longitude,
+      capacityKwDc: demoSavannah.project.capacity_kw,
+      estimatedAnnualProductionMwh: Math.round(demoSavannah.summary.annual_production_mwh),
+      offtakeType: demoSavannah.project.offtake_type as LOIData["project"]["offtakeType"],
+      ppaRate: demoSavannah.project.ppa_rate_per_kwh,
+      ppaEscalator: 0.02,
+      interconnectionStatus: "approved",
+      commissioningDate: demoSavannah.project.commissioning_date,
+      inverterBrand: "SolarEdge",
+    },
+    terms: { ...DEFAULT_TERMS },
     generatedDate: today(),
   };
 }
