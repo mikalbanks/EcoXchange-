@@ -20,6 +20,12 @@ export function Header() {
             Reference Library
           </Link>
           <Link
+            to="/projects"
+            className="hidden sm:inline text-sm text-paleGreen hover:text-white transition-colors duration-150"
+          >
+            Projects
+          </Link>
+          <Link
             to="/developer/demo"
             className="hidden sm:inline text-sm text-paleGreen hover:text-white transition-colors duration-150"
           >

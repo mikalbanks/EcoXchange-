@@ -41,6 +41,13 @@ const DemoBacktestResults = lazy(() =>
   })),
 );
 
+// Multi-project portfolio simulation (Spec 5) — lazy for the Leaflet chunk.
+const ProjectsOverview = lazy(() =>
+  import("./pages/ProjectsOverview.js").then((m) => ({
+    default: m.ProjectsOverview,
+  })),
+);
+
 // EIA catalog is lazy: its 2 MB plant dataset (dynamic import inside the data
 // loader) and page chunk only download when someone opens /investor/catalog.
 const EiaCatalog = lazy(() =>
@@ -199,6 +206,17 @@ export function App() {
           element={
             <HeaderLayout>
               <OnboardingReport />
+            </HeaderLayout>
+          }
+        />
+        {/* Multi-project portfolio simulation (Spec 5) */}
+        <Route
+          path="/projects"
+          element={
+            <HeaderLayout>
+              <Suspense fallback={null}>
+                <ProjectsOverview />
+              </Suspense>
             </HeaderLayout>
           }
         />
