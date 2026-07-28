@@ -762,41 +762,70 @@ export class MemStorage implements IStorage {
     mk("iqe-demo-2", "GS-DEMO-2002", "PJM", "Piedmont Queue Solar", "North Carolina", "Chatham", "55.00", "35.72", "-79.18");
     mk("iqe-demo-3", "GS-DEMO-3003", "SPP", "Plains Wind & Solar Hybrid", "Kansas", "Ford", "150.00", "37.75", "-99.64");
 
-    const baseAnalytics = (entryId: string, mwh: string, kwh: string): QueueEntryAnalytics => ({
-      id: `iqa-${entryId}`,
-      entryId,
-      backtestSummary: {
-        nsrdbAnnualKwh: Number(kwh),
-        performanceRatio: 0.2,
-        demo: true,
-      },
-      annualMwhModeled: mwh,
-      annualKwhNsrdb: kwh,
-      irrProxyPct: "8.2500",
-      moicProxy: "1.5775",
-      ppaScenario: {
-        source: "CAISO_SP15_SPOT_PROXY",
-        usdPerKwh: 0.06449,
-        benchmarkUsdPerMwh: 64.49,
-        annualGrossRevenueUsd: 2_000_000,
-      } as unknown as Record<string, unknown>,
-      waterfallSummary: {
-        DEBT_SERVICE: 400_000,
-        OPEX_FUND: 120_000,
-        RESERVES: 100_000,
-        PLATFORM_FEE: 21_300,
-        INVESTOR_YIELD: 1_250_000,
-      },
-      monthlyWaterfallSeries: [],
-      engineVersion: "queue-analytics-demo",
-      computeStatus: "READY",
-      errorMessage: null,
-      computedAt: new Date(),
-    });
+    // Production derives from capacity x a location-appropriate capacity
+    // factor rather than being hardcoded. The previous figures implied ~33.4%
+    // CF at every site, which fixed-tilt PV cannot reach anywhere in the US —
+    // real-world fixed-tilt runs 15-22% depending on latitude and climate.
+    const PPA_USD_PER_KWH = 0.06449;
+    const OPEX_USD_PER_MW_YEAR = 18_000;
+    const DEBT_SERVICE_RATE = 0.2; // share of gross revenue
+    const RESERVE_RATE = 0.05; // share of gross revenue
+    const PLATFORM_AUA_RATE = 0.0125; // annual AUA fee on gross revenue
 
-    this.queueEntryAnalytics.set("iqe-demo-1", baseAnalytics("iqe-demo-1", "142000.000", "142000000"));
-    this.queueEntryAnalytics.set("iqe-demo-2", baseAnalytics("iqe-demo-2", "161000.000", "161000000"));
-    this.queueEntryAnalytics.set("iqe-demo-3", baseAnalytics("iqe-demo-3", "438000.000", "438000000"));
+    const baseAnalytics = (
+      entryId: string,
+      capacityMw: number,
+      capacityFactor: number,
+    ): QueueEntryAnalytics => {
+      const annualKwh = Math.round(capacityMw * 1000 * 8760 * capacityFactor);
+      const annualGrossRevenueUsd = Math.round(annualKwh * PPA_USD_PER_KWH);
+      const debtService = Math.round(annualGrossRevenueUsd * DEBT_SERVICE_RATE);
+      const opexFund = Math.round(capacityMw * OPEX_USD_PER_MW_YEAR);
+      const reserves = Math.round(annualGrossRevenueUsd * RESERVE_RATE);
+      const platformFee = Math.round(annualGrossRevenueUsd * PLATFORM_AUA_RATE);
+      const investorYield =
+        annualGrossRevenueUsd - debtService - opexFund - reserves - platformFee;
+
+      return {
+        id: `iqa-${entryId}`,
+        entryId,
+        backtestSummary: {
+          nsrdbAnnualKwh: annualKwh,
+          capacityFactor,
+          performanceRatio: 0.82,
+          demo: true,
+        },
+        annualMwhModeled: (annualKwh / 1000).toFixed(3),
+        annualKwhNsrdb: String(annualKwh),
+        // Annual cash yield over capex, not an IRR — see marketplace-listings.
+        irrProxyPct: "8.2500",
+        moicProxy: "1.5775",
+        ppaScenario: {
+          source: "CAISO_SP15_SPOT_PROXY",
+          usdPerKwh: PPA_USD_PER_KWH,
+          benchmarkUsdPerMwh: PPA_USD_PER_KWH * 1000,
+          annualGrossRevenueUsd,
+        } as unknown as Record<string, unknown>,
+        // Tiers sum to gross revenue exactly; the investor tier is the residual.
+        waterfallSummary: {
+          DEBT_SERVICE: debtService,
+          OPEX_FUND: opexFund,
+          RESERVES: reserves,
+          PLATFORM_FEE: platformFee,
+          INVESTOR_YIELD: investorYield,
+        },
+        monthlyWaterfallSeries: [],
+        engineVersion: "queue-analytics-demo",
+        computeStatus: "READY",
+        errorMessage: null,
+        computedAt: new Date(),
+      };
+    };
+
+    // Capacity factors reflect fixed-tilt PV at each site's latitude/climate.
+    this.queueEntryAnalytics.set("iqe-demo-1", baseAnalytics("iqe-demo-1", 48.5, 0.24)); // Kern, CA — high desert irradiance
+    this.queueEntryAnalytics.set("iqe-demo-2", baseAnalytics("iqe-demo-2", 55.0, 0.18)); // Chatham, NC — humid subtropical
+    this.queueEntryAnalytics.set("iqe-demo-3", baseAnalytics("iqe-demo-3", 150.0, 0.19)); // Ford, KS — high plains
   }
 
   /**
