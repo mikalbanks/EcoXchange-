@@ -966,6 +966,9 @@ const PIPELINE_STAGE_META: Record<string, { label: string; icon: typeof Satellit
   utilityShadow: { label: "Utility Shadow", icon: PlugZap },
   sgtHandshake: { label: "SGT Handshake", icon: Workflow },
   waterfallEngine: { label: "Waterfall Engine", icon: Landmark },
+  // Internal ops console only, not investor-facing. Named after the legacy
+  // mock service (server/services/securitize-bridge.ts); both keep the old
+  // name until the Polymath Capital Platform integration replaces them.
   securitizeBridge: { label: "Securitize Bridge", icon: Coins },
 };
 

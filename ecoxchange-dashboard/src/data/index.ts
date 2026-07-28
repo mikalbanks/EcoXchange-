@@ -1,4 +1,5 @@
 import demoPortfolio from "./demo-portfolio.json";
+import { DEMO_OFFERING } from "./demo-offering.js";
 import demoSavannah from "./demo-savannah.json";
 import demoSavannahFlagged from "./demo-savannah-flagged.json";
 import type {
@@ -22,10 +23,11 @@ export { liveMode };
 
 // Investor placeholder constants — Phase 3 reads real production data from
 // Supabase, but the investor-account side (capital deployed, share pct) is
-// still mocked until that layer is built. Same values in demo mode for parity.
-const INVESTOR_SHARE_PCT = 2.0;
+// still mocked until that layer is built. Same values in demo mode for parity,
+// both derived from the canonical offering so live and demo agree.
+const INVESTOR_SHARE_PCT = DEMO_OFFERING.demo_investor.ownership_pct;
 const INVESTOR_SHARE = INVESTOR_SHARE_PCT / 100;
-const INVESTOR_TOTAL_INVESTED = 50_000;
+const INVESTOR_TOTAL_INVESTED = DEMO_OFFERING.demo_investor.position_value_usd;
 
 // ─────────────────────────────────────────────────────────────────────────
 // Public API
@@ -153,7 +155,7 @@ async function loadPortfolioLive(): Promise<Portfolio> {
       latest_verification: latest?.status ?? "pending",
       latest_period: latest?.period_start ?? "",
       ytd_production_mwh: round1(totalMwh),
-      monthly_yield_usd: Math.round(projectMonthly),
+      monthly_yield_usd: round2(projectMonthly),
       investor_share_pct: INVESTOR_SHARE_PCT,
     };
   });
@@ -161,8 +163,8 @@ async function loadPortfolioLive(): Promise<Portfolio> {
   return {
     portfolio: {
       total_invested: INVESTOR_TOTAL_INVESTED,
-      monthly_yield_usd: Math.round(monthlyYield),
-      lifetime_yield_usd: Math.round(lifetimeYield),
+      monthly_yield_usd: round2(monthlyYield),
+      lifetime_yield_usd: round2(lifetimeYield),
       active_projects: projectCards.length,
     },
     projects: projectCards,
@@ -263,6 +265,10 @@ function groupBy<T, K extends keyof T>(arr: T[], key: K): Map<T[K], T[]> {
 
 function round1(n: number): number {
   return Math.round(n * 10) / 10;
+}
+
+function round2(n: number): number {
+  return Math.round(n * 100) / 100;
 }
 
 function locationFromCoords(lat: number, lon: number): string {

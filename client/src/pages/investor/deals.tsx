@@ -587,7 +587,7 @@ export default function InvestorDeals() {
                           </span>
                         )}
                         {q.analytics?.irrProxyPct && (
-                          <span>IRR proxy: {Number(q.analytics.irrProxyPct).toFixed(1)}%</span>
+                          <span>Est. cash yield: {Number(q.analytics.irrProxyPct).toFixed(1)}%</span>
                         )}
                       </div>
                     </CardContent>

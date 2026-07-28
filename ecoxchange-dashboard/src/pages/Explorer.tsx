@@ -9,7 +9,8 @@ import { ENGINE_VERSION } from "../config/engine.js";
 
 /**
  * Smart Contract Explorer (Spec 08): a read-only, purpose-built view of
- * EcoXchange's ERC-3643 contract system on Base. Not a block explorer — a
+ * EcoXchange's ST-20 contract system (demo contracts still on Base Sepolia —
+ * see config/contracts.ts). Not a block explorer — a
  * transparency tool. No wallet connection required or requested.
  */
 export function Explorer() {

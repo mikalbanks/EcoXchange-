@@ -175,6 +175,11 @@ async function buildProjectListing(project: Project): Promise<MarketplaceListing
   });
   const investorYield = wf.annualInvestorYieldUsd;
   const moic = capex.value > 0 ? (investorYield * 20) / capex.value : 0; // 20yr horizon proxy
+  // NOT an IRR despite the field name: this is annual investor yield over
+  // capex, i.e. an unlevered cash-on-cash yield with no time value, no ITC, no
+  // PPA escalator, and no residual value. The UI labels it "Est. cash yield"
+  // accordingly — do not present it as an IRR, and do not compare it to the
+  // 10-14% target net IRR, which is a different measure entirely.
   const irrPctValue = capex.value > 0 ? (investorYield / capex.value) * 100 : 0;
 
   return {

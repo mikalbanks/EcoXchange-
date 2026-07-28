@@ -16,19 +16,20 @@ import { liveMode } from "../data/index.js";
 
 export function ReferenceLibrary() {
   const [data, setData] = useState<Lib | null>(null);
-  const [error, setError] = useState<string | null>(null);
+  const [unavailable, setUnavailable] = useState(false);
   const [capacityFilter, setCapacityFilter] = useState<string>("all");
 
   useEffect(() => {
+    // Without a live backend there is no reference cohort to show. Say that
+    // plainly — never surface backend configuration (env var names, Supabase
+    // errors) to a visitor; this page is public.
     if (!liveMode) {
-      setError(
-        "Reference Library requires VITE_SUPABASE_URL and VITE_SUPABASE_ANON_KEY to be set so the dashboard can read from Supabase.",
-      );
+      setUnavailable(true);
       return;
     }
     loadReferenceLibrary()
       .then((r) => setData(r))
-      .catch((e) => setError((e as Error).message));
+      .catch(() => setUnavailable(true));
   }, []);
 
   const filtered = useMemo(() => {
@@ -42,14 +43,16 @@ export function ReferenceLibrary() {
     });
   }, [data, capacityFilter]);
 
-  if (error) {
+  if (unavailable) {
     return (
       <div className="space-y-4">
         <h1 className="font-heading text-3xl text-darkBg">Reference Library</h1>
+        <p className="max-w-2xl text-sm text-textMuted">
+          The reference cohort is drawn from live operating plants and is not
+          included in this public demo. The engine benchmark below is the
+          published validation result for the same methodology.
+        </p>
         <EngineBenchmark />
-        <div className="rounded-md bg-amber-50 border border-flagAmber/40 px-4 py-3 text-flagAmber text-sm">
-          {error}
-        </div>
       </div>
     );
   }

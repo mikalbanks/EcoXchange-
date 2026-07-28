@@ -13,12 +13,16 @@ export function Header() {
           <span className="font-heading text-xl">EcoXchange</span>
         </Link>
         <div className="flex items-center gap-3">
-          <Link
-            to="/reference"
-            className="hidden sm:inline text-sm text-paleGreen hover:text-white transition-colors duration-150"
-          >
-            Reference Library
-          </Link>
+          {/* The reference cohort needs a live backend — no point advertising
+              it in the public demo, where the page has nothing to show. */}
+          {liveMode ? (
+            <Link
+              to="/reference"
+              className="hidden sm:inline text-sm text-paleGreen hover:text-white transition-colors duration-150"
+            >
+              Reference Library
+            </Link>
+          ) : null}
           <Link
             to="/projects"
             className="hidden sm:inline text-sm text-paleGreen hover:text-white transition-colors duration-150"

@@ -1,30 +1,35 @@
 import { describe, expect, it } from "vitest";
+import { DEMO_OFFERING } from "../data/demo-offering.js";
 import { computeAnnualIrr, computeProForma } from "./proforma.js";
 
 describe("computeProForma", () => {
-  it("matches the canonical demo dataset at $50k / 20y", () => {
+  it("matches the canonical demo position at $10k / 20y", () => {
     const out = computeProForma({
-      investmentUsd: 50_000,
+      investmentUsd: 10_000,
       holdingPeriodYears: 20,
       includeItc: true,
     });
-    // Portfolio canon: 2.0% ownership pays $354.00/month, 8.5% cash yield.
-    expect(out.ownershipPct).toBe(2);
-    expect(out.monthlyDistribution).toBeCloseTo(354, 2);
-    expect(out.annualCashYieldPct).toBeCloseTo(8.5, 1);
-    expect(out.tokenCount).toBe(500); // $100/token
+    // Canonical demo investor: 100 ESN = $10,000 = 0.4% ownership, paying
+    // $58.33/month at the 7.0% target cash yield (data/demo-offering.ts).
+    const d = DEMO_OFFERING.demo_investor;
+    expect(out.ownershipPct).toBeCloseTo(d.ownership_pct, 4);
+    expect(out.monthlyDistribution).toBeCloseTo(d.monthly_distribution_usd, 2);
+    expect(out.annualCashYieldPct).toBeCloseTo(d.target_annual_yield_pct, 1);
+    expect(out.tokenCount).toBe(d.tokens_held); // $100/token
     expect(out.series).toHaveLength(20);
   });
 
   it("scales linearly with investment", () => {
-    const at10k = computeProForma({
-      investmentUsd: 10_000,
+    const at50k = computeProForma({
+      investmentUsd: 50_000,
       holdingPeriodYears: 10,
       includeItc: false,
     });
-    expect(at10k.ownershipPct).toBeCloseTo(0.4, 5);
-    expect(at10k.monthlyDistribution).toBeCloseTo(70.8, 1);
-    expect(at10k.tokenCount).toBe(100); // canonical 100 ESN at $10k
+    expect(at50k.ownershipPct).toBeCloseTo(2, 5);
+    expect(at50k.monthlyDistribution).toBeCloseTo(291.67, 1);
+    expect(at50k.tokenCount).toBe(500); // $100/token
+    // Cash yield is scale-invariant and stays inside the advertised 6-8% band.
+    expect(at50k.annualCashYieldPct).toBeCloseTo(7, 1);
   });
 
   it("ITC toggle raises IRR materially", () => {

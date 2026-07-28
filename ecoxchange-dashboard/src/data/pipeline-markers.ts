@@ -2,6 +2,7 @@
 // spec §1.2). One active project (Savannah, verified) plus target-state
 // programs identified from DSIRE program analysis. Yields are modeled
 // estimates and must carry disclosure marks wherever rendered.
+import { DEMO_OFFERING } from "./demo-offering.js";
 
 export type MarkerStatus = "active" | "pipeline" | "target_market";
 
@@ -28,10 +29,15 @@ export const PIPELINE_MARKERS: ProjectMarker[] = [
     capacityKw: 5000,
     status: "active",
     program: "GA Community Solar",
-    estimatedYield: "~8.5%",
+    // Target cash yield from the canonical offering — the same 7.0% the
+    // Portfolio, distributions, and pro-forma surfaces pay out on.
+    estimatedYield: `~${DEMO_OFFERING.target_annual_yield_pct.toFixed(1)}%`,
     verificationStatus: "VERIFIED",
     projectPath: "/investor/project/demo-savannah-5mw",
   },
+  // Pipeline targets in high-incentive state programs. These sit above the
+  // 6-8% platform target band, so each is labeled program-dependent — the
+  // premium is the state incentive, not the underlying project economics.
   {
     id: "ny-pipeline-1",
     name: "New York VDER Target",
@@ -39,7 +45,7 @@ export const PIPELINE_MARKERS: ProjectMarker[] = [
     longitude: -73.75,
     capacityKw: 3000,
     status: "pipeline",
-    program: "NY VDER (~9.8%)",
+    program: "NY VDER — est. ~9.8%, program-dependent",
   },
   {
     id: "il-pipeline-1",
@@ -48,7 +54,7 @@ export const PIPELINE_MARKERS: ProjectMarker[] = [
     longitude: -87.63,
     capacityKw: 4000,
     status: "pipeline",
-    program: "IL ABP (~9.7%)",
+    program: "IL ABP — est. ~9.7%, program-dependent",
   },
   {
     id: "ma-pipeline-1",
@@ -57,7 +63,7 @@ export const PIPELINE_MARKERS: ProjectMarker[] = [
     longitude: -71.06,
     capacityKw: 2000,
     status: "pipeline",
-    program: "MA SMART (~9.0%)",
+    program: "MA SMART — est. ~9.0%, program-dependent",
   },
   {
     id: "az-target",

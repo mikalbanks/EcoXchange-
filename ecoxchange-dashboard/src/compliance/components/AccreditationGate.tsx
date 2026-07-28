@@ -4,7 +4,7 @@ import { useCompliance } from "../ComplianceProvider.js";
 
 // Self-certification gate state lives in sessionStorage — it expires when the
 // tab closes and is never shared across sessions. This is NOT legal
-// accreditation verification (that's Parallel Markets / Verify Investor); it
+// accreditation verification (that's North Capital / Sumsub via Polymath); it
 // is the standard Reg D 506(c) pre-screen shown before offering content.
 const GATE_KEY = "ecoxchange_accred_self_cert";
 

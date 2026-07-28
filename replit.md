@@ -30,7 +30,7 @@ The application utilizes an Express.js backend and a React frontend (Vite with w
 - **Real-Data Backtest Mode**: Backtest engine supports `meterDataSource: "stored"` to load real production data from energy_production table (filtered to backtest window) instead of synthetic PVDAQ. Route `/api/public/backtest/run` accepts `projectId` + `meterDataSource` params. Auto-detects stored production data and defaults to stored mode when available. Both proj1 (12MW) and proj3 (25MW) are seeded with 8760 hourly SCADA production records, revenue records, and ACTIVE/HIGH SCADA data sources. Frontend defaults `useRealData` toggle to true and auto-sets per project. Report copy for SYNTHETIC_FALLBACK satellite source is professional and caveat-minimized when real meter data is present. Endpoint `/api/public/backtest/has-stored-data?projectId=X` checks stored data availability.
 - **SGT Handshake Real-Meter Integration**: SGT Handshake checks for active SCADA data sources with fresh data (90-day freshness threshold). Uses real meter readings when available, sets `qualityFlag: "METERED"` for real data vs `"SYNTHETIC_FALLBACK"` for simulated.
 - **AI Financial Prediction**: Utilizes OpenAI (gpt-5-mini) for ROI analysis, providing structured JSON output including IRR, payback period, returns, risk factors, and recommendations for projects.
-- **SGT Waterfall Engine**: Processes 15-minute interval meter data through an institutional revenue waterfall to generate double-entry ledger postings and trigger Securitize yield distributions.
+- **SGT Waterfall Engine**: Processes 15-minute interval meter data through an institutional revenue waterfall to generate double-entry ledger postings and trigger yield distributions. (Double-entry here is the accounting sense — the verification engine is three-source.)
 - **SGT Backtest Report**: A formal SGT validation engine that backtests Solcast Sky Oracle data against NREL PVDAQ, generating an investor-grade report with statistical metrics and interactive charts. Includes one-click PDF export (auto-download via html2canvas + jsPDF) with white-background rendering, multi-page support, and proper chart capture.
 
 ### System Design Choices
@@ -41,10 +41,10 @@ The architecture is compliance-first, designed for future regulatory requirement
 - **Persona**: Used for identity verification (KYC/AML).
 - **Solcast Sky Oracle**: Satellite-derived telemetry service for 'Estimated Actuals' used in SGT verification.
 - **Broker-Dealer Partnership**: Planned integration for regulatory compliance in securities offerings.
-- **Transfer Agent**: Integration with a transfer agent (e.g., Securitize, KoreConX) for managing security token ownership.
+- **Transfer Agent**: Integration with the Polymath Capital Platform for managing security token ownership.
 - **Qualified Custodian**: Planned integration for secure holding of digital assets.
 - **SCADA Systems**: Integration with various SCADA and project monitoring systems for revenue ingestion.
-- **Securitize Bridge (Mock)**: Mock integration with Securitize RWA Protocol for institutional yield distribution.
+- **Securitize Bridge (Mock)**: Legacy mock integration, retained under its original name at `server/services/securitize-bridge.ts` pending migration to the Polymath Capital Platform. Not user-facing.
 - **OpenAI**: Used for AI Financial Predictions.
 
 ## Agent tooling

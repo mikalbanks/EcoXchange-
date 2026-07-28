@@ -20,6 +20,7 @@ import {
 } from "lucide-react";
 import { useAuth } from "../../context/AuthContext.js";
 import { useDemo } from "../../context/DemoContext.js";
+import { liveMode } from "../../data/index.js";
 
 interface NavItem {
   to: string;
@@ -27,6 +28,8 @@ interface NavItem {
   icon: LucideIcon;
   end?: boolean;
   disabled?: boolean;
+  /** Hidden unless a live backend is configured (nothing to show without it). */
+  liveOnly?: boolean;
 }
 
 const INVESTOR_NAV: NavItem[] = [
@@ -47,14 +50,16 @@ const INVESTOR_NAV: NavItem[] = [
 const DEVELOPER_NAV: NavItem[] = [
   { to: "/onboard", label: "Add Project", icon: PlusCircle },
   { to: "/developer/loi", label: "Letter of Intent", icon: FileText },
-  { to: "/reference", label: "Reference Library", icon: BookOpen },
+  { to: "/reference", label: "Reference Library", icon: BookOpen, liveOnly: true },
   { to: "/developer/settings", label: "Settings", icon: SettingsIcon, disabled: true },
 ];
 
 export function Sidebar({ onNavigate }: { onNavigate?: () => void }) {
   const { role } = useAuth();
   const { demoMode } = useDemo();
-  const items = role === "developer" ? DEVELOPER_NAV : INVESTOR_NAV;
+  const items = (role === "developer" ? DEVELOPER_NAV : INVESTOR_NAV).filter(
+    (item) => !item.liveOnly || liveMode,
+  );
 
   return (
     <div className="flex h-full flex-col bg-darkBg text-white">

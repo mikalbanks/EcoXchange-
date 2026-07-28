@@ -1,15 +1,16 @@
 import { Cell, Pie, PieChart, ResponsiveContainer, Sector, Tooltip } from "recharts";
 import type { SectorProps } from "recharts";
 import { activeNetwork, shortAddress } from "../../config/contracts.js";
+import { DEMO_OFFERING } from "../../data/demo-offering.js";
 import { DEMO_HOLDERS } from "../../data/demo-wallets.js";
 import { formatUsd } from "../../utils/formatters.js";
 
-// Canonical token economics: 5,000 ESN total supply at $100/token — the demo
-// user's 100 ESN is exactly the 2.0% (200 bps) share used across Portfolio,
-// distributions, and the USDC simulation. Cap table derives straight from
-// DEMO_HOLDERS so there is a single source of truth.
-export const TOKEN_TOTAL_SUPPLY = 5_000;
-export const TOKEN_PRICE_USD = 100;
+// Canonical token economics (data/demo-offering.ts): 25,000 ESN total supply at
+// $100/token — the demo user's 100 ESN is exactly the 0.4% (40 bps) share used
+// across Portfolio, distributions, and the USDC simulation. Cap table derives
+// straight from DEMO_HOLDERS so there is a single source of truth.
+export const TOKEN_TOTAL_SUPPLY = DEMO_OFFERING.total_tokens;
+export const TOKEN_PRICE_USD = DEMO_OFFERING.token_price_usd;
 
 interface HolderSlice {
   label: string;

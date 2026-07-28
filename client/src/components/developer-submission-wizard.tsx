@@ -309,7 +309,7 @@ export function DeveloperSubmissionWizard() {
             <h3 className="font-serif text-2xl font-semibold">Equity raise & contact</h3>
             <p className="text-sm text-muted-foreground">
               EcoXchange currently underwrites equity raises between $1M and $5M per project. SPV pays 3% origination
-              + $15,000 setup at close, then 1.25% AUA / year billed monthly.
+              + $15,000 setup at close, then 0.5% AUA / year billed monthly.
             </p>
             <div>
               <label className="mb-2 block font-mono text-[0.65rem] uppercase tracking-wider text-muted-foreground">

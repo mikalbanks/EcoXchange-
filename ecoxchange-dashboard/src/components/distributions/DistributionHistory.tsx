@@ -160,7 +160,7 @@ export function DistributionHistory({
           <DataSourceAttribution
             sources={[
               { name: "EcoXchange Distribution Ledger", type: "model" },
-              { name: "Base Network", type: "public_data" },
+              { name: "Polymesh Network", type: "public_data" },
             ]}
             isEstimate
           />

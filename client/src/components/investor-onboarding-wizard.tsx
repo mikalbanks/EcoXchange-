@@ -57,7 +57,7 @@ export function InvestorOnboardingWizard() {
           <h3 className="font-serif text-2xl font-semibold">You're on the early-investor list.</h3>
           <p className="mx-auto mt-3 max-w-md text-muted-foreground">
             We'll email you the moment a live offering matches your accreditation. Real KYC, wallet creation, and
-            USDC funding happen at offering launch through Persona, Privy, and Circle.
+            USDC funding happen at offering launch through Persona, Polymath, and Circle.
           </p>
         </CardContent>
       </Card>
@@ -118,7 +118,7 @@ export function InvestorOnboardingWizard() {
           <div className="space-y-4">
             <h3 className="font-serif text-2xl font-semibold">Verify accredited investor status</h3>
             <p className="text-sm text-muted-foreground">
-              Select the basis on which you qualify. At launch, Parallel Markets or VerifyInvestor will collect
+              Select the basis on which you qualify. At launch, North Capital or Sumsub (via Polymath) will collect
               supporting documents.
             </p>
             <div className="space-y-2">
@@ -201,7 +201,7 @@ export function InvestorOnboardingWizard() {
           <div className="space-y-4">
             <h3 className="font-serif text-2xl font-semibold">Your secure wallet</h3>
             <p className="text-sm text-muted-foreground">
-              Privy creates an embedded wallet at launch. You sign in with email or phone — no seed phrase, no
+              Polymath provisions a Web3Auth MPC wallet at launch. You sign in with email or phone — no seed phrase, no
               extension, no crypto experience required.
             </p>
             <div className="rounded-md border border-border bg-muted/30 p-5">
@@ -210,7 +210,7 @@ export function InvestorOnboardingWizard() {
               </p>
               <p className="font-mono text-sm break-all">0x9F8a3e21Cf42b8d17b9c2A4D6e89dC7f0a31b7C2D</p>
               <p className="mt-4 text-xs text-muted-foreground">
-                Distributions arrive here monthly in USDC on Base. You can withdraw to a bank at any time.
+                Distributions arrive here monthly in USDC on Polymesh. You can withdraw to a bank at any time.
               </p>
             </div>
           </div>
@@ -229,7 +229,7 @@ export function InvestorOnboardingWizard() {
               <p><strong className="text-foreground">Minimum ticket:</strong> $10,000.</p>
               <p><strong className="text-foreground">Target cash yield:</strong> 6–8% per year, paid monthly in USDC. Target net IRR 10–14% over 20–25 year asset life.</p>
               <p><strong className="text-foreground">Tax treatment:</strong> K-1 pass-through.</p>
-              <p><strong className="text-foreground">Fees (all paid by the SPV):</strong> 3% origination at close, $15,000 setup at close, 1.25% AUA servicing per year.</p>
+              <p><strong className="text-foreground">Fees (all paid by the SPV):</strong> 3% origination at close, $15,000 setup at close, 0.5% AUA servicing per year.</p>
               <p>Subject to securities counsel review and project-specific offering documents.</p>
             </div>
             <label className="flex cursor-pointer items-start gap-3 rounded-md border border-border p-4 hover:bg-muted/30">

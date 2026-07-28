@@ -124,7 +124,7 @@ Reg D 506(c) allows general solicitation — offerings can be publicly marketed.
 | Function | Phase 1 Strategy | Long-Term Path |
 |----------|-----------------|----------------|
 | Broker-Dealer | Partner with existing BD | Evaluate own BD registration |
-| Transfer Agent | Integrate (Securitize, KoreConX, etc.) | Evaluate own TA registration |
+| Transfer Agent | Polymath Capital Platform | Evaluate own TA registration |
 | ATS | Deferred — no secondary trading | ATS registration or partnership |
 | Custodian | Integrate with qualified custodian | Maintain integration model |
 | KYC/AML | Technology integration (Persona, Plaid) | Enhance with ongoing monitoring |

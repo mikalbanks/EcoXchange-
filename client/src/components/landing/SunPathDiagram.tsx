@@ -96,7 +96,7 @@ export function SunPathDiagram() {
           fig. I · diurnal sun-path, lat. 35°00′ N
         </text>
       </svg>
-      <div className="diagram-caption label">OBS. 04 · 99.74% confidence · n = 8,760 hrs</div>
+      <div className="diagram-caption label">OBS. 04 · ±9.8% mean deviation · n = 3,882 plants</div>
     </figure>
   );
 }

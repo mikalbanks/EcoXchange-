@@ -4,8 +4,12 @@ import "./landing.css";
 
 const STATS = [
   {
-    num: "99.74%",
-    label: "Verification confidence on satellite-reconciled production data",
+    // The measured benchmark result, not a "confidence" figure. Matches the
+    // demo's /benchmark page exactly: publication-cohort mean absolute
+    // deviation, with its own n — the full 5,065-plant fleet is ±13.0%.
+    num: "±9.8%",
+    label: "Mean deviation vs. 3,882 of 5,065 EIA-923 solar plants (2024)",
+    href: "https://demo.ecoxchange.net/benchmark",
   },
   {
     num: "$1–5M",
@@ -16,7 +20,7 @@ const STATS = [
     label: "Reg D exemption — verified accredited investors only",
   },
   {
-    num: "3% + $15K + 1.25%",
+    num: "3% + $15K + 0.5%",
     label: "Origination + setup + AUA servicing — all paid by SPV, not investors",
   },
 ] as const;
@@ -49,13 +53,13 @@ const METHOD_CARDS = [
   {
     num: "02",
     title: "Deterministic",
-    body: "A double-entry reconciliation core. ML is restricted to post-calculation anomaly flagging only.",
+    body: "A three-source reconciliation core. ML is restricted to post-calculation anomaly flagging only.",
     highlight: false,
   },
   {
     num: "03",
     title: "Auditable",
-    body: "Every yield figure traces to utility meter data and satellite irradiance. Full audit trail preserved.",
+    body: "Every yield figure traces to inverter telemetry, utility meter data, and satellite irradiance. Full audit trail preserved.",
     highlight: true,
   },
   {
@@ -77,7 +81,7 @@ const INVESTOR_STATS = [
   },
   {
     num: "Physics",
-    text: "Distributions derive from satellite irradiance × utility meter reconciliation, not developer self-reports",
+    text: "Distributions derive from inverter × utility meter × satellite irradiance reconciliation, not developer self-reports",
   },
   {
     num: "Handled",
@@ -88,7 +92,7 @@ const INVESTOR_STATS = [
 const FEE_ROWS = [
   { label: "Origination fee (one-time, at close)", eco: "3% of equity raised", other: "4–8% placement + 1–3% warrants" },
   { label: "Setup fee (one-time, at close)", eco: "$15,000 fixed", other: "$80K–$250K legal + admin" },
-  { label: "Servicing fee (recurring)", eco: "1.25% of AUA / year", other: "$10K–$25K / year per project" },
+  { label: "Servicing fee (recurring)", eco: "0.5% of AUA / year", other: "$10K–$25K / year per project" },
   { label: "Investor load charge", eco: "None", other: "0–5% upfront" },
   { label: "Production verification", eco: "Production-based, included", other: "$5K–$15K / year third-party" },
   { label: "Distribution cadence", eco: "Monthly, USDC, auto", other: "Quarterly, manual, 30–90d" },
@@ -155,7 +159,15 @@ export default function LandingPage() {
           {STATS.map((s) => (
             <div key={s.num} className="stat-item">
               <div className="stat-num">{s.num}</div>
-              <div className="stat-label">{s.label}</div>
+              <div className="stat-label">
+                {"href" in s && s.href ? (
+                  <a href={s.href} target="_blank" rel="noreferrer">
+                    {s.label} →
+                  </a>
+                ) : (
+                  s.label
+                )}
+              </div>
             </div>
           ))}
         </div>
@@ -190,9 +202,9 @@ export default function LandingPage() {
             <h2 className="section-title">Hardware-Free. Deterministic. Auditable.</h2>
           </div>
           <p className="method-intro">
-            A double-entry reconciliation engine that cross-references satellite irradiance against utility
-            net-meter data — producing a securities-grade, per-project yield figure with no on-site hardware
-            required. Marginal verification cost approaches zero.
+            A three-source reconciliation engine that cross-references inverter telemetry, utility net-meter
+            readings, and satellite irradiance — producing a securities-grade, per-project yield figure with
+            no on-site hardware required. Marginal verification cost approaches zero.
           </p>
           <div className="method-cards">
             {METHOD_CARDS.map((card) => (
@@ -260,7 +272,7 @@ export default function LandingPage() {
                 $80K+ in soft costs typical of a traditional Reg D 506(c) raise.
               </p>
               <p>
-                After close, a <strong>1.25% annual servicing fee on assets under administration</strong> is billed monthly
+                After close, a <strong>0.5% annual servicing fee on assets under administration</strong> is billed monthly
                 to the SPV — covering production verification, smart-contract distribution infrastructure, investor
                 reporting, and K-1 coordination throughout the life of the offering.
               </p>

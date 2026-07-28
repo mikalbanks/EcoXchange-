@@ -17,7 +17,7 @@ export function Settings() {
         <Field label="Name" value={user.name} />
         <Field label="Email" value={user.email} />
         <p className="text-xs text-textMuted">
-          Profile editing and authentication arrive with the Privy integration
+          Profile editing and authentication arrive with the Polymath integration
           (pending securities counsel).
         </p>
       </section>

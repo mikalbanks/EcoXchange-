@@ -26,7 +26,7 @@ const sources = [
 const flow = [
   { day: "Day 1", text: "Pull production data from inverter API, utility meter, and satellite irradiance." },
   { day: "Day 1", text: "Reconciliation runs. Three numbers compared within configurable tolerance." },
-  { day: "Day 2", text: "If verified, Chainlink Functions writes the result on-chain to Base." },
+  { day: "Day 2", text: "If verified, the verification engine writes the result on-chain to Polymesh via the Polymath Capital Platform." },
   { day: "Day 3", text: "Distribution contract calculates pro-rata USDC per token holder. Transfers execute simultaneously." },
   { day: "Day 3–4", text: "Investor dashboards update. Push notifications sent. If flagged, the run is held for review before any payment." },
 ];

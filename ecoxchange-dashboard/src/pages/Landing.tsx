@@ -7,7 +7,7 @@ import { DemoModeBanner } from "../compliance/components/DemoModeBanner.js";
 import { RegDBanner } from "../compliance/components/RegDBanner.js";
 import { DisclaimerFooter } from "../compliance/components/DisclaimerFooter.js";
 
-// Lightweight role-select entry point. Real auth (Privy) replaces this after
+// Lightweight role-select entry point. Real auth (Polymath) replaces this after
 // securities counsel; for now it just sets the mock role and routes in.
 export function Landing() {
   const navigate = useNavigate();

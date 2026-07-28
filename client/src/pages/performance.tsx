@@ -32,7 +32,9 @@ interface PublicSgtProject {
   state: string;
   county: string;
   technology: string;
-  capacityMW: number;
+  // Serialized from a Postgres numeric column, so the API sends a string
+  // ("12.00"), not a number. Coerce before any arithmetic or formatting.
+  capacityMW: string | number;
 }
 
 interface PublicSgtProjectsResponse {
@@ -84,7 +86,7 @@ export default function PerformancePage() {
               Project Performance
             </h1>
             <p className="text-lg text-muted-foreground max-w-2xl mx-auto" data-testid="text-performance-subtitle">
-              Real-time SCADA telemetry powered by the SGT Pipeline — Solcast Sky Oracle satellite data, Utility Shadow net metering, and double-entry waterfall settlement.
+              Real-time production reconciled across three independent sources — inverter telemetry, utility net-meter readings, and satellite irradiance — then settled through the SGT waterfall.
             </p>
           </div>
         </div>
@@ -102,7 +104,7 @@ export default function PerformancePage() {
                   <CardTitle className="text-xl" data-testid="text-featured-project-name">{projectInfo?.projectName || "Institutional Project"}</CardTitle>
                   <div className="flex items-center gap-3 text-sm text-muted-foreground mt-1">
                     <span className="flex items-center gap-1"><MapPin className="h-3.5 w-3.5" /> {projectInfo ? `${projectInfo.state}, ${projectInfo.county}` : "California"}</span>
-                    <span className="flex items-center gap-1"><Zap className="h-3.5 w-3.5" /> {projectInfo ? `${projectInfo.capacityMW.toFixed(2)} MW` : "N/A"}</span>
+                    <span className="flex items-center gap-1"><Zap className="h-3.5 w-3.5" /> {projectInfo ? `${Number(projectInfo.capacityMW).toFixed(2)} MW` : "N/A"}</span>
                     <span>{projectInfo ? projectInfo.technology.replace(/_/g, " ") : "Solar"}</span>
                   </div>
                 </div>

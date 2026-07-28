@@ -3,10 +3,14 @@
 // backend. All outputs are MODELED ESTIMATES: the UI must wrap them in
 // YieldDisclosure / ProjectionDisclosure (Spec 07).
 //
-// Anchored to the canonical demo dataset so every surface agrees:
+// Anchored to the canonical demo dataset (data/demo-offering.ts) so every
+// surface agrees:
 //   - Annual production 8,102,755 kWh (demo-savannah.json, 2024 verified)
-//   - Monthly distribution pool $17,700 -> $212,400/yr distributable
-//   - $50,000 investment = 2.0% ownership -> $354.00/month (Portfolio canon)
+//   - Distributable pool $14,583.33/month -> $175,000/yr, which is the 7.0%
+//     target cash yield on the $2,500,000 raise
+//   - $10,000 investment = 100 ESN = 0.4% ownership -> $58.33/month
+
+import { DEMO_OFFERING } from "../data/demo-offering.js";
 
 export interface ProFormaInputs {
   investmentUsd: number; // $10,000 – $250,000
@@ -22,11 +26,11 @@ export interface ProFormaYearPoint {
 }
 
 export interface ProFormaOutputs {
-  monthlyDistribution: number; // year-1, e.g. 354.00
-  annualCashYieldPct: number; // e.g. 8.5
+  monthlyDistribution: number; // year-1, e.g. 58.33 at $10,000
+  annualCashYieldPct: number; // e.g. 7.0
   netIrrPct: number; // over the holding period (with ITC if enabled)
   tokenCount: number; // ESN at $100/token (canonical demo pricing)
-  ownershipPct: number; // e.g. 2.0
+  ownershipPct: number; // e.g. 0.4 at $10,000
   series: ProFormaYearPoint[];
 }
 
@@ -34,15 +38,17 @@ export interface ProFormaOutputs {
 export const PROJECT_ANNUAL_KWH = 8_102_755; // 2024 verified production
 export const PPA_RATE_USD_PER_KWH = 0.085;
 export const ANNUAL_ESCALATOR = 0.02;
-export const PROJECT_RAISE_USD = 2_500_000; // $50k = 2.0% (canon)
-export const TOKEN_PRICE_USD = 100; // 100 ESN = $10,000 (canon)
+export const PROJECT_RAISE_USD = DEMO_OFFERING.total_raise_usd; // $2,500,000
+export const TOKEN_PRICE_USD = DEMO_OFFERING.token_price_usd; // $100
 export const ITC_RATE = 0.3;
 export const SP500_REFERENCE_RATE = 0.1; // historical avg — imperfect comparison
 
-// Year-1 distributable cash: the $17,700/month demo pool. Roughly 31% of PPA
-// revenue — the remainder models O&M, insurance, asset management, and debt
-// service ahead of the token holders in the waterfall.
-export const ANNUAL_DISTRIBUTABLE_USD_Y1 = 17_700 * 12;
+// Year-1 distributable cash: the canonical $14,583.33/month pool, i.e. the 7.0%
+// target cash yield on the raise. Roughly 25% of PPA revenue — the remainder
+// models O&M, insurance, asset management, and debt service ahead of the token
+// holders in the waterfall.
+export const ANNUAL_DISTRIBUTABLE_USD_Y1 =
+  DEMO_OFFERING.offering_distributions.annual_total_usd;
 
 /** Investor cash received in a given pro-forma year (1-indexed). */
 function investorCashForYear(ownership: number, year: number): number {

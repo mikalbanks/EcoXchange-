@@ -1,5 +1,14 @@
 // Smart Contract Explorer network configuration (Spec 08).
 //
+// LEGACY, PENDING POLYMATH MIGRATION. Product copy now describes ST-20 tokens
+// on Polymesh via the Polymath Capital Platform, but this module and the live
+// plumbing it feeds (ChainHeartbeat, the distribution simulation's block reads,
+// the BaseScan links) still talk to Base Sepolia over EVM JSON-RPC. Polymesh is
+// not EVM-compatible, so renaming the chain here would leave an integration
+// claiming Polymesh while calling Base RPC. Anything reading this config
+// therefore keeps saying "Base Sepolia", because that is where it is actually
+// pointed. Migrate the integration first, then the labels.
+//
 // The demo runs against Base Sepolia (testnet). Switching to mainnet when
 // contracts deploy is a single env change: VITE_NETWORK=base-mainnet.
 //

@@ -189,7 +189,7 @@ export default function QueueDealDetail() {
             </Card>
             <Card>
               <CardHeader className="pb-2">
-                <CardTitle className="text-sm font-medium text-muted-foreground">IRR proxy (illustrative)</CardTitle>
+                <CardTitle className="text-sm font-medium text-muted-foreground">Est. cash yield (illustrative)</CardTitle>
               </CardHeader>
               <CardContent>
                 <p className="text-2xl font-semibold">
