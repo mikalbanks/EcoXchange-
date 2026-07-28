@@ -260,6 +260,17 @@ nav a:hover { color: var(--forest); }
   color: rgba(255,255,255,.7);
   line-height: 1.4;
 }
+.stat-label a {
+  color: inherit;
+  text-decoration: underline;
+  text-underline-offset: .2em;
+  text-decoration-color: rgba(255,255,255,.35);
+  transition: color .15s ease, text-decoration-color .15s ease;
+}
+.stat-label a:hover {
+  color: var(--lime);
+  text-decoration-color: var(--lime);
+}
 
 /* ── Problem ── */
 .problem {

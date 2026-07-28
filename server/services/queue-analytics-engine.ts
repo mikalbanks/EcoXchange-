@@ -214,6 +214,9 @@ export async function computeQueueEntryAnalytics(
     annualOmUsd: monthlyOpexUsd * 12,
     assetCapexUsd: totalCapexUsd,
   });
+  // NOT an IRR despite the field name: computeFinancialApy returns an annual
+  // cash-on-cash yield (net revenue over capex), with no time value, ITC, PPA
+  // escalator, or residual value. Surfaced in the UI as "Est. cash yield".
   const irrProxy = finApy != null ? finApy * 100 : null;
   const moic =
     finApy != null && finApy > 0

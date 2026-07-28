@@ -98,7 +98,7 @@ export default function MarketProjectPage() {
                 <div className="public-mini-stat-grid">
                   <div className="public-mini-stat">
                     <span className="public-mini-stat-value">{data.irrProxyPct.value.toFixed(1)}%</span>
-                    <span className="public-mini-stat-label">IRR proxy</span>
+                    <span className="public-mini-stat-label">Est. cash yield</span>
                   </div>
                   <div className="public-mini-stat">
                     <span className="public-mini-stat-value">${data.annualGrossRevenueUsd.value.toLocaleString("en-US", { maximumFractionDigits: 0 })}</span>
@@ -144,7 +144,7 @@ export default function MarketProjectPage() {
                       { label: "Monthly debt service", field: data.monthlyDebtServiceUsd, format: "usd" },
                       { label: "Monthly opex", field: data.monthlyOpexUsd, format: "usd" },
                       { label: "Capex", field: data.capexUsd, format: "usd" },
-                      { label: "IRR proxy", field: data.irrProxyPct, format: "pct" },
+                      { label: "Est. cash yield", field: data.irrProxyPct, format: "pct" },
                       { label: "MOIC proxy", field: data.moicProxy, format: "multiple" },
                       { label: "Annual investor yield", field: data.annualInvestorYieldUsd, format: "usd" },
                     ]}

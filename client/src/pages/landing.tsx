@@ -4,8 +4,12 @@ import "./landing.css";
 
 const STATS = [
   {
-    num: "99.74%",
-    label: "Verification confidence on satellite-reconciled production data",
+    // The measured benchmark result, not a "confidence" figure. Matches the
+    // demo's /benchmark page exactly: publication-cohort mean absolute
+    // deviation, with its own n — the full 5,065-plant fleet is ±13.0%.
+    num: "±9.8%",
+    label: "Mean deviation vs. 3,882 of 5,065 EIA-923 solar plants (2024)",
+    href: "https://demo.ecoxchange.net/benchmark",
   },
   {
     num: "$1–5M",
@@ -49,13 +53,13 @@ const METHOD_CARDS = [
   {
     num: "02",
     title: "Deterministic",
-    body: "A double-entry reconciliation core. ML is restricted to post-calculation anomaly flagging only.",
+    body: "A three-source reconciliation core. ML is restricted to post-calculation anomaly flagging only.",
     highlight: false,
   },
   {
     num: "03",
     title: "Auditable",
-    body: "Every yield figure traces to utility meter data and satellite irradiance. Full audit trail preserved.",
+    body: "Every yield figure traces to inverter telemetry, utility meter data, and satellite irradiance. Full audit trail preserved.",
     highlight: true,
   },
   {
@@ -155,7 +159,15 @@ export default function LandingPage() {
           {STATS.map((s) => (
             <div key={s.num} className="stat-item">
               <div className="stat-num">{s.num}</div>
-              <div className="stat-label">{s.label}</div>
+              <div className="stat-label">
+                {"href" in s && s.href ? (
+                  <a href={s.href} target="_blank" rel="noreferrer">
+                    {s.label} →
+                  </a>
+                ) : (
+                  s.label
+                )}
+              </div>
             </div>
           ))}
         </div>
@@ -190,9 +202,9 @@ export default function LandingPage() {
             <h2 className="section-title">Hardware-Free. Deterministic. Auditable.</h2>
           </div>
           <p className="method-intro">
-            A double-entry reconciliation engine that cross-references satellite irradiance against utility
-            net-meter data — producing a securities-grade, per-project yield figure with no on-site hardware
-            required. Marginal verification cost approaches zero.
+            A three-source reconciliation engine that cross-references inverter telemetry, utility net-meter
+            readings, and satellite irradiance — producing a securities-grade, per-project yield figure with
+            no on-site hardware required. Marginal verification cost approaches zero.
           </p>
           <div className="method-cards">
             {METHOD_CARDS.map((card) => (

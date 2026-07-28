@@ -35,6 +35,9 @@ export const PIPELINE_MARKERS: ProjectMarker[] = [
     verificationStatus: "VERIFIED",
     projectPath: "/investor/project/demo-savannah-5mw",
   },
+  // Pipeline targets in high-incentive state programs. These sit above the
+  // 6-8% platform target band, so each is labeled program-dependent — the
+  // premium is the state incentive, not the underlying project economics.
   {
     id: "ny-pipeline-1",
     name: "New York VDER Target",
@@ -42,7 +45,7 @@ export const PIPELINE_MARKERS: ProjectMarker[] = [
     longitude: -73.75,
     capacityKw: 3000,
     status: "pipeline",
-    program: "NY VDER (~9.8%)",
+    program: "NY VDER — est. ~9.8%, program-dependent",
   },
   {
     id: "il-pipeline-1",
@@ -51,7 +54,7 @@ export const PIPELINE_MARKERS: ProjectMarker[] = [
     longitude: -87.63,
     capacityKw: 4000,
     status: "pipeline",
-    program: "IL ABP (~9.7%)",
+    program: "IL ABP — est. ~9.7%, program-dependent",
   },
   {
     id: "ma-pipeline-1",
@@ -60,7 +63,7 @@ export const PIPELINE_MARKERS: ProjectMarker[] = [
     longitude: -71.06,
     capacityKw: 2000,
     status: "pipeline",
-    program: "MA SMART (~9.0%)",
+    program: "MA SMART — est. ~9.0%, program-dependent",
   },
   {
     id: "az-target",

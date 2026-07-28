@@ -102,7 +102,7 @@ export function MarketplaceTeaser() {
                       </div>
                     </div>
                     <div className="flex items-center justify-between text-sm">
-                      <span className="text-muted-foreground">IRR proxy</span>
+                      <span className="text-muted-foreground">Est. cash yield</span>
                       <div className="flex items-center gap-2">
                         <span className="font-mono">{listing.irrProxyPct.value.toFixed(1)}%</span>
                         <ConfidenceBadge
