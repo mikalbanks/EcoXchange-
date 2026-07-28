@@ -9,7 +9,7 @@ import type {
   InvestorHolding,
 } from "../types/distributions.js";
 
-// Mock identity until Privy auth lands.
+// Mock identity until Polymath auth lands.
 export const DEMO_INVESTOR_ID = "demo-investor";
 
 interface DemoDist {

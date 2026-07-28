@@ -154,7 +154,7 @@ export function YieldHistory() {
         </button>
         {showDist ? (
           <dl className="mt-4 grid grid-cols-1 sm:grid-cols-2 gap-4 text-sm animate-fade-in">
-            <Detail label="Distribution method" value="USDC on Base L2" />
+            <Detail label="Distribution method" value="USDC on Polymesh" />
             <Detail label="Wallet" value="0x1234…5678" mono />
             <Detail
               label="Transaction hash"

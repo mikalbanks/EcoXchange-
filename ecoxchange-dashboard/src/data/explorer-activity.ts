@@ -41,7 +41,7 @@ export const demoActivity: ChainActivity[] = [
     txHash:
       "0x3c4d5e6f7890abcdef1234567890abcdef1234567890abcdef1234567890abcd",
     type: "oracle_write",
-    from: "Chainlink Functions",
+    from: "Verification Engine",
     to: "Oracle Bridge",
     value: "501,618 kWh (verified)",
     timestamp: new Date(Date.now() - 26 * 3600 * 1000),

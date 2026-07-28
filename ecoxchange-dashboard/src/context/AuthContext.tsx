@@ -1,7 +1,7 @@
 import { createContext, useContext, useMemo, useState } from "react";
 import type { ReactNode } from "react";
 
-// Mock auth only. Real authentication (Privy) lands after securities counsel;
+// Mock auth only. Real authentication (Polymath) lands after securities counsel;
 // for now we model an "active viewing role" plus a placeholder identity so the
 // shell, sidebar, and settings page have something to render.
 export type Role = "investor" | "developer";

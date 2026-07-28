@@ -14,7 +14,7 @@ const STEPS: Step[] = [
   },
   {
     title: "Verify Accreditation",
-    detail: "Integration with Parallel Markets — pending compliance setup.",
+    detail: "Integration with North Capital / Sumsub (via Polymath) — pending compliance setup.",
     done: false,
   },
   {
@@ -24,7 +24,7 @@ const STEPS: Step[] = [
   },
   {
     title: "Create Wallet",
-    detail: "Privy embedded wallet — pending compliance setup.",
+    detail: "Web3Auth MPC wallet (via Polymath) — pending compliance setup.",
     done: false,
   },
   {

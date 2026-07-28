@@ -194,7 +194,7 @@ export function Portfolio() {
                     startOnView
                   />
                 }
-                sublabel="ERC-3643 · Savannah Solar I"
+                sublabel="ST-20 · Savannah Solar I"
               />
             </Link>
           </div>

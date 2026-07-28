@@ -29,7 +29,7 @@ export const explorerContracts: ExplorerContract[] = [
   {
     id: "token",
     title: "ESN Token Contract",
-    standard: "ERC-3643 (T-REX)",
+    standard: "ST-20",
     address: activeNetwork.contracts.token,
     description:
       "Fractional LLC membership interest token with compliance-enforced transfer restrictions. Each token represents a proportional ownership share in the project SPV.",
@@ -45,7 +45,7 @@ export const explorerContracts: ExplorerContract[] = [
   {
     id: "identity",
     title: "Identity Registry",
-    standard: "ONCHAINID",
+    standard: "POLYMESH IDENTITY",
     address: activeNetwork.contracts.identityRegistry,
     description:
       "On-chain registry of verified accredited investors. Only wallets with valid identity claims (KYC, accreditation, AML) can hold or receive ESN tokens. Enforced at the smart contract level.",
@@ -54,7 +54,7 @@ export const explorerContracts: ExplorerContract[] = [
     stats: [
       { label: "Verified Investors", value: "12" },
       { label: "Claim Topics", value: "3" },
-      { label: "KYC Provider", value: "Parallel Markets" },
+      { label: "KYC Provider", value: "North Capital / Sumsub" },
       { label: "Last Verified", value: "Jun 28, 2026" },
     ],
   },
@@ -73,16 +73,16 @@ export const explorerContracts: ExplorerContract[] = [
       { label: "Total Distributed", value: `${formatUsd(DEMO_OFFERING.offering_distributions.annual_total_usd)} USDC` },
       { label: "Distribution Count", value: "12" },
       { label: "Avg Monthly", value: `${formatUsd(DEMO_OFFERING.offering_distributions.monthly_total_usd)} USDC` },
-      { label: "Settlement", value: "USDC on Base" },
+      { label: "Settlement", value: "USDC on Polymesh" },
     ],
   },
   {
     id: "oracle",
     title: "Oracle Bridge",
-    standard: "CHAINLINK FUNCTIONS",
+    standard: "POLYMATH API BRIDGE",
     address: activeNetwork.contracts.oracleBridge,
     description:
-      "Writes production-verified kWh data on-chain via Chainlink Functions. Bridges the off-chain verification engine verdict to the on-chain distribution trigger. Each write is independently verifiable.",
+      "Writes production-verified kWh data on-chain via the Polymath Capital Platform API. Bridges the off-chain verification engine verdict to the on-chain distribution trigger. Each write is independently verifiable.",
     status: statusOf(activeNetwork.contracts.oracleBridge),
     icon: Radio,
     stats: [

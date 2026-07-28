@@ -20,7 +20,7 @@ const STATS = [
     label: "Reg D exemption — verified accredited investors only",
   },
   {
-    num: "3% + $15K + 1.25%",
+    num: "3% + $15K + 0.5%",
     label: "Origination + setup + AUA servicing — all paid by SPV, not investors",
   },
 ] as const;
@@ -81,7 +81,7 @@ const INVESTOR_STATS = [
   },
   {
     num: "Physics",
-    text: "Distributions derive from satellite irradiance × utility meter reconciliation, not developer self-reports",
+    text: "Distributions derive from inverter × utility meter × satellite irradiance reconciliation, not developer self-reports",
   },
   {
     num: "Handled",
@@ -92,7 +92,7 @@ const INVESTOR_STATS = [
 const FEE_ROWS = [
   { label: "Origination fee (one-time, at close)", eco: "3% of equity raised", other: "4–8% placement + 1–3% warrants" },
   { label: "Setup fee (one-time, at close)", eco: "$15,000 fixed", other: "$80K–$250K legal + admin" },
-  { label: "Servicing fee (recurring)", eco: "1.25% of AUA / year", other: "$10K–$25K / year per project" },
+  { label: "Servicing fee (recurring)", eco: "0.5% of AUA / year", other: "$10K–$25K / year per project" },
   { label: "Investor load charge", eco: "None", other: "0–5% upfront" },
   { label: "Production verification", eco: "Production-based, included", other: "$5K–$15K / year third-party" },
   { label: "Distribution cadence", eco: "Monthly, USDC, auto", other: "Quarterly, manual, 30–90d" },
@@ -272,7 +272,7 @@ export default function LandingPage() {
                 $80K+ in soft costs typical of a traditional Reg D 506(c) raise.
               </p>
               <p>
-                After close, a <strong>1.25% annual servicing fee on assets under administration</strong> is billed monthly
+                After close, a <strong>0.5% annual servicing fee on assets under administration</strong> is billed monthly
                 to the SPV — covering production verification, smart-contract distribution infrastructure, investor
                 reporting, and K-1 coordination throughout the life of the offering.
               </p>

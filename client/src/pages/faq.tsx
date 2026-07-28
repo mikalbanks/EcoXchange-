@@ -9,7 +9,7 @@ import {
 const FAQS = [
   {
     q: "What is an EcoXchange Solar Note (ESN)?",
-    a: "A fractional LLC membership interest in a single permitted U.S. solar project SPV, issued as an ERC-3643 compliant security token on Base. One project, one SPV — not a pooled fund. Distributions are paid in USDC.",
+    a: "A fractional LLC membership interest in a single permitted U.S. solar project SPV, issued as an ST-20 compliant security token on Polymesh. One project, one SPV — not a pooled fund. Distributions are paid in USDC.",
   },
   {
     q: "What is the minimum investment?",
@@ -29,7 +29,7 @@ const FAQS = [
   },
   {
     q: "What fees do investors pay?",
-    a: "Zero direct fees. All EcoXchange fees — 3% origination, $15,000 setup, 1.25% AUA servicing — are paid by the project SPV. Investor returns are quoted net of these fees.",
+    a: "Zero direct fees. All EcoXchange fees — 3% origination, $15,000 setup, 0.5% AUA servicing — are paid by the project SPV. Investor returns are quoted net of these fees.",
   },
   {
     q: "What if the project underperforms?",
@@ -49,7 +49,7 @@ const FAQS = [
   },
   {
     q: "Who custody my tokens?",
-    a: "You do. Privy provisions an embedded wallet you control via email or phone login. The transfer agent maintains the on-chain cap table per SEC requirements.",
+    a: "You do. Polymath provisions a Web3Auth MPC wallet you control via email or phone login. The transfer agent maintains the on-chain cap table per SEC requirements.",
   },
   {
     q: "What stops a developer from gaming the meter?",

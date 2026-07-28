@@ -770,7 +770,7 @@ export class MemStorage implements IStorage {
     const OPEX_USD_PER_MW_YEAR = 18_000;
     const DEBT_SERVICE_RATE = 0.2; // share of gross revenue
     const RESERVE_RATE = 0.05; // share of gross revenue
-    const PLATFORM_AUA_RATE = 0.0125; // annual AUA fee on gross revenue
+    const PLATFORM_AUA_RATE = 0.005; // annual AUA fee on gross revenue
 
     const baseAnalytics = (
       entryId: string,
