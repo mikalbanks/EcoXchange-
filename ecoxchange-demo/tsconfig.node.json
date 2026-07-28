@@ -11,5 +11,5 @@
     "skipLibCheck": true,
     "types": ["node"]
   },
-  "include": ["vite.config.ts", "tailwind.config.ts", "postcss.config.cjs", "worker/**/*.ts"]
+  "include": ["worker/**/*.ts"]
 }

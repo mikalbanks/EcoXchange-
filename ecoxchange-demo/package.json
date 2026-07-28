@@ -3,37 +3,19 @@
   "version": "0.1.0",
   "private": true,
   "type": "module",
-  "description": "Deploy shim for demo.ecoxchange.net — builds and serves ../ecoxchange-dashboard (see DEPRECATED-app.md; legacy demo app retired in place).",
+  "description": "Deploy shim for demo.ecoxchange.net — owns the Cloudflare Worker and custom domain, builds and serves ../ecoxchange-dashboard (see DEPLOY-SHIM.md).",
   "engines": {
     "node": ">=20"
   },
   "scripts": {
-    "dev": "vite",
     "build": "node scripts/build-from-dashboard.mjs",
-    "build:legacy": "tsc -b && vite build",
-    "preview": "vite preview --port 4173",
-    "check": "tsc -b --noEmit",
-    "smoke:supabase": "node --env-file=.env scripts/supabase-smoke.mjs",
+    "check": "tsc -b",
     "deploy": "npm run build && npx wrangler deploy",
     "deploy:dry": "npm run build && npx wrangler deploy --dry-run"
   },
-  "dependencies": {
-    "@supabase/supabase-js": "^2.106.2",
-    "react": "^18.3.1",
-    "react-dom": "^18.3.1",
-    "react-router-dom": "^6.26.0",
-    "recharts": "^2.12.7"
-  },
   "devDependencies": {
     "@types/node": "^20.14.0",
-    "@types/react": "^18.3.3",
-    "@types/react-dom": "^18.3.0",
-    "@vitejs/plugin-react": "^4.3.1",
-    "autoprefixer": "^10.4.20",
-    "postcss": "^8.4.41",
-    "tailwindcss": "^3.4.10",
     "typescript": "^5.5.4",
-    "vite": "^5.4.0",
     "wrangler": "^4.95.0"
   }
 }
