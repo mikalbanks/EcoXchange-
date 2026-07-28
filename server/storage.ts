@@ -733,6 +733,7 @@ export class MemStorage implements IStorage {
       iso: string,
       name: string,
       st: string,
+      cty: string,
       mw: string,
       lat: string,
       lon: string,
@@ -746,7 +747,7 @@ export class MemStorage implements IStorage {
         resourceType: "Solar PV",
         capacityMW: mw,
         state: st,
-        county: "Demo",
+        county: cty,
         latitude: lat,
         longitude: lon,
         rawJson: null,
@@ -754,9 +755,12 @@ export class MemStorage implements IStorage {
       });
     };
 
-    mk("iqe-demo-1", "GS-DEMO-1001", "CAISO", "Kern Sunfield South", "California", "48.50", "35.37", "-119.02");
-    mk("iqe-demo-2", "GS-DEMO-2002", "PJM", "Piedmont Queue Solar", "North Carolina", "55.00", "35.72", "-79.18");
-    mk("iqe-demo-3", "GS-DEMO-3003", "SPP", "Plains Wind & Solar Hybrid", "Kansas", "150.00", "37.75", "-99.64");
+    // Counties match each row's coordinates — these render on the public
+    // marketplace as "<county>, <state>", so a placeholder shows up as a real
+    // listing location.
+    mk("iqe-demo-1", "GS-DEMO-1001", "CAISO", "Kern Sunfield South", "California", "Kern", "48.50", "35.37", "-119.02");
+    mk("iqe-demo-2", "GS-DEMO-2002", "PJM", "Piedmont Queue Solar", "North Carolina", "Chatham", "55.00", "35.72", "-79.18");
+    mk("iqe-demo-3", "GS-DEMO-3003", "SPP", "Plains Wind & Solar Hybrid", "Kansas", "Ford", "150.00", "37.75", "-99.64");
 
     const baseAnalytics = (entryId: string, mwh: string, kwh: string): QueueEntryAnalytics => ({
       id: `iqa-${entryId}`,
