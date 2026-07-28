@@ -53,6 +53,8 @@ import NotFound from "@/pages/not-found";
 import LandingPage from "@/pages/landing";
 import PublicMarketPage from "@/pages/market";
 import PublicMarketProjectPage from "@/pages/market-project";
+import PortfolioPage from "@/pages/portfolio";
+import SharedPortfolioPage from "@/pages/portfolio-shared";
 import LoginPage from "@/pages/auth/login";
 import SignupPage from "@/pages/auth/signup";
 
@@ -122,6 +124,8 @@ function Router() {
       <Route path="/" component={LandingPage} />
       <Route path="/market" component={PublicMarketPage} />
       <Route path="/market/:id" component={PublicMarketProjectPage} />
+      <Route path="/portfolio" component={PortfolioPage} />
+      <Route path="/portfolio/shared/:token" component={SharedPortfolioPage} />
       <Route path="/auth/login" component={LoginPage} />
       <Route path="/auth/signup" component={SignupPage} />
       <Route path="/yield-simulation" component={YieldSimulationPage} />

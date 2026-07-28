@@ -286,6 +286,19 @@ export const projects = pgTable("projects", {
   marketPpaBenchmarkUsdPerMwh: decimal("market_ppa_benchmark_usd_per_mwh", { precision: 10, scale: 4 }),
   /** Structured external links surfaced in the marketplace listing (SEC filings, project page, news). */
   externalLinks: jsonb("external_links").$type<MarketplaceExternalLink[] | null>(),
+  /** Photograph of the physical system, served from /projects/. Null falls back to a generated site card. */
+  imageUrl: text("image_url"),
+  imageAlt: text("image_alt"),
+  /** Attribution line rendered under the photo — required for any third-party image. */
+  imageCredit: text("image_credit"),
+  /** License the photo is used under, e.g. "Public domain (U.S. Government work)". */
+  imageLicense: text("image_license"),
+  /** Mounting type, drives the capacity-factor lookup: SINGLE_AXIS_TRACKER | FIXED_TILT | ROOFTOP. */
+  arrayType: text("array_type"),
+  /** Commercial operation date for operating assets; null for pre-COD projects. */
+  commercialOperationDate: timestamp("commercial_operation_date"),
+  /** Remaining contracted offtake term in years, used for portfolio-level weighting. */
+  contractTermRemainingYears: decimal("contract_term_remaining_years", { precision: 5, scale: 2 }),
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
 });
@@ -406,6 +419,63 @@ export const insertInvestorInterestSchema = createInsertSchema(investorInterests
 
 export type InsertInvestorInterest = z.infer<typeof insertInvestorInterestSchema>;
 export type InvestorInterest = typeof investorInterests.$inferSelect;
+
+// ─── Portfolios ──────────────────────────────────────────────────────────────
+
+/** One line of a constructed portfolio. Listings may be curated projects or queue entries. */
+export interface PortfolioAllocation {
+  listingId: string;
+  listingSource: "PROJECT" | "QUEUE";
+  /** Share of the investor's capital, 0-100. */
+  weightPct: number;
+}
+
+export const portfolios = pgTable("portfolios", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  /** Null for portfolios built by an anonymous visitor before they sign up. */
+  ownerId: varchar("owner_id"),
+  name: text("name").notNull().default("Untitled portfolio"),
+  targetCheckSizeUsd: decimal("target_check_size_usd", { precision: 15, scale: 2 }).default("100000"),
+  allocations: jsonb("allocations").$type<PortfolioAllocation[]>().notNull().default(sql`'[]'::jsonb`),
+  /** Opaque token for read-only sharing without exposing the portfolio id. */
+  shareToken: text("share_token").notNull(),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+});
+
+export const insertPortfolioSchema = createInsertSchema(portfolios).omit({
+  id: true,
+  shareToken: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
+export type InsertPortfolio = z.infer<typeof insertPortfolioSchema>;
+export type Portfolio = typeof portfolios.$inferSelect;
+
+/** Expression of interest in the prospective diversified fund. Not an offer, not a subscription. */
+export const fundInterests = pgTable("fund_interests", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  userId: varchar("user_id"),
+  email: text("email").notNull(),
+  checkSizeUsd: decimal("check_size_usd", { precision: 15, scale: 2 }),
+  accreditationStatus: text("accreditation_status").notNull().default("UNKNOWN"),
+  /** INCOME | BALANCED | GROWTH — informs which sleeve the investor would sit in. */
+  riskPreference: text("risk_preference").notNull().default("BALANCED"),
+  message: text("message"),
+  /** Portfolio the investor had built when they opted in, if any. */
+  sourcePortfolioId: varchar("source_portfolio_id"),
+  status: text("status").notNull().default("SUBMITTED"),
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
+export const insertFundInterestSchema = createInsertSchema(fundInterests).omit({
+  id: true,
+  createdAt: true,
+});
+
+export type InsertFundInterest = z.infer<typeof insertFundInterestSchema>;
+export type FundInterest = typeof fundInterests.$inferSelect;
 
 // ─── Project Approval Log ────────────────────────────────────────────────────
 

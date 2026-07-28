@@ -11,6 +11,7 @@ import {
   type NsrdbTimeSeriesRow,
 } from "../lib/nrel-engine";
 import { resolveMarketPpaUsdPerKwh, type MarketPpaResolution } from "../lib/market-rates";
+import { deriveCapitalStructure } from "../lib/project-economics";
 import { runBacktest, type BacktestSiteConfig } from "./backtest-engine";
 
 const ENGINE_VERSION = "queue-analytics-1";
@@ -121,15 +122,16 @@ export function simulateProspectWaterfall(input: ProspectWaterfallInput): {
   };
 }
 
-function defaultCapexAndOpex(capacityMw: number): { totalCapexUsd: number; monthlyOpexUsd: number; monthlyDebtUsd: number; reserveRate: number } {
+/**
+ * Capex and opex defaults for a queue prospect. Debt is sized separately, off
+ * CFADS at a target DSCR, because a straight-line share of capex ignores both
+ * interest and the project's actual ability to service the loan.
+ */
+function defaultCapexAndOpex(capacityMw: number): { totalCapexUsd: number; monthlyOpexUsd: number; reserveRate: number } {
   const capexPerW = 1.12;
   const totalCapexUsd = capacityMw * 1_000_000 * capexPerW;
   const monthlyOpexUsd = Math.max(500, capacityMw * 650);
-  const debtRatio = 0.6;
-  const years = 20;
-  const annualDebtService = (totalCapexUsd * debtRatio) / years;
-  const monthlyDebtUsd = annualDebtService / 12;
-  return { totalCapexUsd, monthlyOpexUsd, monthlyDebtUsd, reserveRate: 0.05 };
+  return { totalCapexUsd, monthlyOpexUsd, reserveRate: 0.05 };
 }
 
 export interface QueueEntryLike {
@@ -205,7 +207,7 @@ export async function computeQueueEntryAnalytics(
   const annualKwhNsrdb = await computeAnnualKwhNsrdb(lat, lon, capMw, DEFAULT_PR);
   const annualMwhModeled = annualKwhNsrdb / 1000;
 
-  const { totalCapexUsd, monthlyOpexUsd, monthlyDebtUsd, reserveRate } = defaultCapexAndOpex(capMw);
+  const { totalCapexUsd, monthlyOpexUsd, reserveRate } = defaultCapexAndOpex(capMw);
   const annualGross = annualKwhNsrdb * ppa.usdPerKwh;
 
   const finApy = computeFinancialApy({
@@ -223,9 +225,20 @@ export async function computeQueueEntryAnalytics(
       ? 1 + finApy * 7
       : null;
 
+  // Size debt to CFADS at the platform's target DSCR, matching how the
+  // marketplace derives an investor's equity slice.
+  const annualCfads = Math.max(
+    0,
+    annualGross - monthlyOpexUsd * 12 - annualGross * reserveRate,
+  );
+  const structure = deriveCapitalStructure({
+    capexUsd: totalCapexUsd,
+    annualCfadsUsd: annualCfads,
+  });
+
   const wf = simulateProspectWaterfall({
     annualGrossRevenueUsd: annualGross,
-    monthlyDebtServiceUsd: monthlyDebtUsd,
+    monthlyDebtServiceUsd: structure.annualDebtServiceUsd / 12,
     monthlyOpexUsd,
     reserveRate,
   });

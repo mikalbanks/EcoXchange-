@@ -1968,6 +1968,186 @@ export async function registerRoutes(
     }
   });
 
+  // ─── Portfolio construction ───────────────────────────────────────────────
+
+  const allocationSchema = z.object({
+    listingId: z.string().min(1),
+    listingSource: z.enum(["PROJECT", "QUEUE"]).default("PROJECT"),
+    weightPct: z.number().min(0).max(100),
+  });
+
+  const portfolioBodySchema = z.object({
+    name: z.string().min(1).max(120).default("Untitled portfolio"),
+    targetCheckSizeUsd: z.number().min(0).max(1_000_000_000).default(100_000),
+    allocations: z.array(allocationSchema).max(50).default([]),
+  });
+
+  /**
+   * Stateless analysis so a visitor can model a portfolio before signing up.
+   * Nothing is persisted and nothing is returned that isn't already public on
+   * the marketplace.
+   */
+  app.post("/api/public/portfolio/analyze", async (req, res) => {
+    try {
+      const parsed = portfolioBodySchema.pick({ targetCheckSizeUsd: true, allocations: true }).parse(req.body);
+      const { analyzePortfolio } = await import("./services/portfolio-analytics");
+      const analysis = await analyzePortfolio({
+        allocations: parsed.allocations,
+        targetCheckSizeUsd: parsed.targetCheckSizeUsd,
+      });
+      res.json(analysis);
+    } catch (error: any) {
+      if (error instanceof z.ZodError) {
+        return res.status(400).json({ message: "Invalid portfolio", errors: error.errors });
+      }
+      res.status(500).json({ message: error.message || "Failed to analyze portfolio" });
+    }
+  });
+
+  app.get("/api/public/portfolio/shared/:token", async (req, res) => {
+    try {
+      const portfolio = await storage.getPortfolioByShareToken(req.params.token);
+      if (!portfolio) return res.status(404).json({ message: "Portfolio not found" });
+      const { analyzePortfolio } = await import("./services/portfolio-analytics");
+      const analysis = await analyzePortfolio({
+        allocations: portfolio.allocations ?? [],
+        targetCheckSizeUsd: Number(portfolio.targetCheckSizeUsd ?? 0),
+      });
+      // Deliberately omits ownerId: a share link grants read access to the
+      // allocation, not to who built it.
+      res.json({
+        portfolio: {
+          id: portfolio.id,
+          name: portfolio.name,
+          targetCheckSizeUsd: portfolio.targetCheckSizeUsd,
+          allocations: portfolio.allocations,
+          updatedAt: portfolio.updatedAt,
+        },
+        analysis,
+      });
+    } catch (error: any) {
+      res.status(500).json({ message: error.message || "Failed to load shared portfolio" });
+    }
+  });
+
+  /**
+   * Expression of interest in the prospective diversified fund. This captures
+   * interest only — the fund is not offered, and nothing here is a subscription.
+   */
+  app.post("/api/public/portfolio/fund-interest", async (req: any, res) => {
+    try {
+      const parsed = z
+        .object({
+          email: z.string().email(),
+          checkSizeUsd: z.number().min(0).max(1_000_000_000).optional(),
+          accreditationStatus: z.enum(["ACCREDITED", "NOT_ACCREDITED", "UNKNOWN"]).default("UNKNOWN"),
+          riskPreference: z.enum(["INCOME", "BALANCED", "GROWTH"]).default("BALANCED"),
+          message: z.string().max(2000).optional(),
+          sourcePortfolioId: z.string().optional(),
+        })
+        .parse(req.body);
+
+      const created = await storage.createFundInterest({
+        userId: req.session?.userId ?? null,
+        email: parsed.email,
+        checkSizeUsd: parsed.checkSizeUsd != null ? String(parsed.checkSizeUsd) : null,
+        accreditationStatus: parsed.accreditationStatus,
+        riskPreference: parsed.riskPreference,
+        message: parsed.message ?? null,
+        sourcePortfolioId: parsed.sourcePortfolioId ?? null,
+        status: "SUBMITTED",
+      });
+      res.status(201).json({ id: created.id, status: created.status });
+    } catch (error: any) {
+      if (error instanceof z.ZodError) {
+        return res.status(400).json({ message: "Invalid submission", errors: error.errors });
+      }
+      res.status(500).json({ message: error.message || "Failed to record interest" });
+    }
+  });
+
+  app.get("/api/portfolios", requireAuth, async (req: any, res) => {
+    try {
+      res.json(await storage.getPortfoliosByOwner(req.session.userId));
+    } catch (error: any) {
+      res.status(500).json({ message: error.message || "Failed to load portfolios" });
+    }
+  });
+
+  app.post("/api/portfolios", requireAuth, async (req: any, res) => {
+    try {
+      const parsed = portfolioBodySchema.parse(req.body);
+      const created = await storage.createPortfolio({
+        ownerId: req.session.userId,
+        name: parsed.name,
+        targetCheckSizeUsd: String(parsed.targetCheckSizeUsd),
+        allocations: parsed.allocations,
+      });
+      res.status(201).json(created);
+    } catch (error: any) {
+      if (error instanceof z.ZodError) {
+        return res.status(400).json({ message: "Invalid portfolio", errors: error.errors });
+      }
+      res.status(500).json({ message: error.message || "Failed to save portfolio" });
+    }
+  });
+
+  app.get("/api/portfolios/:id", requireAuth, async (req: any, res) => {
+    try {
+      const portfolio = await storage.getPortfolio(req.params.id);
+      if (!portfolio || portfolio.ownerId !== req.session.userId) {
+        return res.status(404).json({ message: "Portfolio not found" });
+      }
+      res.json(portfolio);
+    } catch (error: any) {
+      res.status(500).json({ message: error.message || "Failed to load portfolio" });
+    }
+  });
+
+  app.patch("/api/portfolios/:id", requireAuth, async (req: any, res) => {
+    try {
+      const existing = await storage.getPortfolio(req.params.id);
+      if (!existing || existing.ownerId !== req.session.userId) {
+        return res.status(404).json({ message: "Portfolio not found" });
+      }
+      const parsed = portfolioBodySchema.partial().parse(req.body);
+      const updated = await storage.updatePortfolio(req.params.id, {
+        ...(parsed.name != null ? { name: parsed.name } : {}),
+        ...(parsed.targetCheckSizeUsd != null
+          ? { targetCheckSizeUsd: String(parsed.targetCheckSizeUsd) }
+          : {}),
+        ...(parsed.allocations != null ? { allocations: parsed.allocations } : {}),
+      });
+      res.json(updated);
+    } catch (error: any) {
+      if (error instanceof z.ZodError) {
+        return res.status(400).json({ message: "Invalid portfolio", errors: error.errors });
+      }
+      res.status(500).json({ message: error.message || "Failed to update portfolio" });
+    }
+  });
+
+  app.delete("/api/portfolios/:id", requireAuth, async (req: any, res) => {
+    try {
+      const existing = await storage.getPortfolio(req.params.id);
+      if (!existing || existing.ownerId !== req.session.userId) {
+        return res.status(404).json({ message: "Portfolio not found" });
+      }
+      await storage.deletePortfolio(req.params.id);
+      res.status(204).end();
+    } catch (error: any) {
+      res.status(500).json({ message: error.message || "Failed to delete portfolio" });
+    }
+  });
+
+  app.get("/api/admin/fund-interests", requireRole("ADMIN"), async (_req: any, res) => {
+    try {
+      res.json(await storage.getAllFundInterests());
+    } catch (error: any) {
+      res.status(500).json({ message: error.message || "Failed to load fund interests" });
+    }
+  });
+
   app.get("/api/public/market/refresh-status", async (_req, res) => {
     try {
       const meta = await storage.getMarketplaceMeta("global");

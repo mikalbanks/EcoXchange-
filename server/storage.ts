@@ -31,6 +31,9 @@ import {
   type VerificationRun, type InsertVerificationRun,
   type AnomalyFlag, type InsertAnomalyFlag,
   type MarketplaceMeta, type InsertMarketplaceMeta,
+  type MarketplaceExternalLink,
+  type Portfolio, type InsertPortfolio, type PortfolioAllocation,
+  type FundInterest, type InsertFundInterest,
 } from "@shared/schema";
 
 export function hashPassword(password: string): string {
@@ -71,6 +74,16 @@ export interface IStorage {
   getChecklistByProject(projectId: string): Promise<DataRoomChecklistItem[]>;
   createChecklistItem(item: InsertDataRoomChecklistItem): Promise<DataRoomChecklistItem>;
   updateChecklistItem(id: string, updates: Partial<DataRoomChecklistItem>): Promise<DataRoomChecklistItem | undefined>;
+
+  getPortfolio(id: string): Promise<Portfolio | undefined>;
+  getPortfolioByShareToken(token: string): Promise<Portfolio | undefined>;
+  getPortfoliosByOwner(ownerId: string): Promise<Portfolio[]>;
+  createPortfolio(portfolio: InsertPortfolio): Promise<Portfolio>;
+  updatePortfolio(id: string, updates: Partial<Portfolio>): Promise<Portfolio | undefined>;
+  deletePortfolio(id: string): Promise<void>;
+
+  createFundInterest(interest: InsertFundInterest): Promise<FundInterest>;
+  getAllFundInterests(): Promise<FundInterest[]>;
 
   getInterestsByProject(projectId: string): Promise<InvestorInterest[]>;
   getInterestsByInvestor(investorId: string): Promise<InvestorInterest[]>;
@@ -167,6 +180,8 @@ export class MemStorage implements IStorage {
   private documents: Map<string, Document> = new Map();
   private checklistItems: Map<string, DataRoomChecklistItem> = new Map();
   private interests: Map<string, InvestorInterest> = new Map();
+  private portfolios: Map<string, Portfolio> = new Map();
+  private fundInterests: Map<string, FundInterest> = new Map();
   private approvalLogs: Map<string, ProjectApprovalLog> = new Map();
   private ppas: Map<string, Ppa> = new Map();
   private productionRecords: Map<string, EnergyProduction> = new Map();
@@ -267,8 +282,11 @@ export class MemStorage implements IStorage {
       siteControlStatus: "LEASE",
       feocAttested: true,
       ppaRate: "0",
-      monthlyDebtService: "22000.00",
-      monthlyOpex: "8500.00",
+      // Derived from the capital stack below.
+      monthlyDebtService: "0",
+      // $15/kW-year, the low end of the US utility-scale O&M range once land
+      // lease, insurance, asset management and inverter reserves are included.
+      monthlyOpex: "15000.00",
       reserveRate: "0.05",
       sgtScoreNrel: null,
       eiaActualMwh: null,
@@ -281,6 +299,13 @@ export class MemStorage implements IStorage {
       marketPpaSource: "CAISO_SP15_SPOT_PROXY",
       marketPpaBenchmarkUsdPerMwh: "64.4900",
       externalLinks: null,
+      imageUrl: null,
+      imageAlt: null,
+      imageCredit: null,
+      imageLicense: null,
+      arrayType: "SINGLE_AXIS_TRACKER",
+      commercialOperationDate: null,
+      contractTermRemainingYears: "20.00",
       createdAt: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000),
       updatedAt: new Date(),
     });
@@ -289,13 +314,15 @@ export class MemStorage implements IStorage {
     this.capitalStacks.set(proj1Id, {
       id: cs1Id,
       projectId: proj1Id,
-      totalCapex: "13800000",
+      // $1.45/W all-in for 12 MW of single-axis tracking in CAISO, which is
+      // where California utility-scale EPC plus interconnection actually lands.
+      totalCapex: "17400000",
       taxCreditType: "ITC",
-      taxCreditEstimated: "4140000",
+      taxCreditEstimated: "5220000",
       taxCreditTransferabilityReady: true,
-      equityNeeded: "9660000",
+      equityNeeded: "6090000",
       debtPlaceholder: "0",
-      notes: "30% ITC eligible. Transferability confirmed.",
+      notes: "30% ITC eligible. Transferability confirmed. Sponsor equity 35% of capex.",
     });
 
     // Generate checklist for project 1
@@ -399,6 +426,13 @@ export class MemStorage implements IStorage {
       marketPpaSource: "LEVELTEN_P25_PROXY",
       marketPpaBenchmarkUsdPerMwh: "64.4900",
       externalLinks: null,
+      imageUrl: null,
+      imageAlt: null,
+      imageCredit: null,
+      imageLicense: null,
+      arrayType: "SINGLE_AXIS_TRACKER",
+      commercialOperationDate: null,
+      contractTermRemainingYears: null,
       createdAt: new Date(Date.now() - 14 * 24 * 60 * 60 * 1000),
       updatedAt: new Date(),
     });
@@ -525,7 +559,9 @@ export class MemStorage implements IStorage {
       siteControlStatus: "OWNED",
       feocAttested: true,
       ppaRate: "0",
-      monthlyDebtService: "48000.00",
+      // Debt is derived from the capital stack below rather than asserted here,
+      // so the two can no longer disagree.
+      monthlyDebtService: "0",
       monthlyOpex: "18500.00",
       reserveRate: "0.04",
       sgtScoreNrel: null,
@@ -539,6 +575,13 @@ export class MemStorage implements IStorage {
       marketPpaSource: "CAISO_SP15_SPOT_PROXY",
       marketPpaBenchmarkUsdPerMwh: "64.4900",
       externalLinks: null,
+      imageUrl: null,
+      imageAlt: null,
+      imageCredit: null,
+      imageLicense: null,
+      arrayType: "SINGLE_AXIS_TRACKER",
+      commercialOperationDate: new Date(Date.UTC(2021, 9, 1)),
+      contractTermRemainingYears: "16.25",
       createdAt: new Date(Date.now() - 60 * 24 * 60 * 60 * 1000),
       updatedAt: new Date(),
     });
@@ -551,9 +594,9 @@ export class MemStorage implements IStorage {
       taxCreditType: "ITC",
       taxCreditEstimated: "9375000",
       taxCreditTransferabilityReady: true,
-      equityNeeded: "21875000",
-      debtPlaceholder: "0",
-      notes: "30% ITC eligible. Operational asset with verified production history. Transferability confirmed.",
+      equityNeeded: "14062500",
+      debtPlaceholder: "8562500",
+      notes: "30% ITC eligible. Operational asset with verified production history. Sponsor equity 45% of capex, balance senior debt plus ITC transfer.",
     });
 
     const checklist3 = generateChecklist(this.projects.get(proj3Id)!);
@@ -721,7 +764,7 @@ export class MemStorage implements IStorage {
       updatedAt: new Date(Date.now() - 1 * 24 * 60 * 60 * 1000),
     });
 
-    this.seedPipelinePortfolio(devId, adminId);
+    this.seedOperatingPortfolio(devId, adminId);
     this.seedInterconnectionQueueDemo();
   }
 
@@ -829,10 +872,32 @@ export class MemStorage implements IStorage {
   }
 
   /**
-   * ~22 additional pipeline projects so demo lists show a full institutional queue (~25 total with proj1–3).
+   * Marketplace inventory.
+   *
+   * Two tiers, because they answer different investor questions:
+   *
+   *  - OPERATING assets are acquisitions of built, metered, contracted plants.
+   *    They are what a yield investor is actually buying, and their denominator
+   *    is the acquisition price rather than greenfield capex. That is the whole
+   *    reason they can clear a 9% cash yield: an operating plant bought at
+   *    $0.68-1.50/W throws off 9-10% of purchase price in cash, whereas the same
+   *    plant built new at $1.45/W does not.
+   *
+   *  - DEVELOPMENT projects are pre-COD. Their yield is modeled at COD, not
+   *    distributed today, and the stage badge on the card says so.
+   *
+   * Every asset is underwritten from four inputs that are stated, not hidden:
+   * capacity factor (region + mounting), net contracted price, O&M per kW-year,
+   * and acquisition cost per watt. Names and locations are EcoXchange's own SPVs;
+   * where an asset's production profile is modeled on a published reference
+   * plant, that plant is named in `eiaReferencePlantName` and cited in
+   * `externalLinks` rather than being passed off as the asset itself.
+   *
+   * Assets that do not clear the hurdle stay listed at their real number.
+   * Hiding them would recreate exactly the credibility problem this replaced.
    */
-  private seedPipelinePortfolio(devId: string, adminId: string) {
-    type Row = {
+  private seedOperatingPortfolio(devId: string, adminId: string) {
+    type AssetRow = {
       id: string;
       name: string;
       state: string;
@@ -840,44 +905,359 @@ export class MemStorage implements IStorage {
       lat: string;
       lon: string;
       mw: number;
+      arrayType: "SINGLE_AXIS_TRACKER" | "FIXED_TILT" | "ROOFTOP";
+      offtaker: "UTILITY" | "C_AND_I" | "COMMUNITY_SOLAR" | "MERCHANT";
+      tech?: string;
+      /** COD for operating assets; null while pre-construction. */
+      cod: { y: number; m: number } | null;
       stage: string;
       status: "APPROVED" | "SUBMITTED" | "IN_REVIEW";
-      tech?: string;
+      contractYearsRemaining: number | null;
+      /** Net price the SPV receives, $/kWh, after any subscriber discount. */
+      ppaUsdPerKwh: number;
+      /** All-in O&M, insurance, asset management and land, $/kW-year. */
+      opexUsdPerKwYear: number;
+      /** Acquisition cost (operating) or build cost (development), $/W. */
+      costUsdPerW: number;
+      /** Share of cost funded by investor equity. 1.0 is an unlevered SPV. */
+      equityShare: number;
+      /** ITC only applies to new build; an acquired plant's credit is spent. */
+      itcEligible: boolean;
+      referencePlant: string | null;
+      links: MarketplaceExternalLink[] | null;
+      summary: string;
     };
 
-    const rows: Row[] = [
-      { id: "proj4", name: "Mojave Crest Solar", state: "California", county: "San Bernardino", lat: "35.0123", lon: "-116.1024", mw: 18.5, stage: "NTP", status: "APPROVED" },
-      { id: "proj5", name: "Rio Grande PV East", state: "Texas", county: "El Paso", lat: "31.8200", lon: "-106.4200", mw: 14.0, stage: "CONSTRUCTION", status: "APPROVED" },
-      { id: "proj6", name: "Sonoran Fields I", state: "Arizona", county: "Maricopa", lat: "33.4500", lon: "-112.0900", mw: 22.0, stage: "COD", status: "APPROVED" },
-      { id: "proj7", name: "Silver State South", state: "Nevada", county: "Clark", lat: "36.0800", lon: "-115.0300", mw: 30.0, stage: "NTP", status: "APPROVED" },
-      { id: "proj8", name: "High Desert Community Solar", state: "California", county: "Kern", lat: "35.3700", lon: "-119.0200", mw: 4.8, stage: "PRE_NTP", status: "APPROVED" },
-      { id: "proj9", name: "Front Range Solar Park", state: "Colorado", county: "Weld", lat: "40.4200", lon: "-104.7000", mw: 75.0, stage: "CONSTRUCTION", status: "APPROVED" },
-      { id: "proj10", name: "Gulf Breeze Energy Center", state: "Florida", county: "Polk", lat: "28.0400", lon: "-81.9500", mw: 42.0, stage: "NTP", status: "APPROVED" },
-      { id: "proj11", name: "Piedmont Tracking Array", state: "North Carolina", county: "Chatham", lat: "35.7200", lon: "-79.1800", mw: 55.0, stage: "COD", status: "APPROVED" },
-      { id: "proj12", name: "Columbia River West", state: "Oregon", county: "Gilliam", lat: "45.6800", lon: "-120.2100", mw: 110.0, stage: "NTP", status: "APPROVED" },
-      { id: "proj13", name: "Ozark Ridge Solar", state: "Missouri", county: "Greene", lat: "37.2100", lon: "-93.2900", mw: 12.0, stage: "PRE_NTP", status: "SUBMITTED" },
-      { id: "proj14", name: "Sunbelt Logistics Rooftop", state: "Georgia", county: "Fulton", lat: "33.7500", lon: "-84.3900", mw: 3.2, stage: "COD", status: "APPROVED" },
-      { id: "proj15", name: "Wasatch View Solar", state: "Utah", county: "Millard", lat: "39.3300", lon: "-112.3100", mw: 80.0, stage: "CONSTRUCTION", status: "APPROVED" },
-      { id: "proj16", name: "Coastal Plain I", state: "South Carolina", county: "Darlington", lat: "34.1000", lon: "-79.8700", mw: 65.0, stage: "NTP", status: "APPROVED" },
-      { id: "proj17", name: "Mesilla Valley Array", state: "New Mexico", county: "Doña Ana", lat: "32.2700", lon: "-106.7500", mw: 50.0, stage: "PRE_NTP", status: "IN_REVIEW" },
-      { id: "proj18", name: "Badlands Solar Reserve", state: "North Dakota", county: "Mercer", lat: "47.0500", lon: "-101.8200", mw: 128.0, stage: "NTP", status: "APPROVED" },
-      { id: "proj19", name: "Bluegrass Prairie PV", state: "Kentucky", county: "Warren", lat: "36.9900", lon: "-86.4500", mw: 35.0, stage: "CONSTRUCTION", status: "APPROVED" },
-      { id: "proj20", name: "Sierra Foothills C&I", state: "California", county: "Placer", lat: "38.9000", lon: "-121.2500", mw: 6.5, stage: "COD", status: "APPROVED" },
-      { id: "proj21", name: "Red Mesa Community", state: "Arizona", county: "Apache", lat: "35.4800", lon: "-109.0600", mw: 4.5, stage: "PRE_NTP", status: "APPROVED" },
-      { id: "proj22", name: "Lone Star West Utility", state: "Texas", county: "Reeves", lat: "31.3000", lon: "-103.6900", mw: 200.0, stage: "CONSTRUCTION", status: "APPROVED" },
-      { id: "proj23", name: "Everglades Edge Solar", state: "Florida", county: "Miami-Dade", lat: "25.6100", lon: "-80.4300", mw: 48.0, stage: "NTP", status: "SUBMITTED" },
-      { id: "proj24", name: "Prairie Wind & Sun Hybrid", state: "Kansas", county: "Ford", lat: "37.7500", lon: "-99.6400", mw: 150.0, stage: "PRE_NTP", status: "IN_REVIEW", tech: "SOLAR_STORAGE" },
-      { id: "proj25", name: "Columbia Basin East", state: "Washington", county: "Grant", lat: "47.0700", lon: "-119.3100", mw: 95.0, stage: "NTP", status: "APPROVED" },
+    const EIA_860: MarketplaceExternalLink = {
+      label: "EIA-860 generator data",
+      url: "https://www.eia.gov/electricity/data/eia860/",
+      source: "EIA",
+    };
+    const NREL_ATB: MarketplaceExternalLink = {
+      label: "NREL Annual Technology Baseline",
+      url: "https://atb.nrel.gov/",
+      source: "NREL",
+    };
+
+    const rows: AssetRow[] = [
+      // ─── Operating tier ────────────────────────────────────────────────────
+      {
+        id: "asset-kern-ridge",
+        name: "Kern Ridge C&I Portfolio",
+        state: "California",
+        county: "Kern",
+        lat: "35.3733",
+        lon: "-119.0187",
+        mw: 6.4,
+        arrayType: "ROOFTOP",
+        offtaker: "C_AND_I",
+        cod: { y: 2019, m: 6 },
+        stage: "COD",
+        status: "APPROVED",
+        contractYearsRemaining: 13.5,
+        // Behind-the-meter offtake prices against the host's retail bill, not
+        // the wholesale hub, which is why C&I rooftop out-yields utility-scale.
+        ppaUsdPerKwh: 0.115,
+        opexUsdPerKwYear: 22,
+        costUsdPerW: 1.2,
+        equityShare: 0.65,
+        itcEligible: false,
+        referencePlant: null,
+        links: [EIA_860],
+        summary:
+          "Nine rooftop arrays across four industrial tenants in Bakersfield, operating since 2019 with 13.5 years remaining on behind-the-meter PPAs. Acquired at $1.20/W with a 35% senior facility. Yield is paid from host billing, not merchant energy prices.",
+      },
+      {
+        id: "asset-greeley-9068",
+        name: "Greeley Tracker One",
+        state: "Colorado",
+        county: "Weld",
+        lat: "40.3864",
+        lon: "-104.5512",
+        mw: 4.738,
+        arrayType: "SINGLE_AXIS_TRACKER",
+        offtaker: "UTILITY",
+        cod: { y: 2018, m: 11 },
+        stage: "COD",
+        status: "APPROVED",
+        contractYearsRemaining: 12.0,
+        ppaUsdPerKwh: 0.0525,
+        opexUsdPerKwYear: 15,
+        costUsdPerW: 1.05,
+        equityShare: 1.0,
+        itcEligible: false,
+        referencePlant: "NREL PVDAQ Site 9068 - Greeley, CO",
+        links: [
+          {
+            label: "NREL PVDAQ public datasets (Site 9068)",
+            url: "https://data.openei.org/submissions/4568",
+            source: "NREL/OEDI",
+          },
+          {
+            label: "PVDAQ v3 API documentation",
+            url: "https://developer.nrel.gov/docs/solar/pvdaq-v3/",
+            source: "NREL",
+          },
+        ],
+        summary:
+          "4.74 MW single-axis tracking array outside Greeley, modeled on NREL PVDAQ Site 9068 - the same public research dataset the platform's SGT backtest engine validates against, at 10-second resolution. Unlevered SPV: every dollar of cash flow after O&M and reserves goes to members.",
+      },
+      {
+        id: "asset-hudson-valley",
+        name: "Hudson Valley Community Solar II",
+        state: "New York",
+        county: "Ulster",
+        lat: "41.9270",
+        lon: "-74.0221",
+        mw: 5.6,
+        arrayType: "FIXED_TILT",
+        offtaker: "COMMUNITY_SOLAR",
+        cod: { y: 2020, m: 9 },
+        stage: "COD",
+        status: "APPROVED",
+        contractYearsRemaining: 16.0,
+        // NY VDER value stack net of the 10% subscriber discount and subscriber
+        // management cost. Gross stack is higher; this is what the SPV keeps.
+        ppaUsdPerKwh: 0.128,
+        opexUsdPerKwYear: 30,
+        costUsdPerW: 1.3,
+        equityShare: 0.55,
+        itcEligible: false,
+        referencePlant: null,
+        links: [EIA_860],
+        summary:
+          "5.6 MW ground-mount community solar garden in the Hudson Valley with roughly 900 residential subscribers, compensated under NY's VDER value stack. The unlevered yield exceeds the senior debt constant, so the 45% facility is accretive to cash yield rather than dilutive.",
+      },
+      {
+        id: "asset-pecos-mesa",
+        name: "Pecos Mesa Tracker",
+        state: "Texas",
+        county: "Reeves",
+        lat: "31.3005",
+        lon: "-103.6890",
+        mw: 22,
+        arrayType: "SINGLE_AXIS_TRACKER",
+        offtaker: "UTILITY",
+        cod: { y: 2018, m: 4 },
+        stage: "COD",
+        status: "APPROVED",
+        contractYearsRemaining: 11.0,
+        ppaUsdPerKwh: 0.0465,
+        opexUsdPerKwYear: 14,
+        costUsdPerW: 0.95,
+        equityShare: 1.0,
+        itcEligible: false,
+        referencePlant: null,
+        links: [EIA_860, NREL_ATB],
+        summary:
+          "22 MW single-axis tracker in the Permian with 11 years left on an investment-grade PPA. Acquired at $0.95/W - a discount to replacement cost that reflects the shorter contract tail, and the reason the cash yield clears the hurdle. Merchant exposure begins in year 12.",
+      },
+      {
+        id: "asset-sonoran-mesa",
+        name: "Sonoran Mesa I",
+        state: "Arizona",
+        county: "Pinal",
+        lat: "32.8795",
+        lon: "-111.7574",
+        mw: 18,
+        arrayType: "SINGLE_AXIS_TRACKER",
+        offtaker: "UTILITY",
+        cod: { y: 2021, m: 3 },
+        stage: "COD",
+        status: "APPROVED",
+        contractYearsRemaining: 19.0,
+        ppaUsdPerKwh: 0.0435,
+        opexUsdPerKwYear: 14,
+        costUsdPerW: 1.05,
+        equityShare: 1.0,
+        itcEligible: false,
+        referencePlant: null,
+        links: [EIA_860],
+        summary:
+          "18 MW in Pinal County on the best irradiance in the portfolio, with 19 years of contract left. It does not clear the 9% hurdle: the long, cheap PPA that makes it the lowest-risk asset here is exactly what caps its cash yield. Listed at its real number as the stability sleeve of a blended portfolio.",
+      },
+      {
+        id: "asset-piedmont",
+        name: "Piedmont Fixed-Tilt Portfolio",
+        state: "North Carolina",
+        county: "Chatham",
+        lat: "35.7215",
+        lon: "-79.1780",
+        mw: 12,
+        arrayType: "FIXED_TILT",
+        offtaker: "UTILITY",
+        cod: { y: 2016, m: 8 },
+        stage: "COD",
+        status: "APPROVED",
+        contractYearsRemaining: 6.5,
+        ppaUsdPerKwh: 0.051,
+        opexUsdPerKwYear: 15,
+        costUsdPerW: 0.68,
+        equityShare: 1.0,
+        itcEligible: false,
+        referencePlant: null,
+        links: [EIA_860],
+        summary:
+          "Three fixed-tilt farms in the Carolinas, operating since 2016, with 6.5 years remaining under the utility's avoided-cost tariff. Acquired at $0.68/W. High current yield, short contract tail: the terminal value depends on a recontracting decision in 2032, which is the risk being paid for.",
+      },
+      {
+        id: "asset-front-range",
+        name: "Front Range Solar Garden",
+        state: "Colorado",
+        county: "Weld",
+        lat: "40.4233",
+        lon: "-104.7091",
+        mw: 4.2,
+        arrayType: "FIXED_TILT",
+        offtaker: "COMMUNITY_SOLAR",
+        cod: { y: 2019, m: 5 },
+        stage: "COD",
+        status: "APPROVED",
+        contractYearsRemaining: 14.0,
+        ppaUsdPerKwh: 0.085,
+        opexUsdPerKwYear: 26,
+        costUsdPerW: 1.3,
+        equityShare: 1.0,
+        itcEligible: false,
+        referencePlant: null,
+        links: [EIA_860],
+        summary:
+          "4.2 MW community solar garden serving municipal and residential subscribers on the Front Range. Unlevered, 14 years of subscription term remaining, and geographically adjacent to Greeley Tracker One - which is a correlation the portfolio builder will flag rather than hide.",
+      },
+      {
+        id: "asset-bay-state",
+        name: "Bay State C&I Rooftop Portfolio",
+        state: "Massachusetts",
+        county: "Worcester",
+        lat: "42.2626",
+        lon: "-71.8023",
+        mw: 3.8,
+        arrayType: "ROOFTOP",
+        offtaker: "C_AND_I",
+        cod: { y: 2020, m: 2 },
+        stage: "COD",
+        status: "APPROVED",
+        contractYearsRemaining: 14.5,
+        // SMART tariff plus net metering credits against a high retail rate.
+        ppaUsdPerKwh: 0.145,
+        opexUsdPerKwYear: 28,
+        costUsdPerW: 1.5,
+        equityShare: 0.6,
+        itcEligible: false,
+        referencePlant: null,
+        links: [EIA_860],
+        summary:
+          "3.8 MW across eleven commercial rooftops in central Massachusetts under the SMART tariff. The weakest resource in the portfolio at a 15% capacity factor, and the highest revenue per kWh - a useful demonstration that yield tracks price and structure, not sunshine.",
+      },
+
+      // ─── Development tier (pre-COD, modeled at COD) ────────────────────────
+      {
+        id: "asset-mojave-crest",
+        name: "Mojave Crest Solar",
+        state: "California",
+        county: "San Bernardino",
+        lat: "35.0123",
+        lon: "-116.1024",
+        mw: 18.5,
+        arrayType: "SINGLE_AXIS_TRACKER",
+        offtaker: "UTILITY",
+        cod: null,
+        stage: "NTP",
+        status: "APPROVED",
+        contractYearsRemaining: 20,
+        ppaUsdPerKwh: 0.0455,
+        opexUsdPerKwYear: 15,
+        costUsdPerW: 1.42,
+        equityShare: 0.35,
+        itcEligible: true,
+        referencePlant: null,
+        links: [NREL_ATB],
+        summary:
+          "18.5 MW at notice-to-proceed in San Bernardino County. Pre-COD: the figures below are modeled at commercial operation and are not being distributed today. Construction and completion risk are not priced into a cash-yield metric.",
+      },
+      {
+        id: "asset-rio-grande",
+        name: "Rio Grande PV East",
+        state: "Texas",
+        county: "El Paso",
+        lat: "31.8200",
+        lon: "-106.4200",
+        mw: 14,
+        arrayType: "SINGLE_AXIS_TRACKER",
+        offtaker: "COMMUNITY_SOLAR",
+        cod: null,
+        stage: "CONSTRUCTION",
+        status: "APPROVED",
+        contractYearsRemaining: 20,
+        // ERCOT has no premium community solar programme; the subscription
+        // price sits close to the wholesale index, not to a NY-style value stack.
+        ppaUsdPerKwh: 0.0575,
+        opexUsdPerKwYear: 18,
+        costUsdPerW: 1.45,
+        equityShare: 0.35,
+        itcEligible: true,
+        referencePlant: null,
+        links: [NREL_ATB],
+        summary:
+          "14 MW under construction outside El Paso, contracted to a community solar programme. Pre-COD - modeled at commercial operation, targeting first distribution the quarter after energization.",
+      },
+      {
+        id: "asset-ozark-ridge",
+        name: "Ozark Ridge Solar",
+        state: "Missouri",
+        county: "Greene",
+        lat: "37.2100",
+        lon: "-93.2900",
+        mw: 12,
+        arrayType: "FIXED_TILT",
+        offtaker: "C_AND_I",
+        cod: null,
+        stage: "PRE_NTP",
+        status: "SUBMITTED",
+        contractYearsRemaining: null,
+        ppaUsdPerKwh: 0.0685,
+        opexUsdPerKwYear: 17,
+        costUsdPerW: 1.35,
+        equityShare: 0.35,
+        itcEligible: true,
+        referencePlant: null,
+        links: null,
+        summary:
+          "12 MW in southwest Missouri, pre-NTP with site control under option. Submitted for review, not yet listed to investors.",
+      },
+      {
+        id: "asset-prairie-hybrid",
+        name: "Prairie Wind & Sun Hybrid",
+        state: "Kansas",
+        county: "Ford",
+        lat: "37.7500",
+        lon: "-99.6400",
+        mw: 150,
+        arrayType: "SINGLE_AXIS_TRACKER",
+        offtaker: "UTILITY",
+        tech: "SOLAR_STORAGE",
+        cod: null,
+        stage: "PRE_NTP",
+        status: "IN_REVIEW",
+        contractYearsRemaining: null,
+        ppaUsdPerKwh: 0.0415,
+        opexUsdPerKwYear: 16,
+        costUsdPerW: 1.55,
+        equityShare: 0.35,
+        itcEligible: true,
+        referencePlant: null,
+        links: null,
+        summary:
+          "150 MW solar-plus-storage in southwest Kansas, in review. Storage economics are not yet reflected in the energy-only figures below.",
+      },
     ];
 
     let i = 0;
     for (const r of rows) {
-      const mwStr = r.mw.toFixed(2);
-      const kwStr = String(Math.round(r.mw * 1000));
-      const apyBase = 7.2 + (i % 12) * 0.18;
-      const valConf = 78 + (i % 18);
-      const mppaSources = ["CAISO_NP15_SPOT_PROXY", "CAISO_SP15_SPOT_PROXY", "LEVELTEN_P25_PROXY"] as const;
-      const mppa = mppaSources[i % 3];
+      const capacityKw = Math.round(r.mw * 1000);
+      const totalCost = Math.round(r.mw * 1_000_000 * r.costUsdPerW);
+      const monthlyOpex = Math.round((capacityKw * r.opexUsdPerKwYear) / 12);
+      const isOperating = r.cod != null;
 
       this.projects.set(r.id, {
         id: r.id,
@@ -890,46 +1270,61 @@ export class MemStorage implements IStorage {
         county: r.county,
         latitude: r.lat,
         longitude: r.lon,
-        capacityMW: mwStr,
-        capacityKw: kwStr,
+        capacityMW: r.mw.toFixed(2),
+        capacityKw: String(capacityKw),
         status: r.status,
-        summary: `Institutional pipeline project (${r.state}). NSRDB 4km validation; market-based PPA reference where no fixed PPA is recorded.`,
-        offtakerType: i % 4 === 0 ? "UTILITY" : i % 4 === 1 ? "C_AND_I" : "COMMUNITY_SOLAR",
-        interconnectionStatus: r.stage === "COD" ? "IA_EXECUTED" : "STUDY",
+        summary: r.summary,
+        offtakerType: r.offtaker,
+        interconnectionStatus: isOperating ? "IA_EXECUTED" : r.stage === "PRE_NTP" ? "STUDY" : "IA_EXECUTED",
         permittingStatus: r.stage === "PRE_NTP" ? "IN_PROGRESS" : "APPROVED",
-        siteControlStatus: r.stage === "PRE_NTP" ? "LOI" : "LEASE",
+        siteControlStatus: r.stage === "PRE_NTP" ? "OPTION" : isOperating ? "OWNED" : "LEASE",
         feocAttested: true,
-        ppaRate: "0",
-        monthlyDebtService: String(Math.round(r.mw * 1800)),
-        monthlyOpex: String(Math.round(r.mw * 650)),
+        // A contracted price on the books resolves as KNOWN rather than falling
+        // through to the wholesale index, which is what made every listing look
+        // identical before.
+        ppaRate: r.ppaUsdPerKwh.toFixed(4),
+        // Debt is derived from the capital stack below, not asserted here.
+        monthlyDebtService: "0",
+        monthlyOpex: String(monthlyOpex),
         reserveRate: "0.05",
-        sgtScoreNrel: String((0.72 + (i % 20) * 0.008).toFixed(4)),
+        sgtScoreNrel: isOperating ? String((0.78 + (i % 10) * 0.012).toFixed(4)) : null,
         eiaActualMwh: null,
-        validationConfidence: String(valConf.toFixed(2)),
+        validationConfidence: isOperating ? String((84 + (i % 12)).toFixed(2)) : "70.00",
         eiaPlantCode: null,
         eiaGeneratorId: null,
-        eiaReferencePlantName: null,
+        eiaReferencePlantName: r.referencePlant,
         queueEntryId: null,
-        financialApyPct: String(apyBase.toFixed(4)),
-        marketPpaSource: mppa,
+        financialApyPct: null,
+        marketPpaSource: "FIXED_PPA",
         marketPpaBenchmarkUsdPerMwh: "64.4900",
-        externalLinks: null,
+        externalLinks: r.links,
+        imageUrl: null,
+        imageAlt: null,
+        imageCredit: null,
+        imageLicense: null,
+        arrayType: r.arrayType,
+        commercialOperationDate: r.cod ? new Date(Date.UTC(r.cod.y, r.cod.m - 1, 1)) : null,
+        contractTermRemainingYears:
+          r.contractYearsRemaining != null ? r.contractYearsRemaining.toFixed(2) : null,
         createdAt: new Date(Date.now() - (30 + i) * 24 * 60 * 60 * 1000),
         updatedAt: new Date(),
       });
 
-      const capex = Math.round(r.mw * 1_000_000 * 1.12);
       const csId = randomUUID();
       this.capitalStacks.set(r.id, {
         id: csId,
         projectId: r.id,
-        totalCapex: String(capex),
-        taxCreditType: "ITC",
-        taxCreditEstimated: String(Math.round(capex * 0.3)),
-        taxCreditTransferabilityReady: true,
-        equityNeeded: String(Math.round(capex * 0.35)),
-        debtPlaceholder: "0",
-        notes: "Demo capital stack for pipeline preview.",
+        totalCapex: String(totalCost),
+        taxCreditType: r.itcEligible ? "ITC" : "NONE",
+        // An operating acquisition carries no credit: the original owner
+        // claimed it at COD. Modeling one would overstate the yield.
+        taxCreditEstimated: r.itcEligible ? String(Math.round(totalCost * 0.3)) : "0",
+        taxCreditTransferabilityReady: r.itcEligible,
+        equityNeeded: String(Math.round(totalCost * r.equityShare)),
+        debtPlaceholder: String(Math.round(totalCost * (1 - r.equityShare))),
+        notes: isOperating
+          ? `Acquisition at $${r.costUsdPerW.toFixed(2)}/W. Investor equity ${(r.equityShare * 100).toFixed(0)}% of purchase price.`
+          : `Build cost $${r.costUsdPerW.toFixed(2)}/W. Sponsor equity ${(r.equityShare * 100).toFixed(0)}% of capex, balance from senior debt and ITC transfer.`,
       });
 
       const checklistDef = generateChecklist(this.projects.get(r.id)!);
@@ -968,7 +1363,9 @@ export class MemStorage implements IStorage {
           projectId: r.id,
           adminId,
           action: "APPROVE",
-          notes: "Seeded for institutional pipeline demo.",
+          notes: isOperating
+            ? "Operating asset: production metered, contract diligenced."
+            : "Development asset approved for pre-COD listing.",
           createdAt: new Date(Date.now() - (20 + i) * 24 * 60 * 60 * 1000),
         });
       }
@@ -1006,14 +1403,22 @@ export class MemStorage implements IStorage {
     const monthlyProdIds: string[] = [];
     const monthlyMwh: number[] = [];
 
+    // Generate the *trailing* twelve months rather than the previous calendar
+    // year. Consumers that ask for "last 12 months of production" (the
+    // marketplace, the performance page) were only ever seeing the half of a
+    // calendar year that happened to fall inside the window, which halved the
+    // apparent capacity factor of every metered asset.
     for (let m = 0; m < 12; m++) {
-      const periodStart = new Date(now.getFullYear() - 1, m, 1);
-      const periodEnd = new Date(now.getFullYear() - 1, m + 1, 0);
+      const monthAnchor = new Date(now.getFullYear(), now.getMonth() - 12 + m, 1);
+      const year = monthAnchor.getFullYear();
+      const month = monthAnchor.getMonth();
+      const periodStart = new Date(year, month, 1);
+      const periodEnd = new Date(year, month + 1, 0);
       const daysInMonth = periodEnd.getDate();
       let totalMonthMwh = 0;
 
       for (let d = 1; d <= daysInMonth; d++) {
-        const date = new Date(now.getFullYear() - 1, m, d);
+        const date = new Date(year, month, d);
         const dayOfYear = Math.floor((date.getTime() - new Date(date.getUTCFullYear(), 0, 0).getTime()) / 86400000);
         const cloudFactor = 0.7 + 0.3 * rng();
         const tempDerate = 0.95 + 0.05 * rng();
@@ -1033,8 +1438,8 @@ export class MemStorage implements IStorage {
           const productionMwh = productionKw / 1000;
           totalMonthMwh += productionMwh;
 
-          const hourStart = new Date(Date.UTC(now.getFullYear() - 1, m, d, h, 0, 0));
-          const hourEnd = new Date(Date.UTC(now.getFullYear() - 1, m, d, h + 1, 0, 0));
+          const hourStart = new Date(Date.UTC(year, month, d, h, 0, 0));
+          const hourEnd = new Date(Date.UTC(year, month, d, h + 1, 0, 0));
           const cf = productionKw / capacityKw;
 
           const prodId = randomUUID();
@@ -1076,12 +1481,12 @@ export class MemStorage implements IStorage {
       this.distributions.set(distId, {
         id: distId,
         projectId,
-        periodLabel: `${months[m]} ${now.getFullYear() - 1}`,
+        periodLabel: `${months[month]} ${year}`,
         totalDistributable: dist.totalDistributable.toString(),
         investorShare: dist.investorShare.toString(),
         platformFee: dist.platformFee.toString(),
         status: m < 11 ? "DISTRIBUTED" : "APPROVED",
-        distributedAt: m < 11 ? new Date(now.getFullYear() - 1, m + 1, 15) : null,
+        distributedAt: m < 11 ? new Date(year, month + 1, 15) : null,
         createdAt: periodEnd,
       });
     }
@@ -1180,6 +1585,13 @@ export class MemStorage implements IStorage {
       marketPpaSource: project.marketPpaSource || null,
       marketPpaBenchmarkUsdPerMwh: project.marketPpaBenchmarkUsdPerMwh || null,
       externalLinks: (project.externalLinks ?? null) as any,
+      imageUrl: project.imageUrl || null,
+      imageAlt: project.imageAlt || null,
+      imageCredit: project.imageCredit || null,
+      imageLicense: project.imageLicense || null,
+      arrayType: project.arrayType || null,
+      commercialOperationDate: project.commercialOperationDate || null,
+      contractTermRemainingYears: project.contractTermRemainingYears || null,
       createdAt: new Date(),
       updatedAt: new Date(),
     };
@@ -1316,6 +1728,77 @@ export class MemStorage implements IStorage {
     const updated = { ...item, ...updates };
     this.checklistItems.set(id, updated);
     return updated;
+  }
+
+  // ─── Portfolios ─────────────────────────────────────────────────
+
+  async getPortfolio(id: string): Promise<Portfolio | undefined> {
+    return this.portfolios.get(id);
+  }
+
+  async getPortfolioByShareToken(token: string): Promise<Portfolio | undefined> {
+    return Array.from(this.portfolios.values()).find((p) => p.shareToken === token);
+  }
+
+  async getPortfoliosByOwner(ownerId: string): Promise<Portfolio[]> {
+    return Array.from(this.portfolios.values())
+      .filter((p) => p.ownerId === ownerId)
+      .sort((a, b) => (b.updatedAt?.getTime() ?? 0) - (a.updatedAt?.getTime() ?? 0));
+  }
+
+  async createPortfolio(portfolio: InsertPortfolio): Promise<Portfolio> {
+    const id = randomUUID();
+    const now = new Date();
+    const created: Portfolio = {
+      id,
+      ownerId: portfolio.ownerId ?? null,
+      name: portfolio.name || "Untitled portfolio",
+      targetCheckSizeUsd: portfolio.targetCheckSizeUsd ?? "100000",
+      allocations: (portfolio.allocations ?? []) as PortfolioAllocation[],
+      shareToken: randomUUID().replace(/-/g, ""),
+      createdAt: now,
+      updatedAt: now,
+    };
+    this.portfolios.set(id, created);
+    return created;
+  }
+
+  async updatePortfolio(id: string, updates: Partial<Portfolio>): Promise<Portfolio | undefined> {
+    const existing = this.portfolios.get(id);
+    if (!existing) return undefined;
+    // shareToken and id are immutable: a shared link must keep resolving.
+    const { id: _id, shareToken: _token, ...safe } = updates;
+    const updated = { ...existing, ...safe, updatedAt: new Date() };
+    this.portfolios.set(id, updated);
+    return updated;
+  }
+
+  async deletePortfolio(id: string): Promise<void> {
+    this.portfolios.delete(id);
+  }
+
+  async createFundInterest(interest: InsertFundInterest): Promise<FundInterest> {
+    const id = randomUUID();
+    const created: FundInterest = {
+      id,
+      userId: interest.userId ?? null,
+      email: interest.email,
+      checkSizeUsd: interest.checkSizeUsd ?? null,
+      accreditationStatus: interest.accreditationStatus || "UNKNOWN",
+      riskPreference: interest.riskPreference || "BALANCED",
+      message: interest.message ?? null,
+      sourcePortfolioId: interest.sourcePortfolioId ?? null,
+      status: interest.status || "SUBMITTED",
+      createdAt: new Date(),
+    };
+    this.fundInterests.set(id, created);
+    return created;
+  }
+
+  async getAllFundInterests(): Promise<FundInterest[]> {
+    return Array.from(this.fundInterests.values()).sort(
+      (a, b) => (b.createdAt?.getTime() ?? 0) - (a.createdAt?.getTime() ?? 0),
+    );
   }
 
   // ─── Investor Interest ──────────────────────────────────────────
