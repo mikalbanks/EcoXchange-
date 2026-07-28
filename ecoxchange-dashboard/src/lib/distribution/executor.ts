@@ -16,6 +16,7 @@
 
 import { isLiveDistributionEnabled } from "../../config/contracts.js";
 import { ENGINE_VERSION } from "../../config/engine.js";
+import { DEMO_OFFERING } from "../../data/demo-offering.js";
 import { DEMO_HOLDERS, holderAmountUsd } from "../../data/demo-wallets.js";
 import demoSavannah from "../../data/demo-savannah.json";
 import { runSimulatedStep } from "./simulated-run.js";
@@ -42,7 +43,7 @@ export interface DistributionRun {
   period: string; // "2024-12"
   totalUsd: number;
   recipientCount: number;
-  userShareUsd: number; // "Your Wallet" (2%) amount
+  userShareUsd: number; // "Your Wallet" (0.4%) amount
   oracleTxHash: string;
   distributionTxHash: string;
   blockNumber: number;
@@ -59,10 +60,11 @@ export const DEMO_DISTRIBUTION = {
   period: latestRecord.period_start.slice(0, 7),
   periodStartUnix: Math.floor(Date.parse(`${latestRecord.period_start}T00:00:00Z`) / 1000),
   /**
-   * Monthly pool for the whole project. The demo investor persona holds 2%
-   * (200 bps), receiving $354.00 — consistent with Portfolio's Monthly Yield.
+   * Monthly pool for the whole project — the 7.0% target cash yield on the
+   * $2.5M raise. The demo investor persona holds 0.4% (40 bps), receiving
+   * $58.33, consistent with Portfolio's Monthly Yield (data/demo-offering.ts).
    */
-  totalPoolUsd: 17700,
+  totalPoolUsd: DEMO_OFFERING.offering_distributions.monthly_total_usd,
   verifiedKwh: latestRecord.inverter_kwh,
   expectedKwh: latestRecord.expected_kwh,
   utilityKwh: latestRecord.utility_kwh,

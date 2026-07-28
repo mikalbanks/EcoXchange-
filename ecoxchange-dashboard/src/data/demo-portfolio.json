@@ -1,8 +1,8 @@
 {
   "portfolio": {
-    "total_invested": 50000,
-    "monthly_yield_usd": 354,
-    "lifetime_yield_usd": 4248,
+    "total_invested": 10000,
+    "monthly_yield_usd": 58.33,
+    "lifetime_yield_usd": 699.96,
     "active_projects": 1
   },
   "projects": [
@@ -15,8 +15,8 @@
       "latest_verification": "verified",
       "latest_period": "2024-12-01",
       "ytd_production_mwh": 8102.8,
-      "monthly_yield_usd": 354,
-      "investor_share_pct": 2.0
+      "monthly_yield_usd": 58.33,
+      "investor_share_pct": 0.4
     }
   ]
 }

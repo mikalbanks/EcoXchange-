@@ -15,11 +15,13 @@ import {
   StatCardSkeleton,
   TableSkeleton,
 } from "../../components/shared/LoadingState.js";
+import { DEMO_OFFERING } from "../../data/demo-offering.js";
 import { formatPct, formatUsd } from "../../utils/formatters.js";
 import type { ProjectBundle } from "../../utils/types.js";
 
-const INVESTOR_SHARE_PCT = 2.0;
-const INVESTOR_TOTAL_INVESTED = 50_000;
+// Canonical demo position (data/demo-offering.ts) — 100 ESN, $10,000, 0.4%.
+const INVESTOR_SHARE_PCT = DEMO_OFFERING.demo_investor.ownership_pct;
+const INVESTOR_TOTAL_INVESTED = DEMO_OFFERING.demo_investor.position_value_usd;
 
 export function YieldHistory() {
   const { id = "" } = useParams();

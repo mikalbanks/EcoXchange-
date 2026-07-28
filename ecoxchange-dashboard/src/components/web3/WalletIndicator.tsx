@@ -1,15 +1,19 @@
 import { useEffect, useRef, useState } from "react";
 import { ChevronDown, Copy, ExternalLink } from "lucide-react";
 import { activeNetwork } from "../../config/contracts.js";
+import { DEMO_OFFERING } from "../../data/demo-offering.js";
+import { formatUsd } from "../../utils/formatters.js";
 
-// Demo wallet state (Spec 03 §3.1). When Privy lands, this becomes real wallet
-// state; the visual contract stays identical. Balances mirror the canonical
-// demo dataset (100 ESN Savannah Solar I holding, $10,000 cost basis).
+// Demo wallet state (Spec 03 §3.1). When real wallets land, this becomes live
+// wallet state; the visual contract stays identical. Balances derive from the
+// canonical demo dataset (data/demo-offering.ts): a 100 ESN Savannah Solar I
+// holding on a $10,000 cost basis, paid 12 monthly distributions.
+const DEMO_INVESTOR = DEMO_OFFERING.demo_investor;
 const DEMO_WALLET = {
   address: "0xDe302026a11B04D35C0FfEE00000000000001234",
   shortLabel: "0xDemo…1234",
-  esnBalance: "100 ESN · Savannah Solar I",
-  usdcBalance: "$4,248.00 USDC",
+  esnBalance: `${DEMO_INVESTOR.tokens_held} ESN · Savannah Solar I`,
+  usdcBalance: `${formatUsd(DEMO_INVESTOR.lifetime_distributions_usd, true)} USDC`,
 };
 
 /**

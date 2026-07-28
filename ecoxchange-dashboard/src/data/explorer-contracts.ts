@@ -1,9 +1,12 @@
 // Contract card definitions for the Smart Contract Explorer (Spec 08).
-// Stats echo the demo world: 5,000 ESN at $100 (the demo investor's 100 ESN
-// = 2.0%), 12 verified holders, $4,248 USDC distributed, engine v2.0.0.
+// Stats echo the canonical demo world (data/demo-offering.ts): 25,000 ESN at
+// $100 (the demo investor's 100 ESN = 0.4%), 12 verified holders, the 12-month
+// distribution total, engine v2.0.0.
 import type { LucideIcon } from "lucide-react";
 import { ArrowRightLeft, Coins, Radio, ShieldCheck } from "lucide-react";
 import { activeNetwork, isDeployed } from "../config/contracts.js";
+import { DEMO_OFFERING } from "./demo-offering.js";
+import { formatUsd } from "../utils/formatters.js";
 
 export type ContractStatus = "deployed" | "pending" | "not_deployed";
 
@@ -33,10 +36,10 @@ export const explorerContracts: ExplorerContract[] = [
     status: statusOf(activeNetwork.contracts.token),
     icon: Coins,
     stats: [
-      { label: "Total Supply", value: "5,000 ESN" },
+      { label: "Total Supply", value: `${DEMO_OFFERING.total_tokens.toLocaleString("en-US")} ESN` },
       { label: "Holders", value: "12" },
-      { label: "Min Investment", value: "$10,000" },
-      { label: "Token Price", value: "$100.00" },
+      { label: "Min Investment", value: formatUsd(DEMO_OFFERING.minimum_investment_usd) },
+      { label: "Token Price", value: formatUsd(DEMO_OFFERING.token_price_usd, true) },
     ],
   },
   {
@@ -65,9 +68,11 @@ export const explorerContracts: ExplorerContract[] = [
     status: statusOf(activeNetwork.contracts.distributionContract),
     icon: ArrowRightLeft,
     stats: [
-      { label: "Total Distributed", value: "$4,248 USDC" },
+      // Contract-wide totals across all 12 holders, not the demo investor's
+      // position — 12 monthly pools at the canonical rate.
+      { label: "Total Distributed", value: `${formatUsd(DEMO_OFFERING.offering_distributions.annual_total_usd)} USDC` },
       { label: "Distribution Count", value: "12" },
-      { label: "Avg Monthly", value: "$354 USDC" },
+      { label: "Avg Monthly", value: `${formatUsd(DEMO_OFFERING.offering_distributions.monthly_total_usd)} USDC` },
       { label: "Settlement", value: "USDC on Base" },
     ],
   },

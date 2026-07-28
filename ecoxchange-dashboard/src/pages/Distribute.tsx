@@ -18,6 +18,7 @@ import {
   type SimStepId,
   type StepState,
 } from "../lib/distribution/executor.js";
+import { DEMO_OFFERING } from "../data/demo-offering.js";
 import { DEMO_HOLDERS, holderAmountUsd } from "../data/demo-wallets.js";
 import { activeNetwork, shortAddress } from "../config/contracts.js";
 import { useNotifications } from "../context/NotificationContext.js";
@@ -146,7 +147,8 @@ export function Distribute() {
             />
           </p>
           <p className="text-sm text-textMuted">
-            Recipients: {DEMO_HOLDERS.length} verified holders · Your share (2.0%):{" "}
+            Recipients: {DEMO_HOLDERS.length} verified holders · Your share (
+            {DEMO_OFFERING.demo_investor.ownership_pct}%):{" "}
             <YieldDisclosure value={formatUsd(userShare, true)} type="cash_distribution" basis="modeled" />
           </p>
         </div>

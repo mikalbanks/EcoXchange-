@@ -14,6 +14,7 @@ import { SliderInput } from "../calculator/SliderInput.js";
 import { YieldDisclosure } from "../../compliance/components/YieldDisclosure.js";
 import { ProjectionDisclosure } from "../../compliance/components/ProjectionDisclosure.js";
 import { DataSourceAttribution } from "../../compliance/components/DataSourceAttribution.js";
+import { DEMO_OFFERING } from "../../data/demo-offering.js";
 import { computeProForma, type ProFormaInputs } from "../../utils/proforma.js";
 import { palette } from "../../config/palette.js";
 import { ENGINE_VERSION } from "../../config/engine.js";
@@ -36,7 +37,9 @@ function compactUsd(n: number): string {
  */
 export function YieldCalculator() {
   const [inputs, setInputs] = useState<ProFormaInputs>({
-    investmentUsd: 50_000,
+    // Opens on the canonical demo position so the calculator's first render
+    // agrees with the Portfolio and distribution figures on screen.
+    investmentUsd: DEMO_OFFERING.demo_investor.position_value_usd,
     holdingPeriodYears: 20,
     includeItc: true,
   });

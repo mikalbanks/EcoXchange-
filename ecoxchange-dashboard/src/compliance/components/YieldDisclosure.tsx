@@ -9,7 +9,7 @@ export type YieldType =
 export type YieldBasis = "modeled" | "backtest" | "projected" | "actual";
 
 interface YieldDisclosureProps {
-  /** The formatted yield value, e.g. "$354" or "8.5%" — rendered if no children. */
+  /** The formatted yield value, e.g. "$58.33" or "7.0%" — rendered if no children. */
   value: string;
   type: YieldType;
   basis: YieldBasis;

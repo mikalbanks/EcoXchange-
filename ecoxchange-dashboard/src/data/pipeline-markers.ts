@@ -2,6 +2,7 @@
 // spec §1.2). One active project (Savannah, verified) plus target-state
 // programs identified from DSIRE program analysis. Yields are modeled
 // estimates and must carry disclosure marks wherever rendered.
+import { DEMO_OFFERING } from "./demo-offering.js";
 
 export type MarkerStatus = "active" | "pipeline" | "target_market";
 
@@ -28,7 +29,9 @@ export const PIPELINE_MARKERS: ProjectMarker[] = [
     capacityKw: 5000,
     status: "active",
     program: "GA Community Solar",
-    estimatedYield: "~8.5%",
+    // Target cash yield from the canonical offering — the same 7.0% the
+    // Portfolio, distributions, and pro-forma surfaces pay out on.
+    estimatedYield: `~${DEMO_OFFERING.target_annual_yield_pct.toFixed(1)}%`,
     verificationStatus: "VERIFIED",
     projectPath: "/investor/project/demo-savannah-5mw",
   },

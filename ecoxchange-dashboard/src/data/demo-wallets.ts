@@ -1,8 +1,11 @@
-// Demo holder wallets for the distribution simulation. Used whenever Privy
-// embedded wallets are not configured (the current default). Shares are
-// basis points and sum to exactly 10000 (100%). Holder 1 is the demo
-// investor persona ("Your Wallet", 2% — matching the canonical demo dataset:
-// 100 ESN, $354.00/month at a $17,700 monthly pool).
+// Demo holder wallets for the distribution simulation. Used whenever embedded
+// wallets are not configured (the current default). Shares are basis points and
+// sum to exactly 10000 (100%). Holder 1 is the demo investor persona ("Your
+// Wallet") at DEMO_OFFERING.demo_investor.ownership_bps — 40 bps, which is
+// 100 ESN of the 25,000 ESN supply, paying $58.33 of the $14,583.33 monthly
+// pool. Investor 12 absorbs the remainder so the book still closes at 100%.
+
+import { DEMO_OFFERING } from "./demo-offering.js";
 
 export interface DemoHolder {
   address: string;
@@ -11,8 +14,11 @@ export interface DemoHolder {
   label: string;
 }
 
-export const DEMO_HOLDERS: DemoHolder[] = [
-  { address: "0x1111111111111111111111111111111111111111", name: "Demo Investor 1",  shareBps: 200,  label: "Your Wallet" },
+const YOUR_WALLET_BPS = DEMO_OFFERING.demo_investor.ownership_bps; // 40
+
+// Everyone except the anchor holder. The anchor takes the remainder.
+const FIXED_HOLDERS: DemoHolder[] = [
+  { address: "0x1111111111111111111111111111111111111111", name: "Demo Investor 1",  shareBps: YOUR_WALLET_BPS, label: "Your Wallet" },
   { address: "0x2222222222222222222222222222222222222222", name: "Demo Investor 2",  shareBps: 400,  label: "Investor 2" },
   { address: "0x3333333333333333333333333333333333333333", name: "Demo Investor 3",  shareBps: 150,  label: "Investor 3" },
   { address: "0x4444444444444444444444444444444444444444", name: "Demo Investor 4",  shareBps: 300,  label: "Investor 4" },
@@ -23,7 +29,16 @@ export const DEMO_HOLDERS: DemoHolder[] = [
   { address: "0x9999999999999999999999999999999999999999", name: "Demo Investor 9",  shareBps: 600,  label: "Investor 9" },
   { address: "0xaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa", name: "Demo Investor 10", shareBps: 200,  label: "Investor 10" },
   { address: "0xbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb", name: "Demo Investor 11", shareBps: 450,  label: "Investor 11" },
-  { address: "0xcccccccccccccccccccccccccccccccccccccccc", name: "Demo Investor 12", shareBps: 6500, label: "Investor 12" },
+];
+
+const ANCHOR_BPS =
+  10_000 - FIXED_HOLDERS.reduce((sum, h) => sum + h.shareBps, 0);
+
+export const DEMO_HOLDERS: DemoHolder[] = [
+  ...FIXED_HOLDERS,
+  // Anchor holder (the sponsor block) — takes whatever is left, so the cap
+  // table closes at exactly 100% whatever the demo investor's share is.
+  { address: "0xcccccccccccccccccccccccccccccccccccccccc", name: "Demo Investor 12", shareBps: ANCHOR_BPS, label: "Investor 12" },
 ];
 
 /** Dollar amount a holder receives from a pool (bps share, rounded to cents). */

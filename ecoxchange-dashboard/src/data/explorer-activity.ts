@@ -1,6 +1,8 @@
 // Demo on-chain activity for the Smart Contract Explorer (Spec 08).
 // SIMULATED transactions — replace with eth_getLogs queries once the
 // EcoXchange contracts are actually deployed to Base Sepolia.
+import { DEMO_OFFERING } from "./demo-offering.js";
+import { formatUsd } from "../utils/formatters.js";
 
 export type ActivityType =
   | "distribution"
@@ -29,7 +31,7 @@ export const demoActivity: ChainActivity[] = [
     type: "distribution",
     from: "Distribution Contract",
     to: "12 verified holders",
-    value: "4,248.00 USDC",
+    value: `${formatUsd(DEMO_OFFERING.offering_distributions.monthly_total_usd, true).replace("$", "")} USDC`,
     timestamp: new Date(Date.now() - 2 * 3600 * 1000),
     blockNumber: 14523891,
     status: "confirmed",
