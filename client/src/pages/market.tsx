@@ -11,6 +11,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { EmptyState } from "@/components/empty-state";
 import { Search, MapPin, Zap, ArrowRight, ExternalLink, BarChart3 } from "lucide-react";
 import { ConfidenceBadge } from "@/components/marketplace/confidence-badge";
+import { ProjectImage } from "@/components/marketplace/project-image";
 
 interface FinancialField<T> {
   value: T;
@@ -31,9 +32,21 @@ interface MarketplaceListing {
   ppaPriceUsdPerKwh: FinancialField<number>;
   annualGrossRevenueUsd: FinancialField<number>;
   irrProxyPct: FinancialField<number>;
+  cashYieldOnEquityPct: FinancialField<number>;
+  unleveredCashYieldPct: FinancialField<number>;
+  capacityFactorPct: FinancialField<number>;
+  investorEquityUsd: FinancialField<number>;
+  dscrX: FinancialField<number>;
+  arrayType: string | null;
+  image: { url: string | null; alt: string | null; credit: string | null; license: string | null };
+  isOperating: boolean;
+  contractTermRemainingYears: number | null;
   externalLinks: { label: string; url: string; source: string }[];
   detailHref: string;
 }
+
+/** The cash yield an offering has to clear to be worth a sophisticated investor's time. */
+const HURDLE_PCT = 9;
 
 interface MarketplaceListResponse {
   listings: MarketplaceListing[];
@@ -55,6 +68,7 @@ function timeAgo(iso: string | null): string {
 export default function PublicMarketPage() {
   const [search, setSearch] = useState("");
   const [sourceFilter, setSourceFilter] = useState<"" | "PROJECT" | "QUEUE">("");
+  const [hurdleOnly, setHurdleOnly] = useState(false);
 
   const { data, isLoading } = useQuery<MarketplaceListResponse>({
     queryKey: ["/api/public/market/projects"],
@@ -65,6 +79,7 @@ export default function PublicMarketPage() {
     const q = search.trim().toLowerCase();
     return listings.filter((l) => {
       if (sourceFilter && l.source !== sourceFilter) return false;
+      if (hurdleOnly && l.cashYieldOnEquityPct.value < HURDLE_PCT) return false;
       if (!q) return true;
       return [l.name, l.county, l.state, l.technology, l.stage]
         .filter(Boolean)
@@ -72,7 +87,7 @@ export default function PublicMarketPage() {
         .toLowerCase()
         .includes(q);
     });
-  }, [data, search, sourceFilter]);
+  }, [data, search, sourceFilter, hurdleOnly]);
 
   return (
     <div className="public-page">
@@ -97,6 +112,9 @@ export default function PublicMarketPage() {
               <a href="#pipeline" className="public-btn public-btn-outline">
                 Browse current pipeline →
               </a>
+              <Link href="/portfolio" className="public-btn public-btn-outline">
+                Build a portfolio →
+              </Link>
             </div>
           </div>
           <aside className="public-hero-aside">
@@ -158,6 +176,14 @@ export default function PublicMarketPage() {
                     {src === "" ? "All" : src === "PROJECT" ? "Curated" : "Queue"}
                   </Button>
                 ))}
+                <Button
+                  size="sm"
+                  variant={hurdleOnly ? "default" : "outline"}
+                  onClick={() => setHurdleOnly((v) => !v)}
+                  data-testid="filter-hurdle"
+                >
+                  {HURDLE_PCT}%+ yield
+                </Button>
               </div>
             </CardContent>
           </Card>
@@ -194,12 +220,29 @@ export default function PublicMarketPage() {
           ) : (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
               {filtered.map((l) => (
-                <Card key={l.id} className="public-listing-card" data-testid={`card-listing-${l.id}`}>
+                <Card key={l.id} className="public-listing-card overflow-hidden" data-testid={`card-listing-${l.id}`}>
+                  <ProjectImage
+                    project={{
+                      id: l.id,
+                      name: l.name,
+                      state: l.state,
+                      county: l.county,
+                      capacityMW: l.capacityMW,
+                      arrayType: l.arrayType,
+                      imageUrl: l.image?.url ?? null,
+                      imageAlt: l.image?.alt ?? null,
+                      imageCredit: l.image?.credit ?? null,
+                      imageLicense: l.image?.license ?? null,
+                    }}
+                  />
                   <CardHeader className="pb-2">
                     <div className="flex items-start justify-between gap-2">
                       <CardTitle className="text-base leading-tight">{l.name}</CardTitle>
-                      <Badge variant={l.source === "PROJECT" ? "default" : "secondary"} className="shrink-0">
-                        {l.source === "PROJECT" ? "Curated" : "Queue"}
+                      <Badge
+                        variant={l.isOperating ? "default" : l.source === "QUEUE" ? "secondary" : "outline"}
+                        className="shrink-0"
+                      >
+                        {l.isOperating ? "Operating" : l.source === "QUEUE" ? "Queue" : "Pre-COD"}
                       </Badge>
                     </div>
                   </CardHeader>
@@ -212,9 +255,36 @@ export default function PublicMarketPage() {
                       {l.technology && <Badge variant="outline">{l.technology.replace(/_/g, " ")}</Badge>}
                       {l.stage && <Badge variant="secondary">{l.stage.replace(/_/g, " ")}</Badge>}
                     </div>
+                    <div className="rounded-md border bg-muted/40 px-3 py-2">
+                      <div className="flex items-baseline justify-between gap-2">
+                        <span className="text-xs text-muted-foreground">Cash yield on equity</span>
+                        <ConfidenceBadge
+                          confidence={l.cashYieldOnEquityPct.confidence}
+                          source={l.cashYieldOnEquityPct.source}
+                        />
+                      </div>
+                      <div className="flex items-baseline gap-2">
+                        <span
+                          className={`font-mono text-2xl font-semibold ${
+                            l.cashYieldOnEquityPct.value >= HURDLE_PCT ? "" : "text-muted-foreground"
+                          }`}
+                          data-testid={`yield-${l.id}`}
+                        >
+                          {l.cashYieldOnEquityPct.value.toFixed(1)}%
+                        </span>
+                        <span className="text-xs text-muted-foreground">
+                          {l.unleveredCashYieldPct.value.toFixed(1)}% unlevered
+                        </span>
+                      </div>
+                      {!l.isOperating && (
+                        <p className="mt-1 text-[11px] text-amber-600 dark:text-amber-500">
+                          Pre-COD — modeled at commercial operation, not distributing today.
+                        </p>
+                      )}
+                    </div>
                     <div className="space-y-1.5 text-sm">
                       <div className="flex items-center justify-between gap-3">
-                        <span className="text-muted-foreground">PPA</span>
+                        <span className="text-muted-foreground">Contract price</span>
                         <div className="flex items-center gap-2">
                           <span className="font-mono">${l.ppaPriceUsdPerKwh.value.toFixed(4)}/kWh</span>
                           <ConfidenceBadge
@@ -236,14 +306,20 @@ export default function PublicMarketPage() {
                         </div>
                       </div>
                       <div className="flex items-center justify-between gap-3">
-                        <span className="text-muted-foreground">Est. cash yield</span>
-                        <div className="flex items-center gap-2">
-                          <span className="font-mono">{l.irrProxyPct.value.toFixed(1)}%</span>
-                          <ConfidenceBadge
-                            confidence={l.irrProxyPct.confidence}
-                            source={l.irrProxyPct.source}
-                          />
-                        </div>
+                        <span className="text-muted-foreground">Investor equity</span>
+                        <span className="font-mono">
+                          ${l.investorEquityUsd.value.toLocaleString("en-US", { maximumFractionDigits: 0 })}
+                        </span>
+                      </div>
+                      <div className="flex items-center justify-between gap-3">
+                        <span className="text-muted-foreground">Capacity factor</span>
+                        <span className="font-mono">{l.capacityFactorPct.value.toFixed(1)}%</span>
+                      </div>
+                      <div className="flex items-center justify-between gap-3">
+                        <span className="text-muted-foreground">DSCR</span>
+                        <span className="font-mono">
+                          {l.dscrX.value > 0 ? `${l.dscrX.value.toFixed(2)}x` : "Unlevered"}
+                        </span>
                       </div>
                     </div>
                     {l.externalLinks.length > 0 && (
@@ -275,6 +351,15 @@ export default function PublicMarketPage() {
               ))}
             </div>
           )}
+
+          <p className="mt-6 text-xs text-muted-foreground">
+            <strong>Cash yield on equity</strong> is distributable cash after operating expense,
+            reserves, senior debt service and the platform fee, divided by the equity an investor
+            funds. <strong>Unlevered</strong> is cash available for debt service over total project
+            cost. Neither is an IRR: both ignore time value, contract escalation and residual value.
+            Figures for pre-COD assets are modeled at commercial operation. Illustrative underwriting
+            for evaluation only — not an offer to sell securities.
+          </p>
         </section>
       </main>
     </div>

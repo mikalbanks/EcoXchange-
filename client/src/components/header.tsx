@@ -20,6 +20,7 @@ import "@/styles/public-pages.css";
 const PUBLIC_NAV_LINKS = [
   { href: "/", label: "Home", testId: "link-home" },
   { href: "/market", label: "Marketplace", testId: "link-marketplace" },
+  { href: "/portfolio", label: "Portfolio", testId: "link-portfolio" },
   { href: "/develop", label: "Develop", testId: "link-develop" },
   { href: "/method", label: "Method", testId: "link-method" },
   { href: "/faq", label: "FAQ", testId: "link-faq" },
@@ -41,6 +42,8 @@ function isPublicRoute(pathname: string) {
     pathname === "/backtest-report" ||
     pathname === "/market" ||
     pathname.startsWith("/market/") ||
+    pathname === "/portfolio" ||
+    pathname.startsWith("/portfolio/") ||
     pathname === "/develop" ||
     pathname === "/develop/preview" ||
     pathname === "/invest/preview" ||

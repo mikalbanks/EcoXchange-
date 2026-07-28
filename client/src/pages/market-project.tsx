@@ -17,6 +17,7 @@ import {
   FinancialBreakdownTable,
   type FinancialField,
 } from "@/components/marketplace/financial-breakdown-table";
+import { ProjectImage } from "@/components/marketplace/project-image";
 
 interface MarketplaceListingDetail {
   id: string;
@@ -38,6 +39,18 @@ interface MarketplaceListingDetail {
   irrProxyPct: FinancialField<number>;
   moicProxy: FinancialField<number>;
   annualInvestorYieldUsd: FinancialField<number>;
+  cashYieldOnEquityPct: FinancialField<number>;
+  unleveredCashYieldPct: FinancialField<number>;
+  capacityFactorPct: FinancialField<number>;
+  seniorDebtUsd: FinancialField<number>;
+  itcTransferProceedsUsd: FinancialField<number>;
+  investorEquityUsd: FinancialField<number>;
+  dscrX: FinancialField<number>;
+  arrayType: string | null;
+  image: { url: string | null; alt: string | null; credit: string | null; license: string | null };
+  isOperating: boolean;
+  commercialOperationDate: string | null;
+  contractTermRemainingYears: number | null;
   externalLinks: { label: string; url: string; source: string }[];
   monthlySeries?: Array<{ monthIndex: number; label: string; grossRevenueUsd: number; investorYieldUsd: number }>;
   evidenceHash?: string;
@@ -93,12 +106,30 @@ export default function MarketProjectPage() {
                   {data.stage && <span>{data.stage.replace(/_/g, " ")}</span>}
                 </p>
                 {data.summary && <p className="public-copy">{data.summary}</p>}
+                <div className="mt-5 max-w-md">
+                  <ProjectImage
+                    project={{
+                      id: data.id,
+                      name: data.name,
+                      state: data.state,
+                      county: data.county,
+                      capacityMW: data.capacityMW,
+                      arrayType: data.arrayType,
+                      imageUrl: data.image?.url ?? null,
+                      imageAlt: data.image?.alt ?? null,
+                      imageCredit: data.image?.credit ?? null,
+                      imageLicense: data.image?.license ?? null,
+                    }}
+                  />
+                </div>
               </div>
               <aside className="public-hero-aside">
                 <div className="public-mini-stat-grid">
                   <div className="public-mini-stat">
-                    <span className="public-mini-stat-value">{data.irrProxyPct.value.toFixed(1)}%</span>
-                    <span className="public-mini-stat-label">Est. cash yield</span>
+                    <span className="public-mini-stat-value">{data.cashYieldOnEquityPct.value.toFixed(1)}%</span>
+                    <span className="public-mini-stat-label">
+                      Cash yield on equity · {data.unleveredCashYieldPct.value.toFixed(1)}% unlevered
+                    </span>
                   </div>
                   <div className="public-mini-stat">
                     <span className="public-mini-stat-value">${data.annualGrossRevenueUsd.value.toLocaleString("en-US", { maximumFractionDigits: 0 })}</span>
@@ -143,13 +174,28 @@ export default function MarketProjectPage() {
                       { label: "Annual gross revenue", field: data.annualGrossRevenueUsd, format: "usd" },
                       { label: "Monthly debt service", field: data.monthlyDebtServiceUsd, format: "usd" },
                       { label: "Monthly opex", field: data.monthlyOpexUsd, format: "usd" },
-                      { label: "Capex", field: data.capexUsd, format: "usd" },
-                      { label: "Est. cash yield", field: data.irrProxyPct, format: "pct" },
-                      { label: "MOIC proxy", field: data.moicProxy, format: "multiple" },
-                      { label: "Annual investor yield", field: data.annualInvestorYieldUsd, format: "usd" },
+                      { label: "Capacity factor", field: data.capacityFactorPct, format: "pct" },
+                      { label: "Total project cost", field: data.capexUsd, format: "usd" },
+                      { label: "Senior debt", field: data.seniorDebtUsd, format: "usd" },
+                      { label: "ITC transfer proceeds", field: data.itcTransferProceedsUsd, format: "usd" },
+                      { label: "Investor equity", field: data.investorEquityUsd, format: "usd" },
+                      { label: "DSCR", field: data.dscrX, format: "multiple" },
+                      { label: "Annual investor cash", field: data.annualInvestorYieldUsd, format: "usd" },
+                      { label: "Unlevered cash yield", field: data.unleveredCashYieldPct, format: "pct" },
+                      { label: "Cash yield on equity", field: data.cashYieldOnEquityPct, format: "pct" },
                     ]}
                   />
                   <p className="text-xs text-muted-foreground mt-3">
+                    <strong>Cash yield on equity</strong> divides distributable cash — after opex,
+                    reserves, senior debt service and the platform fee — by the equity an investor
+                    funds. <strong>Unlevered cash yield</strong> divides cash available for debt
+                    service by total project cost. Neither is an IRR.
+                    {!data.isOperating && (
+                      <> This asset is pre-COD: the figures are modeled at commercial operation and
+                      are not being distributed today.</>
+                    )}
+                  </p>
+                  <p className="text-xs text-muted-foreground mt-2">
                     <strong>Known</strong> = sourced from contracted data or recorded operational results. {" "}
                     <strong>Estimated</strong> = modeled from physical assumptions. {" "}
                     <strong>Market proxy</strong> = derived from CAISO hub / LevelTen / jurisdiction benchmarks.
