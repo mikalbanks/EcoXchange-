@@ -8,6 +8,8 @@
     "build": "tsx script/build.ts",
     "start": "NODE_ENV=production node dist/index.cjs",
     "check": "tsc",
+    "test": "vitest run",
+    "test:watch": "vitest",
     "test:queue-analytics": "tsx scripts/test-queue-analytics.ts",
     "catalog:import": "tsx scripts/import-ca-listings-csv.ts",
     "db:push": "drizzle-kit push",
@@ -124,7 +126,8 @@
     "tailwindcss": "^3.4.17",
     "tsx": "^4.20.5",
     "typescript": "5.6.3",
-    "vite": "^7.3.0"
+    "vite": "^7.3.0",
+    "vitest": "^2.1.9"
   },
   "overrides": {
     "drizzle-kit": {

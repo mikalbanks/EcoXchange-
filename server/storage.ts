@@ -264,6 +264,7 @@ export class MemStorage implements IStorage {
     this.projects.set(proj1Id, {
       id: proj1Id,
       developerId: devId,
+      spvId: null,
       name: "Imperial Valley Solar I",
       technology: "SOLAR",
       stage: "NTP",
@@ -394,6 +395,7 @@ export class MemStorage implements IStorage {
     this.projects.set(proj2Id, {
       id: proj2Id,
       developerId: devId,
+      spvId: null,
       name: "Pecos Flat Solar Farm",
       technology: "SOLAR_STORAGE",
       stage: "PRE_NTP",
@@ -541,6 +543,7 @@ export class MemStorage implements IStorage {
     this.projects.set(proj3Id, {
       id: proj3Id,
       developerId: devId,
+      spvId: null,
       name: "Lancaster Sun Ranch",
       technology: "SOLAR",
       stage: "COD",
@@ -1262,6 +1265,7 @@ export class MemStorage implements IStorage {
       this.projects.set(r.id, {
         id: r.id,
         developerId: devId,
+        spvId: null,
         name: r.name,
         technology: r.tech || "SOLAR",
         stage: r.stage as Project["stage"],
@@ -1553,6 +1557,7 @@ export class MemStorage implements IStorage {
     const newProject: Project = {
       id,
       developerId: project.developerId,
+      spvId: null,
       name: project.name,
       technology: project.technology || "SOLAR",
       stage: project.stage || "PRE_NTP",

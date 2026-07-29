@@ -1,7 +1,14 @@
 import { sql } from "drizzle-orm";
-import { pgTable, text, varchar, boolean, decimal, timestamp, integer, serial, jsonb, index, uniqueIndex } from "drizzle-orm/pg-core";
+import { pgTable, text, varchar, boolean, decimal, timestamp, integer, serial, jsonb, index, uniqueIndex, type AnyPgColumn } from "drizzle-orm/pg-core";
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod";
+import type {
+  FeeSchedule as Spec17FeeSchedule,
+  ReservePolicy as Spec17ReservePolicy,
+  DebtSchedule as Spec17DebtSchedule,
+  WaterfallTier as Spec17WaterfallTier,
+  MemberClass as Spec17MemberClass,
+} from "./spec17-terms";
 
 export * from "./models/chat";
 
@@ -246,9 +253,48 @@ export type QueueEntryAnalytics = typeof queueEntryAnalytics.$inferSelect;
 
 // ─── Projects ────────────────────────────────────────────────────────────────
 
+// ─── SPVs ───────────────────────────────────────────────────────────────────
+//
+// The legal entity that holds one or more projects and issues membership
+// interests. Defined here rather than with the rest of the Spec 17 tables at the
+// bottom of this file so that `projects.spvId` below can carry a real foreign
+// key without a forward reference.
+
+export const SpvStatus = {
+  FORMING: "FORMING",
+  OFFERING: "OFFERING",
+  OPERATING: "OPERATING",
+  WINDING_DOWN: "WINDING_DOWN",
+  DISSOLVED: "DISSOLVED",
+} as const;
+
+export const spvs = pgTable("spvs", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  name: text("name").notNull(),
+  legalName: text("legal_name").notNull(),
+  jurisdiction: text("jurisdiction").notNull().default("DE"),
+  entityType: text("entity_type").notNull().default("LLC"),
+  taxIdRef: text("tax_id_ref"),
+  status: text("status").notNull().default("FORMING"),
+  formedOn: timestamp("formed_on"),
+  /** Fiscal year end as MM-DD; drives the tax year boundary in § 9. */
+  fiscalYearEnd: text("fiscal_year_end").notNull().default("12-31"),
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
+export const insertSpvSchema = createInsertSchema(spvs).omit({
+  id: true,
+  createdAt: true,
+});
+
+export type InsertSpv = z.infer<typeof insertSpvSchema>;
+export type Spv = typeof spvs.$inferSelect;
+
 export const projects = pgTable("projects", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
   developerId: varchar("developer_id").notNull(),
+  /** Nullable: existing projects predate the SPV model (Spec 17 § 5). */
+  spvId: varchar("spv_id").references(() => spvs.id, { onDelete: "set null" }),
   name: text("name").notNull(),
   technology: text("technology").notNull().default("SOLAR"),
   stage: text("stage").notNull().default("PRE_NTP"),
@@ -1142,3 +1188,588 @@ export const investorInterestFormSchema = z.object({
   timeline: z.enum(["IMMEDIATE", "DAYS_30_60", "DAYS_60_90", "UNKNOWN"]),
   message: z.string().optional(),
 });
+
+// ════════════════════════════════════════════════════════════════════════════
+// Spec 17 — Distribution Waterfall, Capital Accounts & Tax Allocation
+//
+// Money columns are `decimal(18,2)`; Drizzle returns them as strings and the
+// engine parses them to integer cents (§ 2.8). Nothing here should ever be
+// handed to `parseFloat`. Unit columns are `decimal(20,6)` per § 4.2.
+//
+// Several invariants in this block cannot be expressed in Drizzle's DSL and are
+// enforced by trigger in `migrations/0009_distribution_waterfall.sql`:
+//   · `capital_account_entries` rejects UPDATE and DELETE      (§ 4.6, AC 16)
+//   · a run against terms with no `counselConfirmedAt` fails   (§ 4.1, AC 11)
+//   · a run cannot reach `submitted` without a named approver  (§ 11.1, AC 13)
+// ════════════════════════════════════════════════════════════════════════════
+
+// ─── § 4.1 Waterfall terms ──────────────────────────────────────────────────
+
+/**
+ * The operating agreement, encoded. Immutable once an offering goes live;
+ * amendments create a new version with a later `effectiveFrom`.
+ *
+ * The JSONB payload shapes and their validators live in `shared/spec17-terms.ts`.
+ */
+export const waterfallTerms = pgTable(
+  "waterfall_terms",
+  {
+    id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+    spvId: varchar("spv_id").notNull().references(() => spvs.id),
+    version: integer("version").notNull(),
+    effectiveFrom: timestamp("effective_from").notNull(),
+
+    // Pre-waterfall configuration
+    feeSchedule: jsonb("fee_schedule").$type<Spec17FeeSchedule>().notNull(),
+    reservePolicy: jsonb("reserve_policy").$type<Spec17ReservePolicy>().notNull(),
+    debtSchedule: jsonb("debt_schedule").$type<Spec17DebtSchedule | null>(),
+
+    // The waterfall itself (§ 7.1)
+    tiers: jsonb("tiers").$type<Spec17WaterfallTier[]>().notNull(),
+
+    // Classes
+    classes: jsonb("classes").$type<Spec17MemberClass[]>().notNull(),
+
+    // Allocation method
+    taxAllocationMethod: text("tax_allocation_method").notNull(),
+    itcTreatment: text("itc_treatment").notNull(),
+
+    // Distribution mechanics
+    distributionFrequency: text("distribution_frequency").notNull().default("monthly"),
+    minDistributionPerMemberCents: integer("min_distribution_per_member_cents").notNull().default(100),
+    roundingResidualTreatment: text("rounding_residual_treatment").notNull().default("carry_forward"),
+
+    sourceDocumentPath: text("source_document_path").notNull(),
+
+    /**
+     * The gate. No distribution run may execute against terms where this is
+     * null — enforced by trigger, not by application code, because
+     * distributing on unconfirmed terms is the worst failure this system can
+     * produce.
+     */
+    counselConfirmedAt: timestamp("counsel_confirmed_at"),
+    counselConfirmedBy: text("counsel_confirmed_by"),
+
+    createdAt: timestamp("created_at").notNull().defaultNow(),
+  },
+  (t) => ({
+    versionUid: uniqueIndex("waterfall_terms_spv_version_uid").on(t.spvId, t.version),
+    spvIdx: index("waterfall_terms_spv_idx").on(t.spvId),
+  }),
+);
+
+export const insertWaterfallTermsSchema = createInsertSchema(waterfallTerms).omit({
+  id: true,
+  createdAt: true,
+});
+
+export type InsertWaterfallTerms = z.infer<typeof insertWaterfallTermsSchema>;
+export type WaterfallTermsRow = typeof waterfallTerms.$inferSelect;
+
+// ─── § 4.2 Members and positions ────────────────────────────────────────────
+
+export const MemberTaxClassification = {
+  INDIVIDUAL: "individual",
+  ENTITY: "entity",
+  IRA: "ira",
+  TRUST: "trust",
+} as const;
+
+/**
+ * EcoXchange's record of ownership, reconciled against the transfer agent's cap
+ * table. The transfer agent is authoritative for token holdings; this ledger is
+ * authoritative for capital accounts. Drift between them halts distributions
+ * (§ 11.3).
+ */
+export const members = pgTable(
+  "members",
+  {
+    id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+    spvId: varchar("spv_id").notNull().references(() => spvs.id),
+    /** The transfer agent's investor identifier. */
+    transferAgentInvestorRef: text("transfer_agent_investor_ref").notNull(),
+    legalName: text("legal_name").notNull(),
+    memberClass: text("member_class").notNull(),
+    /** Vault reference only — never the tax ID itself. */
+    taxIdRef: text("tax_id_ref"),
+    /** Drives K-1 handling in § 9. */
+    taxClassification: text("tax_classification"),
+    /** Optional link to the platform login, when the member has one. */
+    userId: varchar("user_id").references(() => users.id, { onDelete: "set null" }),
+    admittedOn: timestamp("admitted_on").notNull(),
+    withdrawnOn: timestamp("withdrawn_on"),
+    createdAt: timestamp("created_at").notNull().defaultNow(),
+  },
+  (t) => ({
+    investorUid: uniqueIndex("members_spv_investor_ref_uid").on(t.spvId, t.transferAgentInvestorRef),
+    spvIdx: index("members_spv_idx").on(t.spvId),
+  }),
+);
+
+export const insertMemberSchema = createInsertSchema(members).omit({
+  id: true,
+  createdAt: true,
+});
+
+export type InsertMember = z.infer<typeof insertMemberSchema>;
+export type Member = typeof members.$inferSelect;
+
+export const MemberPositionSource = {
+  SUBSCRIPTION: "subscription",
+  TRANSFER_IN: "transfer_in",
+  TRANSFER_OUT: "transfer_out",
+  REDEMPTION: "redemption",
+} as const;
+
+/** Time-sliced so a mid-period transfer allocates correctly (§ 7.5). */
+export const memberPositions = pgTable(
+  "member_positions",
+  {
+    id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+    memberId: varchar("member_id").notNull().references(() => members.id),
+    effectiveFrom: timestamp("effective_from").notNull(),
+    /** Null = current. */
+    effectiveTo: timestamp("effective_to"),
+    units: decimal("units", { precision: 20, scale: 6 }).notNull(),
+    source: text("source").notNull(),
+    transferAgentTxRef: text("transfer_agent_tx_ref"),
+    createdAt: timestamp("created_at").notNull().defaultNow(),
+  },
+  (t) => ({
+    memberIdx: index("member_positions_member_idx").on(t.memberId),
+    windowIdx: index("member_positions_window_idx").on(t.memberId, t.effectiveFrom),
+  }),
+);
+
+export const insertMemberPositionSchema = createInsertSchema(memberPositions).omit({
+  id: true,
+  createdAt: true,
+});
+
+export type InsertMemberPosition = z.infer<typeof insertMemberPositionSchema>;
+export type MemberPosition = typeof memberPositions.$inferSelect;
+
+// ─── § 4.3 Period financials ────────────────────────────────────────────────
+
+/** One line of the period's operating expenses. */
+export interface PeriodExpense {
+  code: string;
+  description: string;
+  /** Money string, e.g. `"12500.00"`. */
+  amount: string;
+  vendor: string | null;
+  /** Only `paid` expenses reduce cash; `accrued` is carried for the tax books. */
+  recognition: "accrued" | "paid";
+}
+
+export const PeriodCloseStatus = {
+  OPEN: "open",
+  CLOSED: "closed",
+  RESTATED: "restated",
+} as const;
+
+export const periodFinancials = pgTable(
+  "period_financials",
+  {
+    id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+    spvId: varchar("spv_id").notNull().references(() => spvs.id),
+    periodStart: timestamp("period_start").notNull(),
+    periodEnd: timestamp("period_end").notNull(),
+
+    // Cash revenue — received, not invoiced (§ 2.7)
+    energyRevenue: decimal("energy_revenue", { precision: 18, scale: 2 }).notNull().default("0"),
+    recRevenue: decimal("rec_revenue", { precision: 18, scale: 2 }).notNull().default("0"),
+    itcTransferProceeds: decimal("itc_transfer_proceeds", { precision: 18, scale: 2 }).notNull().default("0"),
+    otherRevenue: decimal("other_revenue", { precision: 18, scale: 2 }).notNull().default("0"),
+
+    // Operating expenses
+    expenses: jsonb("expenses").$type<PeriodExpense[]>().notNull().default(sql`'[]'::jsonb`),
+    totalOpex: decimal("total_opex", { precision: 18, scale: 2 }).notNull().default("0"),
+
+    // Links to source
+    revenueReconciliationIds: text("revenue_reconciliation_ids").array(),
+    verificationRecordIds: text("verification_record_ids").array(),
+
+    closeStatus: text("close_status").notNull().default("open"),
+    closedAt: timestamp("closed_at"),
+    closedBy: text("closed_by"),
+
+    /**
+     * GATE 3 of § 5 — cash received must be reconciled to the bank before the
+     * period may close. The spec states the gate but not the field; a named
+     * attestation is the only way to make it checkable.
+     */
+    bankReconciledAt: timestamp("bank_reconciled_at"),
+    bankReconciledBy: text("bank_reconciled_by"),
+
+    createdAt: timestamp("created_at").notNull().defaultNow(),
+  },
+  (t) => ({
+    periodUid: uniqueIndex("period_financials_spv_start_uid").on(t.spvId, t.periodStart),
+  }),
+);
+
+export const insertPeriodFinancialsSchema = createInsertSchema(periodFinancials).omit({
+  id: true,
+  createdAt: true,
+});
+
+export type InsertPeriodFinancials = z.infer<typeof insertPeriodFinancialsSchema>;
+export type PeriodFinancials = typeof periodFinancials.$inferSelect;
+
+// ─── § 4.4 Reserves ─────────────────────────────────────────────────────────
+
+export const reserveAccounts = pgTable(
+  "reserve_accounts",
+  {
+    id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+    spvId: varchar("spv_id").notNull().references(() => spvs.id),
+    /** e.g. `om`, `equipment_replacement`, `dsra`, `decommissioning`. */
+    code: text("code").notNull(),
+    name: text("name").notNull(),
+    targetBasis: text("target_basis").notNull(),
+    targetValue: decimal("target_value", { precision: 18, scale: 2 }).notNull(),
+    fundingPriority: integer("funding_priority").notNull(),
+    fundingCapPerPeriod: decimal("funding_cap_per_period", { precision: 18, scale: 2 }),
+    drawPermittedFor: text("draw_permitted_for").array().notNull(),
+    currentBalance: decimal("current_balance", { precision: 18, scale: 2 }).notNull().default("0"),
+    bankAccountRef: text("bank_account_ref"),
+    createdAt: timestamp("created_at").notNull().defaultNow(),
+  },
+  (t) => ({
+    codeUid: uniqueIndex("reserve_accounts_spv_code_uid").on(t.spvId, t.code),
+  }),
+);
+
+export const insertReserveAccountSchema = createInsertSchema(reserveAccounts).omit({
+  id: true,
+  createdAt: true,
+});
+
+export type InsertReserveAccount = z.infer<typeof insertReserveAccountSchema>;
+export type ReserveAccount = typeof reserveAccounts.$inferSelect;
+
+export const ReserveMovementDirection = {
+  FUND: "fund",
+  DRAW: "draw",
+} as const;
+
+export const reserveMovements = pgTable(
+  "reserve_movements",
+  {
+    id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+    reserveAccountId: varchar("reserve_account_id").notNull().references(() => reserveAccounts.id),
+    distributionRunId: varchar("distribution_run_id"),
+    direction: text("direction").notNull(),
+    amount: decimal("amount", { precision: 18, scale: 2 }).notNull(),
+    /** A draw must cite a purpose listed in `drawPermittedFor` (§ 6). */
+    reason: text("reason").notNull(),
+    balanceAfter: decimal("balance_after", { precision: 18, scale: 2 }).notNull(),
+    occurredAt: timestamp("occurred_at").notNull().defaultNow(),
+  },
+  (t) => ({
+    accountIdx: index("reserve_movements_account_idx").on(t.reserveAccountId),
+    runIdx: index("reserve_movements_run_idx").on(t.distributionRunId),
+  }),
+);
+
+export const insertReserveMovementSchema = createInsertSchema(reserveMovements).omit({
+  id: true,
+});
+
+export type InsertReserveMovement = z.infer<typeof insertReserveMovementSchema>;
+export type ReserveMovement = typeof reserveMovements.$inferSelect;
+
+// ─── § 4.5 Distribution runs and allocations ────────────────────────────────
+
+/**
+ * Per-tier trace. A partially-satisfied preferred return must be visible,
+ * because it is a claim on future cash and an investor is entitled to see it
+ * (§ 7.2).
+ */
+export interface TierResultRecord {
+  seq: number;
+  type: string;
+  class: string | null;
+  /** Money strings. */
+  demand: string;
+  allocated: string;
+  unmet: string;
+  /** True when `unmet` carries forward rather than expiring. */
+  accrues: boolean;
+  perMember: Record<string, string>;
+  /**
+   * What each member was owed by this tier. Recorded alongside what they were
+   * paid so that § 7.3's running balances — unreturned capital, accrued unpaid
+   * preferred — can be *derived* from the run history rather than stored as
+   * separate mutable state that could drift from it.
+   */
+  perMemberDemand: Record<string, string>;
+}
+
+/** Why a run produced less than the period's cash, or nothing at all (§ 6). */
+export interface PreWaterfallNote {
+  code: "funding_shortfall" | "reserve_underfunded" | "reserve_draw" | "debt_service_halt" | "fee_capped";
+  detail: string;
+  amount: string | null;
+}
+
+export const DistributionRunStatus = {
+  COMPUTED: "computed",
+  APPROVED: "approved",
+  SUBMITTED: "submitted",
+  SETTLED: "settled",
+  FAILED: "failed",
+  REVERSED: "reversed",
+} as const;
+
+export const distributionRuns = pgTable(
+  "distribution_runs",
+  {
+    id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+    spvId: varchar("spv_id").notNull().references(() => spvs.id),
+    waterfallTermsId: varchar("waterfall_terms_id").notNull().references(() => waterfallTerms.id),
+    periodStart: timestamp("period_start").notNull(),
+    periodEnd: timestamp("period_end").notNull(),
+
+    // Pre-waterfall trace (§ 6) — every intermediate persisted for audit, so an
+    // investor asking "why was this month lower" gets a trace, not a number.
+    cashRevenue: decimal("cash_revenue", { precision: 18, scale: 2 }).notNull(),
+    lessOpex: decimal("less_opex", { precision: 18, scale: 2 }).notNull(),
+    lessDebtService: decimal("less_debt_service", { precision: 18, scale: 2 }).notNull().default("0"),
+    lessReserveFunding: decimal("less_reserve_funding", { precision: 18, scale: 2 }).notNull().default("0"),
+    plusReserveDraws: decimal("plus_reserve_draws", { precision: 18, scale: 2 }).notNull().default("0"),
+    lessFees: decimal("less_fees", { precision: 18, scale: 2 }).notNull().default("0"),
+    distributableCash: decimal("distributable_cash", { precision: 18, scale: 2 }).notNull(),
+    notes: jsonb("notes").$type<PreWaterfallNote[]>().notNull().default(sql`'[]'::jsonb`),
+
+    // Waterfall trace
+    tierResults: jsonb("tier_results").$type<TierResultRecord[]>().notNull(),
+    totalDistributed: decimal("total_distributed", { precision: 18, scale: 2 }).notNull(),
+    roundingResidual: decimal("rounding_residual", { precision: 18, scale: 2 }).notNull().default("0"),
+    carriedForward: decimal("carried_forward", { precision: 18, scale: 2 }).notNull().default("0"),
+    undistributed: decimal("undistributed", { precision: 18, scale: 2 }).notNull().default("0"),
+
+    status: text("status").notNull().default("computed"),
+    /** Named human. Mandatory before submission — there is no automatic path. */
+    approvedBy: text("approved_by"),
+    approvedAt: timestamp("approved_at"),
+    transferAgentBatchRef: text("transfer_agent_batch_ref"),
+    submittedAt: timestamp("submitted_at"),
+    settledAt: timestamp("settled_at"),
+    settledTotal: decimal("settled_total", { precision: 18, scale: 2 }),
+    failureReason: text("failure_reason"),
+
+    engineVersion: text("engine_version").notNull(),
+    computedAt: timestamp("computed_at").notNull().defaultNow(),
+    /** Set on the *original* run, pointing at the reversing run (§ 12). */
+    reversedBy: varchar("reversed_by").references((): AnyPgColumn => distributionRuns.id),
+    /** Set on the *reversing* run, pointing back at what it reverses. */
+    reverses: varchar("reverses").references((): AnyPgColumn => distributionRuns.id),
+  },
+  (t) => ({
+    runUid: uniqueIndex("distribution_runs_spv_period_engine_uid").on(t.spvId, t.periodStart, t.engineVersion),
+    spvIdx: index("distribution_runs_spv_idx").on(t.spvId),
+    statusIdx: index("distribution_runs_status_idx").on(t.status),
+  }),
+);
+
+export const insertDistributionRunSchema = createInsertSchema(distributionRuns).omit({
+  id: true,
+  computedAt: true,
+});
+
+export type InsertDistributionRun = z.infer<typeof insertDistributionRunSchema>;
+export type DistributionRun = typeof distributionRuns.$inferSelect;
+
+export const distributionAllocations = pgTable(
+  "distribution_allocations",
+  {
+    id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+    distributionRunId: varchar("distribution_run_id").notNull().references(() => distributionRuns.id),
+    memberId: varchar("member_id").notNull().references(() => members.id),
+    memberClass: text("member_class").notNull(),
+    /** Day-weighted within the period (§ 7.5). */
+    weightedUnits: decimal("weighted_units", { precision: 20, scale: 6 }).notNull(),
+    /** `{ tierSeq: amount }`. */
+    tierBreakdown: jsonb("tier_breakdown").$type<Record<string, string>>().notNull(),
+    grossAmount: decimal("gross_amount", { precision: 18, scale: 2 }).notNull(),
+    withholding: decimal("withholding", { precision: 18, scale: 2 }).notNull().default("0"),
+    netAmount: decimal("net_amount", { precision: 18, scale: 2 }).notNull(),
+    /** Sub-minimum amounts brought in from prior periods, and pushed to the next. */
+    carriedForwardIn: decimal("carried_forward_in", { precision: 18, scale: 2 }).notNull().default("0"),
+    carriedForwardOut: decimal("carried_forward_out", { precision: 18, scale: 2 }).notNull().default("0"),
+  },
+  (t) => ({
+    allocUid: uniqueIndex("distribution_allocations_run_member_uid").on(t.distributionRunId, t.memberId),
+    memberIdx: index("distribution_allocations_member_idx").on(t.memberId),
+  }),
+);
+
+export const insertDistributionAllocationSchema = createInsertSchema(distributionAllocations).omit({
+  id: true,
+});
+
+export type InsertDistributionAllocation = z.infer<typeof insertDistributionAllocationSchema>;
+export type DistributionAllocation = typeof distributionAllocations.$inferSelect;
+
+// ─── § 4.6 Capital account entries ──────────────────────────────────────────
+
+export const CapEntryType = {
+  CONTRIBUTION: "contribution",
+  DISTRIBUTION: "distribution",
+  INCOME_ALLOCATION: "income_allocation",
+  LOSS_ALLOCATION: "loss_allocation",
+  SYNDICATION_COST: "syndication_cost",
+  REVERSAL: "reversal",
+} as const;
+
+/**
+ * Append-only. The ledger that cannot be reconstructed later, which is why it
+ * exists before the first contribution rather than after the first K-1.
+ *
+ * Book and tax diverge from day one — depreciation methods differ and ITC basis
+ * reduction applies to tax basis only — so both columns are always populated and
+ * neither is derived from the other (§ 8).
+ *
+ * UPDATE and DELETE are rejected by trigger. Corrections are `reversal` entries.
+ */
+export const capitalAccountEntries = pgTable(
+  "capital_account_entries",
+  {
+    id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+    memberId: varchar("member_id").notNull().references(() => members.id),
+    entryType: text("entry_type").notNull(),
+    periodStart: timestamp("period_start").notNull(),
+    /** 704(b) book. */
+    bookAmount: decimal("book_amount", { precision: 18, scale: 2 }).notNull(),
+    /** Tax basis — diverges from book. */
+    taxAmount: decimal("tax_amount", { precision: 18, scale: 2 }).notNull(),
+    bookBalanceAfter: decimal("book_balance_after", { precision: 18, scale: 2 }).notNull(),
+    taxBalanceAfter: decimal("tax_balance_after", { precision: 18, scale: 2 }).notNull(),
+    sourceType: text("source_type").notNull(),
+    sourceId: varchar("source_id"),
+    reversesEntryId: varchar("reverses_entry_id").references((): AnyPgColumn => capitalAccountEntries.id),
+    reason: text("reason"),
+    engineVersion: text("engine_version").notNull(),
+    /** Monotonic per member; makes the ledger order deterministic on replay. */
+    seq: serial("seq").notNull(),
+    createdAt: timestamp("created_at").notNull().defaultNow(),
+  },
+  (t) => ({
+    memberPeriodIdx: index("idx_cap_member_period").on(t.memberId, t.periodStart),
+    memberSeqIdx: index("idx_cap_member_seq").on(t.memberId, t.seq),
+  }),
+);
+
+export const insertCapitalAccountEntrySchema = createInsertSchema(capitalAccountEntries).omit({
+  id: true,
+  seq: true,
+  createdAt: true,
+});
+
+export type InsertCapitalAccountEntry = z.infer<typeof insertCapitalAccountEntrySchema>;
+export type CapitalAccountEntry = typeof capitalAccountEntries.$inferSelect;
+
+// ─── § 4.7 Tax allocations and ITC positions ────────────────────────────────
+
+export const TaxAllocationStatus = {
+  DRAFT: "draft",
+  CPA_REVIEW: "cpa_review",
+  FINAL: "final",
+  AMENDED: "amended",
+} as const;
+
+/**
+ * [CPA] gated. `status` must reach `final` with `cpaReviewedAt` populated before
+ * any K-1 issues — no exceptions, and no automation of that gate (§ 9).
+ */
+export const taxAllocations = pgTable(
+  "tax_allocations",
+  {
+    id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+    spvId: varchar("spv_id").notNull().references(() => spvs.id),
+    memberId: varchar("member_id").notNull().references(() => members.id),
+    taxYear: integer("tax_year").notNull(),
+    ordinaryIncome: decimal("ordinary_income", { precision: 18, scale: 2 }).notNull().default("0"),
+    depreciation: decimal("depreciation", { precision: 18, scale: 2 }).notNull().default("0"),
+    interestExpense: decimal("interest_expense", { precision: 18, scale: 2 }).notNull().default("0"),
+    otherItems: jsonb("other_items").$type<Record<string, string> | null>(),
+    allocationMethod: text("allocation_method").notNull(),
+    /**
+     * Conditions detected during allocation that require a human tax decision —
+     * §704(c) layers, qualified income offset, minimum gain chargeback. The
+     * engine detects and escalates; it does not compute the mechanics (§ 9).
+     */
+    escalations: jsonb("escalations").$type<string[]>().notNull().default(sql`'[]'::jsonb`),
+    cpaReviewedAt: timestamp("cpa_reviewed_at"),
+    cpaReviewedBy: text("cpa_reviewed_by"),
+    status: text("status").notNull().default("draft"),
+    engineVersion: text("engine_version").notNull(),
+    createdAt: timestamp("created_at").notNull().defaultNow(),
+  },
+  (t) => ({
+    allocUid: uniqueIndex("tax_allocations_spv_member_year_uid").on(t.spvId, t.memberId, t.taxYear),
+  }),
+);
+
+export const insertTaxAllocationSchema = createInsertSchema(taxAllocations).omit({
+  id: true,
+  createdAt: true,
+});
+
+export type InsertTaxAllocation = z.infer<typeof insertTaxAllocationSchema>;
+export type TaxAllocation = typeof taxAllocations.$inferSelect;
+
+/** A disposition or disqualification inside the five-year window (§ 10.2). */
+export interface RecaptureEvent {
+  occurredOn: string;
+  kind: "disposition" | "ceased_to_qualify" | "ownership_change";
+  detail: string;
+  /** Unvested fraction at the time, as a percent string. Not a tax computation. */
+  unvestedPctAtEvent: string;
+  escalatedAt: string | null;
+}
+
+export const itcPositions = pgTable(
+  "itc_positions",
+  {
+    id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+    spvId: varchar("spv_id").notNull().references(() => spvs.id),
+    /** Null when transferred under §6418. */
+    memberId: varchar("member_id").references(() => members.id),
+    placedInServiceDate: timestamp("placed_in_service_date").notNull(),
+    eligibleBasis: decimal("eligible_basis", { precision: 18, scale: 2 }).notNull(),
+    creditRatePct: decimal("credit_rate_pct", { precision: 6, scale: 3 }).notNull(),
+    adders: jsonb("adders").$type<Record<string, string> | null>(),
+    creditAmount: decimal("credit_amount", { precision: 18, scale: 2 }).notNull(),
+    treatment: text("treatment").notNull(),
+    transferProceeds: decimal("transfer_proceeds", { precision: 18, scale: 2 }),
+    transfereeRef: text("transferee_ref"),
+
+    // Recapture: 5-year vesting, 20%/yr (§ 10.2)
+    vestingStart: timestamp("vesting_start").notNull(),
+    vestedPct: decimal("vested_pct", { precision: 6, scale: 3 }).notNull().default("0"),
+    recaptureEvents: jsonb("recapture_events").$type<RecaptureEvent[]>().notNull().default(sql`'[]'::jsonb`),
+    /**
+     * The five-year window outlives the attention span of any operational
+     * process, so the end date is stored and surfaced rather than recomputed on
+     * demand by whoever happens to remember.
+     */
+    recapturePeriodEnds: timestamp("recapture_period_ends").notNull(),
+    cpaReviewedAt: timestamp("cpa_reviewed_at"),
+    createdAt: timestamp("created_at").notNull().defaultNow(),
+  },
+  (t) => ({
+    spvIdx: index("itc_positions_spv_idx").on(t.spvId),
+    windowIdx: index("itc_positions_window_idx").on(t.recapturePeriodEnds),
+  }),
+);
+
+export const insertItcPositionSchema = createInsertSchema(itcPositions).omit({
+  id: true,
+  createdAt: true,
+});
+
+export type InsertItcPosition = z.infer<typeof insertItcPositionSchema>;
+export type ItcPosition = typeof itcPositions.$inferSelect;
