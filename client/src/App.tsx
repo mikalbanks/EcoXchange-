@@ -78,6 +78,7 @@ import AdminProjectReview from "@/pages/admin/project-review";
 import AdminExportPacket from "@/pages/admin/export-packet";
 import AdminUsers from "@/pages/admin/users";
 import AdminVerificationPage from "@/pages/admin/verification";
+import AdminDistributions from "@/pages/admin/distributions";
 import YieldSimulationPage from "@/pages/yield-simulation";
 
 import PerformancePage from "@/pages/performance";
@@ -205,6 +206,17 @@ function Router() {
       <Route path="/admin">
         <ProtectedRoute allowedRoles={["ADMIN"]}>
           <AdminDashboard />
+        </ProtectedRoute>
+      </Route>
+      {/* Spec 17 — declared before /admin/projects/:id so the static segment wins. */}
+      <Route path="/admin/distributions/:spvId">
+        <ProtectedRoute allowedRoles={["ADMIN"]}>
+          <AdminDistributions />
+        </ProtectedRoute>
+      </Route>
+      <Route path="/admin/distributions">
+        <ProtectedRoute allowedRoles={["ADMIN"]}>
+          <AdminDistributions />
         </ProtectedRoute>
       </Route>
       <Route path="/admin/projects/:id/export">

@@ -35,6 +35,7 @@ import multer from "multer";
 import { registerDeveloperBacktestRoutes } from "./routes/developer-backtest";
 import { isSupabaseConfigured, probeSupabase } from "./services/backtest-supabase-writer";
 import { registerDeveloperReportRoutes } from "./routes/developer-report";
+import { registerDistributionRoutes } from "./routes/distributions";
 
 const SessionStore = MemoryStore(session);
 const PgSessionStore = connectPgSimple(session);
@@ -380,6 +381,11 @@ export async function registerRoutes(
 
   // Developer Portal: Production Verification Report (PDF) — see routes/developer-report.ts
   registerDeveloperReportRoutes(app, requireRole);
+
+  // Spec 17: distribution waterfall, capital accounts and tax allocation.
+  // Mounted under /api/v1/spv/... per the specification — the only versioned
+  // prefix in this app. See routes/distributions.ts.
+  registerDistributionRoutes(app, requireRole, requireAuth);
 
   // Developer stats
   app.get("/api/developer/stats", requireRole("DEVELOPER"), async (req: any, res) => {

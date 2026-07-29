@@ -25,6 +25,7 @@ import {
   ChevronRight,
   Search,
   ClipboardCheck,
+  Banknote,
   TrendingUp,
   BarChart3,
   Activity,
@@ -47,6 +48,7 @@ const investorNavItems = [
 const adminNavItems = [
   { title: "Overview", url: "/admin", icon: LayoutDashboard },
   { title: "Review Queue", url: "/admin/projects", icon: ClipboardCheck },
+  { title: "Distributions", url: "/admin/distributions", icon: Banknote },
   { title: "Users", url: "/admin/users", icon: Users },
   { title: "Performance", url: "/performance", icon: BarChart3 },
   { title: "Operations", url: "/operations", icon: Activity },
