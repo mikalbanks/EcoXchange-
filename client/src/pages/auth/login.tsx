@@ -15,6 +15,27 @@ import { loginSchema } from "@shared/schema";
 
 type LoginFormValues = z.infer<typeof loginSchema>;
 
+const DEMO_ACCOUNTS = [
+  {
+    label: "Admin",
+    email: "admin@ecoxchange.demo",
+    password: "Admin123!",
+    lands: "Platform oversight console",
+  },
+  {
+    label: "Developer",
+    email: "developer@ecoxchange.demo",
+    password: "Developer123!",
+    lands: "Project pipeline dashboard",
+  },
+  {
+    label: "Investor",
+    email: "investor@ecoxchange.demo",
+    password: "Investor123!",
+    lands: "Marketplace and commitments",
+  },
+] as const;
+
 export default function LoginPage() {
   const { login } = useAuth();
   const { toast } = useToast();
@@ -45,6 +66,14 @@ export default function LoginPage() {
     } finally {
       setIsLoading(false);
     }
+  }
+
+  // One click to sign in as a given role — the three demo rows used to be
+  // read-only text you had to retype.
+  async function signInAsDemo(account: (typeof DEMO_ACCOUNTS)[number]) {
+    form.setValue("email", account.email, { shouldValidate: true });
+    form.setValue("password", account.password, { shouldValidate: true });
+    await onSubmit({ email: account.email, password: account.password });
   }
 
   return (
@@ -137,20 +166,28 @@ export default function LoginPage() {
 
           <Card className="mt-6 border-muted/50 bg-muted/10">
             <CardContent className="p-4">
-              <p className="text-xs text-muted-foreground text-center mb-3">Demo Accounts</p>
-              <div className="space-y-2 text-xs">
-                <div className="flex justify-between">
-                  <span className="text-muted-foreground">Admin:</span>
-                  <span className="font-mono">admin@ecoxchange.demo / Admin123!</span>
-                </div>
-                <div className="flex justify-between">
-                  <span className="text-muted-foreground">Developer:</span>
-                  <span className="font-mono">developer@ecoxchange.demo / Developer123!</span>
-                </div>
-                <div className="flex justify-between">
-                  <span className="text-muted-foreground">Investor:</span>
-                  <span className="font-mono">investor@ecoxchange.demo / Investor123!</span>
-                </div>
+              <p className="text-xs text-muted-foreground text-center mb-3">
+                Demo accounts — click one to sign in
+              </p>
+              <div className="space-y-2">
+                {DEMO_ACCOUNTS.map((account) => (
+                  <button
+                    key={account.email}
+                    type="button"
+                    onClick={() => signInAsDemo(account)}
+                    disabled={isLoading}
+                    className="w-full text-left rounded-md border border-border/60 bg-card/60 px-3 py-2 transition-colors hover:border-primary/60 hover:bg-card disabled:opacity-50 disabled:cursor-not-allowed"
+                    data-testid={`button-demo-${account.label.toLowerCase()}`}
+                  >
+                    <div className="flex items-center justify-between gap-2">
+                      <span className="text-sm font-medium">{account.label}</span>
+                      <span className="font-mono text-xs text-muted-foreground truncate">
+                        {account.email}
+                      </span>
+                    </div>
+                    <p className="text-xs text-muted-foreground mt-0.5">{account.lands}</p>
+                  </button>
+                ))}
               </div>
             </CardContent>
           </Card>

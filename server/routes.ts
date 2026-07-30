@@ -1,12 +1,11 @@
 import type { Express } from "express";
 import { createServer, type Server } from "http";
 import session from "express-session";
-import MemoryStore from "memorystore";
-import connectPgSimple from "connect-pg-simple";
 import crypto from "crypto";
 import rateLimit from "express-rate-limit";
 import { storage, verifyPassword, hashPassword, computeReadiness, generateChecklist, computeCapitalStack } from "./storage";
-import { pool } from "./db";
+import { pool, isDatabaseConfigured, probeDatabase } from "./db";
+import { createSessionStore, getSessionStoreKind } from "./session-store";
 import { loginSchema, signupSchema, projectWizardStep1Schema, projectWizardStep2Schema, projectWizardStep3Schema, investorInterestFormSchema } from "@shared/schema";
 import { z } from "zod";
 import { generateROIPrediction, type ProjectFinancialData } from "./lib/ai-predictions";
@@ -37,13 +36,8 @@ import { isSupabaseConfigured, probeSupabase } from "./services/backtest-supabas
 import { registerDeveloperReportRoutes } from "./routes/developer-report";
 import { registerDistributionRoutes } from "./routes/distributions";
 
-const SessionStore = MemoryStore(session);
-const PgSessionStore = connectPgSimple(session);
 const SESSION_SECRET = process.env.SESSION_SECRET || crypto.randomBytes(32).toString('hex');
 const IS_PRODUCTION = process.env.NODE_ENV === "production";
-const sessionStore = process.env.DATABASE_URL
-  ? new PgSessionStore({ pool, tableName: "session", createTableIfMissing: true })
-  : new SessionStore({ checkPeriod: 86400000 });
 
 function safeJsonParse<T>(json: string | null | undefined, fallback: T): T {
   if (!json) return fallback;
@@ -71,7 +65,7 @@ export async function registerRoutes(
       secret: SESSION_SECRET,
       resave: false,
       saveUninitialized: false,
-      store: sessionStore,
+      store: await createSessionStore(),
       cookie: { secure: IS_PRODUCTION, httpOnly: true, maxAge: 24 * 60 * 60 * 1000, sameSite: "lax" },
     })
   );
@@ -92,16 +86,32 @@ export async function registerRoutes(
       }
     };
 
-    const [pvlib, irradiance, supabase] = await Promise.all([
+    // The database is probed here on purpose: when DATABASE_URL pointed at a
+    // paused Supabase project, sign-in was completely broken while this endpoint
+    // still reported ok — every other route reads MemStorage. `sessionStore`
+    // tells you whether sessions currently survive a restart.
+    const probeDb = async (): Promise<"ok" | "unreachable" | "not_configured"> => {
+      if (!isDatabaseConfigured()) return "not_configured";
+      return (await probeDatabase(2000)) ? "ok" : "unreachable";
+    };
+
+    const [pvlib, irradiance, supabase, database] = await Promise.all([
       probe(`${pvlibUrl}/health`),
       probe(irradianceHealth),
       isSupabaseConfigured() ? probeSupabase() : Promise.resolve("not_configured"),
+      probeDb(),
     ]);
 
     res.json({
       ok: true,
       uptime: process.uptime(),
-      services: { pvlib, irradiance, supabase },
+      services: {
+        pvlib,
+        irradiance,
+        supabase,
+        database,
+        sessionStore: getSessionStoreKind(),
+      },
     });
   });
 
@@ -962,6 +972,36 @@ export async function registerRoutes(
 
     const updatedScore = await storage.getReadinessScore(project.id);
     res.json(updatedScore);
+  });
+
+  // Admin view of project-level investor commitments. /api/admin/stats only
+  // exposes the aggregate; the admin console needs the individual rows to link
+  // through to the project and the investor.
+  app.get("/api/admin/interests", requireRole("ADMIN"), async (_req: any, res) => {
+    const interests = await storage.getAllInterests();
+    const rows = await Promise.all(
+      interests.map(async (i) => {
+        const [project, investor] = await Promise.all([
+          storage.getProject(i.projectId),
+          storage.getUser(i.investorId),
+        ]);
+        return {
+          id: i.id,
+          projectId: i.projectId,
+          projectName: project?.name ?? "Unknown project",
+          investorName: investor?.name ?? "Unknown investor",
+          investorOrg: investor?.orgName ?? "",
+          amountIntent: i.amountIntent,
+          structurePreference: i.structurePreference,
+          timeline: i.timeline,
+          status: i.status,
+          createdAt: i.createdAt,
+        };
+      })
+    );
+    // Largest commitments first — that is the order an admin triages in.
+    rows.sort((a, b) => Number(b.amountIntent ?? 0) - Number(a.amountIntent ?? 0));
+    res.json(rows);
   });
 
   // Admin users list

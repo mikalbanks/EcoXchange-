@@ -1,5 +1,38 @@
 import { createContext, useContext, useState, useEffect, type ReactNode } from "react";
 import { useLocation } from "wouter";
+import { dashboardPathForRole, loginPathWithReturn, safeReturnPath } from "./roles";
+import { onUnauthorized } from "./auth-events";
+
+/** Best-effort read of a `{ message }` error body without throwing on HTML. */
+async function readMessage(res: Response): Promise<string> {
+  try {
+    const text = await res.text();
+    try {
+      return JSON.parse(text).message ?? text;
+    } catch {
+      return text;
+    }
+  } catch {
+    return res.statusText;
+  }
+}
+
+/**
+ * Credential problems get the server's message; infrastructure faults do not.
+ * A paused database once surfaced on the sign-in form as
+ * "(ENOTFOUND) tenant/user postgres.<ref> not found", which tells a user nothing.
+ */
+async function loginErrorMessage(res: Response): Promise<string> {
+  const message = await readMessage(res);
+  if (res.status === 401 || res.status === 400) {
+    return message || "Please check your credentials and try again.";
+  }
+  if (res.status === 429) {
+    return "Too many sign-in attempts. Please wait a few minutes and try again.";
+  }
+  console.error(`Login failed with ${res.status}:`, message);
+  return "Sign-in is temporarily unavailable. Please try again in a moment.";
+}
 
 export interface AuthUser {
   id: string;
@@ -30,12 +63,31 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     checkAuth();
   }, []);
 
+  // If any data request comes back unauthenticated, the session is gone (server
+  // restarted, cookie expired). Clear local state and send the user to sign in
+  // with their current location remembered, instead of leaving guarded pages
+  // rendering error panels against a dead session.
+  useEffect(() => {
+    return onUnauthorized(() => {
+      setUser((current) => {
+        if (current) {
+          setLocation(loginPathWithReturn(window.location.pathname));
+        }
+        return null;
+      });
+    });
+  }, [setLocation]);
+
   async function checkAuth() {
     try {
       const res = await fetch("/api/auth/me", { credentials: "include" });
       if (res.ok) {
         const data = await res.json();
         setUser(data.user);
+      } else if (res.status !== 401) {
+        // A 401 means "not signed in", which is normal. Anything else is a
+        // backend fault and should not masquerade as a clean logged-out state.
+        console.error(`Auth check failed with ${res.status}:`, await readMessage(res));
       }
     } catch (error) {
       console.error("Auth check failed:", error);
@@ -53,17 +105,15 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     });
 
     if (!res.ok) {
-      const error = await res.json();
-      throw new Error(error.message || "Login failed");
+      throw new Error(await loginErrorMessage(res));
     }
 
     const data = await res.json();
     setUser(data.user);
 
-    const dest = data.user.role === "ADMIN" ? "/admin" 
-      : data.user.role === "DEVELOPER" ? "/developer" 
-      : "/investor";
-    
+    // Honour ?next= so a deep link survives the sign-in detour.
+    const dest = safeReturnPath(window.location.search) ?? dashboardPathForRole(data.user.role);
+
     setTimeout(() => setLocation(dest), 0);
 
     return data.user;
@@ -78,18 +128,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     });
 
     if (!res.ok) {
-      const error = await res.json();
-      throw new Error(error.message || "Signup failed");
+      throw new Error(await loginErrorMessage(res));
     }
 
     const data = await res.json();
     setUser(data.user);
 
-    if (role === "DEVELOPER") {
-      setLocation("/developer");
-    } else {
-      setLocation("/investor");
-    }
+    setLocation(dashboardPathForRole(data.user.role ?? role));
   }
 
   async function logout() {

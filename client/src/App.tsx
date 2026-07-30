@@ -5,6 +5,7 @@ import { QueryClientProvider } from "@tanstack/react-query";
 import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { AuthProvider, useAuth } from "@/lib/auth";
+import { dashboardPathForRole, loginPathWithReturn } from "@/lib/roles";
 
 class ErrorBoundary extends Component<
   { children: ReactNode },
@@ -108,12 +109,12 @@ function ProtectedRoute({
   }
 
   if (!user) {
-    return <Redirect to="/auth/login" />;
+    // Remember where they were headed so sign-in can finish the journey.
+    return <Redirect to={loginPathWithReturn(window.location.pathname)} />;
   }
 
   if (!allowedRoles.includes(user.role)) {
-    const redirectPath = user.role === "ADMIN" ? "/admin" : user.role === "DEVELOPER" ? "/developer" : "/investor";
-    return <Redirect to={redirectPath} />;
+    return <Redirect to={dashboardPathForRole(user.role)} />;
   }
 
   return <>{children}</>;

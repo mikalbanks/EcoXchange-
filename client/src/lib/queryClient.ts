@@ -1,7 +1,11 @@
 import { QueryClient, QueryFunction } from "@tanstack/react-query";
+import { emitUnauthorized } from "./auth-events";
 
 async function throwIfResNotOk(res: Response) {
   if (!res.ok) {
+    // Tell AuthProvider before throwing, so a lost session redirects to sign-in
+    // rather than surfacing as a generic error on every guarded page.
+    if (res.status === 401) emitUnauthorized();
     const text = (await res.text()) || res.statusText;
     throw new Error(`${res.status}: ${text}`);
   }
