@@ -201,17 +201,34 @@ export default function AdminDistributions() {
   });
 
   if (!spvId) {
+    // An unreachable database and a genuinely empty SPV list look identical from
+    // here, so distinguish them — otherwise an outage reads as "run the seed script".
+    const listFailed = Boolean(spvList.error);
     return (
       <DashboardLayout title="Distributions" breadcrumbs={[{ label: "Admin", href: "/admin" }]}>
         <Card>
           <CardHeader>
-            <CardTitle>No SPV yet</CardTitle>
+            <CardTitle>{listFailed ? "Distributions unavailable" : "No SPV yet"}</CardTitle>
             <CardDescription>
-              The distribution engine operates on SPVs. Seed one with{" "}
-              <code className="rounded bg-muted px-1 py-0.5 text-xs">
-                npx tsx scripts/seed-spec17-demo.ts
-              </code>
-              .
+              {listFailed ? (
+                <>
+                  The distribution engine is the one surface that reads from Postgres, and
+                  the database is not reachable right now. Check{" "}
+                  <code className="rounded bg-muted px-1 py-0.5 text-xs">/api/health</code> —
+                  if <code className="rounded bg-muted px-1 py-0.5 text-xs">database</code> is{" "}
+                  <code className="rounded bg-muted px-1 py-0.5 text-xs">unreachable</code>, the
+                  connection string is wrong or the database is paused. Every other admin
+                  screen keeps working.
+                </>
+              ) : (
+                <>
+                  The distribution engine operates on SPVs. Seed one with{" "}
+                  <code className="rounded bg-muted px-1 py-0.5 text-xs">
+                    npx tsx scripts/seed-spec17-demo.ts
+                  </code>
+                  .
+                </>
+              )}
             </CardDescription>
           </CardHeader>
         </Card>

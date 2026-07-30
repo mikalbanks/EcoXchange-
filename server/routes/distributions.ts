@@ -28,6 +28,7 @@ import {
   submitRun,
 } from "../services/distribution/execution";
 import * as repo from "../services/distribution/repository";
+import { isConnectionError } from "../db";
 import { defaultDeps, defaultSubmitter } from "../services/distribution/default-deps";
 import { checkCloseGates, splitExpenses } from "../services/distribution/period-close";
 import { reconcileCapTable, type LocalHolding } from "../services/distribution/cap-table";
@@ -70,6 +71,19 @@ function handleError(error: unknown, res: Response, context: string): void {
 
   if (error instanceof ReserveDrawNotPermitted) {
     res.status(400).json({ message: error.message, kind: error.name });
+    return;
+  }
+
+  // The waterfall engine is the one admin surface that genuinely needs Postgres
+  // (everything else reads MemStorage). Say so plainly instead of a bare 500, so
+  // the UI can distinguish "no data yet" from "database is down".
+  if (isConnectionError(error)) {
+    console.error(`[Spec 17] ${context}: database unavailable`);
+    res.status(503).json({
+      message:
+        "The distribution engine needs the database, which is currently unreachable.",
+      kind: "DATABASE_UNAVAILABLE",
+    });
     return;
   }
 
