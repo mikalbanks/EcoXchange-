@@ -1,0 +1,178 @@
+{
+  "note": "Spec 16 § 6 pre-existing violations, recorded when the check landed (§ 9.4 step 1). The check fails on anything NEW; these are what already existed. 'technical' entries are not § 6 violations — the term is a code identifier or an industry term of art. 'pending-decision' entries ARE genuine violations in live user-facing copy and need a founder or counsel call; a build step must not silently rewrite securities-adjacent or brand copy. AC 16 is not met until every pending-decision entry is gone.",
+  "entries": [
+    {
+      "file": "client/src/pages/backtest-report.tsx",
+      "termId": "oracle",
+      "count": 3,
+      "samples": [
+        "Oracle"
+      ],
+      "category": "pending-decision",
+      "reason": "'Solcast Sky Oracle' rendered on the PUBLIC backtest report page. Line 789 reads 'the Solcast Sky Oracle provides reliable telemetry verification suitable for securities yield calculations' — the exact claim § 6 prohibits the word for, on a page a prospective investor can reach without logging in. Highest-priority instance.",
+      "decision": "Rename the product in user-facing copy, or record a counsel-cleared exception."
+    },
+    {
+      "file": "client/src/pages/landing.tsx",
+      "termId": "patent-pending",
+      "count": 1,
+      "samples": [
+        "Patent-pending"
+      ],
+      "category": "pending-decision",
+      "reason": "'Patent-pending' as a feature-card title on the public landing page. § 6 prohibits it outright. Either an application is on file and counsel has cleared the wording, or this comes out.",
+      "decision": "Confirm filing status with counsel, then keep with cleared wording or remove."
+    },
+    {
+      "file": "client/src/pages/operations.tsx",
+      "termId": "oracle",
+      "count": 8,
+      "samples": [
+        "Oracle",
+        "oracle"
+      ],
+      "category": "pending-decision",
+      "reason": "'Sky Oracle' as the product name for the Solcast satellite feed, in operator-facing labels, pipeline messages, and quality-check strings. Includes the 'solcast-sky-oracle' connector slug (line 758), which is an identifier but changes with the same branding decision, so it is grouped here rather than split.",
+      "decision": "Same branding decision as backtest-report.tsx."
+    },
+    {
+      "file": "ecoxchange-dashboard/src/App.tsx",
+      "termId": "oracle",
+      "count": 1,
+      "samples": [
+        "oracle"
+      ],
+      "category": "technical",
+      "reason": "Route comment describing the distribution simulation flow. Comment only."
+    },
+    {
+      "file": "ecoxchange-dashboard/src/components/explorer/ActivityFeed.tsx",
+      "termId": "oracle",
+      "count": 1,
+      "samples": [
+        "ORACLE"
+      ],
+      "category": "technical",
+      "reason": "'ORACLE WRITE' event label in the contract activity feed. Names an on-chain transaction type."
+    },
+    {
+      "file": "ecoxchange-dashboard/src/data/demo-contract-state.ts",
+      "termId": "oracle",
+      "count": 1,
+      "samples": [
+        "Oracle"
+      ],
+      "category": "technical",
+      "reason": "'// Oracle bridge' section comment. Comment only."
+    },
+    {
+      "file": "ecoxchange-dashboard/src/data/explorer-activity.ts",
+      "termId": "oracle",
+      "count": 2,
+      "samples": [
+        "Oracle",
+        "oracle"
+      ],
+      "category": "technical",
+      "reason": "'Oracle Bridge' as an activity-feed counterparty and 'oracle' as a contract id. Names the deployed contract."
+    },
+    {
+      "file": "ecoxchange-dashboard/src/data/explorer-contracts.ts",
+      "termId": "oracle",
+      "count": 4,
+      "samples": [
+        "oracle",
+        "Oracle"
+      ],
+      "category": "technical",
+      "reason": "'Oracle Bridge' is the name of a deployed smart contract, and 'oracle write' is the standard industry term for an on-chain data write. § 6 prohibits 'oracle' as a reliability claim about EcoXchange's estimates; it does not rename a contract. Rendered in the contract explorer, where the audience expects the blockchain term of art."
+    },
+    {
+      "file": "ecoxchange-dashboard/src/lib/distribution/executor.ts",
+      "termId": "oracle",
+      "count": 11,
+      "samples": [
+        "oracle"
+      ],
+      "category": "technical",
+      "reason": "Step identifier in the three-step distribution flow (verification -> oracle write -> USDC distribution), plus local variables and comments. Code identifiers, no user-facing copy."
+    },
+    {
+      "file": "ecoxchange-dashboard/src/lib/distribution/simulated-run.ts",
+      "termId": "oracle",
+      "count": 5,
+      "samples": [
+        "oracle"
+      ],
+      "category": "technical",
+      "reason": "Step-id keys and latency/gas fixtures for the simulated oracle write. Code identifiers only."
+    },
+    {
+      "file": "ecoxchange-dashboard/src/pages/Distribute.tsx",
+      "termId": "oracle",
+      "count": 7,
+      "samples": [
+        "oracle",
+        "Oracle"
+      ],
+      "category": "technical",
+      "reason": "'Oracle Write' as the step-2 title in the distribution simulation, matching the contract name, plus step-state lookups. Blockchain term of art in a contract-simulation context."
+    },
+    {
+      "file": "ecoxchange-onboarding/src/report/markdown.ts",
+      "termId": "patent-pending",
+      "count": 1,
+      "samples": [
+        "patent-pending"
+      ],
+      "category": "pending-decision",
+      "reason": "\"EcoXchange's patent-pending verification engine\" inside a generated report footer. AC 16 names PDF templates explicitly, and this string ships inside a document handed to a developer or investor.",
+      "decision": "Follows the landing.tsx decision; the § 6 approved substitute is 'proprietary verification engine'."
+    },
+    {
+      "file": "server/services/sgt-handshake.ts",
+      "termId": "oracle",
+      "count": 1,
+      "samples": [
+        "Oracle"
+      ],
+      "category": "pending-decision",
+      "reason": "'Sky Oracle returned …' log line. Same product name, same decision as solcast.ts.",
+      "decision": "Follows the branding decision; log-only."
+    },
+    {
+      "file": "server/services/solcast.ts",
+      "termId": "oracle",
+      "count": 3,
+      "samples": [
+        "Oracle"
+      ],
+      "category": "pending-decision",
+      "reason": "'[Sky Oracle]' log prefixes. Not user-facing, but part of the same product name, so it is tracked with the branding decision rather than acknowledged separately.",
+      "decision": "Follows the branding decision; log-only, so lowest urgency."
+    },
+    {
+      "file": "server/storage.ts",
+      "termId": "oracle",
+      "count": 6,
+      "samples": [
+        "Oracle",
+        "oracle"
+      ],
+      "category": "pending-decision",
+      "reason": "'Solcast Sky Oracle' in seeded project summaries and the SCADA connector registry. Line 558 is an investor-visible project summary; line 658 is an approval note. Also carries the 'solcast-sky-oracle' slug, grouped for the same reason as operations.tsx.",
+      "decision": "Same branding decision; the connector slug and seed copy move together."
+    },
+    {
+      "file": "web/index.html",
+      "termId": "patent-pending",
+      "count": 1,
+      "samples": [
+        "Patent-pending"
+      ],
+      "category": "pending-decision",
+      "reason": "'<h3>Patent-pending</h3>' on the marketing site. Same claim as landing.tsx, same decision.",
+      "decision": "Follows the landing.tsx decision."
+    }
+  ]
+}

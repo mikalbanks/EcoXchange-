@@ -9,6 +9,7 @@
     "start": "NODE_ENV=production node dist/index.cjs",
     "check": "tsc",
     "test": "vitest run",
+    "lint:vocabulary": "tsx scripts/check-rec-vocabulary.ts",
     "test:watch": "vitest",
     "test:queue-analytics": "tsx scripts/test-queue-analytics.ts",
     "catalog:import": "tsx scripts/import-ca-listings-csv.ts",
