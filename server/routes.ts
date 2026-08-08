@@ -35,6 +35,7 @@ import { registerDeveloperBacktestRoutes } from "./routes/developer-backtest";
 import { isSupabaseConfigured, probeSupabase } from "./services/backtest-supabase-writer";
 import { registerDeveloperReportRoutes } from "./routes/developer-report";
 import { registerDistributionRoutes } from "./routes/distributions";
+import { registerPolymeshRoutes } from "./routes/polymesh";
 
 const SESSION_SECRET = process.env.SESSION_SECRET || crypto.randomBytes(32).toString('hex');
 const IS_PRODUCTION = process.env.NODE_ENV === "production";
@@ -396,6 +397,11 @@ export async function registerRoutes(
   // Mounted under /api/v1/spv/... per the specification — the only versioned
   // prefix in this app. See routes/distributions.ts.
   registerDistributionRoutes(app, requireRole, requireAuth);
+
+  // Spec 18 Layer A: Polymesh public chain reads. Reads are public — the data
+  // is already on a public ledger and the transparency claim depends on anyone
+  // being able to check it. See routes/polymesh.ts.
+  registerPolymeshRoutes(app, requireRole);
 
   // Developer stats
   app.get("/api/developer/stats", requireRole("DEVELOPER"), async (req: any, res) => {
