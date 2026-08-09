@@ -9,10 +9,10 @@ below names the artifact that was checked.
 |---|------|-------|-------------|
 | 001 | `001_initial_schema.sql` | applied | `projects`, `raw_readings`, `verification_records`, `engine_runs` exist |
 | 002 | `002_rls.sql` | applied | one anon-read policy on each of the four 001 tables |
-| 003 | `003_storage_bucket.sql` | **NOT applied** | no `evidence` row in `storage.buckets` |
+| 003 | `003_storage_bucket.sql` | applied 2026-08-09 | `evidence` row in `storage.buckets`, private, 10 MB cap |
 | 004 | `004_developer_submissions.sql` | applied 2026-08-09 | `developer_submissions`, `backtest_reports`, `submission_status` enum, `onboarding-reports` bucket |
 | 005 | `005_reference_status.sql` | applied | `projects_status_check` includes `'reference'` |
-| 006 | `006_evidence_bucket_markdown.sql` | **NOT applied** | depends on 003; its `UPDATE` matches no row today |
+| 006 | `006_evidence_bucket_markdown.sql` | applied 2026-08-09 | `evidence.allowed_mime_types` = `{application/json, text/markdown}` |
 | 007 | `007_pvlib_fields.sql` | applied | all five columns present on `projects` (`module_type`, `inverter_efficiency`, `dc_ac_ratio`, `racking_type`, `albedo`) |
 | 008 | `008_offerings_and_documents.sql` | applied 2026-08-09 | `offerings`, `project_documents` |
 | 009 | `009_investor_preferences.sql` | applied 2026-08-09 | `investors`, `investor_holdings`, `distribution_preferences`, `distribution_history` |
@@ -21,19 +21,32 @@ below names the artifact that was checked.
 | 012 | `012_polymesh.sql` | applied 2026-08-09 | `polymesh_assets`, `polymesh_holders`, `polymesh_distributions`, `polymesh_sync_runs` |
 
 18 tables in `public`. `projects` holds 1 row and `verification_records` 12 — the
-Savannah demo year — unchanged by the 2026-08-09 applications.
+Savannah demo year — unchanged by the 2026-08-09 applications. The engine schema
+is now fully migrated: every file in this directory has run against `xgcroo…`.
 
-## The two that are outstanding
+**All twelve are applied.** Nothing is outstanding.
 
-003 creates the private `evidence` bucket; 006 widens its MIME list to accept
-`text/markdown`. 006 is a bare `UPDATE`, so running it against a database
-without 003 succeeds while changing nothing — it is not an error, which is
-exactly why it is easy to believe both have run when neither has. **Apply 003
-before 006.**
+## Storage buckets
 
-Nothing in `src/polymesh/` or `server/services/pcp/` touches the `evidence`
-bucket, so Spec 18 does not depend on either. The fleet-validation pipeline
-does.
+| Bucket | Public | Limit | MIME types | From |
+|---|---|---|---|---|
+| `evidence` | no | 10 MB | `application/json`, `text/markdown` | 003, widened by 006 |
+| `onboarding-reports` | no | 10 MB | `application/json`, `text/markdown` | 004 |
+
+Both are private and there are **zero policies on `storage.objects`**, so both are
+service-role only — deliberate, since `evidence` holds raw third-party API
+responses and `onboarding-reports` holds generated developer reports. A signed
+URL is the way to expose an individual object; do not open these buckets up by
+adding a blanket `storage.objects` policy.
+
+### Why 003 and 006 were the last two, and the trap in them
+
+006 is a bare `UPDATE ... WHERE id = 'evidence'`. Run against a database where
+003 never created the bucket, it **succeeds and changes nothing** — no error, no
+row count anyone checks. That is exactly how the pair came to look applied when
+neither was, and it is the same class of silent no-op that put the wrong state in
+this ledger's first draft. If these are ever replayed onto a fresh database,
+**003 must run before 006.**
 
 ## FK integrity after the 2026-08-09 batch
 
