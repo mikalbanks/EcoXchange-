@@ -20,9 +20,19 @@ export default defineConfig({
     url: dbUrl.toString(),
     ssl: wantsSsl ? { rejectUnauthorized: false } : false,
   },
+  // tablesFilter is the set of tables drizzle believes it owns, and
+  // `drizzle-kit push --force` runs in Render's buildCommand. An entry here that
+  // exists in the database but not in shared/schema.ts is a table drizzle will
+  // offer to drop, unprompted.
+  //
+  // `projects` was removed for exactly that reason: the reconciliation engine
+  // owns a different, uuid-keyed `projects` table (the physical plant, parent of
+  // raw_readings / verification_records / engine_runs / polymesh_assets). Leaving
+  // it listed here while DATABASE_URL points at that database would reconcile the
+  // two. See docs/database-consolidation.md.
   tablesFilter: [
     "users",
-    "projects",
+    "dev_projects",
     "capital_stacks",
     "readiness_scores",
     "documents",

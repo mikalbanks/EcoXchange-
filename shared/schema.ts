@@ -290,7 +290,25 @@ export const insertSpvSchema = createInsertSchema(spvs).omit({
 export type InsertSpv = z.infer<typeof insertSpvSchema>;
 export type Spv = typeof spvs.$inferSelect;
 
-export const projects = pgTable("projects", {
+/**
+ * Development-pipeline projects — the deal entity (developer, SPV, stage,
+ * permitting), not the physical plant.
+ *
+ * The SQL table is `dev_projects`, not `projects`. There is a second, unrelated
+ * `projects` table owned by the reconciliation engine's migration series
+ * (`ecoxchange-reconciliation-engine/supabase/migrations/001_initial_schema.sql`)
+ * describing a physical solar installation — uuid PK, tilt, azimuth, inverter
+ * brand. The two are different entities that collided on a name, and they lived
+ * in separate Supabase projects, so the collision was never visible.
+ *
+ * Consolidating onto one database makes it visible, and `drizzle-kit push --force`
+ * runs in Render's buildCommand — so drizzle must not believe it owns a table
+ * called `projects`. See docs/database-consolidation.md.
+ *
+ * The exported symbol stays `projects`; only the SQL name differs, so no calling
+ * code changes.
+ */
+export const projects = pgTable("dev_projects", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
   developerId: varchar("developer_id").notNull(),
   /** Nullable: existing projects predate the SPV model (Spec 17 § 5). */
