@@ -10,7 +10,7 @@ EcoXchange has two Supabase projects, and the same repository talks to both.
 | | `EcoXchange-` — `xgcrooajrdpcgpgoazti` | `EcoXchange-2nd` — `ojwofgbrxptiaqwjmcou` |
 |---|---|---|
 | Owner | the SQL migration series in `ecoxchange-reconciliation-engine/supabase/migrations/` | `shared/schema.ts` via `drizzle-kit push` |
-| Tables | 18 (001–012 applied except 003/006, which are storage buckets) | 28 |
+| Tables | 18 (migrations 001–012 all applied) | 28 |
 | **Rows** | **1 project, 12 verification_records** | **0 — every table, all 28** |
 | `projects.id` | `uuid`, `gen_random_uuid()` | `character varying` |
 | `projects` shape | physical plant: `tilt_deg`, `azimuth_deg`, `commissioning_date`, `inverter_brand`, `albedo` | development deal: `developer_id`, `spv_id`, `stage`, `technology`, `capacity_mw` |
@@ -74,10 +74,10 @@ physical plant. The name is a one-line decision and easy to change; the directio
 1. **[done in this commit]** `shared/schema.ts:293` → `pgTable("dev_projects", …)`, and
    `drizzle.config.ts` `tablesFilter`: `"projects"` → `"dev_projects"`.
    Until `DATABASE_URL` moves, this is a no-op rename against an empty table in `ojwof…`.
-2. **[done 2026-08-09]** Engine migrations 004, 008, 009 and 010 applied to `xgcroo…`, in that
-   dependency order. Only 003 and 006 remain, and both only touch the `evidence` storage bucket —
-   no tables, so they do not affect this consolidation either way. Apply state for all twelve is
-   tracked in `ecoxchange-reconciliation-engine/supabase/migrations/APPLIED.md`.
+2. **[done 2026-08-09]** All engine migrations applied to `xgcroo…` — 004, 008, 009 and 010 in
+   dependency order, then 003 and 006 for the `evidence` storage bucket. Nothing is outstanding;
+   the engine schema is fully migrated. Apply state for all twelve is tracked in
+   `ecoxchange-reconciliation-engine/supabase/migrations/APPLIED.md`.
 3. Point every environment variable at `xgcrooajrdpcgpgoazti`:
    `DATABASE_URL`, `SUPABASE_URL`, `SUPABASE_SERVICE_ROLE_KEY`, `VITE_SUPABASE_URL`,
    `VITE_SUPABASE_ANON_KEY`. Render, Cloudflare Workers build vars, and local `.env`.
