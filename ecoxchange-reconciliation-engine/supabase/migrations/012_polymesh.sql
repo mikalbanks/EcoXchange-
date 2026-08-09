@@ -5,20 +5,21 @@
 -- `engine_runs` are untouched.
 --
 -- ─────────────────────────────────────────────────────────────────────────────
--- DO NOT APPLY THIS MIGRATION UNTIL TWO GATES CLEAR
+-- APPLIED 2026-08-09 to xgcrooajrdpcgpgoazti (EcoXchange-). Gate B resolved.
 --
--- Gate A — reference asset. EcoXchange has zero issued Polymesh assets, so the
--- queries in src/polymesh/queries.ts have never seen a real response. Identify a
--- live mainnet asset with real distribution history, capture fixtures, and
--- validate the queries first. See docs/polymesh-reference-asset.md.
+-- Gate B — the `projects` ambiguity — RESOLVED. The two tables named `projects`
+-- were never in the same database: xgcrooajrdpcgpgoazti holds the UUID/physics
+-- one from 001_initial_schema.sql (the FK below), and ojwofgbrxptiaqwjmcou held
+-- the varchar/capital-markets one from shared/schema.ts. Verified live; all five
+-- FKs in this migration resolve to uuid targets. `projects` has since been
+-- removed from drizzle's tablesFilter so a consolidated database cannot have
+-- `drizzle-kit push --force` reconcile the two. See docs/database-consolidation.md.
 --
--- Gate B — the `projects` ambiguity. `polymesh_assets.project_id` below
--- references `projects(id)`. There are TWO tables named `projects` with
--- incompatible primary keys: UUID/physics in 001_initial_schema.sql, and
--- varchar/capital-markets in shared/schema.ts:293. `projects` is in drizzle's
--- tablesFilter and `drizzle-kit push --force` runs in Render's buildCommand.
--- Confirm which one is actually deployed in the target database before adding a
--- foreign key into that ambiguity. The FK below intends the UUID table.
+-- Gate A — reference asset — STILL OPEN. The tables below exist and are empty.
+-- EcoXchange has zero issued Polymesh assets, so the queries in
+-- src/polymesh/queries.ts have never seen a real response, and the daily sync
+-- no-ops until an asset is mapped. Do not trust the sync, and do not set
+-- VITE_CHAIN_VIEW_ENABLED, until docs/polymesh-reference-asset.md is satisfied.
 -- ─────────────────────────────────────────────────────────────────────────────
 
 -- ─────────────────────────────────────────────────────────────────────────────
