@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Link, useParams } from "react-router-dom";
-import { ArrowLeft, Download, FileText, LineChart } from "lucide-react";
+import { ArrowLeft, Download, FileText, Link2, LineChart } from "lucide-react";
+import { CHAIN_VIEW_ENABLED } from "../config/chain-view.js";
 import { useData } from "../context/DataContext.js";
 import { ProductionChartLazy as ProductionChart } from "../components/ProductionChartLazy.js";
 import { StatCard } from "../components/StatCard.js";
@@ -195,6 +196,17 @@ export function ProjectDetail() {
           >
             <FileText className="h-4 w-4" /> Documents
           </Link>
+          {/* Spec 18 § 2.8 — on-chain record, linked from the verification
+              surface. Hidden when the route is not registered; a visible link to
+              an unregistered route is just a 404. */}
+          {CHAIN_VIEW_ENABLED ? (
+          <Link
+            to={`/investor/project/${project.id}/chain`}
+            className="inline-flex items-center gap-1.5 rounded-md border border-paleGreen/60 bg-white px-3 py-2 text-sm font-medium text-medGreen hover:bg-cream transition-colors duration-150"
+          >
+            <Link2 className="h-4 w-4" /> On-Chain
+          </Link>
+          ) : null}
           <button
             type="button"
             onClick={() => void downloadReport()}

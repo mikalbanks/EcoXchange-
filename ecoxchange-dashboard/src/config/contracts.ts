@@ -1,5 +1,13 @@
 // Smart Contract Explorer network configuration (Spec 08).
 //
+// SPEC 18 UPDATE: the Polymesh migration this header called for has begun. The
+// chain read path lives in ecoxchange-reconciliation-engine/src/polymesh/ and
+// the investor-facing view is src/pages/ChainView.tsx, behind
+// VITE_CHAIN_VIEW_ENABLED. Nothing below has changed: this module still points
+// at Base Sepolia and still says so, which remains correct until the Polymesh
+// path is validated against a live chain (docs/polymesh-reference-asset.md).
+// Migrate the integration first, then the labels — still true.
+//
 // LEGACY, PENDING POLYMATH MIGRATION. Product copy now describes ST-20 tokens
 // on Polymesh via the Polymath Capital Platform, but this module and the live
 // plumbing it feeds (ChainHeartbeat, the distribution simulation's block reads,

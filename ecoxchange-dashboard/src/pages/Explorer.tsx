@@ -8,7 +8,15 @@ import { demoActivity } from "../data/explorer-activity.js";
 import { ENGINE_VERSION } from "../config/engine.js";
 
 /**
- * Smart Contract Explorer (Spec 08): a read-only, purpose-built view of
+ * Smart Contract Explorer (Spec 08).
+ *
+ * Superseded for Polymesh by Spec 18 § 2.8 (src/pages/ChainView.tsx), which
+ * reads the public Polymesh ledger. This page is unchanged and still works: it
+ * describes the Base Sepolia demo contracts, which are real testnet artifacts
+ * and remain useful demo material. Two chains, two pages, each labelled with the
+ * one it actually talks to.
+ *
+ * A read-only, purpose-built view of
  * EcoXchange's ST-20 contract system (demo contracts still on Base Sepolia —
  * see config/contracts.ts). Not a block explorer — a
  * transparency tool. No wallet connection required or requested.

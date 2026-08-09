@@ -76,6 +76,12 @@ const ExplorerContract = lazy(() =>
 const Distribute = lazy(() =>
   import("./pages/Distribute.js").then((m) => ({ default: m.Distribute })),
 );
+// Spec 18 § 2.8 — the Polymesh chain view. Lazy for the same reason: its holder
+// chart pulls in the recharts chunk.
+const ChainView = lazy(() =>
+  import("./pages/ChainView.js").then((m) => ({ default: m.ChainView })),
+);
+import { CHAIN_VIEW_ENABLED } from "./config/chain-view.js";
 import { DemoModeBanner } from "./compliance/components/DemoModeBanner.js";
 import { RegDBanner } from "./compliance/components/RegDBanner.js";
 import { DisclaimerFooter } from "./compliance/components/DisclaimerFooter.js";
@@ -155,6 +161,24 @@ export function App() {
             path="/investor/project/:id/documents"
             element={<Documents />}
           />
+          {/* Spec 18 § 2.8 — on-chain record. The spec names /project/:id/chain;
+              LegacyProjectRedirect below already rewrites that here, so the
+              documented path works without a competing route declaration.
+
+              Gated OFF by default. Until the Polymesh queries are validated
+              against a live endpoint the route does not exist at all, so the
+              demo build cannot publish an unvalidated verification surface.
+              See config/chain-view.ts. */}
+          {CHAIN_VIEW_ENABLED ? (
+            <Route
+              path="/investor/project/:id/chain"
+              element={
+                <Suspense fallback={null}>
+                  <ChainView />
+                </Suspense>
+              }
+            />
+          ) : null}
           <Route path="/investor/settings" element={<Settings />} />
           <Route path="/investor/onboard" element={<InvestorOnboarding />} />
           {/* Smart Contract Explorer (Spec 08) — read-only on-chain transparency */}

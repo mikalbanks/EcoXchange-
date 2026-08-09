@@ -1,0 +1,3304 @@
+"""
+Represents all known chain "pallets"
+"""
+enum ModuleIdEnum {
+  system
+  babe
+  timestamp
+  indices
+  authorship
+  balances
+  transactionpayment
+  identity
+  cddserviceproviders
+  polymeshcommittee
+  committeemembership
+  technicalcommittee
+  technicalcommitteemembership
+  upgradecommittee
+  upgradecommitteemembership
+  multisig
+  "`bridge` has been deprecated from 6.0.0 chain version"
+  bridge
+  staking
+  offences
+  session
+  authoritydiscovery
+  grandpa
+  historical
+  imonline
+  randomnesscollectiveflip
+  sudo
+  asset
+  capitaldistribution
+  checkpoint
+  compliancemanager
+  corporateaction
+  corporateballot
+  permissions
+  pips
+  portfolio
+  protocolfee
+  scheduler
+  settlement
+  statistics
+  sto
+  treasury
+  utility
+  base
+  externalagents
+  relayer
+  rewards
+  contracts
+  polymeshcontracts
+  preimage
+  testutils
+  nft
+  confidentialasset
+  statetriemigration
+  electionprovidermultiphase
+  validators
+  beefy
+  revive
+  didregistrars
+  polymeshtransactionpayment
+  multiblockmigrations
+  confidentialassets
+
+  ## deprecated ##
+  confidential @deprecated
+  dividend @deprecated
+  exemption @deprecated
+  finalitytracker @deprecated
+  stocapped @deprecated
+
+  "unknown module value is populated for modules not yet implemented by Polymesh SubQuery"
+  unknown
+}
+
+"""
+Events are emitted when chain state is changed. This enum represents all known events
+"""
+enum EventIdEnum {
+  ## system ##
+  ExtrinsicSuccess
+  ExtrinsicFailed
+  CodeUpdated
+  NewAccount
+  KilledAccount
+  Remarked
+  "`PlaceholderFillBlock` has been deprecated from 8.0.0 chain version"
+  PlaceholderFillBlock
+  RejectedInvalidAuthorizedUpgrade
+  UpgradeAuthorized
+
+  ## babe ##
+
+  ## timestamp ##
+
+  ## indices ##
+  IndexAssigned
+  IndexFreed
+  IndexFrozen
+  DepositPoked
+
+  ## authorship ##
+
+  ## balances ##
+  Endowed
+  # Transfer (already defined in Asset)
+  BalanceSet
+  "`AccountBalanceBurned` has been deprecated from 8.0.0 chain version"
+  AccountBalanceBurned
+  Reserved
+  Unreserved
+  ReserveRepatriated
+  TransactionFeePaid
+  # Burned
+  Deposit
+  DustLost
+  # Frozen (already defined in asset)
+  # Issued (already defined in asset)
+  Locked
+  Minted
+  Rescinded
+  # Restored
+  # Slashed (already defined in electionprovidermultiphase)
+  Suspended
+  Thawed
+  TotalIssuanceForced
+  TransferWithMemo
+  Unlocked
+  Upgraded
+  Withdraw
+  BurnedDebt
+  BurnedHeld
+  Held
+  MintedCredit
+  Released
+  TransferAndHold
+  TransferOnHold
+  Unexpected
+
+  ## transactionpayment ##
+
+  ## identity ##
+  DidCreated
+  SecondaryKeysAdded
+  SecondaryKeysRemoved
+  SecondaryKeyLeftIdentity
+  SecondaryKeyPermissionsUpdated
+  PrimaryKeyUpdated
+  ClaimAdded
+  CustomClaimTypeAdded
+  ClaimRevoked
+  "`AssetDidRegistered` has been deprecated from 8.0.0 chain version"
+  AssetDidRegistered
+  AuthorizationAdded
+  AuthorizationRevoked
+  AuthorizationRejected
+  AuthorizationConsumed
+  AuthorizationRetryLimitReached
+  "`CddRequirementForPrimaryKeyUpdated` has been deprecated from 8.0.0 chain version"
+  CddRequirementForPrimaryKeyUpdated
+  "`CddClaimsInvalidated` has been deprecated from 8.0.0 chain version"
+  CddClaimsInvalidated
+  SecondaryKeysFrozen
+  SecondaryKeysUnfrozen
+  "`ChildDidCreated` has been deprecated from 8.0.0 chain version"
+  ChildDidCreated
+  "`ChildDidUnlinked` has been deprecated from 8.0.0 chain version"
+  ChildDidUnlinked
+
+  ## cddserviceproviders ##
+  # MemberAdded (already defined in UpgradeCommitteeMembership)
+  # MemberRemoved (already defined in UpgradeCommitteeMembership)
+  # MemberRevoked (already defined in UpgradeCommitteeMembership)
+  # MembersSwapped (already defined in UpgradeCommitteeMembership)
+  # MembersReset (already defined in UpgradeCommitteeMembership)
+  # ActiveLimitChanged (already defined in UpgradeCommitteeMembership)
+  # Dummy (already defined in UpgradeCommitteeMembership)
+
+  ## polymeshcommittee ##
+  Proposed
+  # Voted (already defined in Pips)
+  VoteRetracted
+  FinalVotes
+  Approved
+  Rejected
+  Executed
+  ReleaseCoordinatorUpdated
+  ExpiresAfterUpdated
+  VoteThresholdUpdated
+
+  ## didregistrars ##
+  MemberAdded
+  MemberRemoved
+  MemberRevoked
+  MembersSwapped
+  MembersReset
+  ActiveLimitChanged
+
+  ## committeemembership ##
+  # MemberAdded (already defined in didRegistrars)
+  # MemberRemoved (already defined in didRegistrars)
+  # MemberRevoked (already defined in didRegistrars)
+  # MembersSwapped (already defined in didRegistrars)
+  # MembersReset (already defined in didRegistrars)
+  # ActiveLimitChanged (already defined in didRegistrars)
+  "`Dummy` has been deprecated from 8.0.0 chain version"
+  Dummy
+
+  ## technicalcommittee ##
+  # Proposed (already defined in PolymeshCommittee)
+  # Voted (already defined in Pips)
+  # VoteRetracted (already defined in PolymeshCommittee)
+  # FinalVotes (already defined in PolymeshCommittee)
+  # Approved (already defined in PolymeshCommittee)
+  # Rejected (already defined in PolymeshCommittee)
+  # Executed (already defined in PolymeshCommittee)
+  # Closed (already defined in PolymeshCommittee)
+  # ReleaseCoordinatorUpdated (already defined in PolymeshCommittee)
+  # ExpiresAfterUpdated (already defined in PolymeshCommittee)
+  # VoteThresholdUpdated (already defined in PolymeshCommittee)
+
+  ## technicalcommitteemembership ##
+  # MemberAdded (already defined in didRegistrars)
+  # MemberRemoved (already defined in didRegistrars)
+  # MemberRevoked (already defined in didRegistrars)
+  # MembersSwapped (already defined in didRegistrars)
+  # MembersReset (already defined in didRegistrars)
+  # ActiveLimitChanged (already defined in didRegistrars)
+  # Dummy (deprecated from 8.0.0 chain version)
+
+  ## upgradecommittee ##
+  # Proposed (already defined in TechnicalCommittee)
+  # Voted (already defined in TechnicalCommittee)
+  # VoteRetracted (already defined in TechnicalCommittee)
+  # FinalVotes (already defined in TechnicalCommittee)
+  # Approved (already defined in TechnicalCommittee)
+  # Rejected (already defined in TechnicalCommittee)
+  # Executed (already defined in TechnicalCommittee)
+  # Closed (already defined in TechnicalCommittee)
+  # ReleaseCoordinatorUpdated (already defined in TechnicalCommittee)
+  # ExpiresAfterUpdated (already defined in TechnicalCommittee)
+  # VoteThresholdUpdated (already defined in TechnicalCommittee)
+
+  ## upgradecommitteemembership ##
+  # MemberAdded (already defined in didRegistrars)
+  # MemberRemoved (already defined in didRegistrars)
+  # MemberRevoked (already defined in didRegistrars)
+  # MembersSwapped (already defined in didRegistrars)
+  # MembersReset (already defined in didRegistrars)
+  # ActiveLimitChanged (already defined in didRegistrars)
+  # Dummy (deprecated from 8.0.0 chain version)
+
+  ## multisig ##
+  MultiSigCreated
+  ProposalAdded
+  ProposalExecuted
+  MultiSigSignerAdded
+  "`MultiSigSignerAuthorized` has been deprecated from 8.0.0 chain version"
+  MultiSigSignerAuthorized
+  "`MultiSigSignerRemoved` has been deprecated from 8.0.0 chain version"
+  MultiSigSignerRemoved
+  "`MultiSigSignaturesRequiredChanged` has been deprecated from 7.0.0 chain version"
+  MultiSigSignaturesRequiredChanged
+  ProposalApproved
+  ProposalRejectionVote
+  ProposalRejected
+  "`ProposalExecutionFailed` has been deprecated from 8.0.0 chain version"
+  ProposalExecutionFailed
+  "`ProposalFailedToExecute` has been deprecated from 8.0.0 chain version"
+  ProposalFailedToExecute
+  # SchedulingFailed (already defined in Settlement)
+  MultiSigAddedAdmin
+  MultiSigRemovedAdmin
+  MultiSigRemovedPayingDid
+  MultiSigSignersAuthorized
+  MultiSigSignersRemoved
+  MultiSigSignersRequiredChanged
+  ProposalApprovalVote
+
+  ## bridge (events removed from 6.0.0 chain) ##
+  "`ControllerChanged` has been deprecated from 6.0.0 chain version"
+  ControllerChanged
+  "`AdminChanged` has been deprecated from 6.0.0 chain version"
+  AdminChanged
+  "`TimelockChanged` has been deprecated from 6.0.0 chain version"
+  TimelockChanged
+  "`Bridged` has been deprecated from 6.0.0 chain version"
+  Bridged
+  "`Frozen` has been deprecated as bridge event from 6.0.0, still active in balances"
+  Frozen
+  "`Unfrozen` has been deprecated from 6.0.0 chain version"
+  Unfrozen
+  "`FrozenTx` has been deprecated from 6.0.0 chain version"
+  FrozenTx
+  "`UnfrozenTx` has been deprecated from 6.0.0 chain version"
+  UnfrozenTx
+  "`ExemptedUpdated` has been deprecated from 6.0.0 chain version"
+  ExemptedUpdated
+  "`BridgeLimitUpdated` has been deprecated from 6.0.0 chain version"
+  BridgeLimitUpdated
+  "`BridgeTxFailed` has been deprecated from 6.0.0 chain version"
+  BridgeTxFailed
+  "`TxsHandled` has been deprecated from 6.0.0 chain version"
+  TxsHandled
+  "`BridgeTxScheduled` has been deprecated from 6.0.0 chain version"
+  BridgeTxScheduled
+  "`BridgeTxScheduleFailed` has been deprecated from 6.0.0 chain version"
+  BridgeTxScheduleFailed
+  "`FreezeAdminAdded` has been deprecated from 6.0.0 chain version"
+  FreezeAdminAdded
+  "`FreezeAdminRemoved` has been deprecated from 6.0.0 chain version"
+  FreezeAdminRemoved
+  "`TxRemoved` has been deprecated from 6.0.0 chain version"
+  TxRemoved
+
+  ## staking ##
+  "`EraPayout` has been deprecated from 7.0.0 chain version"
+  EraPayout
+  "`Reward` has been deprecated from 8.0.0 chain version"
+  Reward
+  "`Slash` has been renamed to `Slashed` from 7.0.0 chain version"
+  Slash
+  OldSlashingReportDiscarded
+  "`StakingElection` has been deprecated from 7.0.0 chain version"
+  StakingElection
+  SolutionStored
+  Bonded
+  Unbonded
+  Nominated
+  Withdrawn
+  PermissionedIdentityAdded
+  PermissionedIdentityRemoved
+  InvalidatedNominators
+  CommissionCapUpdated
+  "`MinimumBondThresholdUpdated` has been deprecated from 7.0.0 chain version"
+  MinimumBondThresholdUpdated
+  RewardPaymentSchedulingInterrupted
+  SlashingAllowedForChanged
+  Chilled
+  EraPaid
+  ForceEra
+  Kicked
+  PayoutStarted
+  SlashReported
+  StakersElected
+  ValidatorPrefsSet
+  StakingElectionFailed
+  ControllerBatchDeprecated
+  CurrencyMigrated
+  SnapshotTargetsSizeExceeded
+  SnapshotVotersSizeExceeded
+
+  ## offences ##
+  Offence
+
+  ## session ##
+  NewSession
+  ValidatorDisabled
+  ValidatorReenabled
+  NewQueued
+
+  ## authoritydiscovery ##
+
+  ## grandpa ##
+  NewAuthorities
+  Paused
+  Resumed
+
+  ## historical ##
+
+  ## imonline ##
+  HeartbeatReceived
+  AllGood
+  SomeOffline
+
+  ## randomnesscollectiveflip ##
+
+  ## sudo ##
+  Sudid
+  KeyChanged
+  KeyRemoved
+  SudoAsDone
+
+  ## asset ##
+  "`Transfer` has been deprecated as an asset event from 6.0.0 chain version, still active in balances"
+  Transfer
+  "`Issued` has been deprecated as an asset event from 6.0.0 chain version, still active in balances"
+  Issued
+  "`Redeemed` has been deprecated from 6.0.0 chain version"
+  Redeemed
+  AssetBalanceUpdated
+  AssetCreated
+  IdentifiersUpdated
+  DivisibilityChanged
+  "`TransferWithData` has been deprecated from 7.0.0 chain version"
+  TransferWithData
+  "`IsIssuable` has been deprecated from 7.0.0 chain version"
+  IsIssuable
+  TickerRegistered
+  TickerTransferred
+  AssetOwnershipTransferred
+  AssetFrozen
+  AssetUnfrozen
+  AssetRenamed
+  AssetTypeChanged
+  FundingRoundSet
+  DocumentAdded
+  DocumentRemoved
+  "`ExtensionRemoved` has been deprecated from 7.0.0 chain version"
+  ExtensionRemoved
+  "`ClassicTickerClaimed` has been deprecated from 6.0.0 chain version"
+  ClassicTickerClaimed
+  ControllerTransfer
+  CustomAssetTypeExists
+  CustomAssetTypeRegistered
+  SetAssetMetadataValue
+  SetAssetMetadataValueDetails
+  RegisterAssetMetadataLocalType
+  RegisterAssetMetadataGlobalType
+  MetadataValueDeleted
+  LocalMetadataKeyDeleted
+  AssetMediatorsAdded
+  "`SetAssetMediators` has been deprecated from 6.0.0 chain version"
+  SetAssetMediators
+  AssetMediatorsRemoved
+  TickerUnlinkedFromAsset
+  GlobalMetadataSpecUpdated
+  CreatedAssetTransfer
+  AllowanceSpent
+  # Approval (already defined in deprecated events)
+
+  ## capitaldistribution ##
+  Created
+  BenefitClaimed
+  Reclaimed
+  Removed
+
+  ## checkpoint ##
+  CheckpointCreated
+  MaximumSchedulesComplexityChanged
+  ScheduleCreated
+  ScheduleRemoved
+
+  ## compliancemanager ##
+  ComplianceRequirementCreated
+  ComplianceRequirementRemoved
+  AssetComplianceReplaced
+  AssetComplianceReset
+  AssetComplianceResumed
+  AssetCompliancePaused
+  ComplianceRequirementChanged
+  TrustedDefaultClaimIssuerAdded
+  TrustedDefaultClaimIssuerRemoved
+
+  ## corporateaction ##
+  MaxDetailsLengthChanged
+  DefaultTargetIdentitiesChanged
+  DefaultWithholdingTaxChanged
+  DidWithholdingTaxChanged
+  "`CAATransferred` has been deprecated from 6.0.0 chain version"
+  CAATransferred
+  CAInitiated
+  CALinkedToDoc
+  CARemoved
+  RecordDateChanged
+
+  ## corporateballot ##
+  # Created (already defined in capitaldistribution)
+  VoteCast
+  RangeChanged
+  MetaChanged
+  RCVChanged
+  # Removed (already defined in capitaldistribution)
+
+  ## permissions ##
+
+  ## pips ##
+  HistoricalPipsPruned
+  ProposalCreated
+  ProposalStateUpdated
+  Voted
+  PipClosed
+  ExecutionScheduled
+  DefaultEnactmentPeriodChanged
+  MinimumProposalDepositChanged
+  PendingPipExpiryChanged
+  MaxPipSkipCountChanged
+  ActivePipLimitChanged
+  ProposalRefund
+  SnapshotCleared
+  SnapshotTaken
+  PipSkipped
+  SnapshotResultsEnacted
+  ExecutionSchedulingFailed
+  ExpiryScheduled
+  ExpirySchedulingFailed
+  ExecutionCancellingFailed
+
+  ## portfolio ##
+  PortfolioCreated
+  PortfolioDeleted
+  "`MovedBetweenPortfolios` has been deprecated from 6.0.0 chain version"
+  MovedBetweenPortfolios
+  "`FungibleTokensMovedBetweenPortfolios` has been deprecated from 6.0.0 chain version"
+  FungibleTokensMovedBetweenPortfolios
+  "`NFTsMovedBetweenPortfolios` has been deprecated from 6.0.0 chain version"
+  NFTsMovedBetweenPortfolios
+  PortfolioRenamed
+  UserPortfolios
+  PortfolioCustodianChanged
+  FundsMovedBetweenPortfolios
+  AllowIdentityToCreatePortfolios
+  RevokeCreatePortfoliosPermission
+
+  ## protocolfee ##
+  FeeSet
+  CoefficientSet
+  FeeCharged
+
+  ## scheduler ##
+  Scheduled
+  Canceled
+  Dispatched
+  "`CallLookupFailed` has been deprecated from 8.0.0 chain version"
+  CallLookupFailed
+  CallUnavailable
+  PeriodicFailed
+  PermanentlyOverweight
+  AgendaIncomplete
+  RetryCancelled
+  RetryFailed
+  RetrySet
+
+  ## settlement ##
+  VenueCreated
+  VenueDetailsUpdated
+  VenueTypeUpdated
+  InstructionAuthorized @deprecated
+  InstructionUnauthorized @deprecated
+  InstructionCreated
+  "`InstructionV2Created` has been deprecated from 6.0.0 chain version"
+  InstructionV2Created
+  InstructionAffirmed
+  AffirmationWithdrawn
+  FailedToExecuteInstruction
+  InstructionRejected
+  ReceiptClaimed
+  "`ReceiptValidityChanged` has been deprecated from 6.0.0 chain version"
+  ReceiptValidityChanged
+  "`ReceiptUnclaimed` has been deprecated from 6.0.0 chain version"
+  ReceiptUnclaimed
+  VenueFiltering
+  VenuesAllowed
+  VenuesBlocked
+  LegFailedExecution
+  "`InstructionFailed` has been deprecated from 7.0.4 chain version"
+  InstructionFailed
+  InstructionExecuted
+  VenueUnauthorized
+  "`SchedulingFailed` has been deprecated from 8.0.0 chain version"
+  SchedulingFailed
+  SettlementManuallyExecuted
+  "`InstructionRescheduled` has been deprecated from 8.0.0 chain version"
+  InstructionRescheduled
+  VenueSignersUpdated
+  InstructionUnlocked
+  MandatoryReceiverAffirmationSet
+
+  RemoveAssetAffirmationExemption
+  AssetAffirmationExemption
+  PreApprovedAsset
+  RemovePreApprovedAsset
+  PreApprovedPortfolio
+  RevokePreApprovedPortfolio
+  InstructionAutomaticallyAffirmed
+  MediatorAffirmationReceived
+  MediatorAffirmationWithdrawn
+  InstructionMediators
+  InstructionLocked
+
+  TickerLinkedToAsset
+  FundsTransferred
+
+  ## statistics ##
+  TransferManagerAdded @deprecated
+  TransferManagerRemoved @deprecated
+  ExemptionsAdded @deprecated
+  ExemptionsRemoved @deprecated
+  StatTypesAdded
+  StatTypesRemoved
+  AssetStatsUpdated
+  SetAssetTransferCompliance
+  TransferConditionExemptionsAdded
+  TransferConditionExemptionsRemoved
+
+  ## sto ##
+  FundraiserCreated
+  Invested
+  FundraiserFrozen
+  FundraiserUnfrozen
+  FundraiserWindowModified
+  FundraiserClosed
+  FundraiserOffchainFundingEnabled
+
+  ## treasury ##
+  TreasuryDisbursement
+  TreasuryDisbursementFailed
+  TreasuryReimbursement
+
+  ## utility ##
+  BatchInterrupted
+  "`BatchOptimisticFailed` has been deprecated from 8.0.0 chain version"
+  BatchOptimisticFailed
+  BatchCompleted
+  "`BatchCompletedOld` has been deprecated from 8.0.0 chain version"
+  BatchCompletedOld
+  BatchCompletedWithErrors
+  "`BatchInterruptedOld` has been deprecated from 8.0.0 chain version"
+  BatchInterruptedOld
+  DispatchedAs
+  ItemCompleted
+  ItemFailed
+  RelayedTx
+
+  ## base ##
+  "`UnexpectedError` has been deprecated from 8.0.0 chain version"
+  UnexpectedError
+
+  ## externalagents ##
+  GroupCreated
+  GroupPermissionsUpdated
+  AgentAdded
+  AgentRemoved
+  GroupChanged
+
+  ## relayer ##
+  "`AuthorizedPayingKey` has been deprecated from 8.0.0 chain version"
+  AuthorizedPayingKey
+  "`AcceptedPayingKey` has been deprecated from 8.0.0 chain version"
+  AcceptedPayingKey
+  "`RemovedPayingKey` has been deprecated from 8.0.0 chain version"
+  RemovedPayingKey
+  UpdatedPolyxLimit
+  AcceptedSubsidy
+  ApprovedSubsidy
+  # RelayedTx (already defined in utility)
+  RemovedPendingSubsidy
+  RemovedSubsidy
+  SubsidyDebited
+
+  ## rewards ##
+  "`ItnRewardClaimed` has been deprecated from 6.0.0 chain version"
+  ItnRewardClaimed
+
+  ## contracts ##
+  Instantiated
+  Terminated
+  CodeStored
+  ContractEmitted
+  CodeRemoved
+  ContractCodeUpdated
+  Called
+  DelegateCalled
+  StorageDepositTransferredAndHeld
+  StorageDepositTransferredAndReleased
+
+  ## polymeshcontracts ##
+  ApiHashUpdated
+  SCRuntimeCall
+
+  ## preimage ##
+  Noted
+  Requested
+  Cleared
+
+  ## testutils ##
+  "`MockInvestorUIDCreated` has been deprecated from 6.0.0 chain version"
+  MockInvestorUIDCreated
+  "`DidStatus` has been deprecated from 7.1.0 chain version"
+  DidStatus
+  "`CddStatus` has been deprecated from 7.1.0 chain version"
+  CddStatus
+
+  ## nft ##
+  "`IssuedNFT` has been deprecated from 6.0.0 chain version"
+  IssuedNFT
+  NftCollectionCreated
+  "`RedeemedNFT` has been deprecated from 6.0.0 chain version"
+  RedeemedNFT
+  "`NFTPortfolioUpdated` has been renamed as `NFTHoldingsUpdated` from 8.0.0 chain version"
+  NFTPortfolioUpdated
+  NFTHoldingsUpdated
+
+  ## confidential assets (events replaced by `confidentialAssets` pallet in 8.0.0) ##
+  "`AccountCreated` has been deprecated from 8.0.0 chain version"
+  AccountCreated
+  # ConfidentialAssetCreated -> uses existing AssetCreated
+  "`AccountDeposit` has been deprecated from 8.0.0 chain version"
+  AccountDeposit
+  "`TransactionCreated` has been deprecated from 8.0.0 chain version"
+  TransactionCreated
+  "`TransactionAffirmed` has been deprecated from 8.0.0 chain version"
+  TransactionAffirmed
+  "`AccountWithdraw` has been deprecated from 8.0.0 chain version"
+  AccountWithdraw
+  "`TransactionRejected` has been deprecated from 8.0.0 chain version"
+  TransactionRejected
+  "`TransactionExecuted` has been deprecated from 8.0.0 chain version"
+  TransactionExecuted
+  "`AccountDepositIncoming` has been deprecated from 8.0.0 chain version"
+  AccountDepositIncoming
+  "`AccountAssetFrozen` has been deprecated from 8.0.0 chain version"
+  AccountAssetFrozen
+  "`AccountAssetUnfrozen` has been deprecated from 8.0.0 chain version"
+  AccountAssetUnfrozen
+  # AssetFrozen -> defined before
+  # AssetUnfrozen -> defined before
+  "`Burned` is still active in balances pallet"
+  Burned
+  "`FundsMoved` has been deprecated from 8.0.0 chain version"
+  FundsMoved
+
+  ## electionprovidermultiphase ##
+  ElectionFailed
+  ElectionFinalized
+  PhaseTransitioned
+  Rewarded
+  Slashed
+  # SolutionStored -> defined before in staking
+
+  ## historical ##
+  RootsPruned
+  RootStored
+
+  ## revive ##
+  # ContractEmitted (already defined in contracts)
+  EthExtrinsicRevert
+  # Instantiated (already defined in contracts)
+
+  ## confidentialassets ##
+  AccountAssetRegistered
+  AccountCurveTreeRootUpdated
+  AccountRegistered
+  AccountStateLeafInserted
+  # AssetCreated
+  AssetCurveTreeRootUpdated
+  AssetMinted
+  AssetStateLeafUpdated
+  AssetUpdated
+  EncryptionKeyRegistered
+  FeeAccountCurveTreeRootUpdated
+  FeeAccountDeposited
+  FeeAccountStateLeafInserted
+  FeeAccountUpdated
+  FeeAccountWithdrawn
+  MediatorAffirmed
+  MediatorRejected
+  ReceiverAffirmationReverted
+  ReceiverAffirmed
+  ReceiverClaimed
+  RelayerBatchedProofs
+  SenderAffirmationReverted
+  SenderAffirmed
+  SenderCounterUpdated
+  SettlementCreated
+  SettlementStatusUpdated
+
+  ## multiBlockMigrations ##
+  HistoricCleared
+  MigrationAdvanced
+  MigrationCompleted
+  MigrationFailed
+  MigrationSkipped
+  UpgradeCompleted
+  UpgradeFailed
+  UpgradeStarted
+
+  "`Approval` is now active for assets pallet"
+  Approval
+  
+  ## deprecated ##
+  AssetPurchased @deprecated
+  AssetRuleChanged @deprecated
+  AssetRuleRemoved @deprecated
+  AssetRulesPaused @deprecated
+  AssetRulesReplaced @deprecated
+  AssetRulesReset @deprecated
+  AssetRulesResumed @deprecated
+  BallotCancelled @deprecated
+  BallotCreated @deprecated
+  CddRequirementForMasterKeyUpdated @deprecated
+  Closed @deprecated
+  ContractExecution @deprecated
+  ControllerRedemption @deprecated
+  CustodyAllowanceChanged @deprecated
+  CustodyTransfer @deprecated
+  DividendCanceled @deprecated
+  DividendCreated @deprecated
+  DividendPaidOutToUser @deprecated
+  DividendRemainingClaimed @deprecated
+  Evicted @deprecated
+  ExemptionListModified @deprecated
+  ExtensionAdded @deprecated
+  ExtensionArchived @deprecated
+  ExtensionUnArchive @deprecated
+  FundraiserWindowModifed @deprecated
+  FundsRaised @deprecated
+  GlobalCommissionUpdated @deprecated
+  IndividualCommissionEnabled @deprecated
+  InstantiationFeeChanged @deprecated
+  InstantiationFreezed @deprecated
+  InstantiationUnFreezed @deprecated
+  InvestorUniquenessClaimNotAllowed @deprecated
+  MasterKeyUpdated @deprecated
+  NewAssetRuleCreated @deprecated
+  OffChainAuthorizationRevoked @deprecated
+  PermissionedValidatorAdded @deprecated
+  PermissionedValidatorRemoved @deprecated
+  PermissionedValidatorStatusChanged @deprecated
+  PrimaryIssuanceAgentTransfered @deprecated
+  PrimaryIssuanceAgentTransferred @deprecated
+  ProposalBondAdjusted @deprecated
+  ProposalCoolOffPeriodChanged @deprecated
+  ProposalDetailsAmended @deprecated
+  ProposalDurationChanged @deprecated
+  PutCodeFlagChanged @deprecated
+  QuorumThresholdChanged @deprecated
+  RangeProofAdded @deprecated
+  RangeProofVerified @deprecated
+  ReferendumCreated @deprecated
+  ReferendumScheduled @deprecated
+  ReferendumStateUpdated @deprecated
+  Restored @deprecated
+  ScheduleUpdated @deprecated
+  SecondaryPermissionsUpdated @deprecated
+  SignerLeft @deprecated
+  SigningKeysAdded @deprecated
+  SigningKeysFrozen @deprecated
+  SigningKeysRemoved @deprecated
+  SigningKeysUnfrozen @deprecated
+  SigningPermissionsUpdated @deprecated
+  SlashingParamsUpdated @deprecated
+  TemplateInstantiationFeeChanged @deprecated
+  TemplateMetaUrlChanged @deprecated
+  TemplateOwnershipTransferred @deprecated
+  TemplateUsageFeeChanged @deprecated
+  TreasuryDidSet @deprecated
+  VenueUpdated @deprecated
+  VoteEnactReferendum @deprecated
+  VoteRejectReferendum @deprecated
+
+  "Unknown event value is populated for events not yet implemented by Polymesh SubQuery"
+  Unknown
+}
+
+"""
+Represents all known chain extrinsics
+"""
+enum CallIdEnum {
+  ## system ##
+  "`fill_block` has been removed from 8.0.0 chain version"
+  fill_block
+  remark
+  set_heap_pages
+  set_code
+  set_code_without_checks
+  set_storage
+  kill_storage
+  kill_prefix
+  remark_with_event
+  "`placeholder_fill_block` has been deprecated from 6.0.0 chain version"
+  placeholder_fill_block
+  apply_authorized_upgrade
+  authorize_upgrade
+  authorize_upgrade_without_checks
+
+  ## babe ##
+  report_equivocation
+  report_equivocation_unsigned
+  plan_config_change
+
+  ## timestamp ##
+  set
+
+  ## indices ##
+  claim
+  transfer
+  free
+  force_transfer
+  freeze
+  poke_deposit
+
+  ## authorship ##
+  "`set_uncles` has been deprecated from 6.0.0 chain version"
+  set_uncles
+
+  ## balances ##
+  # transfer (already defined in indices)
+  transfer_with_memo
+  "`deposit_block_reward_reserve_balance` has been removed from 8.0.0 chain version"
+  deposit_block_reward_reserve_balance
+  "`set_balance` has been removed from 8.0.0 chain version"
+  set_balance
+  # force_transfer (already defined in indices)
+  "`burn_account_balance` has been removed from 8.0.0 chain version"
+  burn_account_balance
+  # burn
+  force_set_balance
+  force_adjust_total_issuance
+  force_unreserve
+  transfer_all
+  transfer_allow_death
+  transfer_keep_alive
+  upgrade_accounts
+
+  ## transactionpayment ##
+  set_disable_fees
+
+  ## identity ##
+  cdd_register_did
+  cdd_register_did_with_cdd
+  "`invalidate_cdd_claims` has been removed from 8.0.0 chain version"
+  invalidate_cdd_claims
+  "`remove_secondary_keys_old` has been deprecated from 6.0.0 chain version"
+  remove_secondary_keys_old
+  accept_primary_key
+  "`change_cdd_requirement_for_mk_rotation` has been removed from 8.0.0 chain version"
+  change_cdd_requirement_for_mk_rotation
+  join_identity_as_key
+  leave_identity_as_key
+  add_claim
+  revoke_claim
+  "`set_permission_to_signer` has been deprecated from 6.0.0 chain version"
+  set_permission_to_signer
+  "`placeholder_legacy_set_permission_to_signer` has been deprecated from 6.0.0 chain version"
+  placeholder_legacy_set_permission_to_signer
+  freeze_secondary_keys
+  unfreeze_secondary_keys
+  add_authorization
+  remove_authorization
+  "`add_secondary_keys_with_authorization_old` has been removed from 8.0.0 chain version"
+  add_secondary_keys_with_authorization_old
+  "`add_investor_uniqueness_claim` has been removed from 8.0.0 chain version"
+  add_investor_uniqueness_claim
+  gc_add_cdd_claim
+  gc_revoke_cdd_claim
+  "`add_investor_uniqueness_claim_v2` has been removed from 8.0.0 chain version"
+  add_investor_uniqueness_claim_v2
+  revoke_claim_by_index
+  rotate_primary_key_to_secondary
+  add_secondary_keys_with_authorization
+  set_secondary_key_permissions
+  remove_secondary_keys
+  register_custom_claim_type
+  # register_did (already defined in testutils)
+  "`create_child_identities` has been removed from 8.0.0 chain version"
+  create_child_identities
+  "`create_child_identity` has been removed from 8.0.0 chain version"
+  create_child_identity
+  "`unlink_child_identity` has been removed from 8.0.0 chain version"
+  unlink_child_identity
+  self_register_did
+
+  ## cddserviceproviders/didregistrars ##
+  set_active_members_limit
+  disable_member
+  add_member
+  remove_member
+  swap_member
+  reset_members
+  abdicate_membership
+
+  ## polymeshcommittee ##
+  set_vote_threshold
+  set_release_coordinator
+  set_expires_after
+  vote_or_propose
+  vote
+
+  ## committeemembership ##
+  # set_active_members_limit ( already defined in cddserviceproviders)
+  # disable_member ( already defined in cddserviceproviders)
+  # add_member ( already defined in cddserviceproviders)
+  # remove_member ( already defined in cddserviceproviders)
+  # swap_member ( already defined in cddserviceproviders)
+  # reset_members ( already defined in cddserviceproviders)
+  # abdicate_membership ( already defined in cddserviceproviders)
+
+  ## technicalcommittee ##
+  # set_vote_threshold ( already defined in polymeshcommittee)
+  # set_release_coordinator ( already defined in polymeshcommittee)
+  # set_expires_after ( already defined in polymeshcommittee)
+  # vote_or_propose ( already defined in polymeshcommittee)
+  # vote ( already defined in polymeshcommittee)
+
+  ## technicalcommitteemembership ##
+  # set_active_members_limit ( already defined in cddserviceproviders)
+  # disable_member ( already defined in cddserviceproviders)
+  # add_member ( already defined in cddserviceproviders)
+  # remove_member ( already defined in cddserviceproviders)
+  # swap_member ( already defined in cddserviceproviders)
+  # reset_members ( already defined in cddserviceproviders)
+  # abdicate_membership ( already defined in cddserviceproviders)
+
+  ## upgradecommittee ##
+  # set_vote_threshold ( already defined in polymeshcommittee)
+  # set_release_coordinator ( already defined in polymeshcommittee)
+  # set_expires_after ( already defined in polymeshcommittee)
+  # vote_or_propose ( already defined in polymeshcommittee)
+  # vote ( already defined in polymeshcommittee)
+
+  ## upgradecommitteemembership ##
+  # set_active_members_limit ( already defined in cddserviceproviders)
+  # disable_member ( already defined in cddserviceproviders)
+  # add_member ( already defined in cddserviceproviders)
+  # remove_member ( already defined in cddserviceproviders)
+  # swap_member ( already defined in cddserviceproviders)
+  # reset_members ( already defined in cddserviceproviders)
+  # abdicate_membership ( already defined in cddserviceproviders)
+
+  ## multisig ##
+  create_multisig
+  "`create_or_approve_proposal_as_identity` has been deprecated from 7.0.0 chain version"
+  create_or_approve_proposal_as_identity
+  "`create_or_approve_proposal_as_key` has been deprecated from 7.0.0 chain version"
+  create_or_approve_proposal_as_key
+  "`create_proposal_as_identity` has been deprecated from 7.0.0 chain version"
+  create_proposal_as_identity
+  "`create_proposal_as_key` has been deprecated from 7.0.0 chain version"
+  create_proposal_as_key
+  "`approve_as_identity` has been deprecated from 7.0.0 chain version"
+  approve_as_identity
+  "`approve_as_key` has been deprecated from 7.0.0 chain version"
+  approve_as_key
+  "`reject_as_identity` has been removed from 8.0.0 chain version"
+  reject_as_identity
+  "`reject_as_key` has been renamed to `reject` from 7.0.0 chain version"
+  reject_as_key
+  "`accept_multisig_signer_as_identity` has been deprecated from 7.0.0 chain version"
+  accept_multisig_signer_as_identity
+  "`accept_multisig_signer_as_key` has been deprecated from 7.0.0 chain version"
+  accept_multisig_signer_as_key
+  accept_multisig_signer
+  "`add_multisig_signer` has been renamed to `add_multisig_signers` from 7.0.0 chain version"
+  add_multisig_signer
+  "`remove_multisig_signer` has been renamed to `remove_multisig_signers` from 7.0.0 chain version"
+  remove_multisig_signer
+  "`add_multisig_signers_via_creator` has been renamed to `add_multisig_signers_via_admin` from 7.0.0 chain version"
+  add_multisig_signers_via_creator
+  "`remove_multisig_signers_via_creator` has been renamed to `remove_multisig_signers_via_admin` from 7.0.0 chain version"
+  remove_multisig_signers_via_creator
+  change_sigs_required
+  "`change_sigs_required_via_creator` has been renamed to `change_sigs_required_via_admin` from 7.0.0 chain version"
+  change_sigs_required_via_creator
+  "`make_multisig_secondary` has been deprecated from 7.0.0 chain version"
+  make_multisig_secondary
+  "`make_multisig_primary` has been deprecated from 7.0.0 chain version"
+  make_multisig_primary
+  "`execute_scheduled_proposal` has been deprecated from 7.0.0 chain version"
+  execute_scheduled_proposal
+  "`remove_creator_controls` has been deprecated from 7.0.0 chain version"
+  remove_creator_controls
+  add_admin
+  add_multisig_signers
+  add_multisig_signers_via_admin
+  approve
+  approve_join_identity
+  change_sigs_required_via_admin
+  create_proposal
+  join_identity
+  reject
+  remove_admin_via_admin
+  remove_admin
+  remove_multisig_signers_via_admin
+  remove_multisig_signers
+  remove_payer
+  remove_payer_via_payer
+
+  ## bridge ##
+  "`change_controller` has been deprecated from 7.0.0 chain version"
+  change_controller
+  "`change_admin` has been deprecated from 7.0.0 chain version"
+  change_admin
+  "`change_timelock` has been deprecated from 7.0.0 chain version"
+  change_timelock
+  # freeze ( already defined in indices)
+  # unfreeze ( already defined in asset)
+  "`change_bridge_limit` has been deprecated from 7.0.0 chain version"
+  change_bridge_limit
+  "`change_bridge_exempted` has been deprecated from 7.0.0 chain version"
+  change_bridge_exempted
+  "`force_handle_bridge_tx` has been deprecated from 7.0.0 chain version"
+  force_handle_bridge_tx
+  "`batch_propose_bridge_tx` has been deprecated from 7.0.0 chain version"
+  batch_propose_bridge_tx
+  "`propose_bridge_tx` has been deprecated from 7.0.0 chain version"
+  propose_bridge_tx
+  "`handle_bridge_tx` has been deprecated from 7.0.0 chain version"
+  handle_bridge_tx
+  "`freeze_txs` has been deprecated from 7.0.0 chain version"
+  freeze_txs
+  "`unfreeze_txs` has been deprecated from 7.0.0 chain version"
+  unfreeze_txs
+  "`handle_scheduled_bridge_tx` has been deprecated from 7.0.0 chain version"
+  handle_scheduled_bridge_tx
+  "`add_freeze_admin` has been deprecated from 7.0.0 chain version"
+  add_freeze_admin
+  "`remove_freeze_admin` has been deprecated from 7.0.0 chain version"
+  remove_freeze_admin
+  "`remove_txs` has been deprecated from 7.0.0 chain version"
+  remove_txs
+
+  ## staking ##
+  bond
+  bond_extra
+  unbond
+  withdraw_unbonded
+  validate
+  nominate
+  chill
+  chill_from_governance
+  chill_other
+  force_apply_min_commission
+  set_payee
+  set_controller
+  set_validator_count
+  increase_validator_count
+  kick
+  scale_validator_count
+  add_permissioned_validator
+  remove_permissioned_validator
+  "`validate_cdd_expiry_nominators` has been deprecated from 7.3.0 chain version"
+  validate_cdd_expiry_nominators
+  set_commission_cap
+  "`set_min_bond_threshold` has been renamed to `set_min_commission` from 7.0.0 chain version"
+  set_min_bond_threshold
+  set_min_commission
+  force_no_eras
+  force_new_era
+  set_invulnerables
+  force_unstake
+  force_new_era_always
+  cancel_deferred_slash
+  payout_stakers
+  rebond
+  "`set_history_depth` has been deprecated from 7.0.0 chain version"
+  set_history_depth
+  reap_stash
+  "`submit_election_solution` has been deprecated from 7.0.0 chain version"
+  submit_election_solution
+  "`submit_election_solution_unsigned` has been deprecated from 7.0.0 chain version"
+  submit_election_solution_unsigned
+  payout_stakers_by_system
+  change_slashing_allowed_for
+  update_permissioned_validator_intended_count
+  set_staking_configs
+  update_payee
+  payout_stakers_by_page
+  deprecate_controller_batch
+  manual_slash
+  migrate_currency
+  restore_ledger
+
+  ## offences ##
+
+  ## session ##
+  set_keys
+  purge_keys
+
+  ## authoritydiscovery ##
+
+  ## grandpa ##
+  # report_equivocation ( already defined in babe)
+  # report_equivocation_unsigned ( already defined in babe)
+  note_stalled
+
+  ## historical ##
+
+  ## imonline ##
+  heartbeat
+
+  ## randomnesscollectiveflip ##
+
+  ## sudo ##
+  sudo
+  sudo_unchecked_weight
+  set_key
+  sudo_as
+  remove_key
+
+  ## asset ##
+  "`register_ticker` has been renamed to `register_unique_ticker` from 7.0.0 chain version"
+  register_ticker @deprecated
+  register_unique_ticker
+  accept_ticker_transfer
+  accept_asset_ownership_transfer
+  create_asset
+  # freeze ( already defined in indices)
+  unfreeze
+  update_asset_type
+  rename_asset
+  issue
+  redeem
+  "`redeem_from_portfolio` has been deprecated and been replaced by `redeem` itself from 7.0.0 chain version"
+  redeem_from_portfolio @deprecated
+  make_divisible
+  "`pre_approve_ticker` has been renamed to `pre_approve_asset` from 7.0.0 chain version"
+  pre_approve_ticker @deprecated
+  pre_approve_asset
+  add_documents
+  remove_documents
+  set_funding_round
+  update_identifiers
+  "`claim_classic_ticker` has been deprecated from 6.0.0 chain version"
+  claim_classic_ticker
+  "`reserve_classic_ticker` has been deprecated from 6.0.0 chain version"
+  reserve_classic_ticker
+  controller_transfer
+  register_custom_asset_type
+  create_asset_with_custom_type
+  "`exempt_ticker_affirmation` has been renamed to `exempt_asset_affirmation` from 7.0.0 chain version"
+  exempt_ticker_affirmation
+  exempt_asset_affirmation
+  set_asset_metadata
+  set_asset_metadata_details
+  register_and_set_local_asset_metadata
+  register_asset_metadata_local_type
+  register_asset_metadata_global_type
+  remove_local_metadata_key
+  remove_metadata_value
+  "`remove_ticker_affirmation_exemption` has been renamed to `remove_asset_affirmation_exemption` from 7.0.0 chain version"
+  remove_ticker_affirmation_exemption @deprecated
+  remove_asset_affirmation_exemption
+  "`remove_ticker_pre_approval` has been renamed to `remove_asset_pre_approval` from 7.0.0 chain version"
+  remove_ticker_pre_approval @deprecated
+  remove_asset_pre_approval
+  add_mandatory_mediators
+  remove_mandatory_mediators
+  link_ticker_to_asset_id
+  unlink_ticker_from_asset_id
+  update_global_metadata_spec
+  receiver_affirm_asset_transfer
+  reject_asset_transfer
+  transfer_asset
+
+  ## capitaldistribution ##
+  distribute
+  # claim ( already defined in indices)
+  push_benefit
+  reclaim
+  remove_distribution
+
+  ## checkpoint ##
+  create_checkpoint
+  set_schedules_max_complexity
+  create_schedule
+  remove_schedule
+
+  ## compliancemanager ##
+  add_compliance_requirement
+  remove_compliance_requirement
+  replace_asset_compliance
+  reset_asset_compliance
+  pause_asset_compliance
+  resume_asset_compliance
+  add_default_trusted_claim_issuer
+  remove_default_trusted_claim_issuer
+  change_compliance_requirement
+
+  ## corporateaction ##
+  set_max_details_length
+  set_default_targets
+  set_default_withholding_tax
+  set_did_withholding_tax
+  initiate_corporate_action
+  link_ca_doc
+  remove_ca
+  change_record_date
+  initiate_corporate_action_and_distribute
+  initiate_corporate_action_and_ballot
+
+  ## corporateballot ##
+  attach_ballot
+  # vote ( already defined in polymeshcommittee)
+  change_end
+  change_meta
+  change_rcv
+  remove_ballot
+
+  ## permissions ##
+
+  ## pips ##
+  set_prune_historical_pips
+  set_min_proposal_deposit
+  set_default_enactment_period
+  set_pending_pip_expiry
+  set_max_pip_skip_count
+  set_active_pip_limit
+  propose
+  # vote ( already defined in polymeshcommittee)
+  approve_committee_proposal
+  reject_proposal
+  prune_proposal
+  reschedule_execution
+  clear_snapshot
+  snapshot
+  enact_snapshot_results
+  execute_scheduled_pip
+  expire_scheduled_pip
+
+  ## portfolio ##
+  create_portfolio
+  delete_portfolio
+  move_portfolio_funds
+  "`move_portfolio_funds_v2` has been removed from 8.0.0 chain version"
+  move_portfolio_funds_v2
+  rename_portfolio
+  quit_portfolio_custody
+  accept_portfolio_custody
+  pre_approve_portfolio
+  remove_portfolio_pre_approval
+
+  ## protocolfee ##
+  change_coefficient
+  change_base_fee
+
+  ## scheduler ##
+  schedule
+  cancel
+  schedule_named
+  cancel_named
+  schedule_after
+  schedule_named_after
+  cancel_retry
+  cancel_retry_named
+  set_retry
+  set_retry_named
+
+  ## settlement ##
+  create_venue
+  update_venue_details
+  update_venue_type
+  add_instruction
+  "`add_instruction_with_memo` has been removed from 8.0.0 chain version"
+  add_instruction_with_memo
+  "`add_instruction_with_memo_v2` has been removed from 8.0.0 chain version"
+  add_instruction_with_memo_v2
+  add_and_affirm_instruction
+  "`add_and_affirm_instruction_with_memo` has been removed from 8.0.0 chain version"
+  add_and_affirm_instruction_with_memo
+  "`add_and_affirm_instruction_with_memo_v2` has been removed from 8.0.0 chain version"
+  add_and_affirm_instruction_with_memo_v2
+  affirm_instruction
+  "`affirm_instruction_v2` has been removed from 8.0.0 chain version"
+  affirm_instruction_v2
+  "`withdraw_affirmation` has been removed from 8.0.0 chain version"
+  withdraw_affirmation
+  "`withdraw_affirmation_v2` has been deprecated from 6.0.0 chain version"
+  withdraw_affirmation_v2
+  reject_instruction
+  "`reject_instruction_v2` has been deprecated from 6.0.0 chain version"
+  reject_instruction_v2
+  affirm_with_receipts
+  "`claim_receipt` has been removed from 8.0.0 chain version"
+  claim_receipt
+  "`placeholder_claim_receipt` has been removed from 8.0.0 chain version"
+  placeholder_claim_receipt
+  "`unclaim_receipt` has been removed from 8.0.0 chain version"
+  unclaim_receipt
+  "`placeholder_unclaim_receipt` has been removed from 8.0.0 chain version"
+  placeholder_unclaim_receipt
+  set_venue_filtering
+  allow_venues
+  disallow_venues
+  execute_manual_instruction
+  "`change_receipt_validity` has been removed from 8.0.0 chain version"
+  change_receipt_validity
+  execute_scheduled_instruction
+  "`execute_scheduled_instruction_v2` has been removed from 8.0.0 chain version"
+  execute_scheduled_instruction_v2
+  "`reschedule_instruction` has been deprecated from 6.0.0 chain version"
+  reschedule_instruction
+  update_venue_signers
+  "`placeholder_add_instruction` has been removed from 8.0.0 chain version"
+  placeholder_add_instruction
+  "`placeholder_add_and_affirm_instruction` has been removed from 8.0.0 chain version"
+  placeholder_add_and_affirm_instruction
+  "`placeholder_affirm_instruction` has been removed from 8.0.0 chain version"
+  placeholder_affirm_instruction
+  "`placeholder_withdraw_affirmation` has been removed from 8.0.0 chain version"
+  placeholder_withdraw_affirmation
+  "`placeholder_reject_instruction` has been removed from 8.0.0 chain version"
+  placeholder_reject_instruction
+  "`placeholder_add_instruction_with_memo` has been removed from 8.0.0 chain version"
+  placeholder_add_instruction_with_memo
+  "`placeholder_add_and_affirm_instruction_with_memo` has been removed from 8.0.0 chain version"
+  placeholder_add_and_affirm_instruction_with_memo
+  "`execute_scheduled_instruction_v3` has been removed from 8.0.0 chain version"
+  execute_scheduled_instruction_v3
+  affirm_with_receipts_with_count
+  affirm_instruction_with_count
+  reject_instruction_with_count
+  "`withdraw_affirmation_with_count` has been removed from 8.0.0 chain version"
+  withdraw_affirmation_with_count
+  add_instruction_with_mediators
+  affirm_instruction_as_mediator
+  "`withdraw_affirmation_as_mediator` has been removed from 8.0.0 chain version"
+  withdraw_affirmation_as_mediator
+  reject_instruction_as_mediator
+  add_and_affirm_with_mediators
+  lock_instruction
+  set_mandatory_receiver_affirmation
+  transfer_funds
+  unlock_instruction
+
+  ## statistics ##
+  set_active_asset_stats
+  batch_update_asset_stats
+  set_asset_transfer_compliance
+  set_entities_exempt
+
+  ## sto ##
+  create_fundraiser
+  invest
+  freeze_fundraiser
+  unfreeze_fundraiser
+  modify_fundraiser_window
+  stop
+  enable_offchain_funding
+
+  ## treasury ##
+  disbursement
+  reimbursement
+
+  ## utility ##
+  batch
+  "`batch_atomic` has been removed from 8.0.0 chain version"
+  batch_atomic
+  "`batch_optimistic` has been removed from 8.0.0 chain version"
+  batch_optimistic
+  relay_tx
+  batch_all
+  as_derivative
+  dispatch_as
+  force_batch
+  with_weight
+  "`batch_old` has been removed from 8.0.0 chain version"
+  batch_old
+
+  ## base ##
+
+  ## externalagents ##
+  create_group
+  set_group_permissions
+  remove_agent
+  abdicate
+  change_group
+  accept_become_agent
+  create_group_and_add_auth
+  create_and_change_custom_group
+
+  ## relayer ##
+  "`set_paying_key` has been removed from 8.0.0 chain version"
+  set_paying_key
+  "`accept_paying_key` has been removed from 8.0.0 chain version"
+  accept_paying_key
+  "`remove_paying_key` has been removed from 8.0.0 chain version"
+  remove_paying_key
+  update_polyx_limit
+  increase_polyx_limit
+  decrease_polyx_limit
+  approve_subsidy
+  revoke_subsidy
+  accept_subsidy
+  remove_subsidy
+
+  ## rewards ##
+  "`claim_itn_reward` has been removed from 8.0.0 chain version"
+  claim_itn_reward
+  "`set_itn_reward_status` has been removed from 8.0.0 chain version"
+  set_itn_reward_status
+
+  ## contracts ##
+  call
+  instantiate_with_code
+  instantiate
+  upload_code
+  remove_code
+  call_old_weight
+  instantiate_with_code_old_weight
+  instantiate_old_weight
+  # set_code
+  migrate
+
+  ## polymeshcontracts ##
+  instantiate_with_code_perms
+  instantiate_with_hash_perms
+  update_call_runtime_whitelist
+  allow_identity_to_create_portfolios
+  revoke_create_portfolios_permission
+  create_custody_portfolio
+  "`instantiate_with_code_as_primary_key` has been removed from 8.0.0 chain version"
+  instantiate_with_code_as_primary_key
+  "`instantiate_with_hash_as_primary_key` has been removed from 8.0.0 chain version"
+  instantiate_with_hash_as_primary_key
+  upgrade_api
+
+  ## preimage ##
+  note_preimage
+  unnote_preimage
+  request_preimage
+  unrequest_preimage
+  ensure_updated
+
+  ## testutils ##
+  "`register_did` is now active in identity pallet"
+  register_did
+  "`mock_cdd_register_did` has been removed from 8.0.0 chain version"
+  mock_cdd_register_did
+  "`get_my_did` has been removed from 8.0.0 chain version"
+  get_my_did
+  "`get_cdd_of` has been removed from 8.0.0 chain version"
+  get_cdd_of
+
+  ## nft ##
+  create_nft_collection
+  issue_nft
+  redeem_nft
+  transfer_nft
+
+  ## confidential assets (calls replaced by `confidentialAssets` pallet in 8.0.0) ##
+  "`add_mediator_account` has been removed from 8.0.0 chain version"
+  add_mediator_account
+  # create_confidential_asset
+  # create_asset -> removing as defined before
+  # mint_confidential_asset -> mint
+  "`mint` has been removed from 8.0.0 chain version"
+  mint
+  "`add_transaction` has been removed from 8.0.0 chain version"
+  add_transaction
+  "`sender_affirm_transaction` has been removed from 8.0.0 chain version"
+  sender_affirm_transaction
+  "`receiver_affirm_transaction` has been removed from 8.0.0 chain version"
+  receiver_affirm_transaction
+  "`mediator_affirm_transaction` has been removed from 8.0.0 chain version"
+  mediator_affirm_transaction
+  "`sender_unaffirm_transaction` has been removed from 8.0.0 chain version"
+  sender_unaffirm_transaction
+  "`receiver_unaffirm_transaction` has been removed from 8.0.0 chain version"
+  receiver_unaffirm_transaction
+  "`mediator_unaffirm_transaction` has been removed from 8.0.0 chain version"
+  mediator_unaffirm_transaction
+  "`create_account` has been removed from 8.0.0 chain version"
+  create_account
+  "`affirm_transactions` has been removed from 8.0.0 chain version"
+  affirm_transactions
+  "`execute_transaction` has been removed from 8.0.0 chain version"
+  execute_transaction
+  "`apply_incoming_balance` has been removed from 8.0.0 chain version"
+  apply_incoming_balance
+  "`apply_incoming_balances` has been removed from 8.0.0 chain version"
+  apply_incoming_balances
+  "`burn` is still active in balances pallet"
+  burn
+  "`reject_transaction` has been removed from 8.0.0 chain version"
+  reject_transaction
+  "`set_account_asset_frozen` has been removed from 8.0.0 chain version"
+  set_account_asset_frozen
+  "`set_asset_frozen` has been removed from 8.0.0 chain version"
+  set_asset_frozen
+  "`move_assets` has been removed from 8.0.0 chain version"
+  move_assets
+
+  ## state trie migration (pallet removed in 8.0.0) ##
+  "`continue_migrate` has been removed from 8.0.0 chain version"
+  continue_migrate
+  "`control_auto_migration` has been removed from 8.0.0 chain version"
+  control_auto_migration
+  "`force_set_progress` has been removed from 8.0.0 chain version"
+  force_set_progress
+  "`migrate_custom_child` has been removed from 8.0.0 chain version"
+  migrate_custom_child
+  "`migrate_custom_top` has been removed from 8.0.0 chain version"
+  migrate_custom_top
+  "`set_signed_max_limits` has been removed from 8.0.0 chain version"
+  set_signed_max_limits
+
+  ## electionprovidermultiphase ##
+  governance_fallback
+  set_emergency_election_result
+  set_minimum_untrusted_score
+  submit
+  submit_unsigned
+
+  ## validators ## added from 8.0.0 chain version
+  # add_permissioned_validator (already was defined in staking)
+  # change_slashing_allowed_for (already was defined in staking)
+  # chill_from_governance (already was defined in staking)
+  # payout_stakers_by_system
+  # remove_permissioned_validator (already was defined in staking)
+  # set_commission_cap (already was defined in staking)
+  # update_permissioned_validator_intended_count (already was defined in staking)
+
+  ### beefy ###
+  report_double_voting
+  report_double_voting_unsigned
+  set_new_genesis
+  report_fork_voting
+  report_fork_voting_unsigned
+  report_future_block_voting
+  report_future_block_voting_unsigned
+
+  ### revive ###
+  eth_transact
+  # call (already defined in contracts)
+  # instantiate (already defined in contracts)
+  # instantiate_with_code (already defined in contracts)
+  eth_instantiate_with_code
+  eth_call
+  eth_substrate_call
+  # upload_code (already defined in contracts)
+  # remove_code (already defined in contracts)
+  # set_code (already defined in contracts)
+  map_account
+  unmap_account
+  dispatch_as_fallback_account
+
+  ## multiblockmigrations ##
+  force_set_cursor
+  force_set_active_cursor
+  force_onboard_mbms
+  clear_historic
+
+  ## confidentialassets ##
+  register_accounts
+  register_encryption_keys
+  # create_asset
+  register_account_assets
+  mint_asset
+  create_settlement
+  sender_affirmation
+  receiver_affirmation
+  mediator_affirmation
+  sender_update_counter
+  sender_revert_affirmation
+  receiver_revert_affirmation
+  receiver_claim
+  batched_settlement
+  register_fee_accounts
+  topup_fee_accounts
+  submit_batched_proofs
+  relayer_submit_batched_proofs
+  execute_instant_settlement
+  instant_sender_affirmation
+  instant_receiver_affirmation
+
+  ## deprecated ##
+  accept_authorization @deprecated
+  accept_master_key @deprecated
+  accept_primary_issuance_agent_transfer @deprecated
+  add_active_rule @deprecated
+  add_and_authorize_instruction @deprecated
+  add_ballot @deprecated
+  add_extension @deprecated
+  add_range_proof @deprecated
+  add_transfer_manager @deprecated
+  add_verify_range_proof @deprecated
+  amend_proposal @deprecated
+  archive_extension @deprecated
+  authorize_instruction @deprecated
+  authorize_with_receipts @deprecated
+  batch_accept_authorization @deprecated
+  batch_add_authorization @deprecated
+  batch_add_claim @deprecated
+  batch_add_default_trusted_claim_issuer @deprecated
+  batch_add_document @deprecated
+  batch_add_secondary_key_with_authorization @deprecated
+  batch_add_signing_key_with_authorization @deprecated
+  batch_change_asset_rule @deprecated
+  batch_change_compliance_requirement @deprecated
+  batch_force_handle_bridge_tx @deprecated
+  batch_freeze_tx @deprecated
+  batch_handle_bridge_tx @deprecated
+  batch_issue @deprecated
+  batch_remove_authorization @deprecated
+  batch_remove_default_trusted_claim_issuer @deprecated
+  batch_remove_document @deprecated
+  batch_revoke_claim @deprecated
+  batch_unfreeze_tx @deprecated
+  bond_additional_deposit @deprecated
+  buy_tokens @deprecated
+  cancel_ballot @deprecated
+  cancel_proposal @deprecated
+  change_all_signers_and_sigs_required @deprecated
+  change_asset_rule @deprecated
+  change_template_fees @deprecated
+  change_template_meta_url @deprecated
+  claim_surcharge @deprecated
+  claim_unclaimed @deprecated
+  close @deprecated
+  controller_redeem @deprecated
+  create_asset_and_mint @deprecated
+  emergency_referendum @deprecated
+  enable_individual_commissions @deprecated
+  enact_referendum @deprecated
+  fast_track_proposal @deprecated
+  final_hint @deprecated
+  forwarded_call @deprecated
+  freeze_instantiation @deprecated
+  freeze_signing_keys @deprecated
+  increase_custody_allowance @deprecated
+  increase_custody_allowance_of @deprecated
+  is_issuable @deprecated
+  join_identity_as_identity @deprecated
+  kill_proposal @deprecated
+  launch_sto @deprecated
+  leave_identity_as_identity @deprecated
+  legacy_set_permission_to_signer @deprecated
+  make_multisig_signer @deprecated
+  modify_exemption_list @deprecated
+  new @deprecated
+  override_referendum_enactment_period @deprecated
+  pause_asset_rules @deprecated
+  pause_sto @deprecated
+  put_code @deprecated
+  redeem_from @deprecated
+  reject_referendum @deprecated
+  remove_active_rule @deprecated
+  add_exempted_entities @deprecated
+  remove_exempted_entities @deprecated
+  remove_primary_issuance_agent @deprecated
+  remove_signing_keys @deprecated
+  remove_smart_extension @deprecated
+  remove_transfer_manager @deprecated
+  replace_asset_rules @deprecated
+  reset_active_rules @deprecated
+  reset_caa @deprecated
+  resume_asset_rules @deprecated
+  revoke_offchain_authorization @deprecated
+  set_changes_trie_config @deprecated
+  set_global_commission @deprecated
+  set_master_key @deprecated
+  set_primary_key @deprecated
+  set_proposal_cool_off_period @deprecated
+  set_proposal_duration @deprecated
+
+  unknown
+}
+
+type Debug @entity {
+  id: ID!
+  line: String
+  context: String
+}
+
+type FoundType @entity {
+  id: ID!
+  rawType: String!
+}
+
+"""
+A set of transactions that were executed together. Includes a reference to its parent, which reference its parent, this forms a chain to the genesis block
+"""
+type Block @entity {
+  id: ID!
+  blockId: Int! @index(unique: true)
+  parentId: Int!
+  hash: String! # a hash value
+  parentHash: String!
+  stateRoot: String!
+  extrinsicsRoot: String!
+  countExtrinsics: Int!
+  countExtrinsicsUnsigned: Int!
+  countExtrinsicsSigned: Int!
+  countExtrinsicsError: Int!
+  countExtrinsicsSuccess: Int!
+  countEvents: Int!
+  datetime: Date!
+  specVersionId: Int!
+  events: [Event] @derivedFrom(field: "block")
+  extrinsics: [Extrinsic] @derivedFrom(field: "block")
+}
+
+"""
+Represents external data included into the chain. Virtually all user actions, as well as runtime operations are extrinsics
+
+Usually extrinsics are signed. When the block author includes data, e.g. `timestamp.set` then the signature is implied. This is indicated with `signed = 0`
+"""
+type Extrinsic @entity {
+  id: ID!
+  block: Block! @index(unique: false)
+  extrinsicIdx: Int!
+  extrinsicLength: Int!
+  signed: Int!
+  "`signedbyAddress` is now deprecated in favour of `signed`"
+  signedbyAddress: Int! @deprecated(reason: "use `signed` instead.")
+  address: String
+  moduleId: ModuleIdEnum!
+  moduleIdText: String!
+  callId: CallIdEnum!
+  callIdText: String!
+  paramsTxt: String!
+  success: Int! @index(unique: false)
+  nonce: Int
+  extrinsicHash: String @index(unique: false)
+  specVersionId: Int!
+}
+
+"""
+Information of a chain state transition on. For most use cases a more specific entity should be queried
+"""
+type Event @entity {
+  id: ID!
+  block: Block!
+  eventIdx: Int!
+  extrinsicIdx: Int
+  specVersionId: Int!
+  moduleId: ModuleIdEnum!
+  moduleIdText: String!
+  eventId: EventIdEnum!
+  eventIdText: String!
+  attributesTxt: String!
+  eventArg_0: String
+  eventArg_1: String
+  eventArg_2: String
+  eventArg_3: String
+  claimType: String
+  claimScope: String
+  claimIssuer: String
+  claimExpiry: String
+  corporateActionTicker: String
+  fundraiserOfferingAsset: String
+  transferTo: String
+  extrinsic: Extrinsic
+}
+
+"""
+Represents which permissions an account may have over an Identity's assets
+"""
+type AssetPermissions @jsonField {
+  type: String!
+  values: [String]!
+}
+
+"""
+Represents which extrinsics an Account may sign for an Identity
+"""
+type TransactionPermissions @jsonField {
+  type: String!
+  values: [String]!
+}
+
+"""
+Represents which portfolios an Account can manage for an Identity
+"""
+type PortfolioPermissions @jsonField {
+  type: String!
+  values: [PortfolioJson]!
+}
+
+"""
+Represents an Account's permissions. The primary key for an Identity always has full permission
+"""
+type Permissions @entity {
+  id: ID!
+  assets: AssetPermissions
+  portfolios: PortfolioPermissions
+  transactions: TransactionPermissions
+  transactionGroups: [String]!
+  datetime: Date!
+  createdBlock: Block!
+  updatedBlock: Block!
+}
+
+"""
+Represents a public/private key pair. Most actions must be signed by an appropriately permissioned Account
+
+Before an Account can sign most Extrinsics it must first be attached to an Identity
+"""
+type Account @entity {
+  id: ID!
+  address: String! @index(unique: true)
+  identity: Identity
+  permissions: Permissions
+  eventId: EventIdEnum!
+  datetime: Date!
+  createdBlock: Block!
+  updatedBlock: Block!
+}
+
+"""
+Represents permissions to be saved in account history
+"""
+type PermissionsJson @jsonField {
+  assets: AssetPermissions
+  portfolios: PortfolioPermissions
+  transactions: TransactionPermissions
+  transactionGroups: [String]!
+}
+
+"""
+Represents historical data of identities assigned to an account
+"""
+type AccountHistory @entity {
+  id: ID!
+  account: String!
+  identity: String!
+  eventId: EventIdEnum!
+  permissions: PermissionsJson
+  datetime: Date!
+  createdBlock: Block!
+  updatedBlock: Block!
+}
+
+"""
+Represents a person or business on chain. All Polymesh assets belong to an Identity. A single Identity can have many accounts (i.e. "keys")
+
+An Identity needs a valid CDD claim from at least one KYC/KYB provider to perform most actions on chain
+"""
+type Identity @entity {
+  id: ID!
+  did: String! @index(unique: true)
+  primaryAccount: String! @index(unique: false)
+  secondaryAccounts: [Account!]! @derivedFrom(field: "identity")
+  secondaryKeysFrozen: Boolean!
+  eventId: EventIdEnum!
+  datetime: Date!
+  createdBlock: Block!
+  updatedBlock: Block!
+  heldAssets: [AssetHolder]! @derivedFrom(field: "identity")
+  heldNfts: [NftHolder]! @derivedFrom(field: "identity")
+  portfolios: [Portfolio!]! @derivedFrom(field: "identity")
+  children: [ChildIdentity!]! @derivedFrom(field: "parent")
+}
+
+"""
+Represents `POLY`, the Ethereum based ERC-20 token, being converted to POLYX, the native Polymesh token
+"""
+type BridgeEvent @entity {
+  id: ID!
+  identity: Identity!
+  recipient: String!
+  amount: BigInt!
+  txHash: String! @index(unique: false)
+  eventIdx: Int!
+  createdEvent: Event!
+  datetime: Date!
+  createdBlock: Block!
+  updatedBlock: Block!
+}
+
+"""
+Represents a change in staking status
+"""
+type StakingEvent @entity {
+  id: ID!
+  stashAccount: String @index(unique: false)
+  identity: Identity
+  eventId: EventIdEnum!
+  amount: BigInt
+  rewardDestination: String
+  rewardDestinationAccount: String
+  nominatedValidators: [String!]
+  transactionId: String
+  datetime: Date! @index
+  createdBlock: Block!
+  updatedBlock: Block!
+  createdEvent: Event!
+}
+
+"""
+Represents an administrative action on an Asset, e.g. tokens issued, compliance rules updated, document added, etc.
+"""
+type TickerExternalAgentAction @entity {
+  id: ID!
+  asset: Asset! @index(unique: false)
+  caller: Identity @index(unique: false)
+  palletName: String! @index(unique: false)
+  eventId: EventIdEnum!
+  eventIdx: Int!
+  createdBlock: Block! @index(unique: false)
+  updatedBlock: Block!
+  createdEvent: Event!
+}
+
+"""
+Represents how much tokens can be purchased at a certain price as part of an Offering
+"""
+type FundraiserTierJson @jsonField {
+  price: BigInt!
+  remaining: BigInt!
+  total: BigInt!
+}
+
+"""
+Represents all possible statuses for a STO
+"""
+enum StoStatus {
+  Live
+  Frozen
+  Closed
+  ClosedEarly
+}
+
+"""
+Securities Token Offering. Represents a fund raising effort from a company. e.g. sale of company equity in exchange for a stable coin
+"""
+type Sto @entity {
+  id: ID! #offeringAsset/stoId
+  stoId: Int! @index(unique: false)
+  name: String!
+  venue: Venue!
+  offeringAsset: Asset!
+  offeringPortfolio: Portfolio!
+  raisingAssetId: String! # This is not marked as Asset, since the raising asset need not be an registered asset. For example, USD
+  "The ticker value associated with the raising asset ID. For cases where stable coin is used, which is not a registered asset, this value will be same as `raisingAssetId`"
+  raisingTicker: String
+  raisingPortfolio: Portfolio!
+  creator: Identity!
+  start: Date
+  end: Date
+  tiers: [FundraiserTierJson!]!
+  status: StoStatus!
+  minimumInvestment: BigInt!
+  offChainFundingEnabled: Boolean!
+  offChainFundingToken: String
+  createdBlock: Block!
+  updatedBlock: Block!
+}
+
+"""
+Represents all possible authorization types
+"""
+enum AuthTypeEnum {
+  AttestPrimaryKeyRotation
+  RotatePrimaryKey
+  RotatePrimaryKeyToSecondary
+  TransferTicker
+  AddMultiSigSigner
+  TransferAssetOwnership
+  JoinIdentity
+  PortfolioCustody
+  BecomeAgent
+  AddRelayerPayingKey
+
+  ## deprecated ##
+  TransferPrimaryIssuanceAgent @deprecated
+  Custom @deprecated
+  NoData @deprecated
+}
+
+"""
+Represents all possible authorization statuses
+"""
+enum AuthorizationStatusEnum {
+  Pending
+  Consumed
+  Rejected
+  Revoked
+}
+
+"""
+Represents a request to grant an Account some permission to perform actions for an Identity. e.g. become a Portfolio custodian
+"""
+type Authorization @entity {
+  id: ID!
+  type: AuthTypeEnum!
+  from: Identity! @index(unique: false)
+  toId: String @index(unique: false)
+  toKey: String @index(unique: false)
+  data: String
+  expiry: Date @index(unique: false)
+  status: AuthorizationStatusEnum!
+  createdBlock: Block!
+  updatedBlock: Block!
+  createdEvent: Event!
+}
+
+enum RaisingAssetTypeEnum {
+  OnChain
+  OffChain
+}
+
+"""
+Represents participation in an STO
+"""
+type Investment @entity {
+  id: ID!
+  investor: Identity!
+  stoId: Int! @index(unique: false)
+  offeringAssetId: String! @index(unique: false)
+  offeringToken: String @index(unique: false)
+  raisingAssetId: String!
+  raiseToken: String
+  raisingAssetType: RaisingAssetTypeEnum!
+  offeringTokenAmount: BigInt!
+  raiseTokenAmount: BigInt!
+  datetime: Date!
+  createdBlock: Block!
+  updatedBlock: Block!
+}
+
+"""
+Represents an Identity authorized to perform actions on behalf of a company
+"""
+type TickerExternalAgent @entity {
+  id: ID! # assetId/callerId
+  asset: Asset! @index(unique: false)
+  caller: Identity! @index(unique: false)
+  eventIdx: Int!
+  datetime: Date!
+  createdBlock: Block!
+  updatedBlock: Block!
+  createdEvent: Event!
+}
+
+"""
+Represents a change in the status of an external agent.
+
+"AgentAdded" and "AgentPermissionsChanged" will have `permissions` field. `AgentRemoved` will have an empty `permissions` value
+"""
+type TickerExternalAgentHistory @entity {
+  id: ID! #block_id/event_idx/did
+  asset: Asset! @index(unique: false)
+  identity: Identity! @index(unique: false)
+  datetime: Date!
+  type: String!
+  permissions: String
+  eventIdx: Int!
+  createdBlock: Block!
+  updatedBlock: Block!
+  createdEvent: Event!
+}
+
+"""
+Represents a set of agents authorized to perform actions for a given Asset
+"""
+type AgentGroup @entity {
+  id: ID! #assetId/group_id
+  permissions: String!
+  members: [AgentGroupMembership!]! @derivedFrom(field: "group")
+  createdBlock: Block!
+  updatedBlock: Block!
+}
+
+"""
+Represent membership in a group. Tracks which members belong to which groups
+"""
+type AgentGroupMembership @entity {
+  id: ID! #assetId/group_id/member
+  member: String! @index(unique: false)
+  group: AgentGroup! @index(unique: false)
+  createdBlock: Block!
+  updatedBlock: Block!
+}
+
+"""
+JSON representation of a Portfolio identifier. Portfolios are uniquely identified by the tuple (Identity DID, portfolio ID)
+"""
+type PortfolioJson @jsonField {
+  did: String!
+  number: Int
+  accountId: String
+}
+
+"""
+Represents a grouping of Assets held by an Identity. Particular accounts maybe authorized only over certain portfolios
+
+Note: identities will always have a default Portfolio (id = 0)
+"""
+type Portfolio @entity {
+  id: ID! # did/number
+  identity: Identity! @index(unique: false)
+  number: Int! @index(unique: false)
+  name: String
+  custodian: Identity
+  eventIdx: Int!
+  deletedAt: Date
+  createdBlock: Block!
+  updatedBlock: Block!
+  createdEvent: Event!
+}
+
+enum PortfolioMovementTypeEnum {
+  Fungible
+  NonFungible
+}
+
+"""
+Represents a transfer of fungible assets between a single identities portfolios.
+
+Note: transfers between identities are known as `Settlements`
+"""
+type PortfolioMovement @entity {
+  id: ID!
+  from: Portfolio @index(unique: false)
+  fromAccount: String @index(unique: false)
+  to: Portfolio @index(unique: false)
+  toAccount: String @index(unique: false)
+  identity: Identity @index(unique: false)
+  type: PortfolioMovementTypeEnum!
+  asset: Asset!
+  "the number of fungible tokens transferred. Defined if type == Fungible"
+  amount: BigInt
+  "the IDs of non-fungible tokens transferred. Defined if type == NonFungible"
+  nftIds: [BigInt]
+  memo: String
+  address: String!
+  createdBlock: Block!
+  updatedBlock: Block!
+}
+
+"""
+Represents a place to trade assets. This allows for additional mediation and control over the exchange of Assets
+
+e.g. An asset may specify it can only be exchanged at a particular Venue, allowing the Venue owner to explicitly approve transactions
+"""
+type Venue @entity {
+  id: ID! # venueId
+  owner: Identity!
+  type: String!
+  details: String
+  instructions: [Instruction!] @derivedFrom(field: "venue")
+  signers: [String!]!
+  createdBlock: Block!
+  updatedBlock: Block!
+}
+
+"""
+Represents all possible states of an Instruction
+"""
+enum InstructionStatusEnum {
+  Created
+  Executed
+  Rejected
+  Failed
+  Locked
+}
+
+"""
+Represents types of an Instruction
+"""
+enum InstructionTypeEnum {
+  SettleOnAffirmation
+  SettleOnBlock
+  SettleManual
+  SettleAfterLock
+}
+
+type ErrorJson @jsonField {
+  errorType: String
+  details: String
+}
+
+"""
+Represents a request to exchange Assets between parties.
+
+Before an Instruction is executed all involved parties must sign and submit an affirmation.
+Once an Instruction is affirmed it will then be attempted to be executed.
+If any party fails to satisfy any compliance or transfer restriction the Instruction will fail,
+and no movement of assets will occur.
+"""
+type Instruction @entity {
+  id: ID!
+  status: InstructionStatusEnum!
+  venue: Venue @index(unique: false)
+  type: InstructionTypeEnum!
+  "`endBlock` is applicable only when `type` is `SettleOnBlock`"
+  endBlock: Int
+  "`endAfterBlock` is applicable only when `type` is `SettleManual`"
+  endAfterBlock: Int
+  tradeDate: Date
+  valueDate: Date
+  memo: String
+  "DID of the mediators"
+  mediators: [String!]!
+  failureReason: ErrorJson
+  legs: [Leg!]! @derivedFrom(field: "instruction")
+  parties: [InstructionParty]! @derivedFrom(field: "instruction")
+  affirmations: [InstructionAffirmation]! @derivedFrom(field: "instruction")
+  events: [InstructionEvent]! @derivedFrom(field: "instruction")
+  createdBlock: Block!
+  updatedBlock: Block!
+  createdEvent: Event!
+}
+
+"""
+Represents all possible states of an Instruction
+"""
+enum LegTypeEnum {
+  Fungible
+  NonFungible
+  OffChain
+}
+
+"""
+Represents the movement of a single Asset in a trade, e.g. Alice will give Bob 1 USDS
+"""
+type Leg @entity {
+  id: ID! # instructionId/legIndex
+  instruction: Instruction!
+  legIndex: Int!
+  legType: LegTypeEnum!
+  "`assetId` can be ID of the asset for the on chain or ticker of an off chain asset"
+  assetId: String! @index(unique: false)
+  ticker: String @index(unique: false)
+  from: String! @index(unique: false)
+  fromAccount: String
+  "`fromPortfolio` is null for off chain legs"
+  fromPortfolio: Int
+  to: String! @index(unique: false)
+  toAccount: String
+  "`toPortfolio` is null for off chain legs"
+  toPortfolio: Int
+  "`amount` is null for non-fungible legs"
+  amount: BigInt
+  "`nftIds` is only applicable for non-fungible legs"
+  nftIds: [BigInt]
+  addresses: [String!]!
+  createdBlock: Block!
+  updatedBlock: Block!
+}
+
+"""
+Represents a relationship between Identities and Instructions they are involved in
+"""
+type InstructionParty @entity {
+  id: ID!
+  instruction: Instruction! @index(unique: false)
+  isMediator: Boolean!
+  "`identity` is the DID of the party involved in the instruction. No mapping to Identity is added, since instruction can have leg (e.g. off chain) where DID doesn't exists"
+  identity: String! @index(unique: false)
+  "`portfolios` depicts which portfolios for the identity are involved in the instructions. Legs can have different portfolios of a same identity involved"
+  portfolios: [Int]
+  affirmations: [InstructionAffirmation]! @derivedFrom(field: "party")
+  createdBlock: Block!
+  updatedBlock: Block!
+}
+
+"""
+Represents an off chain receipt
+"""
+type OffChainReceipt @entity {
+  id: ID!
+  uid: Int! @index(unique: false)
+  signer: String! @index(unique: false)
+  leg: Leg
+  metadata: String
+  createdBlock: Block!
+  updatedBlock: Block!
+}
+
+"""
+Represents affirmations received on an Instruction
+"""
+type InstructionAffirmation @entity {
+  id: ID!
+  instruction: Instruction! @index(unique: false)
+  party: InstructionParty!
+  identity: String! @index(unique: false)
+  account: String
+  "`portfolio` will be null for mediator affirmation and off chain affirmation"
+  portfolios: [Int]
+  isMediator: Boolean!
+  isAutomaticallyAffirmed: Boolean!
+  status: AffirmStatusEnum!
+  "If `expiry` is present the time should be check top ensure the affirmation is still valid. Applicable for mediator affirmations"
+  expiry: Date
+  "`offChainReceipt` is only applicable when affirmation"
+  offChainReceipt: OffChainReceipt
+  createdBlock: Block!
+  updatedBlock: Block!
+}
+
+enum InstructionEventEnum {
+  FailedToExecuteInstruction
+  InstructionCreated
+  InstructionAffirmed
+  InstructionAutomaticallyAffirmed
+  InstructionExecuted
+  InstructionFailed
+  InstructionLocked
+  InstructionMediators
+  AffirmationWithdrawn
+  InstructionRejected
+  InstructionRescheduled
+  LegFailedExecution
+  MediatorAffirmationReceived
+  MediatorAffirmationWithdrawn
+  ReceiptClaimed
+  SchedulingFailed
+  SettlementManuallyExecuted
+  VenueCreated
+  VenueDetailsUpdated
+  VenueFiltering
+  VenueSignersUpdated
+  VenueTypeUpdated
+  VenueUnauthorized
+  VenuesAllowed
+  VenuesBlocked
+}
+
+"""
+Represents events associated with an Instruction
+"""
+type InstructionEvent @entity {
+  id: ID!
+  instruction: Instruction! @index(unique: false)
+  event: InstructionEventEnum!
+  eventIdx: Int!
+  identity: String @index(unique: false)
+  portfolio: Int
+  account: String
+  offChainReceipt: OffChainReceipt
+  failureReason: ErrorJson
+  createdBlock: Block!
+  updatedBlock: Block!
+  createdEvent: Event!
+}
+
+"""
+Represents a distribution to the owners of an Asset. e.g. dividend payment
+"""
+type Distribution @entity {
+  id: ID! # assetId/localId
+  identity: Identity!
+  localId: Int! @index(unique: false)
+  asset: Asset! @index(unique: false)
+  portfolio: Portfolio!
+  currency: Asset!
+  perShare: BigInt!
+  amount: BigInt!
+  remaining: BigInt!
+  paymentAt: BigInt!
+  expiresAt: BigInt
+  taxes: BigInt! # withheld tax for CA
+  createdBlock: Block!
+  updatedBlock: Block!
+}
+
+"""
+Represents an owner of an asset collecting a distribution e.g. accepting a dividend
+"""
+type DistributionPayment @entity {
+  id: ID!
+  distribution: Distribution!
+  target: Identity!
+  eventId: EventIdEnum!
+  amount: BigInt!
+  tax: BigInt!
+  amountAfterTax: BigInt!
+  reclaimed: Boolean!
+  datetime: Date!
+  createdBlock: Block!
+  updatedBlock: Block!
+  createdEvent: Event!
+}
+
+"""
+Represents a vote on a governance proposal
+"""
+type ProposalVote @entity {
+  id: ID!
+  proposal: Proposal!
+  account: String!
+  vote: Boolean!
+  weight: BigInt!
+  createdBlock: Block!
+  updatedBlock: Block!
+}
+
+"""
+Represents all possible Proposal statuses
+"""
+enum ProposalStateEnum {
+  All
+  Pending
+  Rejected
+  Scheduled
+  Failed
+  Executed
+  Expired
+}
+
+enum SnapshotEnum {
+  All
+  InSnapshot
+  NotInSnapshot
+}
+
+"""
+Represents where this claim may apply
+"""
+type Proposer @jsonField {
+  type: String!
+  value: String!
+}
+
+"""
+Represents a potential change to how the chain will operate. It will need gain sufficient "Aye" votes before having effect
+"""
+type Proposal @entity {
+  id: ID!
+  proposer: Proposer!
+  state: ProposalStateEnum!
+  owner: Identity!
+  balance: BigInt!
+  url: String
+  description: String
+  votes: [ProposalVote]! @derivedFrom(field: "proposal")
+  snapshotted: Boolean!
+  totalAyeWeight: BigInt!
+  totalNayWeight: BigInt!
+  createdBlock: Block!
+  updatedBlock: Block!
+}
+
+"""
+Represents all possible claims that can be made of an identity
+"""
+enum ClaimTypeEnum {
+  Accredited
+  Affiliate
+  BuyLockup
+  SellLockup
+  Custom
+  CustomerDueDiligence
+  KnowYourCustomer
+  Jurisdiction
+  Exempted
+  Blocked
+  InvestorUniqueness
+  NoData
+  InvestorUniquenessV2
+  NoType
+}
+
+"""
+Represents all possible scopes a claim may have
+"""
+enum ClaimScopeTypeEnum {
+  Identity
+  "@deprecated in favour of `Asset`"
+  Ticker
+  Asset
+  Custom
+}
+
+"""
+Represents where this claim may apply
+"""
+type Scope @jsonField {
+  type: String!
+  value: String!
+  "`assetId` is only present when `type` is `Asset`"
+  assetId: String
+}
+
+"""
+The scope of a claim.
+
+e.g. `target` is Blocked from owning "TICKER-A" or `target` is an Affiliate of "TICKER-B"
+"""
+type ClaimScope @entity {
+  id: ID!
+  target: String! @index(unique: false)
+  asset: Asset
+  scope: Scope
+  createdBlock: Block!
+  updatedBlock: Block!
+}
+
+"""
+A claim made about an Identity. All active identities must have a valid CDD claim, but additional claims can be made.
+
+e.g. The Identity belongs to an accredited, US citizen
+"""
+type Claim @entity {
+  id: ID!
+  eventIdx: Int! @index(unique: false)
+  target: Identity! @index(unique: false)
+  issuer: Identity! @index(unique: false)
+  issuanceDate: BigInt!
+  lastUpdateDate: BigInt!
+  expiry: BigInt
+  filterExpiry: BigInt! @index(unique: false)
+  type: ClaimTypeEnum!
+  jurisdiction: String
+  scope: Scope
+  cddId: String
+  customClaimType: CustomClaimType
+  revokeDate: BigInt
+  createdBlock: Block! @index(unique: false)
+  updatedBlock: Block!
+  createdEvent: Event!
+}
+
+"""
+An claim issuer that is trusted for an Asset.
+
+Assets relying on on chain compliance should be explicit on which issuers they trust
+"""
+type TrustedClaimIssuer @entity {
+  id: ID!
+  asset: Asset! @index(unique: false)
+  issuer: String! @index(unique: false)
+  eventIdx: Int!
+  createdBlock: Block!
+  updatedBlock: Block!
+  createdEvent: Event!
+}
+
+"""
+An off chain identifier for a given Asset. e.g. ISIN, CUSIP, FIGI, etc.
+"""
+type SecurityIdentifier @jsonField {
+  type: String!
+  value: String!
+}
+
+"""
+Represents all possible transfer restriction types
+"""
+enum TransferRestrictionTypeEnum {
+  Count
+  Percentage
+}
+
+"""
+deprecated in favor of `TransferCompliance`
+"""
+type TransferManager @entity {
+  id: ID! # assetId/transferManagerType/value
+  asset: Asset! @index(unique: false)
+  type: TransferRestrictionTypeEnum!
+  value: Int!
+  exemptedEntities: [String]!
+  createdBlock: Block!
+  updatedBlock: Block!
+}
+
+"""
+Represents all known stat types
+"""
+enum StatOpTypeEnum {
+  Count
+  Balance
+}
+
+"""
+Represents an on chain statistic about the Asset owners. e.g. How many investors hold the Asset
+
+These are required to be enabled in order for the chain to enforce transfer restrictions
+
+e.g. A restriction requiring ownership to be at least 50% Canadian would require a StatType of type `Balance` scoped to Jurisdiction before being created
+"""
+type StatType @entity {
+  id: ID! # assetId/op/type/claimIssuer
+  asset: Asset!
+  opType: StatOpTypeEnum!
+  claimType: ClaimTypeEnum
+  customClaimType: CustomClaimType
+  claimIssuer: Identity
+  createdBlock: Block!
+  updatedBlock: Block!
+}
+
+"""
+Represents all possible transfer restriction rules that can be enabled
+"""
+enum TransferComplianceTypeEnum {
+  MaxInvestorCount
+  MaxInvestorOwnership
+  ClaimCount
+  ClaimOwnership
+}
+
+"""
+Represents restriction that will ensure the composition of ownership remains a certain way
+
+e.g. No more than 2000 individual investors to avoid additional reporting requirements
+"""
+type TransferCompliance @entity {
+  id: ID! # assetId/op/type/claimIssuer
+  asset: Asset! @index(unique: false)
+  type: TransferComplianceTypeEnum!
+  statType: StatType!
+  # value is present only in case of MaxInvestorCount and MaxInvestorOwnership
+  value: BigInt
+  # following values are present in case of ClaimCount and ClaimOwnership
+  claimType: ClaimTypeEnum
+  claimValue: String
+  claimIssuer: Identity
+  min: BigInt
+  max: BigInt
+  createdBlock: Block!
+  updatedBlock: Block!
+}
+
+"""
+Represents an exemption for an individual for TransferCompliance rules
+"""
+type TransferComplianceExemption @entity {
+  id: ID! #asset/opType/claimType/exemptedEntityId
+  asset: Asset! @index(unique: false)
+  opType: StatOpTypeEnum!
+  claimType: ClaimTypeEnum
+  exemptedEntityId: String!
+  createdBlock: Block!
+  updatedBlock: Block!
+}
+
+"""
+Represents a restriction all investor must comply with for a given Asset
+
+e.g. All investors must be German citizens
+"""
+type Compliance @entity {
+  id: ID! # assetId/complianceId
+  complianceId: Int!
+  data: String! # This could be expanded into structured data
+  asset: Asset! @index(unique: false)
+  createdBlock: Block!
+  updatedBlock: Block!
+}
+
+"""
+Represents how much of a given Asset an Identity owns
+"""
+type AssetHolder @entity {
+  id: ID! # assetId/did
+  identity: Identity! @index(unique: false)
+  asset: Asset! @index(unique: false)
+  amount: BigInt!
+  createdBlock: Block!
+  updatedBlock: Block!
+}
+
+"""
+Represents what NFTs of a collection an Identity owns
+"""
+type NftHolder @entity {
+  id: ID! #assetId/did
+  identity: Identity! @index(unique: false)
+  asset: Asset! @index(unique: false)
+  nftIds: [Int]
+  createdBlock: Block!
+  updatedBlock: Block!
+}
+
+"""
+Represents a hash of a document
+"""
+type ContentHash @jsonField {
+  type: String
+  value: String
+}
+
+"""
+Represents off chain documentation for an Asset. A hash should be included on chain so readers can be sure their copy has not been tampered with
+
+e.g. A companies 10-K report
+"""
+type AssetDocument @entity {
+  id: ID! # assetId/documentId
+  documentId: Int!
+  name: String!
+  link: String!
+  contentHash: ContentHash
+  type: String
+  filedAt: Date
+  asset: Asset! @index(unique: false)
+  createdBlock: Block!
+  updatedBlock: Block!
+}
+
+"""
+Represents a tokenized Asset on the Polymesh chain. The central data structure for the ecosystem
+"""
+type Asset @entity {
+  id: ID! # ticker
+  ticker: String @index(unique: false)
+  name: String @index(unique: false)
+  isNftCollection: Boolean!
+  type: String @index(unique: false)
+  fundingRound: String @index(unique: false)
+  isDivisible: Boolean!
+  isFrozen: Boolean!
+  isUniquenessRequired: Boolean!
+  identifiers: [SecurityIdentifier]!
+  owner: Identity!
+  documents: [AssetDocument]! @derivedFrom(field: "asset")
+  holders: [AssetHolder]! @derivedFrom(field: "asset")
+  totalSupply: BigInt!
+  totalTransfers: BigInt!
+  isCompliancePaused: Boolean!
+  compliance: [Compliance]! @derivedFrom(field: "asset")
+  transferManagers: [TransferManager]! @derivedFrom(field: "asset")
+  trustedClaimIssuers: [TrustedClaimIssuer]! @derivedFrom(field: "asset")
+  mandatoryMediators: [AssetMandatoryMediator]! @derivedFrom(field: "asset")
+  eventIdx: Int!
+  createdBlock: Block!
+  updatedBlock: Block!
+  createdEvent: Event!
+}
+
+"""
+Represents all the transactions related to an Asset
+"""
+type AssetTransaction @entity {
+  id: ID!
+  asset: Asset!
+  "`fromPortfolioId` will be null in transactions where either the Asset was issued or the sender is an account"
+  fromPortfolio: Portfolio
+  "`fromAccount` will be populated when asset transaction has initiated directly from an account"
+  fromAccount: String
+  "`fromIdentityId` is the DID of the sender, present for transfers and redemptions. Stored separately from portfolio/account to preserve historical queryability when accounts change identity"
+  fromIdentity: Identity @index(unique: false)
+  "`toPortfolioId` will be null in transactions where either the Asset was redeemed or the receiver is an account"
+  toPortfolio: Portfolio
+  "`toAccount` will be populated when asset transaction has settled directly into an account"
+  toAccount: String
+  "`toIdentityId` is the DID of the receiver, present for issuances and transfers. Stored separately from portfolio/account to preserve historical queryability when accounts change identity"
+  toIdentity: Identity @index(unique: false)
+  "`amount` is the number of fungible tokens involved in this transaction"
+  amount: BigInt
+  "`nftIds` are the IDs of the non-fungible tokens involved in this transaction"
+  nftIds: [BigInt]
+  eventId: EventIdEnum!
+  eventIdx: Int!
+  "`extrinsicIdx` will be null for scheduled transactions"
+  extrinsicIdx: Int
+  "`fundingRound` will only be present for the cases where Assets are issued with a fundingRound name"
+  fundingRound: String
+  "`instruction` will only be present for the cases where Assets are transferred once instruction is executed"
+  instruction: Instruction
+  "`instructionMemo` will only be present for the cases where memo is provided for the instruction which got executed"
+  instructionMemo: String
+  datetime: Date!
+  createdBlock: Block!
+  updatedBlock: Block!
+  createdEvent: Event!
+}
+
+"""
+Represents an investment into an Asset
+"""
+type Funding @entity {
+  id: ID!
+  asset: Asset! @index(unique: false)
+  fundingRound: String! @index(unique: false)
+  amount: BigInt!
+  totalFundingAmount: BigInt!
+  datetime: Date!
+  createdBlock: Block!
+  updatedBlock: Block!
+  createdEvent: Event!
+}
+
+type AssetMandatoryMediator @entity {
+  id: ID! # /assetId/did
+  asset: Asset!
+  identityId: String! # The chain doesn't validate existence of the DID
+  addedBy: Identity!
+  createdBlock: Block!
+  updatedBlock: Block!
+}
+
+"""
+Represents the deployed version of the node indexing the data
+"""
+type SubqueryVersion @entity {
+  id: ID!
+  version: String!
+}
+
+"""
+Represents the list of migrations executed
+"""
+type Migration @entity {
+  id: ID!
+  number: Int!
+  version: String!
+  executed: Int! @index(unique: false)
+  processedBlock: Int!
+}
+
+"""
+Represents possible all possible balance types
+"""
+enum BalanceTypeEnum {
+  Free
+  Reserved
+  Bonded
+  Unbonded
+  Locked
+}
+
+"""
+Represents transactions involving POLYX
+"""
+type PolyxTransaction @entity {
+  id: ID!
+  identityId: String
+  address: String @index(unique: false)
+  toId: String
+  toAddress: String @index(unique: false)
+  amount: BigInt!
+  type: BalanceTypeEnum!
+  moduleId: ModuleIdEnum
+  moduleIdText: String
+  callId: CallIdEnum
+  callIdText: String
+  eventId: EventIdEnum
+  eventIdText: String
+  memo: String
+  extrinsic: Extrinsic
+  datetime: Date!
+  eventIdx: Int!
+  createdBlock: Block!
+  updatedBlock: Block!
+}
+
+"""
+Represents the parent child mapping for an Identity
+"""
+type ChildIdentity @entity {
+  id: ID!
+  child: Identity!
+  parent: Identity!
+  createdBlock: Block!
+  updatedBlock: Block!
+}
+
+"""
+Represents signer types
+"""
+enum SignerTypeEnum {
+  Account
+  Identity
+}
+
+"""
+Represents a MultiSig
+"""
+type MultiSig @entity {
+  id: ID!
+  address: String! @index(unique: true)
+  creator: Identity!
+  creatorAccount: Account!
+  signaturesRequired: Int!
+  signers: [MultiSigSigner]! @derivedFrom(field: "multisig")
+  proposals: [MultiSigProposal]! @derivedFrom(field: "multisig")
+  admins: [MultiSigAdmin!] @derivedFrom(field: "multisig")
+  createdBlock: Block!
+  updatedBlock: Block!
+}
+
+"""
+Represents MultiSig signer status
+"""
+enum MultiSigAdminStatusEnum {
+  Authorized ## when a admin is added
+  Removed ## when admin has been removed
+}
+
+"""
+Represents a MultiSig admin
+"""
+type MultiSigAdmin @entity {
+  id: ID!
+  multisig: MultiSig! @index(unique: false)
+  identityId: String!
+  status: MultiSigAdminStatusEnum!
+  createdBlock: Block!
+  updatedBlock: Block!
+}
+
+"""
+Represents MultiSig signer status
+"""
+enum MultiSigSignerStatusEnum {
+  Authorized ## when a signer is added
+  Approved ## when authorization is accepted by the signer
+  Removed ## when signer has been removed
+}
+
+"""
+Represents a MultiSig signer
+"""
+type MultiSigSigner @entity {
+  id: ID!
+  multisig: MultiSig! @index(unique: false)
+  signerType: SignerTypeEnum!
+  signerValue: String!
+  status: MultiSigSignerStatusEnum!
+  votes: [MultiSigProposalVote]! @derivedFrom(field: "signer")
+  createdBlock: Block!
+  updatedBlock: Block!
+}
+
+"""
+Represents the list of proposal status
+"""
+enum MultiSigProposalStatusEnum {
+  Active
+  Approved
+  Success
+  Failed
+  Rejected
+  Deleted
+}
+
+"""
+Represents bridge transaction
+"""
+type BridgeTx @jsonField {
+  nonce: String!
+  amount: String!
+  txHash: String!
+  recipient: String!
+}
+
+"""
+Represents a single MultiSigProposal Call
+"""
+type SingleProposal @jsonField {
+  module: String!
+  call: String!
+  args: String!
+}
+
+type MultiSigProposalParams @jsonField {
+  isBridge: Boolean!
+  isBatch: Boolean!
+  proposals: [SingleProposal!]
+  bridge: [BridgeTx!]
+  expiry: String
+  autoClose: Boolean
+}
+
+"""
+Represents a MultiSig proposal
+"""
+type MultiSigProposal @entity {
+  id: ID!
+  multisig: MultiSig! @index(unique: false)
+  proposalId: Int! @index(unique: false)
+  creator: Identity
+  creatorAccount: String
+  status: String! @index(unique: false)
+  approvalCount: Int!
+  rejectionCount: Int!
+  datetime: Date!
+  eventIdx: Int!
+  extrinsicIdx: Int
+  params: MultiSigProposalParams!
+  votes: [MultiSigProposalVote]! @derivedFrom(field: "proposal")
+  createdBlock: Block!
+  updatedBlock: Block!
+  extrinsic: Extrinsic
+  createdEvent: Event!
+}
+
+"""
+Represents action performed on MultiSig proposal
+"""
+enum MultiSigProposalVoteActionEnum {
+  Approved
+  Rejected
+}
+
+"""
+Represents a MultiSig proposal vote
+"""
+type MultiSigProposalVote @entity {
+  id: ID!
+  proposal: MultiSigProposal! @index(unique: false)
+  signer: MultiSigSigner! @index(unique: false)
+  action: MultiSigProposalVoteActionEnum
+  datetime: Date!
+  eventIdx: Int!
+  extrinsicIdx: Int!
+  createdBlock: Block!
+  updatedBlock: Block!
+  createdEvent: Event!
+}
+
+"""
+Represents the registered CustomClaimType
+"""
+type CustomClaimType @entity {
+  id: ID!
+  identity: Identity
+  name: String!
+  createdBlock: Block!
+  updatedBlock: Block!
+}
+
+enum AffirmingPartyEnum {
+  Sender
+  Receiver
+  Mediator
+}
+
+enum AffirmStatusEnum {
+  Affirmed
+  Rejected
+}
+
+enum ConfidentialTransactionStatusEnum {
+  Created
+  Executed
+  Rejected
+}
+
+"""
+Represents the proof of a transaction affirmation
+"""
+type SenderProof @jsonField {
+  assetId: String!
+  proof: String!
+}
+
+"""
+Represents a confidential account
+"""
+type ConfidentialAccount @entity {
+  id: ID!
+  account: String!
+  creator: Identity!
+  eventIdx: Int!
+  frozenForAsset: [String!]!
+  createdBlock: Block!
+  updatedBlock: Block!
+  createdEvent: Event!
+}
+
+"""
+Represents a confidential venue
+"""
+type ConfidentialVenue @entity {
+  id: ID!
+  venueId: Int!
+  creator: Identity!
+  eventIdx: Int!
+  createdBlock: Block!
+  updatedBlock: Block!
+  createdEvent: Event!
+}
+
+"""
+Represents a confidential asset
+"""
+type ConfidentialAsset @entity {
+  id: ID!
+  assetId: String!
+  ticker: String
+  data: String
+  creator: Identity!
+  auditors: [String!]
+  mediators: [String!]
+  totalSupply: BigInt!
+  allowedVenues: [Int!]
+  venueFiltering: Boolean!
+  isFrozen: Boolean!
+  eventIdx: Int!
+  createdBlock: Block!
+  updatedBlock: Block!
+  createdEvent: Event!
+}
+
+"""
+Represents a confidential asset holder
+"""
+type ConfidentialAssetHolder @entity {
+  id: ID!
+  account: ConfidentialAccount!
+  asset: ConfidentialAsset!
+  """
+  the encrypted amount
+  """
+  amount: String
+  eventIdx: Int!
+  createdBlock: Block!
+  updatedBlock: Block!
+  createdEvent: Event!
+}
+
+"""
+Represents a confidential asset transaction affirmation
+"""
+type ConfidentialTransactionAffirmation @entity {
+  id: ID!
+  transaction: ConfidentialTransaction!
+  legId: Int!
+  account: ConfidentialAccount
+  identity: Identity!
+  party: AffirmingPartyEnum!
+  status: AffirmStatusEnum!
+  proofs: [SenderProof!]
+  eventIdx: Int!
+  createdBlock: Block!
+  updatedBlock: Block!
+  createdEvent: Event!
+}
+
+type AssetAuditorGroup @jsonField {
+  assetId: String!
+  auditors: [String!]
+}
+
+"""
+Represents a leg of a confidential asset transaction
+"""
+type ConfidentialLeg @entity {
+  id: ID!
+  transaction: ConfidentialTransaction!
+  sender: ConfidentialAccount!
+  receiver: ConfidentialAccount!
+  mediators: [String!]!
+  assetAuditors: [AssetAuditorGroup!]!
+  createdBlock: Block!
+  updatedBlock: Block!
+}
+
+"""
+Represents a confidential transaction
+"""
+type ConfidentialTransaction @entity {
+  id: ID!
+  venue: ConfidentialVenue! @index(unique: false)
+  status: ConfidentialTransactionStatusEnum!
+  eventId: EventIdEnum!
+  eventIdx: Int!
+  legs: [ConfidentialLeg!]! @derivedFrom(field: "transaction")
+  affirmations: [ConfidentialTransactionAffirmation!]! @derivedFrom(field: "transaction")
+  memo: String
+  pendingAffirmations: Int!
+  createdBlock: Block!
+  updatedBlock: Block!
+  createdEvent: Event!
+}
+
+"""
+Represents a confidential asset transaction history entry
+"""
+type ConfidentialAssetHistory @entity {
+  id: ID!
+  asset: ConfidentialAsset!
+  from: ConfidentialAccount
+  to: ConfidentialAccount
+  amount: String!
+  eventId: EventIdEnum!
+  eventIdx: Int!
+  extrinsicIdx: Int
+  transaction: ConfidentialTransaction
+  memo: String
+  datetime: Date!
+  createdBlock: Block!
+  updatedBlock: Block!
+  createdEvent: Event!
+}
+
+"""
+Represents a transfer of confidential assets between a single identities confidential accounts.
+"""
+type ConfidentialAssetMovement @entity {
+  id: ID!
+  from: ConfidentialAccount! @index(unique: false)
+  to: ConfidentialAccount! @index(unique: false)
+  asset: ConfidentialAsset!
+  proof: String!
+  createdBlock: Block!
+  updatedBlock: Block!
+  createdEvent: Event!
+}
+
+"""
+Represent asset pre-approvals from an Identity. These entries will not require an affirmation when the identity is receiving them
+"""
+type AssetPreApproval @entity {
+  id: ID!
+  asset: Asset! @index(unique: false)
+  identity: Identity! @index(unique: false)
+  createdBlock: Block!
+  updatedBlock: Block!
+}
+
+"""
+Represents a ticker reservation. If linked to an Asset `asset` will be set
+"""
+type TickerReservation @entity {
+  id: ID!
+  ticker: String!
+  asset: Asset
+  identity: Identity! @index(unique: false)
+  expiry: Date
+  createdBlock: Block!
+  updatedBlock: Block!
+}
