@@ -10,7 +10,7 @@ EcoXchange has two Supabase projects, and the same repository talks to both.
 | | `EcoXchange-` — `xgcrooajrdpcgpgoazti` | `EcoXchange-2nd` — `ojwofgbrxptiaqwjmcou` |
 |---|---|---|
 | Owner | the SQL migration series in `ecoxchange-reconciliation-engine/supabase/migrations/` | `shared/schema.ts` via `drizzle-kit push` |
-| Tables | 9 (001 + 011 + 012 applied) | 28 |
+| Tables | 18 (001–012 applied except 003/006, which are storage buckets) | 28 |
 | **Rows** | **1 project, 12 verification_records** | **0 — every table, all 28** |
 | `projects.id` | `uuid`, `gen_random_uuid()` | `character varying` |
 | `projects` shape | physical plant: `tilt_deg`, `azimuth_deg`, `commissioning_date`, `inverter_brand`, `albedo` | development deal: `developer_id`, `spv_id`, `stage`, `technology`, `capacity_mw` |
@@ -33,11 +33,13 @@ drizzle's 44-entry `tablesFilter`:
 { projects }
 ```
 
-That is the whole list, and it stays the whole list once the unapplied engine migrations (004, 008,
-009, 010) land: they create `developer_submissions`, `backtest_reports`, `offerings`,
+That is the whole list, and it stayed the whole list when migrations 004, 008, 009 and 010 landed on
+2026-08-09: they created `developer_submissions`, `backtest_reports`, `offerings`,
 `project_documents`, `investors`, `investor_holdings`, `distribution_history`,
 `distribution_preferences`, `suitability_profiles` — none of which drizzle claims. The near-misses
 (`documents` vs `project_documents`, `distributions` vs `distribution_history`) are distinct names.
+So the engine side is now at its full 18 tables and the intersection is still exactly `{projects}`;
+the repoint below no longer has to reason about migrations that have not run yet.
 
 ## The hazard to handle first
 
@@ -72,14 +74,18 @@ physical plant. The name is a one-line decision and easy to change; the directio
 1. **[done in this commit]** `shared/schema.ts:293` → `pgTable("dev_projects", …)`, and
    `drizzle.config.ts` `tablesFilter`: `"projects"` → `"dev_projects"`.
    Until `DATABASE_URL` moves, this is a no-op rename against an empty table in `ojwof…`.
-2. Apply the still-unapplied engine migrations to `xgcroo…` if you want them: 004, 008, 009, 010.
-   (001, 011, 012 are applied; 002/003/005/006/007 are RLS, buckets and columns.)
+2. **[done 2026-08-09]** Engine migrations 004, 008, 009 and 010 applied to `xgcroo…`, in that
+   dependency order. Only 003 and 006 remain, and both only touch the `evidence` storage bucket —
+   no tables, so they do not affect this consolidation either way. Apply state for all twelve is
+   tracked in `ecoxchange-reconciliation-engine/supabase/migrations/APPLIED.md`.
 3. Point every environment variable at `xgcrooajrdpcgpgoazti`:
    `DATABASE_URL`, `SUPABASE_URL`, `SUPABASE_SERVICE_ROLE_KEY`, `VITE_SUPABASE_URL`,
    `VITE_SUPABASE_ANON_KEY`. Render, Cloudflare Workers build vars, and local `.env`.
 4. Run `drizzle-kit push` **without** `--force` first and read the plan. Expect ~44 creates and zero
-   drops. A proposed drop of `projects`, `raw_readings`, `verification_records` or `engine_runs`
-   means step 1 did not take — stop.
+   drops. A proposed drop of *any* of the 18 engine tables means step 1 did not take — stop. The
+   four from 001 (`projects`, `raw_readings`, `verification_records`, `engine_runs`) are the ones
+   that hold data and so the ones that matter most, but none of the 18 should appear in the plan at
+   all: not one of them is in `tablesFilter`.
 5. Verify the engine tables survived and still hold 1 project / 12 verification_records.
 6. Pause `ojwof…`, keep it for a week, then delete.
 
@@ -113,6 +119,8 @@ one renamed table already solves. Worth revisiting if a second name ever collide
 
 ## Not done here
 
-- No environment variables were changed. Steps 2–6 above are all untouched.
+- No environment variables were changed. Step 2 is done; steps 3–6 are untouched, and step 3 is the
+  one that actually consolidates anything. It cannot be done from a code session — it is a change in
+  the Render and Cloudflare dashboards.
 - `ojwof…` is untouched and still running.
 - `listcraft-prod` (`wtvovergzmprzgqasodh`) is a different product and remains paused.
