@@ -16,6 +16,7 @@
 
 import { isLiveDistributionEnabled } from "../../config/contracts.js";
 import { ENGINE_VERSION } from "../../config/engine.js";
+import type { DataProvenance } from "../../utils/types.js";
 import { DEMO_OFFERING } from "../../data/demo-offering.js";
 import { DEMO_HOLDERS, holderAmountUsd } from "../../data/demo-wallets.js";
 import demoSavannah from "../../data/demo-savannah.json";
@@ -72,6 +73,8 @@ export const DEMO_DISTRIBUTION = {
   invVsUtilityPct: latestRecord.inv_vs_utility_pct,
   deviationBps: Math.round(latestRecord.inv_vs_expected_pct * 100),
   engineVersion: ENGINE_VERSION,
+  /** Spec 19: the tag travels with the record into every surface that shows it. */
+  dataProvenance: latestRecord.data_provenance as DataProvenance | undefined,
   verdict: "VERIFIED" as const,
 };
 

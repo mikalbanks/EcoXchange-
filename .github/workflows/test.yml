@@ -1,0 +1,89 @@
+# Spec 19 G4 — test CI.
+#
+# Before this, the only automated checks on the repo were Cloudflare deploy
+# builds, which prove the bundle compiles and nothing else. A fixture with a
+# 0.0% INV→EXP deviation reached the public demo and stayed there for two
+# months without a single check objecting (docs/spec-19-diagnostic.md).
+#
+# The reconciliation-engine job is the one that matters most: it runs the
+# independence assertion (G1) that makes that class of bug fail a run.
+
+name: tests
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+# A newer push to the same ref supersedes an in-flight run.
+concurrency:
+  group: tests-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  reconciliation-engine:
+    name: reconciliation engine (vitest)
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: ecoxchange-reconciliation-engine
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20.19.0"
+          cache: npm
+          cache-dependency-path: ecoxchange-reconciliation-engine/package-lock.json
+      - run: npm ci
+      # The package's own `test` script excludes backtest-integration.test.ts,
+      # which needs live NASA POWER access. Nothing in CI may depend on a
+      # third-party API being up.
+      - run: npm test
+      - run: npx tsc --noEmit
+
+  dashboard:
+    name: dashboard (vitest)
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: ecoxchange-dashboard
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20.19.0"
+          cache: npm
+          cache-dependency-path: ecoxchange-dashboard/package-lock.json
+      - run: npm ci
+      - run: npm test
+      - run: npx tsc -b
+
+  pvlib-service:
+    name: pvlib service (pytest)
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: ecoxchange-pvlib-service
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - run: pip install -r requirements.txt pytest pytest-asyncio
+      - run: pytest
+
+  demo-fixtures:
+    name: demo fixtures are reproducible
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20.19.0"
+      # The generator is deterministic and takes no dependencies, so a clean
+      # re-run must reproduce the committed fixtures byte for byte. If this
+      # fails, someone hand-edited a demo dataset — which is precisely how the
+      # zero-deviation records got there in the first place.
+      - run: node scripts/generate-realistic-seed.mjs
+        working-directory: ecoxchange-dashboard
+      - run: git diff --exit-code

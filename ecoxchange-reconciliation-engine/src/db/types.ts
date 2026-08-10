@@ -6,6 +6,18 @@ export type OfftakeType = "ppa" | "community_solar" | "net_metering" | "merchant
 export type ProjectStatus = "onboarding" | "active" | "suspended" | "decommissioned";
 export type DataSource = "inverter" | "utility_meter" | "satellite";
 export type DataQuality = "complete" | "partial" | "missing" | "error";
+
+/**
+ * Where a record's telemetry came from (Spec 19 Task B, migration 014).
+ *
+ * `simulated`      — real satellite irradiance, simulated inverter/utility legs.
+ * `live_telemetry` — all three sources from real APIs. RESERVED: nothing may
+ *                    claim this until real inverter telemetry is connected.
+ *
+ * NOT NULL with no default in the database, so a record cannot stay silent
+ * about its origin.
+ */
+export type DataProvenance = "simulated" | "live_telemetry";
 export type TriggerType = "manual" | "scheduled" | "backtest";
 export type RunStatus = VerificationStatus | "errored";
 
@@ -40,6 +52,7 @@ export interface RawReading {
   raw_response: unknown;
   archive_path: string | null;
   data_quality: DataQuality;
+  data_provenance: DataProvenance;
   quality_notes: string | null;
   fetched_at: string;
 }
@@ -60,6 +73,7 @@ export interface VerificationRecord {
   tolerance_config: ToleranceConfig;
   estimated_revenue: number | null;
   engine_version: string;
+  data_provenance: DataProvenance;
   verified_at: string;
   reviewed_by: string | null;
   review_notes: string | null;

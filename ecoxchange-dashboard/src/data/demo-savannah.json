@@ -16,25 +16,27 @@
       "status": "active"
   },
   "verification_records": [
-    {"period_start": "2024-01-01", "inverter_kwh": 512270, "expected_kwh": 516016, "utility_kwh": 490863, "inv_vs_expected_pct": -0.73, "inv_vs_utility_pct": 4.36, "util_vs_expected_pct": -4.87, "status": "verified", "flag_reasons": [], "estimated_revenue": 43543, "ghi_kwh_m2": 93.7},
-    {"period_start": "2024-02-01", "inverter_kwh": 557180, "expected_kwh": 546624, "utility_kwh": 537876, "inv_vs_expected_pct": 1.93, "inv_vs_utility_pct": 3.59, "util_vs_expected_pct": -1.6, "status": "verified", "flag_reasons": [], "estimated_revenue": 47360, "ghi_kwh_m2": 106.7},
-    {"period_start": "2024-03-01", "inverter_kwh": 642064, "expected_kwh": 667163, "utility_kwh": 611372, "inv_vs_expected_pct": -3.76, "inv_vs_utility_pct": 5.02, "util_vs_expected_pct": -8.36, "status": "verified", "flag_reasons": [], "estimated_revenue": 54575, "ghi_kwh_m2": 140.5},
-    {"period_start": "2024-04-01", "inverter_kwh": 830626, "expected_kwh": 836859, "utility_kwh": 782627, "inv_vs_expected_pct": -0.74, "inv_vs_utility_pct": 6.13, "util_vs_expected_pct": -6.48, "status": "verified", "flag_reasons": [], "estimated_revenue": 70603, "ghi_kwh_m2": 185.5},
-    {"period_start": "2024-05-01", "inverter_kwh": 781984, "expected_kwh": 796045, "utility_kwh": 762872, "inv_vs_expected_pct": -1.77, "inv_vs_utility_pct": 2.51, "util_vs_expected_pct": -4.17, "status": "verified", "flag_reasons": [], "estimated_revenue": 66469, "ghi_kwh_m2": 184.9},
-    {"period_start": "2024-06-01", "inverter_kwh": 826402, "expected_kwh": 858953, "utility_kwh": 803219, "inv_vs_expected_pct": -3.79, "inv_vs_utility_pct": 2.89, "util_vs_expected_pct": -6.49, "status": "verified", "flag_reasons": [], "estimated_revenue": 70244, "ghi_kwh_m2": 203.1},
-    {"period_start": "2024-07-01", "inverter_kwh": 823000, "expected_kwh": 795158, "utility_kwh": 798060, "inv_vs_expected_pct": 3.5, "inv_vs_utility_pct": 3.13, "util_vs_expected_pct": 0.36, "status": "verified", "flag_reasons": [], "estimated_revenue": 69955, "ghi_kwh_m2": 186.8},
-    {"period_start": "2024-08-01", "inverter_kwh": 777430, "expected_kwh": 776243, "utility_kwh": 762896, "inv_vs_expected_pct": 0.15, "inv_vs_utility_pct": 1.91, "util_vs_expected_pct": -1.72, "status": "verified", "flag_reasons": [], "estimated_revenue": 66082, "ghi_kwh_m2": 174.6},
-    {"period_start": "2024-09-01", "inverter_kwh": 630109, "expected_kwh": 611196, "utility_kwh": 603422, "inv_vs_expected_pct": 3.09, "inv_vs_utility_pct": 4.42, "util_vs_expected_pct": -1.27, "status": "verified", "flag_reasons": [], "estimated_revenue": 53559, "ghi_kwh_m2": 131.3},
-    {"period_start": "2024-10-01", "inverter_kwh": 736676, "expected_kwh": 721974, "utility_kwh": 721005, "inv_vs_expected_pct": 2.04, "inv_vs_utility_pct": 2.17, "util_vs_expected_pct": -0.13, "status": "verified", "flag_reasons": [], "estimated_revenue": 62617, "ghi_kwh_m2": 140.2},
-    {"period_start": "2024-11-01", "inverter_kwh": 483396, "expected_kwh": 486701, "utility_kwh": 471818, "inv_vs_expected_pct": -0.68, "inv_vs_utility_pct": 2.45, "util_vs_expected_pct": -3.06, "status": "verified", "flag_reasons": [], "estimated_revenue": 41089, "ghi_kwh_m2": 90},
-    {"period_start": "2024-12-01", "inverter_kwh": 501618, "expected_kwh": 489823, "utility_kwh": 494143, "inv_vs_expected_pct": 2.41, "inv_vs_utility_pct": 1.51, "util_vs_expected_pct": 0.88, "status": "verified", "flag_reasons": [], "estimated_revenue": 42638, "ghi_kwh_m2": 87}
+    {"period_start": "2024-01-01", "inverter_kwh": 515456, "expected_kwh": 516016, "utility_kwh": 490817, "inv_vs_expected_pct": -0.11, "inv_vs_utility_pct": 4.78, "util_vs_expected_pct": -4.88, "status": "verified", "flag_reasons": [], "estimated_revenue": 43814, "ghi_kwh_m2": 93.7, "data_provenance": "simulated"},
+    {"period_start": "2024-02-01", "inverter_kwh": 560645, "expected_kwh": 546624, "utility_kwh": 528247, "inv_vs_expected_pct": 2.57, "inv_vs_utility_pct": 5.78, "util_vs_expected_pct": -3.36, "status": "verified", "flag_reasons": [], "estimated_revenue": 47655, "ghi_kwh_m2": 106.7, "data_provenance": "simulated"},
+    {"period_start": "2024-03-01", "inverter_kwh": 666314, "expected_kwh": 667163, "utility_kwh": 650029, "inv_vs_expected_pct": -0.13, "inv_vs_utility_pct": 2.44, "util_vs_expected_pct": -2.57, "status": "verified", "flag_reasons": [], "estimated_revenue": 56637, "ghi_kwh_m2": 140.5, "data_provenance": "simulated"},
+    {"period_start": "2024-04-01", "inverter_kwh": 827190, "expected_kwh": 836859, "utility_kwh": 803985, "inv_vs_expected_pct": -1.16, "inv_vs_utility_pct": 2.81, "util_vs_expected_pct": -3.93, "status": "verified", "flag_reasons": [], "estimated_revenue": 70311, "ghi_kwh_m2": 185.5, "data_provenance": "simulated"},
+    {"period_start": "2024-05-01", "inverter_kwh": 829043, "expected_kwh": 796045, "utility_kwh": 803920, "inv_vs_expected_pct": 4.15, "inv_vs_utility_pct": 3.03, "util_vs_expected_pct": 0.99, "status": "verified", "flag_reasons": [], "estimated_revenue": 70469, "ghi_kwh_m2": 184.9, "data_provenance": "simulated"},
+    {"period_start": "2024-06-01", "inverter_kwh": 865616, "expected_kwh": 858953, "utility_kwh": 849434, "inv_vs_expected_pct": 0.78, "inv_vs_utility_pct": 1.87, "util_vs_expected_pct": -1.11, "status": "verified", "flag_reasons": [], "estimated_revenue": 73577, "ghi_kwh_m2": 203.1, "data_provenance": "simulated"},
+    {"period_start": "2024-07-01", "inverter_kwh": 824862, "expected_kwh": 795158, "utility_kwh": 789926, "inv_vs_expected_pct": 3.74, "inv_vs_utility_pct": 4.24, "util_vs_expected_pct": -0.66, "status": "verified", "flag_reasons": [], "estimated_revenue": 70113, "ghi_kwh_m2": 186.8, "data_provenance": "simulated"},
+    {"period_start": "2024-08-01", "inverter_kwh": 796977, "expected_kwh": 776243, "utility_kwh": 780024, "inv_vs_expected_pct": 2.67, "inv_vs_utility_pct": 2.13, "util_vs_expected_pct": 0.49, "status": "verified", "flag_reasons": [], "estimated_revenue": 67743, "ghi_kwh_m2": 174.6, "data_provenance": "simulated"},
+    {"period_start": "2024-09-01", "inverter_kwh": 498736, "expected_kwh": 611196, "utility_kwh": 486790, "inv_vs_expected_pct": -18.4, "inv_vs_utility_pct": 2.4, "util_vs_expected_pct": -20.35, "status": "flagged", "flag_reasons": ["Inverter production 18.4% BELOW expected (threshold: -15%). Possible causes: panel degradation exceeding model, soiling, shading, inverter fault, curtailment.", "Utility meter 20.4% BELOW expected (threshold: -20%). Possible causes: high on-site consumption, curtailment, system issue."], "estimated_revenue": 42393, "ghi_kwh_m2": 131.3, "data_provenance": "simulated"},
+    {"period_start": "2024-10-01", "inverter_kwh": 743957, "expected_kwh": 721974, "utility_kwh": 732870, "inv_vs_expected_pct": 3.04, "inv_vs_utility_pct": 1.49, "util_vs_expected_pct": 1.51, "status": "verified", "flag_reasons": [], "estimated_revenue": 63236, "ghi_kwh_m2": 140.2, "data_provenance": "simulated"},
+    {"period_start": "2024-11-01", "inverter_kwh": 481775, "expected_kwh": 486701, "utility_kwh": null, "inv_vs_expected_pct": -1.01, "inv_vs_utility_pct": null, "util_vs_expected_pct": null, "status": "verified", "flag_reasons": ["Utility meter data not available — verification based on inverter vs. satellite only (two-way check)."], "estimated_revenue": 40951, "ghi_kwh_m2": 90, "data_provenance": "simulated"},
+    {"period_start": "2024-12-01", "inverter_kwh": 492184, "expected_kwh": 489823, "utility_kwh": 478314, "inv_vs_expected_pct": 0.48, "inv_vs_utility_pct": 2.82, "util_vs_expected_pct": -2.35, "status": "verified", "flag_reasons": [], "estimated_revenue": 41836, "ghi_kwh_m2": 87, "data_provenance": "simulated"}
   ],
   "summary": {
       "annual_production_mwh": 8102.8,
       "capacity_factor_pct": 18.5,
-      "months_verified": 12,
-      "months_flagged": 0,
-      "total_revenue_estimate": 688734,
-      "ppa_rate": 0.085
+      "months_verified": 11,
+      "months_flagged": 1,
+      "months_utility_missing": 1,
+      "total_revenue_estimate": 688735,
+      "ppa_rate": 0.085,
+      "data_provenance": "simulated"
   }
 }

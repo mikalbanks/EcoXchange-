@@ -1,6 +1,7 @@
 import { calculateExpectedGeneration } from "../physics/expected-generation.js";
 import { getExpectedGeneration } from "../physics/pvlib-client.js";
 import { reconcile } from "../reconciliation/reconcile.js";
+import { assertDeviationIndependence } from "../reconciliation/independence.js";
 import { fetchNasaPowerDaily } from "../ingestion/nasa-power.js";
 import { DEFAULT_TOLERANCES, type ToleranceConfig } from "../config/tolerances.js";
 import { ENGINE_VERSION } from "../config/constants.js";
@@ -65,10 +66,43 @@ async function computeExpected(
   }
 }
 
+/**
+ * Per-month escape hatch from the series-wide noise policy (Spec 19 §3.2).
+ *
+ * A demo where every month passes proves the engine can say yes. It does not
+ * prove the engine can say no, which is the only property that matters. These
+ * overrides let a run compose a series that exercises both verdicts and the
+ * two-way degrade path, without hand-writing records.
+ */
+export interface BacktestMonthOverride {
+  /** Force this month's INV deviation, ignoring the series noise policy. */
+  deviation_pct?: number;
+  /**
+   * Drop the utility leg for this month. `reconcile()` then runs the two-way
+   * inverter-vs-satellite check (see reconcile.ts STEP 4) and notes the absence
+   * in flag_reasons without failing the month.
+   */
+  utility_missing?: boolean;
+}
+
 export interface BacktestSimulation {
   monthly_deviation_pct: number | "random_normal";
   random_std_dev?: number;
   seed?: number;
+  /** Keyed by period start, "YYYY-MM-DD". */
+  month_overrides?: Record<string, BacktestMonthOverride>;
+  /**
+   * Opt out of the G1 independence assertion for a deliberate 0%-deviation run.
+   *
+   * Engine spec §5.6 acceptance criterion 3 requires such a run to prove the
+   * engine raises no false flags, so it is legitimate — but its output is the
+   * exact shape of the fixture that reached production
+   * (docs/spec-19-diagnostic.md). Setting this is an explicit statement that the
+   * caller knows the series is degenerate and will not persist or publish it.
+   *
+   * Never set it on a path that writes to the database or a demo fixture.
+   */
+  acknowledge_zero_deviation?: boolean;
 }
 
 export interface BacktestConfig {
@@ -84,7 +118,8 @@ export interface BacktestMonthResult {
   ghi_kwh_m2: number;
   expected_kwh: number;
   simulated_inverter_kwh: number;
-  simulated_utility_kwh: number;
+  /** Null when the month's utility leg was deliberately omitted. */
+  simulated_utility_kwh: number | null;
   deviation_applied_pct: number;
   inv_vs_expected_pct: number | null;
   status: VerificationStatus;
@@ -142,15 +177,20 @@ export async function runBacktest(config: BacktestConfig): Promise<BacktestRepor
     if (engine === "pvlib") usedPvlib = true;
     else usedFallback = true;
 
-    let deviation_pct: number;
-    if (config.simulation.monthly_deviation_pct === "random_normal") {
-      deviation_pct = randomNormal(0, config.simulation.random_std_dev ?? 3, rng);
-    } else {
-      deviation_pct = config.simulation.monthly_deviation_pct;
-    }
+    // Always draw, even when overridden, so adding or changing an override
+    // does not shift every later month's noise.
+    const drawn =
+      config.simulation.monthly_deviation_pct === "random_normal"
+        ? randomNormal(0, config.simulation.random_std_dev ?? 3, rng)
+        : config.simulation.monthly_deviation_pct;
+
+    const override = config.simulation.month_overrides?.[m.start];
+    const deviation_pct = override?.deviation_pct ?? drawn;
 
     const simulated_inverter_kwh = expected.expected_kwh * (1 + deviation_pct / 100);
-    const simulated_utility_kwh = simulated_inverter_kwh * 0.97;
+    const simulated_utility_kwh = override?.utility_missing
+      ? null
+      : simulated_inverter_kwh * 0.97;
 
     const verification = reconcile({
       project: config.project,
@@ -161,11 +201,14 @@ export async function runBacktest(config: BacktestConfig): Promise<BacktestRepor
         data_quality: "complete",
         raw_response: { simulated: true, deviation_pct },
       },
-      utility_reading: {
-        kwh_net: simulated_utility_kwh,
-        data_quality: "complete",
-        raw_response: { simulated: true },
-      },
+      utility_reading:
+        simulated_utility_kwh === null
+          ? null
+          : {
+              kwh_net: simulated_utility_kwh,
+              data_quality: "complete",
+              raw_response: { simulated: true },
+            },
       expected_generation: expected,
       tolerances,
     });
@@ -181,6 +224,19 @@ export async function runBacktest(config: BacktestConfig): Promise<BacktestRepor
       status: verification.status,
       flag_reasons: verification.flag_reasons,
     });
+  }
+
+  // Spec 19 G1. Fail the run before any caller can persist or publish a series
+  // where INV and EXP are not independent — a `monthly_deviation_pct: 0` run is
+  // legitimate for proving the engine raises no false flags, but it must never
+  // be mistaken for engine output. This throws; it does not warn.
+  if (!config.simulation.acknowledge_zero_deviation) {
+    assertDeviationIndependence(
+      results.map((r) => ({
+        period_start: r.month,
+        inv_vs_expected_pct: r.inv_vs_expected_pct,
+      })),
+    );
   }
 
   const total_expected_kwh = results.reduce((s, r) => s + r.expected_kwh, 0);

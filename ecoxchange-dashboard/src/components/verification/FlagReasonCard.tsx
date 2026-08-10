@@ -8,6 +8,7 @@ import type {
   VerificationRecord,
 } from "../../utils/types.js";
 import { formatMonthLong, formatPct } from "../../utils/formatters.js";
+import { ProvenanceTag } from "../ProvenanceTag.js";
 
 const CATEGORY_LABELS: Record<AnomalyCategory, string> = {
   weather_anomaly: "Weather Anomaly",
@@ -28,9 +29,18 @@ export function FlagReasonCard({ record }: { record: VerificationRecord }) {
       className="border-l-4 border-flagAmber bg-amber-50 p-4 sm:p-5"
       data-testid="flag-reason-card"
     >
-      <p className="flex items-center gap-2 font-medium text-darkBg">
+      <p className="flex flex-wrap items-center gap-2 font-medium text-darkBg">
         <AlertTriangle className="h-4 w-4 shrink-0 text-flagAmber" aria-hidden />
         Production flagged for {formatMonthLong(record.period_start)}
+        {/* Spec 19 §3.3. The flagged month is the most valuable pixel on the
+            demo — it is the proof the engine can say no — so it is also the one
+            that must never be mistaken for live telemetry. */}
+        {record.data_provenance && (
+          <ProvenanceTag provenance={record.data_provenance} />
+        )}
+      </p>
+      <p className="mt-2 text-xs leading-snug text-textMuted">
+        A FLAGGED verification record cannot reach a distribution transport.
       </p>
 
       {classification ? (

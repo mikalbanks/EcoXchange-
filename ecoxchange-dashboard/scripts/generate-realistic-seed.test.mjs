@@ -1,8 +1,13 @@
 import { describe, expect, it } from "vitest";
 import {
-  generateRealisticVerificationData,
-  generateFlaggedVerificationData,
+  FLAGGED_MONTH,
+  UTILITY_MISSING_MONTH,
+  FLAGGED_DEVIATION_PCT,
+  assertDeviationIndependence,
   buildSummary,
+  generateFlaggedVerificationData,
+  generateRealisticVerificationData,
+  reconcileMonth,
 } from "./generate-realistic-seed.mjs";
 import demoSavannah from "../src/data/demo-savannah.json";
 
@@ -30,33 +35,67 @@ describe("generateRealisticVerificationData", () => {
     expect(sumInverter).toBe(8_102_755);
   });
 
-  it("produces realistic non-zero deviations within ±5%", () => {
-    const devs = records.map((r) => r.inv_vs_expected_pct);
-    expect(devs.every((d) => d !== 0)).toBe(true);
-    expect(Math.max(...devs.map(Math.abs))).toBeLessThanOrEqual(5);
-    // Both signs appear (no systematic bias direction).
-    expect(devs.some((d) => d > 0)).toBe(true);
-    expect(devs.some((d) => d < 0)).toBe(true);
-    // Most months land in the ±2% band.
-    expect(devs.filter((d) => Math.abs(d) <= 2).length).toBeGreaterThanOrEqual(6);
-  });
-
-  it("keeps every month inside the engine tolerance bands (all verified)", () => {
-    for (const r of records) {
-      expect(Math.abs(r.inv_vs_expected_pct)).toBeLessThanOrEqual(15);
-      expect(Math.abs(r.inv_vs_utility_pct)).toBeLessThanOrEqual(10);
-      expect(Math.abs(r.util_vs_expected_pct)).toBeLessThanOrEqual(20);
-      expect(r.status).toBe("verified");
-      expect(r.flag_reasons).toEqual([]);
-    }
-  });
-
   it("summary reproduces the canonical figures", () => {
     const summary = buildSummary(records, 5000);
     expect(summary.annual_production_mwh).toBe(8102.8);
     expect(summary.capacity_factor_pct).toBe(18.5);
-    expect(summary.months_verified).toBe(12);
-    expect(summary.months_flagged).toBe(0);
+  });
+
+  // ── Spec 19 §3.2 — series composition ──────────────────────────────────
+  it("ships 10 clean VERIFIED months, 1 FLAGGED, and 1 two-way month", () => {
+    const summary = buildSummary(records, 5000);
+    expect(summary.months_flagged).toBe(1);
+    expect(summary.months_utility_missing).toBe(1);
+    // 11 verified = 10 normal + the utility-missing month, which still passes.
+    expect(summary.months_verified).toBe(11);
+    expect(records).toHaveLength(12);
+  });
+
+  it("the FLAGGED month breaches -15% and renders the engine's own reasons", () => {
+    const flagged = records.filter((r) => r.status === "flagged");
+    expect(flagged).toHaveLength(1);
+    expect(flagged[0].period_start).toBe(FLAGGED_MONTH);
+    expect(flagged[0].inv_vs_expected_pct).toBe(FLAGGED_DEVIATION_PCT);
+    expect(flagged[0].inv_vs_expected_pct).toBeLessThan(-15);
+    expect(flagged[0].flag_reasons[0]).toMatch(
+      /^Inverter production 18\.4% BELOW expected \(threshold: -15%\)\. Possible causes: panel degradation/,
+    );
+  });
+
+  it("the two-way month verifies with the absence stated, not hidden", () => {
+    const twoWay = records.filter((r) => r.utility_kwh === null);
+    expect(twoWay).toHaveLength(1);
+    expect(twoWay[0].period_start).toBe(UTILITY_MISSING_MONTH);
+    expect(twoWay[0].status).toBe("verified");
+    expect(twoWay[0].inv_vs_utility_pct).toBeNull();
+    expect(twoWay[0].util_vs_expected_pct).toBeNull();
+    expect(twoWay[0].flag_reasons).toEqual([
+      "Utility meter data not available — verification based on inverter vs. satellite only (two-way check).",
+    ]);
+  });
+
+  it("keeps every non-flagged month inside the engine tolerance bands", () => {
+    for (const r of records) {
+      if (r.status === "flagged") continue;
+      expect(Math.abs(r.inv_vs_expected_pct)).toBeLessThanOrEqual(15);
+      expect(Math.abs(r.util_vs_expected_pct ?? 0)).toBeLessThanOrEqual(20);
+      expect(Math.abs(r.inv_vs_utility_pct ?? 0)).toBeLessThanOrEqual(10);
+    }
+  });
+
+  it("produces realistic non-zero deviations with both signs", () => {
+    const devs = records.map((r) => r.inv_vs_expected_pct);
+    expect(devs.every((d) => d !== 0)).toBe(true);
+    expect(devs.some((d) => d > 0)).toBe(true);
+    expect(devs.some((d) => d < 0)).toBe(true);
+  });
+
+  // ── Spec 19 §3.3 / G2 — provenance ─────────────────────────────────────
+  it("every record declares its provenance and none claims live telemetry", () => {
+    for (const r of records) {
+      expect(r.data_provenance).toBe("simulated");
+    }
+    expect(buildSummary(records, 5000).data_provenance).toBe("simulated");
   });
 });
 
@@ -75,6 +114,60 @@ describe("generateFlaggedVerificationData", () => {
       expect(r.status).toBe("flagged");
       expect(r.flag_reasons.length).toBeGreaterThanOrEqual(1);
       expect(r.flag_reasons[0]).toMatch(/BELOW expected \(threshold: -15%\)/);
+      expect(r.data_provenance).toBe("simulated");
     }
+  });
+});
+
+describe("reconcileMonth mirrors reconcile.ts", () => {
+  it("expresses INV→UTL against the INVERTER reading (reconcile.ts:71)", () => {
+    // 1000 vs 900: (1000-900)/1000 = 10%, NOT (1000-900)/900 = 11.1%.
+    const v = reconcileMonth(1000, 900, 1000);
+    expect(v.inv_vs_utility_pct).toBe(10);
+  });
+
+  it("degrades to a two-way check when the utility reading is absent", () => {
+    const v = reconcileMonth(1000, null, 1000);
+    expect(v.status).toBe("verified");
+    expect(v.inv_vs_utility_pct).toBeNull();
+    expect(v.util_vs_expected_pct).toBeNull();
+    expect(v.flag_reasons).toHaveLength(1);
+  });
+
+  it("flags an inverter reading below the -15% band", () => {
+    const v = reconcileMonth(800, 776, 1000);
+    expect(v.status).toBe("flagged");
+    expect(v.inv_vs_expected_pct).toBe(-20);
+  });
+});
+
+describe("assertDeviationIndependence (Spec 19 G1)", () => {
+  const at = (period_start, inv_vs_expected_pct) => ({
+    period_start,
+    inv_vs_expected_pct,
+  });
+
+  it("throws on three consecutive identically-zero deviations", () => {
+    expect(() =>
+      assertDeviationIndependence([
+        at("2024-01-01", 0),
+        at("2024-02-01", 0),
+        at("2024-03-01", 0),
+      ]),
+    ).toThrow(/not independent/);
+  });
+
+  it("tolerates two — a rounding coincidence is not a broken pipeline", () => {
+    expect(() =>
+      assertDeviationIndependence([
+        at("2024-01-01", 0),
+        at("2024-02-01", 0),
+        at("2024-03-01", 2.4),
+      ]),
+    ).not.toThrow();
+  });
+
+  it("passes the committed dataset", () => {
+    expect(() => assertDeviationIndependence(BASE)).not.toThrow();
   });
 });

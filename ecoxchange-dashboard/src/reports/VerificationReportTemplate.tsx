@@ -2,6 +2,7 @@ import type { ReactNode } from "react";
 import { complianceMode } from "../compliance/config/complianceMode.js";
 import { disclaimerConfig } from "../compliance/config/disclaimerConfig.js";
 import { ENGINE_VERSION } from "../config/engine.js";
+import { PROVENANCE_DETAIL, PROVENANCE_LABEL_LONG } from "../config/provenance.js";
 import benchmarkData from "../data/benchmark-results.json";
 import { formatMonthShort, formatUsd } from "../utils/formatters.js";
 import type { ProjectMeta, ProjectSummary, VerificationRecord } from "../utils/types.js";
@@ -98,6 +99,7 @@ export function VerificationReportTemplate({
       ? `${monthName(records[0].period_start)} – ${monthName(records[records.length - 1].period_start)}`
       : "—";
   const year = records.length > 0 ? records[0].period_start.slice(0, 4) : "";
+  const reportProvenance = records[0]?.data_provenance;
   const hasPpa = (project.ppa_rate_per_kwh ?? 0) > 0;
   const maxKwh = Math.max(...records.map((r) => Math.max(r.expected_kwh, r.inverter_kwh)));
   const disclaimers = disclaimerConfig[complianceMode];
@@ -133,7 +135,21 @@ export function VerificationReportTemplate({
             <p>Report Period: {periodLabel}</p>
             <p>Generated: {fmtDate(generatedAt)}</p>
             <p>Engine Version: {ENGINE_VERSION} (pvlib ModelChain)</p>
+            {/* Spec 19 §3.3 — report-header form. This appears on the cover, not
+                in a footnote: a reader must know what the report is before they
+                read a single number in it. */}
+            {reportProvenance && (
+              <p className="pt-1">
+                Data Provenance: {PROVENANCE_LABEL_LONG[reportProvenance]}
+              </p>
+            )}
           </div>
+
+          {reportProvenance && (
+            <p className="mt-6 max-w-[420px] font-mono text-[10px] leading-relaxed text-textMuted">
+              {PROVENANCE_DETAIL[reportProvenance]}
+            </p>
+          )}
 
           <p className="mt-14 font-mono text-[10px] uppercase tracking-[0.08em] text-olive">
             § Confidential

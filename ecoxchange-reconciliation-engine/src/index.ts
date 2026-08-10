@@ -18,16 +18,38 @@ program
     "scenario key: savannah | billerica | phoenix | all",
     "all",
   )
-  .option("-d, --deviation <pct>", "monthly deviation pct (default 0)", "0")
+  // Spec 19: this used to default to "0", which makes simulated_inverter_kwh
+  // collapse to expected_kwh and produces a 0.0% deviation on every month —
+  // the fixture that reached the public demo (docs/spec-19-diagnostic.md).
+  // The default is now realistic noise; a degenerate run must be asked for.
+  .option(
+    "-d, --deviation <pct|random>",
+    "monthly deviation pct, or 'random' for N(0, --std)",
+    "random",
+  )
+  .option("--std <pct>", "std dev when --deviation is 'random'", "3")
+  .option(
+    "--allow-zero-deviation",
+    "permit a 0%-deviation run (engine spec §5.6 #3). Its output proves the " +
+      "engine raises no false flags and must never be seeded anywhere.",
+    false,
+  )
   .option("--out <dir>", "output directory for reports", "./reports")
   .action(async (opts) => {
     const scenarioKeys =
       opts.scenario === "all"
         ? Object.keys(SCENARIOS)
         : [opts.scenario as string];
-    const deviation = Number.parseFloat(opts.deviation);
-    if (!Number.isFinite(deviation)) {
+
+    const isRandom = opts.deviation === "random";
+    const deviation = isRandom ? 0 : Number.parseFloat(opts.deviation);
+    if (!isRandom && !Number.isFinite(deviation)) {
       console.error(`Invalid deviation: ${opts.deviation}`);
+      process.exit(1);
+    }
+    const stdDev = Number.parseFloat(opts.std);
+    if (isRandom && !Number.isFinite(stdDev)) {
+      console.error(`Invalid --std: ${opts.std}`);
       process.exit(1);
     }
 
@@ -44,7 +66,12 @@ program
         project: scenario.project,
         start_month: scenario.start_month,
         end_month: scenario.end_month,
-        simulation: { monthly_deviation_pct: deviation },
+        simulation: isRandom
+          ? { monthly_deviation_pct: "random_normal", random_std_dev: stdDev }
+          : {
+              monthly_deviation_pct: deviation,
+              acknowledge_zero_deviation: opts.allowZeroDeviation === true,
+            },
       });
       const stamp = new Date().toISOString().replace(/[:.]/g, "-");
       writeJsonReport(`${opts.out}/${key}-${stamp}.json`, report);
