@@ -7,6 +7,7 @@
 
 import type { VerificationRecord } from "../../utils/types.js";
 import { formatMonthShort, formatPct } from "../../utils/formatters.js";
+import { ProvenanceTag } from "../ProvenanceTag.js";
 
 const TOLERANCE_PCT = 15;
 
@@ -90,6 +91,10 @@ export function VerificationTimeline({
 }: Props) {
   if (records.length === 0) return null;
 
+  // One tag for the series: every record in a run shares its provenance, and a
+  // tag per dot would be noise. Falls back to no tag rather than guessing.
+  const seriesProvenance = records[0].data_provenance;
+
   return (
     <div data-testid="verification-timeline">
       {/* Dot row — horizontal scroll beyond ~12 months on narrow screens */}
@@ -144,7 +149,12 @@ export function VerificationTimeline({
             {formatMonthShort(records[0].period_start)}{" "}
             {records[0].period_start.slice(0, 4)}
           </span>
-          <span>deviation vs expected · band ±{TOLERANCE_PCT}%</span>
+          <span className="flex items-center gap-1.5">
+            deviation vs expected · band ±{TOLERANCE_PCT}%
+            {/* Spec 19 §3.3: the tag sits with the deviations it describes, not
+                in a footnote at the bottom of the page. */}
+            {seriesProvenance && <ProvenanceTag provenance={seriesProvenance} />}
+          </span>
           <span>
             {formatMonthShort(records[records.length - 1].period_start)}{" "}
             {records[records.length - 1].period_start.slice(0, 4)}

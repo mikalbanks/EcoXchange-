@@ -19,12 +19,44 @@ below names the artifact that was checked.
 | 010 | `010_suitability_profiles.sql` | applied 2026-08-09 | `suitability_profiles` |
 | 011 | `011_pcp_submissions.sql` | applied 2026-08-09 | `pcp_submissions` |
 | 012 | `012_polymesh.sql` | applied 2026-08-09 | `polymesh_assets`, `polymesh_holders`, `polymesh_distributions`, `polymesh_sync_runs` |
+| 013 | `013_spec19_containment.sql` | applied 2026-08-10 | `projects.status` = `suspended` for `inverter_plant_id = 'demo-plant-001'` |
+| 014 | `014_data_provenance.sql` | applied 2026-08-10 | `data_provenance` enum type exists; column present, `is_nullable = NO`, `column_default = null` on both `verification_records` and `raw_readings`; all 12 existing records backfilled to `simulated` |
 
 18 tables in `public`. `projects` holds 1 row and `verification_records` 12 — the
 Savannah demo year — unchanged by the 2026-08-09 applications. The engine schema
 is now fully migrated: every file in this directory has run against `xgcroo…`.
 
-**All twelve are applied.** Nothing is outstanding.
+**All fourteen are applied.** Nothing is outstanding.
+
+## 013 and 014 — Spec 19
+
+Both were applied by hand on 2026-08-10 with `execute_sql`, the same way 001–012
+were applied. **No migration runner was introduced**, per Spec 19 §0.1; this
+ledger remains the only record of what has run.
+
+**013** suspends the Savannah demo project. It holds the twelve zero-deviation
+fixture records diagnosed in `docs/spec-19-diagnostic.md`, and `status = 'active'`
+made it reachable by any job iterating active projects. The row is deliberately
+**not deleted** — it is the evidence and the basis for the Task C reseed.
+
+There was a second way the fixture could come back: `persistBacktest()` in
+`server/services/backtest-supabase-writer.ts` upserts projects **by name** and
+used to force `status: 'active'` on the update branch, so any later backtest
+named "Savannah Community Solar 5MW" would silently un-suspend it. `status` is
+now set only on insert. If you re-suspend a project and it flips back, look
+there first.
+
+**014** adds `data_provenance`. Note the deliberate absence of a default: a
+default lets a future insert stay silent about its origin, which is the exact
+failure being fixed. Every write path must name its provenance explicitly.
+
+⚠️ **Deployment ordering.** The `NOT NULL` constraint is live from the moment 014
+runs, but the writer that supplies the column ships with the Spec 19 branch. Any
+Render deploy older than that branch will fail its `verification_records` insert.
+The failure is graceful — `persistBacktest()` catches everything and returns
+`persisted: false`, so a developer-portal backtest still completes in-memory and
+logs `[backtest-writer] persistence failed` — but backtests will not persist
+until the branch is deployed. Deploy the API before relying on persistence.
 
 ## Storage buckets
 

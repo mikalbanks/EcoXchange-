@@ -4,6 +4,7 @@ import { SectionTag } from "../components/ui/SectionTag.js";
 import { Button } from "../components/ui/Button.js";
 import { NetworkStatus } from "../components/explorer/NetworkStatus.js";
 import { SimulationStepCard } from "../components/distribution/SimulationStepCard.js";
+import { ProvenanceTag } from "../components/ProvenanceTag.js";
 import {
   USDCFlowAnimation,
   USDCFlowList,
@@ -110,7 +111,14 @@ export function Distribute() {
           <dt className="text-textMuted">Expected</dt>
           <dd className="text-right tabular-nums">{formatKwh(DEMO_DISTRIBUTION.expectedKwh)}</dd>
           <dt className="text-textMuted">Utility</dt>
-          <dd className="text-right tabular-nums">{formatKwh(DEMO_DISTRIBUTION.utilityKwh)}</dd>
+          {/* Spec 19 §3.2: a month can legitimately have no utility reading —
+              reconcile() degrades to the two-way inverter-vs-satellite check
+              rather than failing. Say so instead of rendering a blank. */}
+          <dd className="text-right tabular-nums">
+            {DEMO_DISTRIBUTION.utilityKwh === null
+              ? "not available"
+              : formatKwh(DEMO_DISTRIBUTION.utilityKwh)}
+          </dd>
         </dl>
         <div className="mt-3 flex flex-wrap items-center gap-3">
           <span className="inline-flex items-center gap-1.5 rounded-full bg-accentBrt/15 px-2.5 py-0.5 text-xs font-medium text-medGreen">
@@ -119,9 +127,15 @@ export function Distribute() {
           </span>
           <span className="font-mono text-xs text-textMuted">
             INV→EXP {formatSignedPct(DEMO_DISTRIBUTION.invVsExpectedPct)} · INV→UTL{" "}
-            {formatSignedPct(DEMO_DISTRIBUTION.invVsUtilityPct)} · Engine{" "}
-            {DEMO_DISTRIBUTION.engineVersion}
+            {DEMO_DISTRIBUTION.invVsUtilityPct === null
+              ? "n/a (two-way check)"
+              : formatSignedPct(DEMO_DISTRIBUTION.invVsUtilityPct)}{" "}
+            · Engine {DEMO_DISTRIBUTION.engineVersion}
           </span>
+          {/* Spec 19 §3.3 — the tag sits with the numbers, not in a footnote. */}
+          {DEMO_DISTRIBUTION.dataProvenance && (
+            <ProvenanceTag provenance={DEMO_DISTRIBUTION.dataProvenance} />
+          )}
         </div>
       </SimulationStepCard>
 

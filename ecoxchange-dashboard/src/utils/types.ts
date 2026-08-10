@@ -1,5 +1,19 @@
 export type VerificationStatus = "verified" | "flagged" | "pending";
 
+/**
+ * Where a record's telemetry came from (Spec 19).
+ *
+ * `simulated`      — real NASA POWER satellite irradiance for the site's actual
+ *                    coordinates, with the inverter and utility legs modelled.
+ * `live_telemetry` — all three sources from real APIs. RESERVED: nothing may
+ *                    claim this until real inverter telemetry is connected, and
+ *                    no UI may render it as a label before then.
+ *
+ * NOT NULL in the database with no default, so the tag travels with the record
+ * and cannot be forgotten at render time.
+ */
+export type DataProvenance = "simulated" | "live_telemetry";
+
 export type AnomalyCategory =
   | "weather_anomaly"
   | "inverter_fault"
@@ -72,6 +86,8 @@ export interface VerificationRecord {
   flag_reasons: string[];
   estimated_revenue: number;
   ghi_kwh_m2?: number;
+  /** Spec 19: every record states where its telemetry came from. */
+  data_provenance?: DataProvenance;
   /** Present only on flagged records when the classifier has run (Spec 7). */
   classification?: AnomalyClassification;
 }

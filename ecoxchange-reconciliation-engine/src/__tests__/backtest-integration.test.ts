@@ -14,7 +14,15 @@ d("reference backtests against NASA POWER (spec §5.6)", () => {
           project: scenario.project,
           start_month: scenario.start_month,
           end_month: scenario.end_month,
-          simulation: { monthly_deviation_pct: 0 },
+          // Spec §5.6 #3 deliberately runs a degenerate 0%-deviation series to
+          // prove the engine raises no false flags. That trips the Spec 19 G1
+          // independence assertion by design, so the acknowledgement is
+          // required here — this report is asserted on and discarded, never
+          // persisted or published.
+          simulation: {
+            monthly_deviation_pct: 0,
+            acknowledge_zero_deviation: true,
+          },
         });
 
         const annual = report.summary.annual_expected_mwh;

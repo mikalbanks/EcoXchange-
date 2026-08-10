@@ -101,8 +101,6 @@ export async function persistBacktest(input: PersistInput): Promise<PersistOutco
       offtake_type: p.offtake_type,
       ppa_rate_per_kwh: ppaRate,
       ppa_escalator: p.ppa_escalator ?? null,
-      // 'active' makes the row visible to getActiveProjects()/read paths.
-      status: "active",
       module_type: p.module_type,
       dc_ac_ratio: p.dc_ac_ratio,
       racking_type: p.racking_type,
@@ -119,6 +117,11 @@ export async function persistBacktest(input: PersistInput): Promise<PersistOutco
     let projectId: string;
     if (existing?.id) {
       projectId = existing.id as string;
+      // `status` is deliberately absent from projectPayload on this branch.
+      // Spec 19 Task A suspends the Savannah fixture project, and this writer
+      // upserts by NAME — forcing status:'active' here would silently
+      // un-suspend a project someone had deliberately taken out of service.
+      // Status is an operational decision; a backtest re-run is not one.
       const { error } = await supabase
         .from("projects")
         .update({ ...projectPayload, updated_at: new Date().toISOString() })
@@ -127,7 +130,8 @@ export async function persistBacktest(input: PersistInput): Promise<PersistOutco
     } else {
       const { data, error } = await supabase
         .from("projects")
-        .insert(projectPayload)
+        // 'active' makes a NEW backtest project visible to read paths.
+        .insert({ ...projectPayload, status: "active" })
         .select("id")
         .single();
       if (error) throw error;
@@ -162,26 +166,69 @@ export async function persistBacktest(input: PersistInput): Promise<PersistOutco
       tolerance_config: r.verification.tolerance_config,
       estimated_revenue: ppaRate != null ? r.verification.expected_kwh * ppaRate : null,
       engine_version: ENGINE_VERSION,
+      // Spec 19 Task B. The developer-portal backtest simulates the inverter
+      // and utility legs against real NASA POWER irradiance, so every record it
+      // writes is 'simulated'. NOT NULL in the database with no default:
+      // omitting this is a write error, not a silent null.
+      data_provenance: "simulated" as const,
     }));
     const { error: vErr } = await supabase
       .from("verification_records")
       .upsert(verificationRows, { onConflict: "project_id,period_start" });
     if (vErr) throw vErr;
 
-    // 4. Raw readings (satellite provenance) — best-effort; a failure here must
-    //    not discard the verification records already written.
+    // 4. Raw readings — best-effort; a failure here must not discard the
+    //    verification records already written.
+    //
+    //    All three legs are written, not just satellite. A verification record
+    //    with no underlying readings is structurally impossible for engine
+    //    output, and that inconsistency is exactly what made the Spec 19
+    //    fixture identifiable as hand-inserted (docs/spec-19-diagnostic.md).
+    //    A utility leg is written only when the month actually has one — the
+    //    two-way degrade path leaves utility_kwh null.
     try {
-      const rawRows = results.map((m) => {
+      const rawRows = results.flatMap((m) => {
         const recon = reconciliations.find((r) => r.month === m.month);
-        return {
+        const period_start = recon?.period_start ?? `${m.month}-01`;
+        const period_end = recon?.period_end ?? `${m.month}-28`;
+        const base = {
           project_id: projectId,
-          source: "satellite",
-          period_start: recon?.period_start ?? `${m.month}-01`,
-          period_end: recon?.period_end ?? `${m.month}-28`,
-          ghi_kwh_m2: m.ghi_kwh_m2,
-          raw_response: { source: "nasa_power", poa_kwh_m2: m.poa_irradiance_kwh_m2 },
+          period_start,
+          period_end,
           data_quality: "complete",
+          data_provenance: "simulated" as const,
         };
+
+        const rows: Record<string, unknown>[] = [
+          {
+            ...base,
+            source: "satellite",
+            ghi_kwh_m2: m.ghi_kwh_m2,
+            raw_response: {
+              source: "nasa_power",
+              poa_kwh_m2: m.poa_irradiance_kwh_m2,
+              // The irradiance leg is genuinely real; only INV/UTL are modelled.
+              irradiance_is_real: true,
+            },
+          },
+          {
+            ...base,
+            source: "inverter",
+            kwh_gross: recon?.verification.inverter_kwh ?? null,
+            raw_response: { simulated: true },
+          },
+        ];
+
+        if (recon?.verification.utility_kwh != null) {
+          rows.push({
+            ...base,
+            source: "utility_meter",
+            kwh_net: recon.verification.utility_kwh,
+            raw_response: { simulated: true },
+          });
+        }
+
+        return rows;
       });
       const { error: rawErr } = await supabase
         .from("raw_readings")
@@ -218,6 +265,17 @@ export async function getPersistedProject(
   return (data as Record<string, unknown> | null) ?? null;
 }
 
+/**
+ * Spec 19 G2 — provenance is required at the API boundary.
+ *
+ * A record that cannot state where its telemetry came from does not get
+ * rendered. Rows predating migration 014, or written by any path that skipped
+ * `data_provenance`, are dropped here rather than served unlabelled: an
+ * untagged number on a public surface is the failure this spec exists to fix.
+ *
+ * Dropped rows are logged loudly — silence is how the original fixture survived
+ * for two months.
+ */
 export async function getPersistedVerificationHistory(
   id: string,
 ): Promise<Record<string, unknown>[]> {
@@ -229,7 +287,17 @@ export async function getPersistedVerificationHistory(
     .eq("project_id", id)
     .order("period_start", { ascending: true });
   if (error) throw new Error(`getPersistedVerificationHistory: ${error.message}`);
-  return (data as Record<string, unknown>[]) ?? [];
+
+  const rows = (data as Record<string, unknown>[]) ?? [];
+  const served = rows.filter((r) => r.data_provenance != null);
+  if (served.length !== rows.length) {
+    console.error(
+      `[backtest-writer] G2: withheld ${rows.length - served.length} of ` +
+        `${rows.length} verification record(s) for project ${id} with null ` +
+        "data_provenance — a record that cannot state its origin is not served.",
+    );
+  }
+  return served;
 }
 
 /** Lightweight liveness probe for the /api/health aggregation. */

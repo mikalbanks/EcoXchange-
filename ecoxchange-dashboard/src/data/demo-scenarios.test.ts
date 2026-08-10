@@ -17,15 +17,39 @@ describe("demo scenarios", () => {
     }
   });
 
-  it("keeps every seed month verified and inside the ±15% tolerance band", () => {
+  it("keeps deviations arithmetically consistent, and the verdict matched to the band", () => {
     for (const scenario of DEMO_SCENARIO_LIST) {
       for (const m of scenario.months) {
-        expect(m.status).toBe("verified");
-        expect(Math.abs(m.deviation_pct)).toBeLessThan(15);
         // inverter must be arithmetically consistent with the deviation
         const implied =
           ((m.inverter_kwh - m.expected_kwh) / m.expected_kwh) * 100;
         expect(implied).toBeCloseTo(m.deviation_pct, 0);
+
+        // Spec 19 §3.2: the seed series is no longer uniformly verified — it
+        // deliberately carries a flagged month, because a demo where every
+        // month passes only proves the engine can say yes. So assert the
+        // relationship between verdict and band rather than a blanket "pass".
+        if (m.status === "verified") {
+          expect(Math.abs(m.deviation_pct)).toBeLessThan(15);
+        } else {
+          expect(m.status).toBe("flagged");
+          expect(Math.abs(m.deviation_pct)).toBeGreaterThanOrEqual(15);
+        }
+      }
+    }
+  });
+
+  it("Spec 19 §3.2: the Savannah seed proves the engine can say no", () => {
+    const months = DEMO_SCENARIOS.savannah_5mw.months;
+    const flagged = months.filter((m) => m.status === "flagged");
+    expect(flagged).toHaveLength(1);
+    expect(flagged[0].deviation_pct).toBeLessThan(-15);
+  });
+
+  it("Spec 19: no seed month reads a 0.0% deviation", () => {
+    for (const scenario of DEMO_SCENARIO_LIST) {
+      for (const m of scenario.months) {
+        expect(Math.abs(m.deviation_pct)).toBeGreaterThan(0.001);
       }
     }
   });
