@@ -1,9 +1,11 @@
 # Polymath Capital Platform — Admin Console Inventory
 
 **Status: PARTIAL.** First walkthrough recorded 2026-08-10 from a 47-second screen
-capture of `admin.polymath.market/en/marketplace/theecoxchange/`. Enough to settle
-Spec 18 risk #2 and to constrain Layer B. Sections still marked _TBD_ need a second
-pass with the relevant screens actually opened.
+capture of `admin.polymath.market/en/marketplace/theecoxchange/`, extended the same
+day with two screenshots of the expanded distribution dropdowns. Enough to settle
+Spec 18 risk #2, to constrain Layer B, and to surface a structural mismatch between
+Spec 17's waterfall and what a Polymesh distribution can express (§ 3). Sections
+still marked _TBD_ need a second pass with the relevant screens actually opened.
 
 **Everything below is read off screenshots.** Nothing here was verified by using the
 platform, and no dropdown was expanded. Where a value is inferred rather than seen,
@@ -76,13 +78,76 @@ Create flow at `/distribution-schedules/create`:
 
 | Section | Control | Options seen |
 |---|---|---|
-| Type of the distribution | `Distribution type` dropdown | not expanded — _TBD_ |
-| Calculation method | `Calculation method` dropdown | described as: by total distribution amount, fixed amount per token, or percentage yield per token |
+| Type of the distribution | `Distribution type` dropdown | Dividends · Interest payment · Capital return (return of capital) · Rights or warrants distribution · Royalty payment · Liquidation distribution · Profit sharing distribution — **list scrolls; there may be more** |
+| Calculation method | `Calculation method` dropdown | Total distribution amount · Amount per token · Percentage yield per token |
 | Distribution configuration | `Distribution asset` dropdown | fiat **or** tokens |
 
 Actions: **Save draft** and **Schedule distribution** (the latter disabled until the
 form is valid). "Schedule" implies future-dating; whether it also implies recurrence
 is _TBD_.
+
+### All three calculation methods are token-proportional — the waterfall cannot be expressed
+
+Every option divides a payment by token holding: a total split pro-rata, a fixed
+amount per token, or a percentage yield per token. **None of them can express a
+distribution waterfall**, and that is not a limitation of Polymath's UI — Polymesh's
+native `Distribution` primitive is `perShare × balance`, so a single on-chain
+distribution is inherently pro-rata by construction.
+
+Spec 17 built the opposite: `waterfall_terms.tiers` supports `PREFERRED_RETURN`,
+`RETURN_OF_CAPITAL`, `CATCH_UP`, `RESIDUAL_SPLIT`, `FIXED_AMOUNT` and `PRO_RATA`,
+resolved against member classes and capital accounts, with a per-tier trace in
+`distribution_runs.tier_results` and a per-member `tierBreakdown`. Only the last of
+those six tier types survives a translation into a Polymesh distribution.
+
+So for any SPV whose terms are more than flat pro-rata, one of these has to be true:
+
+1. **A separate asset per member class.** Polymesh supports multiple assets; a Class-A
+   token and a Class-B token can receive different `perShare` values. The waterfall is
+   computed off-chain by Spec 17 and expressed as one distribution per class. Most
+   faithful, most moving parts.
+2. **Flat pro-rata offerings only** on this rail, with waterfall SPVs kept off it.
+3. **Off-platform payment**, using Polymath purely as the record — which is already
+   what the fiat path forces.
+
+This is unresolved and it is the deepest mismatch found so far. It is a structuring
+question, not an engineering one: it constrains what the offerings can promise.
+
+### Distribution type does not map cleanly either
+
+The type list is a tax-characterisation list, and it takes **one value per
+distribution**. Spec 17 splits a single period's cash across tiers, and those tiers
+have genuinely different characterisations — a `RETURN_OF_CAPITAL` tier maps to
+"Capital return (return of capital)", a `RESIDUAL_SPLIT` to "Profit sharing
+distribution", and a `PREFERRED_RETURN` to something the platform may not have.
+
+Note also that **"Dividends" is probably wrong** for the entity Spec 17 models.
+Capital accounts and tax allocations imply an LLC taxed as a partnership; dividends
+are a corporate concept. "Profit sharing distribution" is the closer fit. **This is a
+question for counsel and a CPA, not one to settle from a dropdown** — the label
+travels onto investor tax reporting.
+
+If accurate characterisation requires one submission per tier, the idempotency key
+has to change: `idempotencyKey()` in `server/services/pcp/interface.ts` is
+deterministic on `(projectId, periodStart)`, which permits exactly one submission per
+period. Splitting by tier would need `(projectId, periodStart, tierType)`, and the
+unique constraint on `pcp_submissions.idempotency_key` with it.
+
+### What the adapter already gets right, and the one field it lacks
+
+`DistributionRequest` carries `distributionAmount: Cents` — a total — which maps
+directly onto **Total distribution amount**, the method that lets Polymath do the
+per-holder math from its own snapshot. It also already types `currency` as
+`"USD" | "USDC"`, so the fiat/token fork needs no new type.
+
+It has **no `distributionType` field**. That is a required input on this form, so the
+interface is incomplete for any real transport. Adding it is trivial; deciding what
+value to send is the hard part above.
+
+One consequence of choosing "Total distribution amount": the authoritative cap table
+at payment time is **Polymath's snapshot, not ours**. `polymesh_holders` records our
+observation of the chain, and reconciliation should keep comparing totals — never
+re-derive `perShare` locally and assert a discrepancy from it.
 
 ### The finding that matters
 
