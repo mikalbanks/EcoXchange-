@@ -32,7 +32,9 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: "20.19.0"
-      - run: npm install
+          cache: npm
+          cache-dependency-path: ecoxchange-reconciliation-engine/package-lock.json
+      - run: npm ci
       # The package's own `test` script excludes backtest-integration.test.ts,
       # which needs live NASA POWER access. Nothing in CI may depend on a
       # third-party API being up.
@@ -50,8 +52,11 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: "20.19.0"
-      - run: npm install
+          cache: npm
+          cache-dependency-path: ecoxchange-dashboard/package-lock.json
+      - run: npm ci
       - run: npm test
+      - run: npx tsc -b
 
   pvlib-service:
     name: pvlib service (pytest)
