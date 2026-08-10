@@ -21,21 +21,6 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
-  # TEMPORARY DIAGNOSTIC (Spec 19 / PR #98). Uses no third-party actions and
-  # needs no checkout — just a runner and a shell. Its only job is to tell two
-  # admin-side failures apart:
-  #   - this passes, the others fail  → an Actions allow-list is blocking
-  #     actions/checkout and actions/setup-*  (Settings → Actions → General)
-  #   - this fails too                → GitHub-hosted runners are not being
-  #     assigned to this repo at all
-  # Both runs so far produced 0 ms billable time and no logs on every job.
-  # Remove this job once CI is green.
-  runner-smoke:
-    name: runner smoke test
-    runs-on: ubuntu-latest
-    steps:
-      - run: echo "runner assigned, shell works"
-
   reconciliation-engine:
     name: reconciliation engine (vitest)
     runs-on: ubuntu-latest
