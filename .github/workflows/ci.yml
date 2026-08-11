@@ -1,0 +1,92 @@
+name: CI
+
+# Spec 19/20 land two guardrails that only mean something if they gate:
+#   - the night-energy / time-alignment assertions (verification-engine)
+#   - the independence assertion (ecoxchange-dashboard)
+# This repo had no CI before them. An assertion nobody runs is a comment.
+#
+# Network-dependent suites stay out. The reconciliation engine's `npm test`
+# already excludes backtest-integration.test.ts, and `npm run backtest:validate`
+# (live NASA POWER) is not invoked here — a red build must mean a real
+# regression, not that an upstream API was briefly unreachable.
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+concurrency:
+  group: ci-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  verification-engine:
+    name: verification-engine (physics + time alignment)
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: verification-engine
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: pip
+          cache-dependency-path: verification-engine/requirements.txt
+      - run: pip install -r requirements.txt pytest
+      # tests/ mixes two import styles: some modules import `src.verification_engine`
+      # (via their own sys.path insert), test_degradation.py imports
+      # `verification_engine` directly. PYTHONPATH=src satisfies both.
+      - name: pytest
+        env:
+          PYTHONPATH: src
+        run: python -m pytest tests -q
+
+  dashboard:
+    name: dashboard (independence assertion)
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: ecoxchange-dashboard
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: npm
+          cache-dependency-path: ecoxchange-dashboard/package-lock.json
+      - run: npm ci
+      - run: npm run check
+      - run: npm test
+
+  reconciliation-engine:
+    name: reconciliation-engine
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: ecoxchange-reconciliation-engine
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: npm
+          cache-dependency-path: ecoxchange-reconciliation-engine/package-lock.json
+      - run: npm ci
+      - run: npm run check
+      - run: npm test
+
+  app:
+    name: app (root)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: npm
+          cache-dependency-path: package-lock.json
+      - run: npm ci
+      - run: npm run check
+      - run: npm test
