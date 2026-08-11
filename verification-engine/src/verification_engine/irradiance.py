@@ -13,6 +13,22 @@ Sources (all free; some need a no-cost key/registration):
 NOTE FOR CLAUDE CODE: pvlib iotools signatures are version-sensitive. This is
 written for pvlib 0.15.x (PSM4). On pvlib <=0.12 the function is
 `get_nsrdb_psm3`. Verify against the installed version before wiring secrets.
+
+TIME STANDARD (spec 20 §2.1). The NASA POWER hourly endpoint defaults to
+**local solar time**, not UTC. Measured against the live API for Greeley CO
+(lon -104.71) on 2024-06-15, the GHI peak lands at hour 11 with the parameter
+omitted and at hour 18 with `time-standard=utc` — a 7-hour shift, i.e. roughly
+`round(lon / 15)`. Reading an LST series as UTC puts peak production in the
+middle of the night and silently corrupts every downstream expected-energy
+figure.
+
+pvlib 0.15.x sends `time-standard: utc` explicitly and localizes the index to
+UTC, so the pvlib path is correct today. That correctness is inherited, not
+stated, and would disappear silently on a version change. Every fetcher here
+therefore ends at `_normalize`, which *enforces* the contract rather than
+assuming it: the returned index is always tz-aware UTC, and a naive index is an
+error rather than something to guess at. `tests/test_time_alignment.py` holds
+the guardrail.
 """
 from __future__ import annotations
 
@@ -49,7 +65,12 @@ def fetch_nsrdb(loc: Location, year: int, api_key: str, email: str) -> pd.DataFr
 
 
 def fetch_nasa_power(loc: Location, start: str, end: str) -> pd.DataFrame:
-    """NASA POWER hourly. No key required. start/end as 'YYYY-MM-DD'."""
+    """NASA POWER hourly, indexed in UTC. No key required. start/end 'YYYY-MM-DD'.
+
+    The endpoint itself defaults to local solar time; pvlib requests
+    `time-standard=utc` and localizes accordingly. `_normalize` enforces the UTC
+    result rather than trusting it — see the module docstring (spec 20 §2.1).
+    """
     from pvlib import iotools
     df, _ = iotools.get_nasa_power(
         latitude=loc.latitude, longitude=loc.longitude,
@@ -68,9 +89,36 @@ def fetch_pvgis(loc: Location, start_year: int, end_year: int) -> pd.DataFrame:
     return _normalize(df)
 
 
+class NaiveTimestampError(ValueError):
+    """A source returned timestamps with no time zone, so the standard is unknown.
+
+    Raised rather than defaulted. NASA POWER hourly is LST by default and UTC on
+    request; the two differ by hours, and nothing in a naive index says which one
+    you are holding. Guessing is how a whole-day phase error survives review.
+    """
+
+
 def _normalize(df: pd.DataFrame) -> pd.DataFrame:
-    """Coerce a source frame to canonical columns; tolerate missing optionals."""
-    out = pd.DataFrame(index=pd.to_datetime(df.index))
+    """Coerce a source frame to canonical columns, indexed in tz-aware UTC.
+
+    Missing optional channels are tolerated. A naive index is not: see
+    `NaiveTimestampError`.
+    """
+    index = pd.to_datetime(df.index)
+    if index.tz is None:
+        raise NaiveTimestampError(
+            "Irradiance source returned timestamps with no time zone. NASA POWER "
+            "hourly is local solar time unless 'time-standard=utc' is requested; "
+            "localize the index to the standard the source actually used before "
+            "normalizing (spec 20 §2.1)."
+        )
+    # Re-index the source itself before reading columns, so the channel copies
+    # below never align a UTC frame against a fixed-offset one (NSRDB PSM4 comes
+    # back in local standard time, NASA POWER and PVGIS in UTC).
+    src = df.copy()
+    src.index = index.tz_convert("UTC")
+
+    out = pd.DataFrame(index=src.index)
     aliases = {
         "ghi": ["ghi", "GHI"],
         "dni": ["dni", "DNI"],
@@ -79,8 +127,8 @@ def _normalize(df: pd.DataFrame) -> pd.DataFrame:
         "wind_speed": ["wind_speed", "ws", "WS10M"],
     }
     for canon, opts in aliases.items():
-        col = next((c for c in opts if c in df.columns), None)
-        out[canon] = df[col] if col is not None else np.nan
+        col = next((c for c in opts if c in src.columns), None)
+        out[canon] = src[col] if col is not None else np.nan
     return out
 
 

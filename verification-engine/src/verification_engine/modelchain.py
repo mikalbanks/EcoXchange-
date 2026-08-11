@@ -19,6 +19,7 @@ from pvlib.modelchain import ModelChain
 from pvlib.temperature import TEMPERATURE_MODEL_PARAMETERS
 
 from .config import SystemConfig, ArrayConfig
+from .irradiance import NaiveTimestampError
 
 
 def _build_mount(arr: ArrayConfig):
@@ -93,9 +94,16 @@ def expected_ac_energy(cfg: SystemConfig, weather: pd.DataFrame) -> pd.Series:
     kWh/hour and 15-min data yields kWh/15-min, both correctly scaled.
     """
     mc = build_modelchain(cfg)
-    # ModelChain wants tz-aware weather in the location tz.
+    # ModelChain wants tz-aware weather in the location tz. A naive index is
+    # rejected rather than assumed to be UTC: NASA POWER hourly is local solar
+    # time by default, so that assumption is a `round(lon / 15)`-hour phase error
+    # that shows up as production at midnight (spec 20 §2.1).
     if weather.index.tz is None:
-        weather = weather.tz_localize("UTC")
+        raise NaiveTimestampError(
+            "expected_ac_energy received weather with a naive index. Localize it "
+            "to the time standard the source actually used — irradiance.py's "
+            "fetchers already return UTC."
+        )
     weather = weather.tz_convert(cfg.location.tz)
 
     mc.run_model(weather)
