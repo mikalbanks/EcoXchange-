@@ -18,7 +18,13 @@
 // illustrative scenario, and pretending otherwise is what this test exists to stop.
 
 import { describe, expect, it } from "vitest";
-import { PVDAQ_9068, PVDAQ_9068_RECORDS } from "./demo-pvdaq-9068.js";
+import {
+  PVDAQ_9068,
+  PVDAQ_9068_PROJECT_ID,
+  PVDAQ_9068_RECORDS,
+  toProjectBundle,
+} from "./demo-pvdaq-9068.js";
+import { loadProject } from "./index.js";
 
 interface Leg {
   inverter: number;
@@ -136,6 +142,30 @@ describe("QC gates hold", () => {
     for (const r of PVDAQ_9068_RECORDS) {
       if (r.status !== "flagged") continue;
       expect(r.flag_reasons.length).toBeGreaterThan(0);
+    }
+  });
+});
+
+describe("the measured asset is reachable, not dead data", () => {
+  it("resolves through loadProject by id", async () => {
+    const bundle = await loadProject(PVDAQ_9068_PROJECT_ID);
+    expect(bundle).not.toBeNull();
+    expect(bundle!.project.name).toContain("9068");
+    expect(bundle!.verification_records).toHaveLength(PVDAQ_9068_RECORDS.length);
+  });
+
+  it("never surfaces a computed-looking 0.0% for an uncomputable period", () => {
+    // A period without a deviation must arrive as NaN, so a renderer shows "—"
+    // rather than a confident zero.
+    for (const r of toProjectBundle().verification_records) {
+      const source = PVDAQ_9068_RECORDS.find(
+        (x) => x.period_start === r.period_start,
+      )!;
+      if (source.inv_vs_expected_pct === null) {
+        expect(Number.isNaN(r.inv_vs_expected_pct)).toBe(true);
+      } else {
+        expect(r.inv_vs_expected_pct).toBe(source.inv_vs_expected_pct);
+      }
     }
   });
 });

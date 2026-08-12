@@ -2,6 +2,7 @@ import demoPortfolio from "./demo-portfolio.json";
 import { DEMO_OFFERING } from "./demo-offering.js";
 import demoSavannah from "./demo-savannah.json";
 import demoSavannahFlagged from "./demo-savannah-flagged.json";
+import { PVDAQ_9068_PROJECT_ID, toProjectBundle } from "./demo-pvdaq-9068.js";
 import type {
   Portfolio,
   PortfolioProject,
@@ -49,6 +50,11 @@ export async function loadProject(
       ? flagged
       : null;
   }
+  // PVDAQ 9068 is served from the static bundle in BOTH modes. Its production
+  // leg is measured telemetry, so it is the same data either way, and it stays
+  // reachable before anyone applies supabase/seed/004_pvdaq_9068_measured.sql.
+  // See demo-pvdaq-9068.ts for what each leg is and is not.
+  if (id === PVDAQ_9068_PROJECT_ID) return toProjectBundle();
   if (supabase) return loadProjectLive(id);
   if (id !== "demo-savannah-5mw") return null;
   return verified;

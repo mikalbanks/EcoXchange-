@@ -22,7 +22,11 @@
 // Regenerate with: python3 verification-engine/scripts/build_pvdaq_demo.py
 
 import bundle from "./demo-pvdaq-9068.json";
-import type { VerificationStatus } from "../utils/types.js";
+import type {
+  ProjectBundle,
+  VerificationRecord,
+  VerificationStatus,
+} from "../utils/types.js";
 
 /** How a number was arrived at (standing rule #7 — cited vs. estimated). */
 export type ProvenanceBasis = "cited" | "estimated";
@@ -88,3 +92,63 @@ export const PVDAQ_9068_RECORDS = PVDAQ_9068.verification_records;
 
 /** The one leg backed by measurement. Anything else is a model output. */
 export const MEASURED_LEG = "inverter_kwh" as const;
+
+export const PVDAQ_9068_PROJECT_ID = PVDAQ_9068.project.id;
+
+/**
+ * Adapt the measured bundle to the shared `ProjectBundle` shape so existing
+ * project surfaces can render it without special-casing.
+ *
+ * Two fields in `ProjectMeta` have no measured counterpart in the PVDAQ record
+ * and are carried as MODELLING INPUTS, not site facts: `module_efficiency`
+ * (CdTe nameplate assumption) and `system_losses` (the PVWatts reference stack
+ * Engine A ran with). `tilt_deg` is 0 because the array tracks — the tilt varies
+ * through the day and a fixed number would misdescribe it.
+ */
+export function toProjectBundle(): ProjectBundle {
+  const p = PVDAQ_9068.project;
+  return {
+    project: {
+      id: p.id,
+      name: p.name,
+      location: p.location,
+      latitude: p.latitude,
+      longitude: p.longitude,
+      capacity_kw: p.capacity_kw,
+      tilt_deg: 0,
+      azimuth_deg: 180,
+      module_efficiency: 0.18,
+      system_losses: 0.14,
+      commissioning_date: p.commissioning_date,
+      offtake_type: "ppa",
+      ppa_rate_per_kwh: p.ppa_rate_per_kwh,
+      status: "active",
+    },
+    verification_records: PVDAQ_9068_RECORDS.map(toVerificationRecord),
+    summary: {
+      annual_production_mwh: PVDAQ_9068.summary.annual_production_mwh,
+      capacity_factor_pct: PVDAQ_9068.summary.capacity_factor_pct,
+      months_verified: PVDAQ_9068.summary.months_verified,
+      months_flagged: PVDAQ_9068.summary.months_flagged,
+      total_revenue_estimate: PVDAQ_9068.summary.total_revenue_estimate,
+      ppa_rate: PVDAQ_9068.summary.ppa_rate,
+    },
+  };
+}
+
+function toVerificationRecord(r: MeasuredVerificationRecord): VerificationRecord {
+  return {
+    period_start: r.period_start,
+    inverter_kwh: r.inverter_kwh,
+    expected_kwh: r.expected_kwh,
+    utility_kwh: r.utility_kwh,
+    // A period with no computable deviation carries NaN, never 0. Rendering a
+    // missing comparison as "0.0%" is the exact failure this dataset replaces.
+    inv_vs_expected_pct: r.inv_vs_expected_pct ?? Number.NaN,
+    inv_vs_utility_pct: r.inv_vs_utility_pct,
+    util_vs_expected_pct: r.util_vs_expected_pct,
+    status: r.status,
+    flag_reasons: r.flag_reasons,
+    estimated_revenue: r.estimated_revenue,
+  };
+}
