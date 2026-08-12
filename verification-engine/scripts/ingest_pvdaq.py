@@ -214,15 +214,25 @@ def ingest_system(adapter, system_id: int, start: date, end: date,
     # that appear in some files and not others — so a per-month resolver can
     # silently change measurement point mid-window. The deviations either side of
     # such a switch are not comparable, and nothing else would show it.
-    channel_sets = {
-        period: tuple(frame.raw_payload["channels"]["ac_power_w"]["metric_ids"])
-        for period, frame in frames.items()
-        if "metric_ids" in frame.raw_payload["channels"]["ac_power_w"]
-    }
+    # The two stores name their channels differently — `metric_ids` in the
+    # partitioned store, `columns` in the data-prize CSVs — so read whichever is
+    # present. Keying on `metric_ids` alone made the check pass VACUOUSLY for
+    # 9069: nothing to compare, so nothing differed, so "consistent: true".
+    def _channel_key(frame) -> tuple | None:
+        channel = frame.raw_payload["channels"]["ac_power_w"]
+        for field_name in ("metric_ids", "columns"):
+            if field_name in channel:
+                return tuple(channel[field_name])
+        return None
+
+    channel_sets = {period: key for period, frame in frames.items()
+                    if (key := _channel_key(frame)) is not None}
     distinct = sorted(set(channel_sets.values()))
     result["ac_power_channel_consistency"] = {
+        "months_compared": len(channel_sets),
         "distinct_channel_sets": [list(c) for c in distinct],
-        "consistent": len(distinct) <= 1,
+        # Only a claim when something was actually compared.
+        "consistent": len(distinct) == 1 and len(channel_sets) == len(frames),
         "by_period": ({str(p): list(c) for p, c in sorted(channel_sets.items())}
                       if len(distinct) > 1 else "identical across every month"),
     }

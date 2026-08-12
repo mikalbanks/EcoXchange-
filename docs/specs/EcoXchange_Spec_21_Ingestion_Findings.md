@@ -270,6 +270,16 @@ telemetry system — which is what an independent leg requires — is not establ
 by their existence, so **nothing here is described as three-source validation**
 and §8 stands as written. It is worth checking before Bayou.
 
+**1332 carries a detected time shift of up to 60 minutes.**
+`qtime.shifts_ruptures` over its 2016–2017 window finds a step change in daily
+timing against solar transit. Per §5 this sets `shift_detected` and routes to
+human review; it does not flag the months, and it has not been treated as one.
+9069 and 4902 show nothing. It is consistent with the same site's elevated
+twilight signature (§2.8b) and is worth a look alongside NREL's own
+`qa_issue` note on its mounting config — a logger re-clock and a wrong mounting
+record are both explanations that a review would separate and this pipeline
+cannot.
+
 **9069's peak output falls over the record**, from 33.0 MW in 2016 to 24.4 MW in
 2023 on a 33 MW nameplate. Far too steep for degradation alone; likely partial
 outage, curtailment or a changed inverter limit. It is the reason the demo window
