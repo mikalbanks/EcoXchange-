@@ -312,12 +312,24 @@ def _power_candidates(metrics: pd.DataFrame) -> pd.DataFrame:
 
 
 def _role(row: pd.Series) -> str:
+    """Which measurement point a channel sits at: inverter, site meter, or meter.
+
+    Inverter is tested FIRST, and the order is load-bearing. System 1332
+    declares `inv_total_ac_power` — the calculated sum of its three inverters —
+    alongside `metered_ac_power`. Matching on "total" before the `inv` prefix
+    makes both site totals, which is a genuine ambiguity the resolver then
+    refuses, and it cost 15 of 24 months on the first full run.
+
+    They are not the same measurement: one is the inverter leg, the other is the
+    site meter. `inv_total_ac_power` is an inverter channel that happens to be
+    aggregated, so it is classified as one and never competes for site total.
+    """
     source = str(row.get("source_type") or "").strip().upper()
     name = str(row.get("sensor_name") or "")
-    if _SITE_TOTAL_NAME.search(name) and not _METER_NAME.search(name.replace("metered", "")):
-        return "site_total"
     if source == "INVERTER" or _INVERTER_NAME.match(name):
         return "inverter"
+    if _SITE_TOTAL_NAME.search(name):
+        return "site_total"
     if source == "METER" or _METER_NAME.search(name):
         return "meter"
     return "other"

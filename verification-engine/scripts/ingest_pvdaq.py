@@ -209,6 +209,24 @@ def ingest_system(adapter, system_id: int, start: date, end: date,
     result["shift_analysis"] = {"notes": shift_notes,
                                 "detected": bool(shifted_months)}
 
+    # Which channel every month resolved to. Channel availability varies within
+    # a system's record — 1332 declares `inv3_ac_power` and `inv_total_ac_power`
+    # that appear in some files and not others — so a per-month resolver can
+    # silently change measurement point mid-window. The deviations either side of
+    # such a switch are not comparable, and nothing else would show it.
+    channel_sets = {
+        period: tuple(frame.raw_payload["channels"]["ac_power_w"]["metric_ids"])
+        for period, frame in frames.items()
+        if "metric_ids" in frame.raw_payload["channels"]["ac_power_w"]
+    }
+    distinct = sorted(set(channel_sets.values()))
+    result["ac_power_channel_consistency"] = {
+        "distinct_channel_sets": [list(c) for c in distinct],
+        "consistent": len(distinct) <= 1,
+        "by_period": ({str(p): list(c) for p, c in sorted(channel_sets.items())}
+                      if len(distinct) > 1 else "identical across every month"),
+    }
+
     try:
         expected = monthly_expected(site, start, end)
         result["expected_leg"] = "Engine A (pvlib PVWatts ModelChain) on NASA POWER"

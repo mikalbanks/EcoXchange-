@@ -218,6 +218,50 @@ def test_night_guard_is_blind_to_a_shift_without_coordinates():
     assert any("cannot see a whole-series time shift" in n for n in blind.qc_notes)
 
 
+def test_twilight_production_does_not_trip_the_night_guard():
+    """A real plant produces before geometric sunrise, and that is not an error.
+
+    System 1332 — a Golden CO parking garage at 1,770 m with a steeply tilted
+    face — puts 1.114% of October 2017's energy above the geometric horizon
+    line, entirely between -6 and 0 degrees and none below -18. Measured from
+    0 degrees the month FAILS while the same month shifted a full hour PASSES
+    at 0.000%, because a small shift moves twilight production into daylight
+    faster than it pushes evening production past dusk.
+
+    This fixture reproduces the shape: a clear-sky month plus a twilight tail
+    that a 0-degree boundary counts as night energy.
+    """
+    import pvlib
+
+    power = _clearsky_power()
+    solpos = pvlib.solarposition.get_solarposition(power.index, *GOLDEN_CO)
+    elevation = solpos["apparent_elevation"].to_numpy()
+
+    # ~1.5% of the month's energy in civil twilight, none below -6 degrees.
+    twilight = (elevation < 0) & (elevation > -6)
+    with_twilight = power.copy()
+    with_twilight[twilight] = power.sum() * 0.015 / max(twilight.sum(), 1)
+
+    verdict = assess(with_twilight, latitude=GOLDEN_CO[0], longitude=GOLDEN_CO[1])
+    assert verdict.night_energy_frac < 1.0
+    assert verdict.qc_verdict != "error"
+
+    # And the guard still fires on the error it exists for, on the same series.
+    shifted = with_twilight.copy()
+    shifted.index = shifted.index + pd.Timedelta(hours=7)
+    assert assess(shifted, latitude=GOLDEN_CO[0],
+                  longitude=GOLDEN_CO[1]).qc_verdict == "error"
+
+
+def test_night_is_measured_below_civil_twilight():
+    from ingestion.quality import NIGHT_DEPRESSION_DEG
+
+    assert NIGHT_DEPRESSION_DEG == 6.0, (
+        "the boundary is the end of civil twilight; moving it changes which "
+        "real months pass — see the measurements in quality.py"
+    )
+
+
 def test_clipping_is_a_note_and_never_a_downgrade():
     """A clipped plant is healthy. Downgrading it would flag the best assets.
 
@@ -365,6 +409,28 @@ def test_metric_resolution_prefers_a_site_total_and_ignores_absent_channels(patc
     assert plan.metric_ids == (2638,)
     assert plan.scale == pytest.approx(1e6)                     # kW->W x calc_scale
     assert "metered_ac_power" in plan.detail
+
+
+def test_an_aggregated_inverter_channel_is_not_a_site_total(patched_metrics):
+    """1332 declares `inv_total_ac_power` next to `metered_ac_power`.
+
+    Classifying both as site totals makes them compete, the resolver refuses the
+    ambiguity, and the system loses every month where the calculated channel
+    happens to be present — 15 of 24 on the first full run. They are different
+    measurement points: one is the inverter leg aggregated, the other is the
+    site meter.
+    """
+    from ingestion.pvdaq import resolve_ac_power
+
+    patched_metrics([
+        _metric(2638, "metered_ac_power", "AC power", "kW", calc_scale=1000.0),
+        _metric(2642, "inv1_ac_power", "AC power", "kW", calc_scale=1000.0),
+        _metric(2654, "inv_total_ac_power", "AC power", "W"),
+    ])
+    # Same answer whether or not the calculated channel has rows that month.
+    without = resolve_ac_power(4242, {2638, 2642})
+    with_total = resolve_ac_power(4242, {2638, 2642, 2654})
+    assert without.metric_ids == with_total.metric_ids == (2638,)
 
 
 def test_ambiguous_site_totals_raise(patched_metrics):

@@ -11,11 +11,16 @@ Two judgements are deliberate and go the opposite way from each other:
 and, above DC:AC 1.25, normal. Downgrading on clipping flags the best assets in
 the portfolio and teaches everyone to ignore the flag.
 
-**Time misalignment is always `error`.** Energy below the horizon is physically
-impossible, so it is never a tolerance question. A misaligned series still has
-a plausible shape and a plausible total, which is exactly why it must be
-stopped here rather than at reconciliation — spec 20 §2.1 cost a debugging
+**Time misalignment is always `error`.** Energy in the middle of the night is
+physically impossible, so it is never a tolerance question. A misaligned series
+still has a plausible shape and a plausible total, which is exactly why it must
+be stopped here rather than at reconciliation — spec 20 §2.1 cost a debugging
 cycle to the same class of error.
+
+Both judgements needed measurement to implement, not just reading. Clipping
+downgrades through the *staleness* rule if nothing stops it, and the night guard
+as §5 specifies it cannot see a shift at all. See `NIGHT_DEPRESSION_DEG`,
+`_night_mask`, and the staleness block in `assess()` for the numbers.
 
 `outliers.zscore` is not used: it defaults to `nan_policy='raise'` and real
 gapped telemetry throws immediately. `outliers.hampel` is the robust one.
@@ -40,6 +45,28 @@ COMPLETENESS_PARTIAL_PCT = 90.0
 STALE_PARTIAL_FRAC = 0.10
 CLIPPING_NOTE_FRAC = 0.15
 NIGHT_ENERGY_ERROR_PCT = 1.0
+
+#: "Night" is the sun below this many degrees — the end of civil twilight, not
+#: the geometric horizon. Real plants produce during twilight, and measuring
+#: from 0 degrees makes the guard fail healthy months while passing shifted ones.
+#:
+#: Measured on system 1332 (Golden CO parking garage), October 2017, a month
+#: with no alignment problem:
+#:
+#:     depression   aligned    +30min       +1h       +7h
+#:              0     1.114     0.184     0.000    55.441
+#:              6     0.213     0.000     0.000    48.321
+#:
+#: At 0 degrees the correct month scores 1.114% and FAILS, while the same month
+#: shifted a full hour scores 0.000% and PASSES. All of that 1.114% sits between
+#: -6 and 0 degrees — morning diffuse before geometric sunrise, on a steeply
+#: tilted array at 1,770 m with a clear horizon — and none of it below -18.
+#: 1332's other months behave the same way (median 0.383% at 0 degrees) while
+#: 9069 and 4902 sit at 0.000%; it is a property of that site, not an error.
+#:
+#: At -6 the separation is clean: 0.213% healthy against 48.3% for the
+#: longitude-sized shift the guard exists to catch.
+NIGHT_DEPRESSION_DEG = 6.0
 
 #: How "at the inverter ceiling" is decided when excluding clipped samples from
 #: the staleness measure. The 99th percentile rather than the max so one spike
@@ -101,20 +128,32 @@ def _night_mask(
     longitude: float | None,
     observed_day: np.ndarray,
 ) -> tuple[np.ndarray, str]:
-    """Where the sun is below the horizon — from solar geometry when possible.
+    """Where the sun is below `NIGHT_DEPRESSION_DEG` — from solar geometry.
 
-    This is the correction that makes the night-energy guard mean anything.
-    Spec 21 §5 derives the mask from `daytime.power_or_irradiance`, which infers
-    day and night FROM THE SERIES ITSELF. Shift a whole month by seven hours and
-    the inferred daylight window shifts with it, so the guard reports ~0% night
-    energy on a badly misaligned series — measured, not argued: a +7 h shift of a
-    clear-sky Golden CO month scores 0.005%, indistinguishable from the aligned
-    original.
+    Two corrections to spec 21 §5 live here, and the guard is worthless without
+    either.
 
-    Real solar geometry does not move when the index does, so it catches the
-    error the guard exists for. When coordinates are unavailable the observed
-    mask is used and the caller says so in `qc_notes`; that path detects a
-    within-day anomaly but not a whole-series shift.
+    **The mask must come from geometry, not from the data.** §5 derives it from
+    `daytime.power_or_irradiance`, which infers day and night FROM THE SERIES
+    ITSELF, so a shifted month shifts its own mask with it. Measured: a +7 h
+    shift of a clear-sky Golden CO month scores 0.005% night energy on the
+    data-derived mask, indistinguishable from the aligned original. On geometry
+    the same fixture scores 44.74%.
+
+    **Night starts at the end of civil twilight, not at the horizon.** See
+    `NIGHT_DEPRESSION_DEG` for the measurements; a real plant produces during
+    twilight, and a 0-degree boundary fails healthy months.
+
+    What this guard is, precisely: a detector for HOUR-SCALE misalignment — the
+    longitude-sized error of spec 20 §2.1. It is not a general alignment check.
+    A 30-minute shift can score BELOW an aligned series (0.000% against 0.213%
+    on the same month), because a small shift moves genuine twilight production
+    into daylight faster than it pushes evening production past dusk. A passing
+    night fraction is evidence against a large shift and nothing more.
+
+    When coordinates are unavailable the observed mask is used and the caller
+    says so in `qc_notes`; that path detects a within-day anomaly but no shift
+    at all.
     """
     if latitude is None or longitude is None:
         return ~observed_day, "observed"
@@ -122,7 +161,8 @@ def _night_mask(
     import pvlib
 
     solpos = pvlib.solarposition.get_solarposition(index, latitude, longitude)
-    return (solpos["apparent_elevation"] < 0).to_numpy(), "solar_geometry"
+    below = solpos["apparent_elevation"] < -NIGHT_DEPRESSION_DEG
+    return below.to_numpy(), "solar_geometry"
 
 
 def assess(
@@ -269,8 +309,9 @@ def assess(
     if night_frac > NIGHT_ENERGY_ERROR_PCT:
         verdict = "error"
         notes.append(
-            f"{night_frac:.2f}% of positive energy falls below the horizon "
-            f"(limit {NIGHT_ENERGY_ERROR_PCT:.1f}%). The series is time-misaligned; "
+            f"{night_frac:.2f}% of positive energy falls more than "
+            f"{NIGHT_DEPRESSION_DEG:.0f}° below the horizon (limit "
+            f"{NIGHT_ENERGY_ERROR_PCT:.1f}%). The series is time-misaligned; "
             "it must not be reconciled at any tolerance."
         )
 

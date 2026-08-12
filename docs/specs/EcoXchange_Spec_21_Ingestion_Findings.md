@@ -139,13 +139,14 @@ the prize bundle carries no metrics dictionary to supply one. Inferring kW from
 magnitudes against the 27.6 kW ABB inverter nameplate would be a guess, and a
 wrong guess is a clean 1000× error, so **2107 is not seeded**. See §4 below.
 
-### 2.8 §5's night-energy guard cannot detect the error it exists for
+### 2.8 §5's night-energy guard needs two corrections, not one
 
-The most important correction, because the check reads as working.
+The most important item here, because the check reads as working either way.
 
-§5 derives the daylight mask from `daytime.power_or_irradiance`, which infers day
-and night **from the series itself**. Shift a whole month and the inferred
-daylight window shifts with it. Measured on a clear-sky June month at Golden CO:
+**(a) The mask must come from geometry, not from the data.** §5 derives the
+daylight mask from `daytime.power_or_irradiance`, which infers day and night
+**from the series itself**. Shift a whole month and the inferred daylight window
+shifts with it. Measured on a clear-sky June month at Golden CO:
 
 | Series | §5 mask (data-derived) | Solar geometry |
 |---|---|---|
@@ -154,14 +155,38 @@ daylight window shifts with it. Measured on a clear-sky June month at Golden CO:
 
 Under §5 as written, a +7 h misalignment scores identically to a correct series,
 and §7.4 (`night_energy_frac < 1.0` on every month) would be satisfied by
-construction rather than by evidence.
+construction rather than by evidence. `assess()` therefore takes
+`latitude`/`longitude` and builds the mask from `pvlib.solarposition` — the same
+construction spec 20's `tests/test_time_alignment.py` uses. The data-derived
+path is kept for sources with no coordinates and **discloses itself** in
+`qc_notes`.
 
-`assess()` therefore takes `latitude`/`longitude` and builds the mask from
-`pvlib.solarposition` — the same construction spec 20's
-`tests/test_time_alignment.py` uses, and for the same reason: real geometry does
-not move when the index does. The data-derived path is kept for sources with no
-coordinates and **discloses itself** in `qc_notes`.
-`test_night_guard_is_blind_to_a_shift_without_coordinates` pins both halves.
+**(b) Night starts at the end of civil twilight, not at the horizon.** With the
+geometry mask in place and the boundary at 0°, the first full ingestion run
+failed §7.4 on one month — system 1332, October 2017, at 1.114%. It is not
+misaligned. Measured on that month:
+
+| Solar depression | aligned | +30 min | +1 h | +7 h |
+|---|---|---|---|---|
+| 0° | **1.114** | 0.184 | 0.000 | 55.441 |
+| 6° | 0.213 | 0.000 | 0.000 | 48.321 |
+
+At 0° the correct month **fails** and the same month shifted a full hour
+**passes**. All 1.114% sits between −6° and 0° — morning diffuse before
+geometric sunrise, on a steeply tilted array at 1,770 m with a clear horizon —
+and none of it below −18°. 1332's other months behave the same way (median
+0.383% at 0°) while 9069 and 4902 sit at 0.000%: it is a property of that site.
+
+`NIGHT_DEPRESSION_DEG = 6.0` puts the boundary at the end of civil twilight,
+where the separation is clean — 0.213% healthy against 48.3% for the
+longitude-sized shift.
+
+**What the guard is, precisely.** It detects **hour-scale** misalignment — the
+error of spec 20 §2.1 — and nothing finer. The table above shows a 30-minute
+shift scoring *below* an aligned series, because a small shift moves genuine
+twilight production into daylight faster than it pushes evening production past
+dusk. A passing night fraction is evidence against a large shift and no more
+than that; §7.4 should be read accordingly.
 
 ### 2.9 `daytime.power_or_irradiance(clipping=...)` is broken in pvanalytics 0.2.2
 
@@ -184,7 +209,32 @@ and dropping everything it flags would hide exactly the fault the check is for.
 Measured on one fixture: healthy 0%, clipped-at-500 kW 0%, frozen-for-six-days
 14%.
 
-### 2.11 Sub-minute sampling has nowhere to live in `interval_minutes`
+### 2.11 A system's available channels change within its own record
+
+Not a spec error, but the trap the "never default a metric id" rule is really
+protecting against, and it bites in a way a per-month resolver does not survive.
+
+System 1332's dictionary declares three per-inverter AC power channels, a
+calculated `inv_total_ac_power`, and a `metered_ac_power`. Which of them carry
+rows **varies month to month**: `inv3_ac_power` (2650) and `inv_total_ac_power`
+(2654) are absent from some day files and present in others. A resolver that
+picks per month therefore risks changing measurement point mid-window, and the
+deviations either side of such a switch are not comparable.
+
+Two things guard it. `resolve_ac_power` refuses to sum a partial set of inverter
+channels — summing two of three under-reports the site by a third and still
+looks like a plant. And `scripts/ingest_pvdaq.py` records
+`ac_power_channel_consistency` per system, so a window that silently resolved to
+two different channels is visible in the artifact rather than only in the
+numbers.
+
+This is also where the first full run lost 15 of 1332's 24 months: `_role`
+matched `inv_total_ac_power` on "total" before the `inv` prefix, making it
+compete with `metered_ac_power` for site total, and the resolver correctly
+refused the ambiguity it had been handed. An aggregated inverter channel is an
+inverter channel; it now classifies as one.
+
+### 2.12 Sub-minute sampling has nowhere to live in `interval_minutes`
 
 System 1332 logs every **15 seconds**. `reading_quality.interval_minutes` is an
 `INT` and `energy_kwh()` multiplies by it, so rounding 0.25 up is a 4× energy
@@ -193,13 +243,13 @@ sub-minute input and the adapter resamples to a 1-minute grid of means — the
 energy-preserving reduction for an instantaneous-power channel — recording it in
 `conversion_applied`.
 
-### 2.12 `shifts_ruptures` needs a dependency §1 does not list
+### 2.13 `shifts_ruptures` needs a dependency §1 does not list
 
 `pvanalytics.quality.time.shifts_ruptures` imports `ruptures` lazily and fails
 with *"requires ruptures"* at call time, not import time. Added to
 `requirements.txt`.
 
-### 2.13 `raw_readings.data_provenance` did not exist
+### 2.14 `raw_readings.data_provenance` did not exist
 
 Spec 21 lists it as landed with spec 19. Spec 19 (commit `063f50f`) shipped the
 PVDAQ 9068 demo bundle, the independence assertion and CI, and carried leg
