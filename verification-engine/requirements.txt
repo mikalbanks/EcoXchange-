@@ -5,3 +5,9 @@ scipy>=1.10
 pyyaml>=6.0
 requests>=2.31
 openpyxl>=3.1  # EIA-860/923 .xlsx parsing in validate_eia_fleet.py
+
+# Spec 21 ingestion layer (src/ingestion/).
+pvanalytics==0.2.2  # QC detectors; pinned — §5's thresholds are calibrated to it
+ruptures>=1.1       # pvanalytics.quality.time.shifts_ruptures imports it lazily
+s3fs>=2023.1        # anonymous reads of the public oedi-data-lake bucket
+pyarrow>=14.0       # PVDAQ pvdata/metrics are parquet
