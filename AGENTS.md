@@ -9,6 +9,7 @@ EcoXchange is a digital securities platform for renewable energy — tokenized S
 Current state of note:
 - Persistence is in-memory (`server/storage.ts` `MemStorage`). Supabase scaffolding exists but is not yet wired through.
 - SCADA, backtest, SGT waterfall, and yield distribution modules are working — extend them rather than re-implementing.
+- Telemetry sources go through the spec 21 ingestion interface (`verification-engine/src/ingestion/base.py`): implement `InverterAdapter`, call `register()`, and never import a vendor module from reconciliation. Read `docs/specs/EcoXchange_Spec_21_Ingestion_Findings.md` before touching the PVDAQ adapter — the published lake diverges from the spec in ways that yield plausible wrong numbers rather than errors.
 - Public routes: `/performance`, `/backtest-report`, and `/api/public/backtest/*`. Treat these as the demo golden path.
 
 ## Branch and commit policy

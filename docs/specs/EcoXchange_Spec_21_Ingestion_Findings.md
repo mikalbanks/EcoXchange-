@@ -31,7 +31,7 @@ produce the expected result, **report it** rather than manufacture one.
 | Store | Path | Systems |
 |---|---|---|
 | `partitioned` | `pvdaq/parquet/pvdata/system_id={id}/year=/month=/day=` | 157, including seeds **1332** and **4902** |
-| `data_prize` | `pvdaq/2023-solar-data-prize/{id}_OEDI/data/*.csv` | 6, including seeds **9069** and **2107** |
+| `data_prize` | `pvdaq/2023-solar-data-prize/{id}_OEDI/data/*.csv` | 5 (2105, 2107, 7333, 9068, 9069), including seeds **9069** and **2107** |
 
 **Systems 9069 and 2107 have no objects at all under `parquet/pvdata` or
 `csv/pvdata`** — not an empty partition, no prefix — even though the index
@@ -247,3 +247,11 @@ only a system-total DC capacity to weight them by. §3.2's table quotes 16.77°
 describes neither array. The adapter follows §3.1 and records both source values
 in `SiteDescriptor.extra["tilt_rows"]`, so the expected leg's extra uncertainty
 for that site is visible rather than buried.
+
+NREL agrees, in the index itself. 1332 passes `qa_status` but carries a
+`qa_issue` of *"Filtered time series less than 1.0 years data, Less than 10%
+daytime values, **Wrong mounting config identified. Please manually review.**"*
+The §3.2 filter selects on `qa_status == 'pass'` and never reads `qa_issue`, so
+a system flagged for manual review passes the screen. `qa_issue` is carried
+through to `SiteDescriptor.extra` for every site; it is worth reading before
+trusting any seed system's geometry.

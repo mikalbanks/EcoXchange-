@@ -158,10 +158,20 @@ def assess(
         interval_minutes = infer_interval_minutes(series.index)
     freq = _freq_alias(interval_minutes)
 
-    # Reindex onto the complete grid so an absent row is a NaN gap that
+    # Put the series on a complete grid so an absent row is a NaN gap that
     # completeness can see, rather than a row that was never counted.
-    grid = pd.date_range(series.index[0], series.index[-1], freq=freq, tz=series.index.tz)
-    series = series.reindex(series.index.union(grid)).reindex(grid)
+    #
+    # `resample`, not `reindex` onto a `date_range`. A reindexed grid keeps only
+    # timestamps that land on it exactly, so a logger with a few seconds of
+    # jitter drops nearly everything: measured on a complete clear-sky month at
+    # 15-minute sampling with +/-40 s of jitter, reindexing scores 1.4%
+    # completeness and resampling scores 74.7%. A jittery logger is a real
+    # source; 1.4% would send every one of its months to `missing`.
+    #
+    # Resampling still loses something — jitter pushes two samples into one bin
+    # and leaves the next empty — so the number is a floor, not the truth. That
+    # is the right direction for a completeness measure to be wrong in.
+    series = series.resample(freq).mean()
 
     notes: list[str] = []
 

@@ -513,10 +513,13 @@ class PVDAQAdapter:
                 "store": store,
                 "tilt_rows": row.get("tilt_rows"),
                 "azimuth_rows": row.get("azimuth_rows"),
-                "site_location": row.get("site_location"),
-                "tracking": row.get("tracking"),
-                "qa_status": row.get("qa_status"),
-                "qa_issue": row.get("qa_issue"),
+                # `_opt_str`, because the index leaves absent text fields as a
+                # float NaN. Serialized straight through, `qa_issue` becomes the
+                # string "nan", which reads as a recorded issue rather than none.
+                "site_location": _opt_str(row.get("site_location")),
+                "tracking": _opt_str(row.get("tracking")),
+                "qa_status": _opt_str(row.get("qa_status")),
+                "qa_issue": _opt_str(row.get("qa_issue")),
                 "years": _opt_float(row.get("years")),
                 "timezone_field": row.get("timezone_or_utc_offset"),
                 "timezone_derivation": derivation,
@@ -644,7 +647,10 @@ class PVDAQAdapter:
                                     "scale_to_unit": p.scale,
                                     "combine": p.combine,
                                     "detail": p.detail} for p in plans},
-            "metric_ids_present": sorted(present),
+            # int(), not the numpy scalars pandas hands back: these land in a
+            # JSONB column, and `["82607"]` does not match a numeric containment
+            # query the way `[82607]` does.
+            "metric_ids_present": sorted(int(m) for m in present),
             "partitions_read": len(paths),
             "sentinel_values_masked": n_sentinels,
             "sentinel_values": list(MISSING_VALUE_SENTINELS),
@@ -791,6 +797,13 @@ class PVDAQAdapter:
 def _none_if_nan(value):
     value = float(value)
     return None if not np.isfinite(value) else value
+
+
+def _opt_str(value) -> str | None:
+    if value is None or (isinstance(value, float) and not np.isfinite(value)):
+        return None
+    text = str(value).strip()
+    return text or None
 
 
 def _opt_float(value) -> float | None:

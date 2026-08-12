@@ -182,11 +182,18 @@ def ingest_system(adapter, system_id: int, start: date, end: date,
     if not frames:
         return result
 
-    # Shift detection runs over the WHOLE ingested window, not per month. A step
-    # change in daily timing is a property of the history; one month has ~30
-    # daily observations, which is the bare minimum `shifts_ruptures` accepts and
-    # far too few to separate a real re-clock from seasonal drift. The per-day
-    # verdict is then mapped back onto the months it covers.
+    # Shift detection runs over the WHOLE ingested window, not per month. §5 says
+    # to run it monthly, but a step change in daily timing is a property of the
+    # history: one month gives `shifts_ruptures` ~30 daily observations, the bare
+    # minimum it accepts, and far too few to separate a real re-clock from
+    # seasonal drift in sunrise.
+    #
+    # The flag is therefore window-level — every month of a window carrying a
+    # shift is marked, not just the months after the change point. That is
+    # deliberately coarse, and it is safe because `shift_detected` routes to
+    # human review rather than auto-flagging (§5). Narrowing it to the affected
+    # months means trusting the change-point date, which is the part a 24-month
+    # window is thinnest on.
     shifted_months: set[pd.Period] = set()
     shift_notes: list[str] = []
     try:
@@ -320,6 +327,24 @@ def format_sql(run: dict) -> str:
             continue
         site = system["site"]
         pid = project_uuid(system["system_id"])
+
+        # `projects` has these NOT NULL since migration 001. Emitting a NULL
+        # would make the whole seed file fail at apply time, hours after the
+        # ingestion that produced it — and §7.2 asks for real geometry, so a
+        # site missing any of it is one to report, not one to seed.
+        required = {"latitude": site["latitude"], "longitude": site["longitude"],
+                    "capacity_kw_dc": site["capacity_kw_dc"],
+                    "tilt_deg": site["tilt_deg"], "azimuth_deg": site["azimuth_deg"],
+                    "iana_timezone": site["iana_timezone"],
+                    "commissioning_date": site["first_data"]}
+        absent = sorted(k for k, v in required.items() if v is None)
+        if absent:
+            parts.append(
+                f"\n-- system {system['system_id']}: NOT SEEDED — the systems index "
+                f"gives no {', '.join(absent)}, and `projects` requires "
+                f"{'them' if len(absent) > 1 else 'it'}.\n"
+            )
+            continue
         parts.append(f"""
 -- ── PVDAQ {system['system_id']} — {site['name']} ─────────────────────────────
 -- {system['window']['rationale']}
