@@ -62,7 +62,9 @@ export interface RawReading {
   kwh_gross?: number | null;
   kwh_net?: number | null;
   data_quality?: DataQuality;
-  quality_notes?: string;
+  /** `null` as well as absent: the column is nullable in `raw_readings`, and
+   *  narrowing it here forced every DB row through a cast. */
+  quality_notes?: string | null;
   raw_response?: unknown;
 }
 

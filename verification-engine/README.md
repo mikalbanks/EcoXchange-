@@ -120,6 +120,55 @@ from src.validate_pvdaq import fetch_pvdaq_power, validate_against_pvdaq
 
 ---
 
+## Telemetry ingestion (`src/ingestion/`, spec 21)
+
+One interface for every telemetry source, so a new vendor is an adapter and not
+a reconciliation change.
+
+```python
+from datetime import date
+from ingestion import get_adapter, assess
+
+adapter = get_adapter("pvdaq")            # resolved from projects.telemetry_source
+frame   = adapter.fetch_interval("4902", date(2017, 7, 1), date(2017, 7, 31))
+verdict = assess(frame.ac_power_w,
+                 latitude=frame.site.latitude, longitude=frame.site.longitude,
+                 interval_minutes=frame.interval_minutes)
+
+frame.energy_kwh(), verdict.qc_verdict     # (34_623.1, 'complete')
+```
+
+| Module | What it is |
+|---|---|
+| `base.py` | `InverterAdapter` protocol, `SiteDescriptor`, `TelemetryFrame`, the normalized column vocabulary, the registry. Reconciliation imports this and nothing else. |
+| `pvdaq.py` | NREL PVDAQ over the public `oedi-data-lake` bucket. Anonymous, no credentials. |
+| `quality.py` | pvanalytics QC → `reading_quality`. Completeness, staleness, outliers, clipping, the night-energy guard, time-shift detection. |
+
+Two invariants do most of the work. **`ac_power_w` is mandatory** — a frame
+without it is a failed fetch, not a partial success. **`interval_minutes` is
+inferred, never declared** — a 15-minute interval read as hourly inflates
+production 4× with a plausible shape and a plausible total.
+
+Run a backfill and regenerate the seed with:
+
+```bash
+python3 scripts/ingest_pvdaq.py            # -> reports/pvdaq_ingestion.json
+                                           #    + supabase/seed/005_pvdaq_ingestion.sql
+```
+
+The lake diverges from spec 21 §3 in ways that matter — two time-series layouts,
+a per-system metrics dictionary the spec looks for in the wrong file, `-999`
+missing-data sentinels, a units convention that changes mid-record, and a
+night-energy guard that as specified cannot detect the error it exists for.
+All of it is measured and written up in
+[`docs/specs/EcoXchange_Spec_21_Ingestion_Findings.md`](../docs/specs/EcoXchange_Spec_21_Ingestion_Findings.md).
+Read that before extending the adapter.
+
+**Spec 24 adds a vendor** by implementing the protocol and calling `register()`;
+add the module path to `base._ADAPTER_MODULES` so `get_adapter()` can find it.
+
+---
+
 ## Known caveats (read before production)
 
 - **pvlib version sensitivity.** Written for pvlib **0.15.x** (NSRDB = PSM4). On

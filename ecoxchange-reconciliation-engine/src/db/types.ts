@@ -2,6 +2,32 @@ import type { ProjectConfig, VerificationStatus } from "../utils/types.js";
 import type { ToleranceConfig } from "../config/tolerances.js";
 
 export type InverterBrand = "solaredge" | "enphase" | "fronius" | "sma";
+
+/** Spec 21 §2: the source kinds an ingestion adapter can be registered under.
+ *  Generalizes `InverterBrand` — `telemetry_source` + `telemetry_external_id`
+ *  replaces the `inverter_brand` / `inverter_plant_id` pair, so spec 24 adds
+ *  vendors without another migration. Mirrors `SourceKind` in
+ *  `verification-engine/src/ingestion/base.py`; the two lists must agree. */
+export type TelemetrySource =
+  | "pvdaq"
+  | "solaredge"
+  | "enphase"
+  | "fronius"
+  | "sma"
+  | "manual_csv";
+
+/** Where a reading came from. `demo_seed` is synthetic and must never be
+ *  described as measurement. Mirrors the CHECK in migration 013. */
+export type DataProvenance =
+  | "demo_seed"
+  | "pvdaq_real"
+  | "solaredge_api"
+  | "enphase_api"
+  | "fronius_api"
+  | "sma_api"
+  | "manual_csv"
+  | "eia_923"
+  | "bayou";
 export type OfftakeType = "ppa" | "community_solar" | "net_metering" | "merchant";
 export type ProjectStatus = "onboarding" | "active" | "suspended" | "decommissioned";
 export type DataSource = "inverter" | "utility_meter" | "satellite";
@@ -13,9 +39,16 @@ export interface Project extends ProjectConfig {
   id: string;
   name: string;
   timezone: string;
-  inverter_brand: InverterBrand;
-  inverter_api_key_ref: string;
-  inverter_plant_id: string;
+  /** Real Olson zone for this site (migration 013). `timezone` above defaults to
+   *  'America/New_York' on every row and is not site-specific — bucket months on
+   *  this one. Null until the project's telemetry binding is set. */
+  iana_timezone: string | null;
+  telemetry_source: TelemetrySource | null;
+  telemetry_external_id: string | null;
+  /** Superseded by `telemetry_source` (spec 21 §4); nullable since 013. */
+  inverter_brand: InverterBrand | null;
+  inverter_api_key_ref: string | null;
+  inverter_plant_id: string | null;
   utility_provider: string | null;
   utility_account_ref: string | null;
   offtake_type: OfftakeType | null;
@@ -41,7 +74,30 @@ export interface RawReading {
   archive_path: string | null;
   data_quality: DataQuality;
   quality_notes: string | null;
+  data_provenance: DataProvenance;
   fetched_at: string;
+}
+
+/** One row of `reading_quality` (migration 013) — the evidence behind a
+ *  reading's `data_quality`. Produced by
+ *  `verification-engine/src/ingestion/quality.py::assess`. */
+export interface ReadingQuality {
+  id: string;
+  raw_reading_id: string;
+  completeness_pct: number;
+  clipped_frac: number | null;
+  stale_frac: number | null;
+  outlier_frac: number | null;
+  /** PERCENT of positive energy below the horizon, on real solar geometry.
+   *  Above 1.0 the series is time-misaligned — always `error`, never a
+   *  tolerance question. */
+  night_energy_frac: number;
+  shift_detected: boolean;
+  interval_minutes: number;
+  qc_verdict: DataQuality;
+  qc_notes: string[] | null;
+  pvanalytics_version: string;
+  evaluated_at: string;
 }
 
 export interface VerificationRecord {

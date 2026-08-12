@@ -19,12 +19,34 @@ below names the artifact that was checked.
 | 010 | `010_suitability_profiles.sql` | applied 2026-08-09 | `suitability_profiles` |
 | 011 | `011_pcp_submissions.sql` | applied 2026-08-09 | `pcp_submissions` |
 | 012 | `012_polymesh.sql` | applied 2026-08-09 | `polymesh_assets`, `polymesh_holders`, `polymesh_distributions`, `polymesh_sync_runs` |
+| 013 | `013_ingestion_and_quality.sql` | **NOT APPLIED** | written for spec 21 §4; not yet run against `xgcroo…` |
 
 18 tables in `public`. `projects` holds 1 row and `verification_records` 12 — the
 Savannah demo year — unchanged by the 2026-08-09 applications. The engine schema
 is now fully migrated: every file in this directory has run against `xgcroo…`.
 
-**All twelve are applied.** Nothing is outstanding.
+**The first twelve are applied. 013 is outstanding** — it is written and
+idempotent but has not been run, so nothing has verified it against the live
+database. Apply it before `supabase/seed/005_pvdaq_ingestion.sql`, which inserts
+into the `reading_quality` table and the `data_provenance` / `telemetry_source`
+columns that 013 creates.
+
+### What 013 changes that is not additive
+
+Everything in 013 is `IF NOT EXISTS` or a `DROP CONSTRAINT IF EXISTS` /
+`ADD CONSTRAINT` pair, with one exception worth reading before applying: it
+drops `NOT NULL` from `projects.inverter_brand`, `inverter_api_key_ref` and
+`inverter_plant_id`. Spec 21 §4 replaces that pair with `telemetry_source` +
+`telemetry_external_id`, and the old constraint is what forced spec 19's PVDAQ
+seed to write `'sma'` for a system whose inverter make is not published — an
+explicit "SCHEMA PLACEHOLDER" comment sitting in a committed seed file. Existing
+rows are unaffected; only future inserts gain the freedom to leave it null.
+
+Note also that 013 **creates** `raw_readings.data_provenance`. Spec 21 lists that
+column as already present from spec 19; it is not. Spec 19 (commit 063f50f)
+carried leg provenance in `demo-pvdaq-9068.json` and never touched the schema.
+Running only the `ADD CONSTRAINT` half of §4 against this database would fail on
+a missing column.
 
 ## Storage buckets
 
