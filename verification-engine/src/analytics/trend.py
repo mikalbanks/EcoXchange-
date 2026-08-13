@@ -649,11 +649,20 @@ def run_availability(project_id, period: date | None = None) -> AvailabilityResu
     # Gaps are preserved as NaN rather than filled. AvailabilityAnalysis reads
     # NaN, zero and very-low values as the signature of an outage, so bridging a
     # gap here would erase the exact events being measured.
-    series = assembled.series.resample(AVAILABILITY_FREQ).mean()
+    # Power channels average over the bucket; a CUMULATIVE meter must take the
+    # last reading in it instead. Averaging a running total turns each bucket
+    # into its midpoint, which drags every reading backwards by half an interval
+    # and understates the energy delivered across any gap — the exact quantity
+    # the comms-vs-outage test reads.
+    resampler = assembled.series.resample(AVAILABILITY_FREQ)
+    series = resampler.mean()
+    if "meter_export_wh" in assembled.series.columns:
+        series["meter_export_wh"] = resampler["meter_export_wh"].last()
+
     power_system = series["ac_power_w"].astype(float)
 
     subsystem, subsystem_note = load_subsystem_power(project, series)
-    subsystem = subsystem.resample(AVAILABILITY_FREQ).mean().reindex(series.index)
+    subsystem = subsystem.reindex(series.index)
     notes = [
         f"Subsystem power: {subsystem_note}.",
         f"Series resampled to a regular {AVAILABILITY_FREQ} grid for this "
