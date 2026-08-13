@@ -12,6 +12,9 @@ reports/eia_fleet_checkpoint.jsonl
 # downloaded federal datasets (large; fetch via scripts/download-data.sh)
 data/fleet/**
 !data/fleet/.gitkeep
+# Spec 20 public-source archives and NASA POWER cache. Rebuild with
+# scripts/reproduce_spec20.py; compact derived evidence is committed.
+data/spec20/
 # Derived PVDAQ site-total series (spec 21). The data-prize bundles are not
 # partitioned by date, so the adapter materializes one pass per system here
 # rather than re-reading a 1.8 GB CSV per month. Disposable; regenerate with
