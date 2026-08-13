@@ -110,7 +110,15 @@ def score_acceptance(rows: list[dict], records: list[dict]) -> list[dict]:
     availability_rows = [
         r for r in rows if r.get("availability_pct") is not None
     ]
+    # §6.5 asks for availability ON a multi-inverter system, so both halves have
+    # to hold on the same row. Counting rows that merely HAVE several inverters
+    # produced the nonsense "1 row with an availability figure, 2 of them backed
+    # by per-inverter telemetry".
     multi_inverter = [
+        r for r in availability_rows
+        if (r.get("provenance") or {}).get("availability_subsystems", 1) > 1
+    ]
+    multi_inverter_attempted = [
         r for r in rows
         if (r.get("provenance") or {}).get("availability_subsystems", 1) > 1
     ]
@@ -200,10 +208,17 @@ def score_acceptance(rows: list[dict], records: list[dict]) -> list[dict]:
             ),
             "met": bool(multi_inverter),
             "detail": (
-                f"{len(availability_rows)} row(s) with an availability figure, "
-                f"{len(multi_inverter)} of them backed by per-inverter telemetry. "
+                f"{len(availability_rows)} of {len(rows)} row(s) produced an "
+                f"availability figure; {len(multi_inverter)} of those are backed "
+                f"by per-inverter telemetry. "
+                f"{len(multi_inverter_attempted)} row(s) had per-inverter "
+                f"telemetry available in total"
+                + ("." if len(multi_inverter) == len(multi_inverter_attempted)
+                   else f", so {len(multi_inverter_attempted) - len(multi_inverter)} "
+                        f"multi-inverter system(s) had telemetry but produced no "
+                        f"availability figure — see their notes.")
                 + ("" if multi_inverter else
-                   "No multi-inverter analysis completed this run.")
+                   " No multi-inverter analysis completed this run.")
             ),
         },
         {

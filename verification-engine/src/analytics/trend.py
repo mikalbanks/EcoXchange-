@@ -766,8 +766,38 @@ def run_availability(project_id, period: date | None = None) -> AvailabilityResu
                 if monthly else f"Requested period {wanted} is not in the rollup."
             )
 
-    lost_total = float(results["lost_production"].sum(skipna=True))
-    actual_total = float(results["actual_production"].sum(skipna=True))
+    # Drop non-finite months before totalling, and say how many.
+    #
+    # rdtools 3.2.1 `availability.py:514` scales an outage's production fill by
+    # `row['energy_actual'] / subset_energy.sum()`. For an outage that falls
+    # entirely at night the expected energy over its window is zero, so that is
+    # a divide-by-zero and the month's loss comes back `inf`. It is an edge case
+    # in the library, not in the data — a plant being down at 2am is ordinary.
+    #
+    # Summing across it would poison the whole window: one `inf` month makes the
+    # total `inf`, and the earlier physical-plausibility guard would then
+    # suppress every figure. On 4902 that discarded 41 perfectly good months to
+    # protect against 3. Excluding the affected months and reporting the
+    # exclusion keeps the result and keeps it honest.
+    finite = results[
+        np.isfinite(results["lost_production"])
+        & np.isfinite(results["actual_production"])
+    ]
+    dropped = len(results) - len(finite)
+    if dropped:
+        notes.append(
+            f"{dropped} of {len(results)} month(s) excluded from the totals: "
+            f"RdTools returned a non-finite loss for them. This is a known edge "
+            f"case in rdtools {_rdtools_version()} (availability.py:514) where "
+            f"an outage falling entirely within night hours has zero expected "
+            f"energy over its window, and the production-fill scaling divides by "
+            f"it. The remaining {len(finite)} month(s) are unaffected. "
+            f"Availability below is computed over those, so it describes "
+            f"{len(finite)}/{len(results)} of the window rather than all of it."
+        )
+
+    lost_total = float(finite["lost_production"].sum(skipna=True))
+    actual_total = float(finite["actual_production"].sum(skipna=True))
     denominator = lost_total + actual_total
     availability_pct = (
         (1.0 - lost_total / denominator) * 100.0 if denominator > 0 else None
