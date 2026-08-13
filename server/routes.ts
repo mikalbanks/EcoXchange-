@@ -36,6 +36,7 @@ import { isSupabaseConfigured, probeSupabase } from "./services/backtest-supabas
 import { registerDeveloperReportRoutes } from "./routes/developer-report";
 import { registerDistributionRoutes } from "./routes/distributions";
 import { registerPolymeshRoutes } from "./routes/polymesh";
+import { registerAnalyticsRoutes } from "./routes/analytics";
 
 const SESSION_SECRET = process.env.SESSION_SECRET || crypto.randomBytes(32).toString('hex');
 const IS_PRODUCTION = process.env.NODE_ENV === "production";
@@ -402,6 +403,12 @@ export async function registerRoutes(
   // is already on a public ledger and the transparency claim depends on anyone
   // being able to check it. See routes/polymesh.ts.
   registerPolymeshRoutes(app, requireRole);
+
+  // Spec 22: performance analytics (RdTools degradation, soiling, availability).
+  // Reads are public because the three reports they back are documents an owner
+  // hands to a third party, and a report gated behind the reporting party's
+  // login is not obviously independent of it. See routes/analytics.ts.
+  registerAnalyticsRoutes(app);
 
   // Developer stats
   app.get("/api/developer/stats", requireRole("DEVELOPER"), async (req: any, res) => {

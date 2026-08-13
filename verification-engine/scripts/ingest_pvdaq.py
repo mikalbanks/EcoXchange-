@@ -42,9 +42,9 @@ sys.path.insert(0, str(ROOT / "src"))
 from ingestion import assess, get_adapter                       # noqa: E402
 from ingestion.base import IngestionError, SiteDescriptor       # noqa: E402
 from ingestion.quality import detect_shifts                     # noqa: E402
-from verification_engine.config import (                        # noqa: E402
-    ArrayConfig, Location, LossAssumptions, SystemConfig,
-)
+from analytics.plant import site_config                         # noqa: E402
+from analytics.registry import project_uuid                     # noqa: E402
+from verification_engine import __version__ as ENGINE_VERSION   # noqa: E402
 from verification_engine.irradiance import fetch_nasa_power     # noqa: E402
 from verification_engine.losses import apply_losses_series      # noqa: E402
 from verification_engine.modelchain import expected_ac_energy   # noqa: E402
@@ -54,14 +54,12 @@ OUT_JSON = ROOT / "reports" / "pvdaq_ingestion.json"
 OUT_SQL = (REPO / "ecoxchange-reconciliation-engine" / "supabase" / "seed"
            / "005_pvdaq_ingestion.sql")
 
-ENGINE_VERSION = "2.2.0"
 DATA_PROVENANCE = "pvdaq_real"
 
-#: Deterministic UUIDs so re-running the seed updates rows instead of duplicating
-#: them, and so a project id is legible in a log. Same construction as spec 19's
-#: 9068 project id.
-def project_uuid(system_id: int) -> str:
-    return f"{system_id:08d}-0000-4000-8000-{system_id:012d}"
+# `ENGINE_VERSION` and `project_uuid` are imported above rather than defined here.
+# Both used to be literals in this file; spec 22 needs the same two values, and a
+# second copy of either is a thing that drifts silently — a seed whose project ids
+# no longer match the analytics rows keyed on them would still load cleanly.
 
 
 #: The ingestion windows, and why each one. Chosen from what the lake actually
@@ -96,31 +94,10 @@ TOLERANCES = {
 
 # ── Expected leg (Engine A) ───────────────────────────────────────────────────
 
-def site_config(site: SiteDescriptor) -> SystemConfig:
-    """A `SystemConfig` from what the site descriptor actually knows.
-
-    Tilt and azimuth come from the deduplicated index row. For a multi-array
-    system that number is a merge, not a measurement — 1332's 38.4° is the mean
-    of a 16.77° garage deck and a 60° face — and the resulting expected leg
-    carries that uncertainty. It is recorded in the artifact's provenance block
-    rather than hidden in a config.
-    """
-    tracking = str(site.extra.get("tracking") or "").lower() == "tracking"
-    dc_kw = site.capacity_kw_dc or 1000.0
-    return SystemConfig(
-        name=f"PVDAQ {site.external_id} — {site.name}",
-        location=Location(site.latitude, site.longitude, altitude=0.0,
-                          tz=site.iana_timezone),
-        array=ArrayConfig(
-            surface_tilt=float(site.tilt_deg or 0.0),
-            surface_azimuth=float(site.azimuth_deg or 180.0),
-            dc_capacity_kw=dc_kw,
-            ac_capacity_kw=dc_kw / 1.2,
-            tracking=tracking,
-        ),
-        losses=LossAssumptions(),
-        commission_date=site.first_data or date(2010, 1, 1),
-    )
+# `site_config` is imported from analytics.plant rather than defined here. Spec
+# 22 §4 requires the analytics module's gamma_pdc and temperature model to match
+# the ones behind this expected leg; sharing the constructor is what makes that
+# true by construction instead of by vigilance.
 
 
 def monthly_expected(site: SiteDescriptor, start: date, end: date) -> pd.Series:

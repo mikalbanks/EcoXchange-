@@ -30,4 +30,4 @@ __all__ = [
     "load_meter_from_supabase",
     "get_or_compute_site_sigma", "interannual_variability_from_annual_totals",
 ]
-__version__ = "2.2.0"
+__version__ = "2.3.0"

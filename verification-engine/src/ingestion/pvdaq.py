@@ -434,6 +434,70 @@ def resolve_ac_power(system_id: int, present_ids: set[int]) -> ChannelPlan:
     )
 
 
+def resolve_subsystem_power(system_id: int, present_ids: set[int]) -> list[ChannelPlan]:
+    """One `ChannelPlan` per inverter, for spec 22's availability analysis.
+
+    `resolve_ac_power` deliberately collapses the inverters into a site total,
+    because that is the production leg reconciliation needs. Availability needs
+    the opposite: RdTools distinguishes a genuine outage from a datalogger
+    communication dropout by watching subsystems fall out *independently*, and a
+    pre-summed series has thrown that information away — three inverters at a
+    third of nameplate and one inverter dead look identical in the sum.
+
+    The same refusal applies as in `resolve_ac_power`, for the same reason: if
+    the dictionary declares inverter channels the data does not carry, this
+    raises rather than analyzing a subset. A missing inverter is not a smaller
+    plant, and availability computed against a subset would read as a healthy
+    fraction of a plant that is not the plant.
+
+    Returns an empty list where the system declares no per-inverter channels at
+    all — an absence, not a failure. The caller falls back to the site total and
+    records that it did.
+    """
+    metrics = load_metrics(system_id)
+    candidates = _power_candidates(metrics)
+    if candidates.empty:
+        return []
+    candidates = candidates.assign(_role=candidates.apply(_role, axis=1))
+
+    declared = candidates[candidates["_role"] == "inverter"]
+    if declared.empty:
+        return []
+
+    # An aggregated inverter channel (`inv_total_ac_power`) classifies as an
+    # inverter by `_role`, which is right for site-total resolution and wrong
+    # here: including it alongside its own members would double-count the plant
+    # and hand RdTools a subsystem that is the sum of the others.
+    members = declared[~declared["sensor_name"].astype(str).str.contains(
+        "total", case=False, na=False
+    )]
+    if members.empty:
+        return []
+
+    present = members[members["metric_id"].astype(int).isin(present_ids)]
+    missing = sorted(set(members["sensor_name"]) - set(present["sensor_name"]))
+    if missing:
+        raise MetricResolutionError(
+            f"system {system_id}: inverter AC power channels {missing} are in the "
+            f"dictionary but absent from the data. Availability computed over the "
+            f"remaining {len(present)} would measure the uptime of a plant that "
+            f"is not this plant, and would look entirely healthy doing it."
+        )
+
+    plans: list[ChannelPlan] = []
+    for _, row in present.sort_values("metric_id").iterrows():
+        scale = float(row["_unit_scale"]) * float(row["calc_scale"] or 1.0)
+        plans.append(ChannelPlan(
+            column=str(row["sensor_name"]),
+            metric_ids=(int(row["metric_id"]),),
+            scale=scale,
+            combine="single",
+            detail=f"inverter channel {row['sensor_name']} "
+                   f"({row['raw_units']}->W, metric_id={int(row['metric_id'])})",
+        ))
+    return plans
+
+
 def resolve_optional_channels(system_id: int, present_ids: set[int]) -> list[ChannelPlan]:
     """Best-effort mapping of the non-required vocabulary (§2.1).
 
@@ -606,9 +670,20 @@ class PVDAQAdapter:
 
     # -- partitioned store -----------------------------------------------------
 
-    def _fetch_partitioned(
+    def _load_partitioned_long(
         self, site: SiteDescriptor, start: date, end: date
-    ) -> tuple[pd.DataFrame, dict]:
+    ) -> tuple[pd.DataFrame, set[int], int, str, int]:
+        """Read, sentinel-mask and timestamp the long-format partitions.
+
+        Everything both the normalized fetch and the per-inverter fetch need, and
+        nothing either of them decides. Shared rather than duplicated because the
+        sentinel mask in particular must not diverge between the two paths: a
+        per-inverter series that skipped it would put -999 into an availability
+        analysis, where a large negative reads as neither an outage nor a
+        measurement.
+
+        Returns `(long, present_metric_ids, n_sentinels, index_basis, n_paths)`.
+        """
         system_id = int(site.external_id)
         fs = _fs()
         paths = _partition_paths(fs, system_id, start, end)
@@ -630,12 +705,23 @@ class PVDAQAdapter:
         long.loc[sentinel_mask, "value"] = np.nan
 
         present = set(long["metric_id"].astype(int).unique())
-        ac_plan = resolve_ac_power(system_id, present)
-        plans = [ac_plan, *resolve_optional_channels(system_id, present)]
 
         index, index_basis = _partitioned_index(long, site)
         long = long.assign(_ts=index)
         long = long[long["_ts"].notna()]
+
+        return long, present, n_sentinels, index_basis, len(paths)
+
+    def _fetch_partitioned(
+        self, site: SiteDescriptor, start: date, end: date
+    ) -> tuple[pd.DataFrame, dict]:
+        system_id = int(site.external_id)
+        long, present, n_sentinels, index_basis, n_paths = self._load_partitioned_long(
+            site, start, end
+        )
+
+        ac_plan = resolve_ac_power(system_id, present)
+        plans = [ac_plan, *resolve_optional_channels(system_id, present)]
 
         columns: dict[str, pd.Series] = {}
         for plan in plans:
@@ -663,7 +749,7 @@ class PVDAQAdapter:
             # JSONB column, and `["82607"]` does not match a numeric containment
             # query the way `[82607]` does.
             "metric_ids_present": sorted(int(m) for m in present),
-            "partitions_read": len(paths),
+            "partitions_read": n_paths,
             "sentinel_values_masked": n_sentinels,
             "sentinel_values": list(MISSING_VALUE_SENTINELS),
             "timestamp_basis": index_basis,
@@ -671,6 +757,130 @@ class PVDAQAdapter:
                 f"{p.column}: raw value x {p.scale:g} ({p.combine})" for p in plans
             ],
         }
+
+    # -- per-inverter power (spec 22) ------------------------------------------
+
+    def fetch_subsystem_power(
+        self, external_id: str, start: date, end: date
+    ) -> pd.DataFrame:
+        """Per-inverter AC power in watts, tz-aware UTC index (spec 22 §2.3).
+
+        Deliberately NOT part of the `InverterAdapter` protocol. Spec 21's
+        contract is five methods and reconciliation depends on exactly those;
+        widening it would oblige every future vendor adapter to produce
+        per-inverter data whether or not the vendor publishes it. Analytics
+        reaches this through `getattr(adapter, "fetch_subsystem_power", None)`
+        and falls back to a single-column site total when it is absent, which is
+        the honest behaviour for a source that only reports an aggregate.
+
+        Returns an empty DataFrame — not an error — where the system publishes no
+        per-inverter channels. That is a property of the site, and the caller
+        records the fallback rather than failing the run.
+        """
+        if end < start:
+            raise ValueError(f"end {end} precedes start {start}")
+        site = self.describe_site(external_id)
+        store = site.extra["store"]
+        if store == "partitioned":
+            frame = self._subsystem_partitioned(site, start, end)
+        elif store == "data_prize":
+            frame = self._subsystem_prize(site, start, end)
+        else:
+            raise TelemetryUnavailableError(
+                f"system {external_id} has no time-series objects in the lake"
+            )
+        if frame.empty or not len(frame.columns):
+            return frame
+        frame, _ = _to_minute_grid(frame)
+        return frame
+
+    def _subsystem_partitioned(
+        self, site: SiteDescriptor, start: date, end: date
+    ) -> pd.DataFrame:
+        system_id = int(site.external_id)
+        long, present, _, _, _ = self._load_partitioned_long(site, start, end)
+        plans = resolve_subsystem_power(system_id, present)
+        if not plans:
+            return pd.DataFrame()
+
+        columns: dict[str, pd.Series] = {}
+        for plan in plans:
+            subset = long[long["metric_id"].astype(int).isin(plan.metric_ids)]
+            if subset.empty:
+                continue
+            wide = subset.pivot_table(
+                index="_ts", columns="metric_id", values="value", aggfunc="mean"
+            )
+            columns[plan.column] = wide.iloc[:, 0] * plan.scale
+
+        frame = pd.DataFrame(columns).sort_index()
+        frame.index = pd.DatetimeIndex(frame.index, name=None)
+        return _clip_to_local_window(frame, site, start, end)
+
+    def _subsystem_prize(
+        self, site: SiteDescriptor, start: date, end: date
+    ) -> pd.DataFrame:
+        cached = self._prize_subsystem_series(site)
+        return _clip_to_local_window(cached, site, start, end)
+
+    def _prize_subsystem_cache_path(self, system_id: int) -> Path:
+        return self.cache_dir / f"pvdaq_{system_id}_subsystem.parquet"
+
+    def _prize_subsystem_series(self, site: SiteDescriptor) -> pd.DataFrame:
+        """Whole-record per-inverter series for a data-prize system, cached.
+
+        A second full pass over the same object the site-total cache came from —
+        9069's AC file is 1.77 GB — and a much larger cache, because it keeps 40
+        columns where the other keeps one. Both are the price of the same
+        constraint: the bundle is not partitioned by date, so any slice reads
+        everything, and the cache is what stops that happening per month.
+        """
+        system_id = int(site.external_id)
+        cache = self._prize_subsystem_cache_path(system_id)
+        if cache.exists():
+            return pd.read_parquet(cache)
+
+        fs = _fs()
+        data_dir = f"{PRIZE_ROOT}/{system_id}_OEDI/data"
+        ac_file = f"{data_dir}/{system_id}_electrical_ac.csv"
+        if not fs.exists(ac_file):
+            candidates = [p for p in fs.ls(data_dir)
+                          if p.endswith("_electrical_data.csv")]
+            if not candidates:
+                raise TelemetryUnavailableError(
+                    f"system {system_id}: no AC electrical file under {data_dir}"
+                )
+            ac_file = candidates[0]
+
+        with fs.open(ac_file) as fh:
+            header = pd.read_csv(fh, nrows=0)
+        power_cols, unit_scale = _prize_ac_power_columns(system_id, header.columns)
+
+        chunks: list[pd.DataFrame] = []
+        with fs.open(ac_file, block_size=32 * 1024 * 1024) as fh:
+            for chunk in pd.read_csv(
+                fh, usecols=["measured_on", *power_cols], chunksize=200_000
+            ):
+                stamps = pd.to_datetime(chunk["measured_on"], errors="coerce")
+                values = chunk[power_cols].apply(pd.to_numeric, errors="coerce")
+                values = values * unit_scale
+                values.index = stamps
+                chunks.append(values)
+
+        combined = pd.concat(chunks)
+        combined = combined[combined.index.notna()]
+        combined = combined[~combined.index.duplicated(keep="first")].sort_index()
+        # Same localization discipline as the site-total path: prize timestamps
+        # are naive site-local, and DST-ambiguous or nonexistent stamps are
+        # dropped rather than snapped to a neighbouring hour.
+        localized = combined.tz_localize(
+            site.iana_timezone, ambiguous="NaT", nonexistent="NaT"
+        )
+        localized = localized[localized.index.notna()].tz_convert("UTC")
+
+        self.cache_dir.mkdir(parents=True, exist_ok=True)
+        localized.to_parquet(cache)
+        return localized
 
     # -- data prize store ------------------------------------------------------
 
