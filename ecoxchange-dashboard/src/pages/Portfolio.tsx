@@ -18,14 +18,18 @@ import { SectionTag } from "../components/ui/SectionTag.js";
 import { LazyMount } from "../components/shared/LazyMount.js";
 import { PipelineMap } from "../components/map/PipelineMap.js";
 import { MapSkeleton } from "../components/shared/LoadingState.js";
-import { YieldDisclosure } from "../compliance/components/YieldDisclosure.js";
 import { DataSourceAttribution } from "../compliance/components/DataSourceAttribution.js";
 import { useData } from "../context/DataContext.js";
 import { useAuth } from "../context/AuthContext.js";
 import { useIsMobile, useIsTablet } from "../hooks/useMediaQuery.js";
 import { usePullToRefresh } from "../hooks/usePullToRefresh.js";
-import type { Portfolio as PortfolioData } from "../utils/types.js";
-import { formatUsd } from "../utils/formatters.js";
+import { DeterminationCard } from "../components/verification/DeterminationCard.js";
+import { ChainHeartbeat } from "../components/web3/ChainHeartbeat.js";
+import type {
+  Portfolio as PortfolioData,
+  VerificationRecord,
+} from "../utils/types.js";
+import { formatMonthLong, formatUsd } from "../utils/formatters.js";
 
 // Recharts stays out of the initial Portfolio render path: the donut only
 // loads (and its chunk only downloads) once the section scrolls into view.
@@ -36,11 +40,12 @@ const OwnershipVisualization = lazy(() =>
 );
 
 export function Portfolio() {
-  const { getPortfolio, scenario, mode } = useData();
+  const { getPortfolio, getVerification, scenario, mode } = useData();
   const { user } = useAuth();
   const isMobile = useIsMobile();
   const isTablet = useIsTablet();
   const [data, setData] = useState<PortfolioData | null>(null);
+  const [latest, setLatest] = useState<VerificationRecord | null>(null);
   const [status, setStatus] = useState<"loading" | "ready" | "error">("loading");
 
   const load = useCallback(
@@ -50,13 +55,23 @@ export function Portfolio() {
         setData(null);
       }
       return getPortfolio()
-        .then((res) => {
+        .then(async (res) => {
           setData(res);
           setStatus("ready");
+          // The determination card needs the record itself, not just the
+          // status chip the portfolio summary carries. Failing to load it
+          // degrades to the summary — it must never blank the dashboard.
+          const primary = res.projects[0];
+          if (!primary?.latest_period) return setLatest(null);
+          const found = await getVerification(
+            primary.id,
+            primary.latest_period,
+          ).catch(() => null);
+          setLatest(found?.record ?? null);
         })
         .catch(() => setStatus("error"));
     },
-    [getPortfolio],
+    [getPortfolio, getVerification],
   );
 
   useEffect(() => {
@@ -94,6 +109,15 @@ export function Portfolio() {
   }
 
   const firstName = user.name.split(" ")[0];
+  const verifiedMonthMwh =
+    latest && latest.status === "verified" ? latest.inverter_kwh / 1000 : null;
+  const ytdMwh = data.projects.reduce((s, p) => s + p.ytd_production_mwh, 0);
+  const distributionStatus =
+    latest?.status === "verified"
+      ? "Eligible"
+      : latest?.status === "flagged"
+        ? "On hold"
+        : "Pending";
 
   return (
     <div ref={containerRef} className="relative space-y-8 animate-fade-in">
@@ -126,21 +150,52 @@ export function Portfolio() {
           connectDistance={100}
         />
         <div className="relative">
-          <SectionTag>Your Solar Portfolio</SectionTag>
+          <SectionTag>Your Verified Solar Portfolio</SectionTag>
           <h1 className="font-heading text-3xl text-darkBg">
             Good to see you, {firstName}.
           </h1>
           <p className="text-textMuted mt-1">
-            Production-verified income from U.S. solar assets ·{" "}
-            {data.portfolio.active_projects} active project
-            {data.portfolio.active_projects === 1 ? "" : "s"}
+            Independent monthly production verification for your U.S.
+            solar-project interests · {data.portfolio.active_projects} active
+            project{data.portfolio.active_projects === 1 ? "" : "s"}
           </p>
 
-          {/* 4-up stat grid (2x2 on mobile/tablet). Count-ups start on first
-              viewport entry. */}
+          {/* Production and the determination lead. Money follows, because the
+              determination is what releases it — see the Distributions section
+              below for the amounts. */}
           <div className="mt-6 grid grid-cols-2 gap-3 sm:gap-4 xl:grid-cols-4">
             <StatCard
-              label="Total Invested"
+              label="Verified Production"
+              value={
+                verifiedMonthMwh != null ? (
+                  <AnimatedNumber
+                    value={verifiedMonthMwh}
+                    format={(n) => `${n.toFixed(1)} MWh`}
+                    startOnView
+                  />
+                ) : (
+                  "—"
+                )
+              }
+              sublabel={latest ? formatMonthLong(latest.period_start) : undefined}
+            />
+            <StatCard
+              label="YTD Verified Production"
+              value={
+                <AnimatedNumber
+                  value={ytdMwh}
+                  format={(n) => `${n.toFixed(1)} MWh`}
+                  startOnView
+                />
+              }
+            />
+            <StatCard
+              label="Distribution Status"
+              value={distributionStatus}
+              sublabel={latest ? formatMonthLong(latest.period_start) : undefined}
+            />
+            <StatCard
+              label="Project Interest"
               value={
                 <AnimatedNumber
                   value={data.portfolio.total_invested}
@@ -148,58 +203,18 @@ export function Portfolio() {
                   startOnView
                 />
               }
+              sublabel="invested"
             />
-            <StatCard
-              label="Monthly Yield"
-              value={
-                <YieldDisclosure
-                  value={formatUsd(data.portfolio.monthly_yield_usd)}
-                  type="cash_distribution"
-                  basis="modeled"
-                >
-                  <AnimatedNumber
-                    value={data.portfolio.monthly_yield_usd}
-                    format={(n) => formatUsd(n)}
-                    startOnView
-                  />
-                </YieldDisclosure>
-              }
-              sublabel="USDC"
-            />
-            <StatCard
-              label="Lifetime Yield"
-              value={
-                <YieldDisclosure
-                  value={formatUsd(data.portfolio.lifetime_yield_usd)}
-                  type="cumulative_return"
-                  basis="modeled"
-                >
-                  <AnimatedNumber
-                    value={data.portfolio.lifetime_yield_usd}
-                    format={(n) => formatUsd(n)}
-                    startOnView
-                  />
-                </YieldDisclosure>
-              }
-              sublabel="USDC"
-            />
-            {/* ESN token holdings — the on-chain settlement layer, visible. */}
-            <Link to="/explorer/token" className="block">
-              <StatCard
-                label="ESN Holdings"
-                value={
-                  <AnimatedNumber
-                    value={100}
-                    format={(n) => `${Math.round(n)} ESN`}
-                    startOnView
-                  />
-                }
-                sublabel="ST-20 · Savannah Solar I"
-              />
-            </Link>
           </div>
         </div>
       </section>
+
+      {latest ? (
+        <DeterminationCard
+          projectId={data.projects[0]!.id}
+          record={latest}
+        />
+      ) : null}
 
       <Link
         to="/investor/impact"
@@ -209,10 +224,11 @@ export function Portfolio() {
           <Leaf className="h-5 w-5 text-medGreen" />
           <span>
             <span className="block font-medium text-darkBg">
-              See your verified environmental impact
+              Environmental impact calculated from verified production
             </span>
             <span className="text-sm text-textMuted">
-              CO₂ avoided, homes powered, trees planted — from verified production
+              CO₂ avoided and equivalent-impact estimates are calculated only from
+              production periods that have completed verification.
             </span>
           </span>
         </span>
@@ -251,17 +267,31 @@ export function Portfolio() {
 
       <PortfolioDistributions />
 
-      {/* Token cap table (differentiation spec §4) — recharts stays below-fold. */}
+      {/* Ownership administration (differentiation spec §4). Collapsed, because
+          the digital record is plumbing for the interest described in the
+          offering documents — not the investment, and not the headline.
+          Recharts stays below-fold either way. */}
       <section className="space-y-3">
-        <div>
-          <SectionTag>Token Holders</SectionTag>
-          <h2 className="font-heading text-xl text-darkBg">Ownership</h2>
-        </div>
-        <LazyMount placeholder={<Shimmer className="h-72 w-full" />}>
-          <Suspense fallback={<Shimmer className="h-72 w-full" />}>
-            <OwnershipVisualization />
-          </Suspense>
-        </LazyMount>
+        <details className="rounded-xl border border-paleGreen/60 bg-white px-5 py-4">
+          <summary className="cursor-pointer font-heading text-xl text-darkBg">
+            Ownership record details
+          </summary>
+          <p className="mt-3 max-w-3xl text-sm text-textMuted">
+            Your investment is the project-entity interest described in your
+            subscription and operating documents. The permissioned digital record
+            shown below supports ownership administration.
+          </p>
+          <div className="mt-4">
+            <LazyMount placeholder={<Shimmer className="h-72 w-full" />}>
+              <Suspense fallback={<Shimmer className="h-72 w-full" />}>
+                <OwnershipVisualization />
+              </Suspense>
+            </LazyMount>
+          </div>
+          <div className="mt-4 border-t border-paleGreen/60 pt-3">
+            <ChainHeartbeat />
+          </div>
+        </details>
       </section>
 
       {/* Pipeline & target markets map (differentiation spec §1). */}

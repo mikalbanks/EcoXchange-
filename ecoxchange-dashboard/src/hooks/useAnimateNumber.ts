@@ -47,7 +47,15 @@ export function useAnimateNumber(
       { threshold: 0.2 },
     );
     observer.observe(el);
-    return () => observer.disconnect();
+    // Safety net: the pre-animation value is 0, so a stat whose observer never
+    // fires reads as a real "0" — on a published statistic that is a wrong
+    // number, not a missing animation. If nothing has intersected shortly
+    // after mount, count up anyway.
+    const fallback = window.setTimeout(() => setInView(true), 1200);
+    return () => {
+      observer.disconnect();
+      window.clearTimeout(fallback);
+    };
   }, [startOnView, inView]);
 
   useEffect(() => {

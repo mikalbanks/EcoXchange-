@@ -1,4 +1,5 @@
 import { useEffect, useRef } from "react";
+import { PUBLICATION_MAD_PCT, PUBLICATION_N } from "@shared/benchmark";
 
 export function SunPathDiagram() {
   const ticksRef = useRef<SVGGElement>(null);
@@ -96,7 +97,10 @@ export function SunPathDiagram() {
           fig. I · diurnal sun-path, lat. 35°00′ N
         </text>
       </svg>
-      <div className="diagram-caption label">OBS. 04 · ±9.8% mean deviation · n = 3,882 plants</div>
+      <div className="diagram-caption label">
+        OBS. 04 · ±{PUBLICATION_MAD_PCT.toFixed(1)}% mean absolute deviation · n ={" "}
+        {PUBLICATION_N.toLocaleString("en-US")} plants
+      </div>
     </figure>
   );
 }

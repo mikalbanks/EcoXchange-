@@ -9,7 +9,7 @@
 
 import { useRef, useState } from "react";
 import { Download } from "lucide-react";
-import benchmark from "../data/benchmark-results.json";
+import benchmark, { targetSegment } from "../data/benchmark.js";
 import { StatCard } from "../components/StatCard.js";
 import { AnimatedNumber } from "../components/shared/AnimatedNumber.js";
 import { EngineBenchmark } from "../components/verification/EngineBenchmark.js";
@@ -28,7 +28,8 @@ const DISTRIBUTION = [
   { band: "±20%", publication: pub.within_20_pct_rate, fleet: benchmark.within_20_pct_rate },
 ];
 
-const TARGET_BUCKETS = new Set(["1–5 MW", "5–20 MW"]);
+const TARGET_SEGMENT = targetSegment();
+const TARGET_BUCKETS = new Set(TARGET_SEGMENT.map((b) => b.bucket));
 
 function DistributionBars() {
   return (
@@ -125,40 +126,19 @@ export function Benchmark() {
       {/* ── Hero: dark stat band ─────────────────────────────────────── */}
       <section className="bg-darkBg px-5 py-8 sm:px-8">
         <p className="font-mono text-[11px] uppercase tracking-[0.08em] text-olive">
-          § ENGINE VALIDATION
+          § INDEPENDENT ENGINE VALIDATION
         </p>
         <h1 className="mt-1 font-heading text-3xl text-cream">
-          EcoXchange Verification Engine {ENGINE_VERSION}
+          Verification Engine {ENGINE_VERSION} benchmark results
         </h1>
         <p className="mt-2 max-w-2xl text-sm text-lightGreen">
-          Validated against {benchmark.plants_succeeded.toLocaleString()} U.S.
-          solar plants — EIA-923 reported generation,{" "}
-          {benchmark.benchmark_year} data, NASA POWER satellite irradiance.
+          Modeled generation was compared with {benchmark.benchmark_year} EIA-923
+          reported output for {benchmark.plants_succeeded.toLocaleString()} U.S.
+          solar plants using NASA POWER irradiance inputs. Publication-cohort and
+          full-fleet results are shown separately so exclusions remain visible.
         </p>
         <div className="mt-6 grid grid-cols-2 gap-4 lg:grid-cols-4">
           {[
-            {
-              value: (
-                <AnimatedNumber
-                  value={pub.mean_absolute_deviation_pct}
-                  format={(n) => `±${n.toFixed(1)}%`}
-                  startOnView
-                />
-              ),
-              label: "Mean deviation",
-              sub: `publication cohort · full fleet ±${benchmark.mean_absolute_deviation_pct.toFixed(1)}%`,
-            },
-            {
-              value: (
-                <AnimatedNumber
-                  value={pub.within_10_pct_rate}
-                  format={(n) => `${n.toFixed(1)}%`}
-                  startOnView
-                />
-              ),
-              label: "Within ±10%",
-              sub: `${pub.within_10_pct.toLocaleString()} plants`,
-            },
             {
               value: (
                 <AnimatedNumber
@@ -171,9 +151,37 @@ export function Benchmark() {
               sub: `${benchmark.success_rate_pct.toFixed(0)}% run success`,
             },
             {
-              value: <span>pvlib</span>,
-              label: "ModelChain + NASA POWER",
-              sub: "Perez transposition",
+              value: (
+                <AnimatedNumber
+                  value={pub.mean_absolute_deviation_pct}
+                  format={(n) => `±${n.toFixed(1)}%`}
+                  startOnView
+                />
+              ),
+              label: "Publication-cohort mean absolute deviation",
+              sub: `n=${pub.n.toLocaleString()}`,
+            },
+            {
+              value: (
+                <AnimatedNumber
+                  value={benchmark.mean_absolute_deviation_pct}
+                  format={(n) => `±${n.toFixed(1)}%`}
+                  startOnView
+                />
+              ),
+              label: "Full-fleet mean absolute deviation",
+              sub: `n=${benchmark.plants_succeeded.toLocaleString()}`,
+            },
+            {
+              value: (
+                <AnimatedNumber
+                  value={pub.within_10_pct_rate}
+                  format={(n) => `${n.toFixed(1)}%`}
+                  startOnView
+                />
+              ),
+              label: "Publication cohort within ±10%",
+              sub: `${pub.within_10_pct.toLocaleString()} plants`,
             },
           ].map((stat, i) => (
             <div key={i} className="border border-lightGreen/20 p-4">
@@ -191,17 +199,6 @@ export function Benchmark() {
         </div>
       </section>
 
-      {/* ── Accuracy distribution ────────────────────────────────────── */}
-      <section>
-        <SectionTag>ACCURACY DISTRIBUTION</SectionTag>
-        <h2 className="font-heading text-2xl text-darkBg">
-          Share of Plants Within Each Tolerance
-        </h2>
-        <Card variant="bordered" padding="spacious" className="mt-4">
-          <DistributionBars />
-        </Card>
-      </section>
-
       {/* ── Target segment callout ───────────────────────────────────── */}
       <section>
         <SectionTag>TARGET SEGMENT</SectionTag>
@@ -211,78 +208,44 @@ export function Benchmark() {
           className="border-l-4 !border-l-accentBrt"
         >
           <h2 className="font-heading text-2xl text-darkBg">
-            EcoXchange's Target Segment: 1–20 MW
+            Performance in EcoXchange's 1–20 MW target segment
           </h2>
-          <div className="mt-4 grid grid-cols-1 gap-4 sm:grid-cols-2">
-            {pub.by_capacity
-              .filter((b) => TARGET_BUCKETS.has(b.bucket))
-              .map((b) => (
-                <StatCard
-                  key={b.bucket}
-                  label={b.bucket}
-                  value={
-                    <AnimatedNumber
-                      value={b.mean_abs_deviation_pct ?? 0}
-                      format={(n) => `±${n.toFixed(1)}%`}
-                      startOnView
-                    />
-                  }
-                  sublabel={`mean absolute deviation · ${b.count.toLocaleString()} plants`}
-                />
-              ))}
+          {/* Deliberately not animated. These two figures are the ones the
+              acceptance criteria pin and the ones the exported PDF must match;
+              a count-up renders them as ±0.0% until it completes. */}
+          <div
+            className="mt-4 grid grid-cols-1 gap-4 sm:grid-cols-2"
+            data-testid="benchmark-target-segment"
+          >
+            {TARGET_SEGMENT.map((b) => (
+              <StatCard
+                key={b.bucket}
+                label={b.bucket}
+                value={`±${b.meanAbsDeviationPct.toFixed(1)}%`}
+                sublabel={`mean absolute deviation · ${b.count.toLocaleString()} plants`}
+              />
+            ))}
           </div>
           <p className="mt-4 text-sm text-textDark">
-            For projects in EcoXchange's target size range, the engine holds
-            mean absolute deviation under ±10% — precisely where the platform
-            originates.
+            The publication-cohort benchmark produced mean absolute deviation of{" "}
+            {TARGET_SEGMENT.map(
+              (b) => `±${b.meanAbsDeviationPct.toFixed(1)}% for ${b.bucket}`,
+            ).join(" plants and ")}{" "}
+            plants. These results describe model-to-reported-generation
+            agreement across the benchmark cohort; they are not a guarantee of
+            accuracy for an individual project or month.
           </p>
         </Card>
       </section>
 
-      {/* ── State breakdown ──────────────────────────────────────────── */}
+      {/* ── Accuracy distribution ────────────────────────────────────── */}
       <section>
-        <SectionTag>BY STATE</SectionTag>
+        <SectionTag>ACCURACY DISTRIBUTION</SectionTag>
         <h2 className="font-heading text-2xl text-darkBg">
-          Top 10 States (Publication Cohort)
+          Share of Plants Within Each Tolerance
         </h2>
-        <Card variant="bordered" padding="standard" className="mt-4">
-          <div className="space-y-2.5">
-            {pub.by_state.map((s) => {
-              const isTarget = ["NY", "IL", "MA", "GA"].includes(s.state);
-              const width = Math.min(
-                100,
-                (s.mean_abs_deviation_pct / 15) * 100,
-              );
-              return (
-                <div key={s.state} className="flex items-center gap-3">
-                  <span
-                    className={`w-9 font-mono text-xs ${
-                      isTarget
-                        ? "font-bold text-darkBg"
-                        : "text-textMuted"
-                    }`}
-                  >
-                    {s.state}
-                    {isTarget ? "★" : ""}
-                  </span>
-                  <div className="h-4 flex-1 bg-paleGreen/30">
-                    <div
-                      className={`h-full ${isTarget ? "bg-accentBrt" : "bg-medGreen/70"}`}
-                      style={{ width: `${width}%` }}
-                    />
-                  </div>
-                  <span className="w-24 text-right font-mono text-xs text-darkBg tabular-nums">
-                    ±{s.mean_abs_deviation_pct.toFixed(1)}% · n=
-                    {s.count}
-                  </span>
-                </div>
-              );
-            })}
-          </div>
-          <p className="mt-3 font-mono text-[11px] text-textMuted">
-            ★ EcoXchange target states (NY, IL, MA, GA) · shorter bar = lower
-            deviation
-          </p>
+        <Card variant="bordered" padding="spacious" className="mt-4">
+          <DistributionBars />
         </Card>
       </section>
 
@@ -337,11 +300,58 @@ export function Benchmark() {
         </div>
       </section>
 
-      {/* ── Methodology + export ─────────────────────────────────────── */}
-      <section className="space-y-4">
+      {/* ── State breakdown ──────────────────────────────────────────── */}
+      <section>
+        <SectionTag>BY STATE</SectionTag>
+        <h2 className="font-heading text-2xl text-darkBg">
+          Top 10 States (Publication Cohort)
+        </h2>
+        <Card variant="bordered" padding="standard" className="mt-4">
+          <div className="space-y-2.5">
+            {pub.by_state.map((s) => {
+              const isTarget = ["NY", "IL", "MA", "GA"].includes(s.state);
+              const width = Math.min(
+                100,
+                (s.mean_abs_deviation_pct / 15) * 100,
+              );
+              return (
+                <div key={s.state} className="flex items-center gap-3">
+                  <span
+                    className={`w-9 font-mono text-xs ${
+                      isTarget
+                        ? "font-bold text-darkBg"
+                        : "text-textMuted"
+                    }`}
+                  >
+                    {s.state}
+                    {isTarget ? "★" : ""}
+                  </span>
+                  <div className="h-4 flex-1 bg-paleGreen/30">
+                    <div
+                      className={`h-full ${isTarget ? "bg-accentBrt" : "bg-medGreen/70"}`}
+                      style={{ width: `${width}%` }}
+                    />
+                  </div>
+                  <span className="w-24 text-right font-mono text-xs text-darkBg tabular-nums">
+                    ±{s.mean_abs_deviation_pct.toFixed(1)}% · n=
+                    {s.count}
+                  </span>
+                </div>
+              );
+            })}
+          </div>
+          <p className="mt-3 font-mono text-[11px] text-textMuted">
+            ★ EcoXchange target states (NY, IL, MA, GA) · shorter bar = lower
+            deviation
+          </p>
+        </Card>
+      </section>
+
+      {/* ── Assumptions and known limitations ────────────────────────── */}
+      <section>
         <div className="bg-cream px-5 py-4">
           <p className="font-mono text-[11px] uppercase tracking-[0.08em] text-olive">
-            § METHODOLOGY
+            § METHODOLOGY, ASSUMPTIONS, AND LIMITATIONS
           </p>
           <div className="mt-2 space-y-1.5 font-mono text-xs leading-relaxed text-darkBg">
             <p>
@@ -356,9 +366,45 @@ export function Benchmark() {
               single-axis tracking show higher deviation under fixed-tilt
               assumptions — a known limitation of the fleet-wide approach.
             </p>
-            <p>Publication cohort: {pub.rule}</p>
           </div>
         </div>
+      </section>
+
+      {/* ── Cohort exclusions ────────────────────────────────────────── */}
+      <section>
+        <SectionTag>COHORT EXCLUSIONS</SectionTag>
+        <Card variant="bordered" padding="spacious" className="mt-4">
+          <p className="text-sm text-textDark">
+            Publication-cohort results exclude documented high-curtailment and
+            severe-underperformance cases under the stated rules. Full-fleet
+            results remain displayed alongside the publication cohort. Users
+            should consider both views.
+          </p>
+          <p className="mt-3 font-mono text-xs leading-relaxed text-darkBg">
+            {pub.rule}
+          </p>
+          <dl className="mt-4 grid grid-cols-2 gap-x-6 gap-y-2 font-mono text-xs sm:grid-cols-4">
+            {[
+              ["Excluded, total", pub.excluded_total],
+              ["Curtailment state", pub.excluded_curtailment_state],
+              ["Severe underperformer", pub.excluded_underperformer],
+              ["Both reasons", pub.excluded_both],
+            ].map(([label, count]) => (
+              <div key={label as string}>
+                <dt className="uppercase tracking-wide text-textMuted">
+                  {label}
+                </dt>
+                <dd className="mt-0.5 tabular-nums text-darkBg">
+                  {(count as number).toLocaleString()}
+                </dd>
+              </div>
+            ))}
+          </dl>
+        </Card>
+      </section>
+
+      {/* ── Export + version ─────────────────────────────────────────── */}
+      <section className="space-y-4">
         <div className="flex flex-wrap items-center gap-3">
           <Button
             variant="accent"
@@ -368,9 +414,22 @@ export function Benchmark() {
             data-testid="benchmark-pdf-download"
           >
             <span className="inline-flex items-center gap-1.5">
-              <Download className="h-4 w-4" /> Download as PDF
+              <Download className="h-4 w-4" /> Download benchmark report
             </span>
           </Button>
+          <a
+            href="/benchmark-results.json"
+            download={`EcoXchange_Benchmark_${benchmark.benchmark_date}.json`}
+            className="font-mono text-xs font-medium uppercase tracking-wide text-medGreen underline-offset-2 hover:underline"
+          >
+            Download result data and exclusions →
+          </a>
+          <a
+            href="https://www.ecoxchange.net/verification"
+            className="font-mono text-xs font-medium uppercase tracking-wide text-medGreen underline-offset-2 hover:underline"
+          >
+            Review engine methodology →
+          </a>
           {generating ? (
             <p
               className="font-mono text-[11px] text-textMuted"
@@ -382,6 +441,12 @@ export function Benchmark() {
                 : "Preparing report…"}
             </p>
           ) : null}
+        </div>
+        <div className="flex flex-wrap items-center gap-3">
+          <p className="font-mono text-[11px] uppercase tracking-[0.08em] text-textMuted">
+            Engine {ENGINE_VERSION} · benchmarked {benchmark.benchmark_date} ·{" "}
+            {benchmark.data_source}
+          </p>
           <div className="flex-1 min-w-[280px]">
             <EngineBenchmark />
           </div>

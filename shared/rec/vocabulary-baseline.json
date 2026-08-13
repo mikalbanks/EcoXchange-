@@ -13,17 +13,6 @@
       "decision": "Rename the product in user-facing copy, or record a counsel-cleared exception."
     },
     {
-      "file": "client/src/pages/landing.tsx",
-      "termId": "patent-pending",
-      "count": 1,
-      "samples": [
-        "Patent-pending"
-      ],
-      "category": "pending-decision",
-      "reason": "'Patent-pending' as a feature-card title on the public landing page. § 6 prohibits it outright. Either an application is on file and counsel has cleared the wording, or this comes out.",
-      "decision": "Confirm filing status with counsel, then keep with cleared wording or remove."
-    },
-    {
       "file": "client/src/pages/operations.tsx",
       "termId": "oracle",
       "count": 8,

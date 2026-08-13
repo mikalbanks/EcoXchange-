@@ -54,19 +54,19 @@ export function DistributionCard({ holding, totalReceived }: Props) {
         ) : null}
       </div>
       <p className="text-sm text-textMuted">
-        {holding.tokens_held} tokens · {formatUsd(holding.cost_basis)} invested
+        {formatUsd(holding.cost_basis)} project interest
       </p>
 
       <div className="mt-3 border-t border-paleGreen/50 pt-3 text-sm">
-        <span className="text-textMuted">Monthly Distribution: </span>
+        <span className="text-textMuted">Latest distribution: </span>
         <span className="font-mono font-semibold text-darkBg">
-          ~{formatUsd(estimatedMonthly, true)} USDC
+          ~{formatUsd(estimatedMonthly, true)}
         </span>
       </div>
 
       <div className="mt-4">
         <div className="mb-2 text-xs font-semibold uppercase tracking-wide text-textMuted">
-          Distribution Preference
+          Payment preference
         </div>
         <DripToggle value={pref} onSelect={onSelect} />
       </div>
@@ -74,14 +74,14 @@ export function DistributionCard({ holding, totalReceived }: Props) {
       {pref === "reinvest" ? (
         <p className="mt-3 flex items-start gap-2 rounded-lg bg-paleGreen/30 px-3 py-2 text-xs text-darkBg">
           <Info className="mt-0.5 h-3.5 w-3.5 shrink-0 text-medGreen" />
-          Preference saved — DRIP activation is pending on-chain reinvestment. Until
-          then, distributions continue as cash out.
+          Preference saved — reinvestment is pending activation. Until then, you
+          continue to receive distributions.
         </p>
       ) : null}
 
       <div className="mt-4 flex flex-wrap items-center justify-between gap-2 border-t border-paleGreen/50 pt-3">
         <div className="text-sm">
-          <span className="text-textMuted">Total Distributions Received: </span>
+          <span className="text-textMuted">Lifetime distributions: </span>
           <span className="font-mono font-semibold text-darkBg">
             {formatUsd(totalReceived, true)}
           </span>
@@ -90,7 +90,7 @@ export function DistributionCard({ holding, totalReceived }: Props) {
           to="/investor/distributions"
           className="inline-flex items-center gap-1 text-sm font-medium text-medGreen hover:text-darkBg"
         >
-          View Distribution History <ArrowRight className="h-4 w-4" />
+          Distribution history <ArrowRight className="h-4 w-4" />
         </Link>
       </div>
 

@@ -3,7 +3,7 @@
 // jsPDF pipeline (src/reports/pdf.ts). Bars are plain styled divs, not
 // Recharts SVG: html2canvas rasterizes divs far more reliably.
 
-import benchmark from "../data/benchmark-results.json";
+import benchmark, { targetSegment } from "../data/benchmark.js";
 import { ENGINE_VERSION } from "../config/engine.js";
 
 const pub = benchmark.publication;
@@ -59,7 +59,7 @@ export function BenchmarkReportDoc() {
         <div className="mt-4 flex gap-3">
           <Stat
             value={`±${pub.mean_absolute_deviation_pct.toFixed(1)}%`}
-            label="Mean deviation"
+            label="Mean absolute deviation"
           />
           <Stat
             value={`${pub.within_10_pct_rate.toFixed(1)}%`}
@@ -103,14 +103,12 @@ export function BenchmarkReportDoc() {
           Target Segment: 1–20 MW
         </h2>
         <div className="mt-2 flex gap-8 font-mono text-[11px] text-textDark">
-          {pub.by_capacity
-            .filter((b) => b.bucket === "1–5 MW" || b.bucket === "5–20 MW")
-            .map((b) => (
-              <span key={b.bucket}>
-                {b.bucket}: ±{b.mean_abs_deviation_pct?.toFixed(1)}% ·{" "}
-                {b.count.toLocaleString()} plants
-              </span>
-            ))}
+          {targetSegment().map((b) => (
+            <span key={b.bucket}>
+              {b.bucket}: ±{b.meanAbsDeviationPct.toFixed(1)}% ·{" "}
+              {b.count.toLocaleString()} plants
+            </span>
+          ))}
         </div>
         <p className="mt-2 text-[10.5px] text-textDark">
           In EcoXchange's origination range, the engine holds mean absolute

@@ -54,7 +54,7 @@ The demo repeatedly shows yields above the ceiling the landing page advertises.
 proxy" of **1.2% – 8.3%** — not one reaches the advertised floor. A prospective investor
 comparing the two pages sees the product underperform its own headline by 2–10 points.
 
-### B-3 — Headline accuracy metric is different on each site
+### B-3 — Headline accuracy metric is different on each site — RESOLVED
 
 - `www` home: **"99.74%"** — "Verification confidence on satellite-reconciled production data" (`landing.tsx:7`), repeated in the hero figure as `OBS. 04 · 99.74% CONFIDENCE · N = 8,760 HRS`.
 - `demo` /benchmark and /reference: **"±9.8% mean deviation"**, "66.3% within ±10%", full fleet ±13.0%, across 5,065 plants.
@@ -63,7 +63,14 @@ These are the two sites' central credibility numbers and they are not reconcilab
 99.74% figure appears nowhere in the codebase's benchmark data and carries no source note,
 while the ±9.8% figure is backed by `ecoxchange-dashboard/src/data/benchmark-results.json`.
 
-### B-4 — Two-source vs. three-source verification story
+**Resolved.** The 99.74% "confidence" figure is gone from `www`. The artifact moved to
+`shared/benchmark/benchmark-results.json` and both sites now read it through
+`shared/benchmark/index.ts` — the homepage proof strip, the benchmark module, the
+`SunPathDiagram` caption, `/benchmark` and the exported PDF all resolve from the same
+object, so they cannot diverge again. `shared/benchmark/benchmark.test.ts` guards the
+cohort labels and the target-segment values under the root `npm test`.
+
+### B-4 — Two-source vs. three-source verification story — RESOLVED
 
 - `www` home §II: "cross-references satellite irradiance **against utility net-meter data**" — two sources. Footer strapline reinforces it: `SATELLITE × UTILITY METER · AUDITABLE · HARDWARE-FREE`. Also described as a "**double-entry** reconciliation engine".
 - `www` /method: "**Three sources**, one ledger" / "3 Independent production sources" (inverter API, utility meter, satellite).
@@ -72,6 +79,10 @@ while the ±9.8% figure is backed by `ecoxchange-dashboard/src/data/benchmark-re
 
 The home page is the only place describing it as two sources — and it is the page most
 visitors see first.
+
+**Resolved.** The homepage hero, the §II verification section and the footer strapline
+(`Inverter × Utility Meter × Satellite Model`) now all describe three sources, matching
+`/verification`, `/faq` and the demo.
 
 ### B-5 — Developer cost comparison: different totals on each site
 

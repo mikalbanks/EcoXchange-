@@ -19,15 +19,24 @@ export function ProjectCard({ project }: { project: PortfolioProject }) {
         <VerificationBadge status={project.latest_verification} />
       </div>
 
-      <div className="text-sm text-textMuted">
-        Latest period:{" "}
-        <span className="text-textDark">{formatMonthLong(project.latest_period)}</span>
+      <div className="font-mono text-xs uppercase tracking-wide text-textMuted">
+        {project.latest_verification} ·{" "}
+        {formatMonthLong(project.latest_period)}
       </div>
+
+      {/* Say what the status means, not just what it is. */}
+      <p className="text-sm text-textDark">
+        {project.latest_verification === "verified"
+          ? "All three sources reconciled within tolerance. No open production exceptions."
+          : project.latest_verification === "flagged"
+            ? "Sources did not reconcile within tolerance. Distribution processing is on hold pending review."
+            : "Awaiting one or more production sources for this period."}
+      </p>
 
       <div className="grid grid-cols-2 gap-4">
         <div>
           <div className="text-xs uppercase tracking-wide text-textMuted">
-            YTD Production
+            YTD Verified Production
           </div>
           <div className="font-heading text-xl text-darkBg mt-1">
             {formatMwh(project.ytd_production_mwh)}
@@ -35,26 +44,33 @@ export function ProjectCard({ project }: { project: PortfolioProject }) {
         </div>
         <div>
           <div className="text-xs uppercase tracking-wide text-textMuted">
-            Monthly Yield
+            Latest Distribution
           </div>
           <div className="font-heading text-xl text-darkBg mt-1">
             <YieldDisclosure
               value={formatUsd(project.monthly_yield_usd)}
               type="cash_distribution"
               basis="modeled"
-            />{" "}
-            <span className="text-sm text-textMuted">USDC</span>
+            />
           </div>
         </div>
       </div>
 
       {/* Mobile: full-width outlined CTA (>=44px target). Desktop: text link. */}
-      <Link
-        to={`/investor/project/${project.id}`}
-        className="inline-flex items-center gap-1 font-medium text-medGreen hover:text-darkBg w-full min-h-[44px] justify-center rounded-lg border border-medGreen sm:w-auto sm:min-h-0 sm:justify-start sm:self-start sm:rounded-none sm:border-0"
-      >
-        View Project <ChevronRight className="h-4 w-4" />
-      </Link>
+      <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:gap-4">
+        <Link
+          to={`/investor/project/${project.id}/verification/${project.latest_period}`}
+          className="inline-flex items-center gap-1 font-medium text-medGreen hover:text-darkBg w-full min-h-[44px] justify-center rounded-lg border border-medGreen sm:w-auto sm:min-h-0 sm:justify-start sm:rounded-none sm:border-0"
+        >
+          View Verification Record <ChevronRight className="h-4 w-4" />
+        </Link>
+        <Link
+          to={`/investor/project/${project.id}`}
+          className="inline-flex items-center gap-1 text-sm font-medium text-textMuted hover:text-darkBg w-full min-h-[44px] justify-center sm:w-auto sm:min-h-0 sm:justify-start"
+        >
+          View Project Details <ChevronRight className="h-4 w-4" />
+        </Link>
+      </div>
     </div>
   );
 }

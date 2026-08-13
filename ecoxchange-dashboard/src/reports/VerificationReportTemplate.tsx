@@ -2,7 +2,7 @@ import type { ReactNode } from "react";
 import { complianceMode } from "../compliance/config/complianceMode.js";
 import { disclaimerConfig } from "../compliance/config/disclaimerConfig.js";
 import { ENGINE_VERSION } from "../config/engine.js";
-import benchmarkData from "../data/benchmark-results.json";
+import benchmarkData, { targetSegmentWeightedMad } from "../data/benchmark.js";
 import { formatMonthShort, formatUsd } from "../utils/formatters.js";
 import type { ProjectMeta, ProjectSummary, VerificationRecord } from "../utils/types.js";
 
@@ -18,15 +18,7 @@ export interface ReportInput {
 // Count-weighted mean absolute deviation over the 1–5 and 5–20 MW buckets of
 // the publication (healthy-fleet) cohort — the EcoXchange target segment
 // cited in the methodology section.
-const targetSegmentMad: number | null = (() => {
-  const rows = benchmarkData.publication.by_capacity.filter(
-    (b) => (b.bucket === "1–5 MW" || b.bucket === "5–20 MW") &&
-      b.count > 0 && b.mean_abs_deviation_pct !== null,
-  );
-  const n = rows.reduce((s, b) => s + b.count, 0);
-  if (n === 0) return null;
-  return rows.reduce((s, b) => s + b.count * (b.mean_abs_deviation_pct as number), 0) / n;
-})();
+const targetSegmentMad: number | null = targetSegmentWeightedMad();
 
 const fmtInt = (n: number) => Math.round(n).toLocaleString("en-US");
 const fmtSigned = (pct: number) => `${pct >= 0 ? "+" : ""}${pct.toFixed(1)}%`;

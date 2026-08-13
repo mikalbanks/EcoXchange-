@@ -3,7 +3,7 @@
 // stay dumb, and the numbers (revenue, dynamic fees, benchmark stats,
 // filename) are unit-tested without touching the DOM.
 
-import benchmark from "../../data/benchmark-results.json";
+import benchmark, { targetSegmentRange } from "../../data/benchmark.js";
 import { DEMO_SCENARIOS, type DemoScenarioId } from "../../data/demo-scenarios.js";
 import type { StoredBacktestResult } from "../../utils/backtest-store.js";
 import {
@@ -101,16 +101,16 @@ function coordsLabel(lat: number, lng: number): string {
 }
 
 function pickTargetSegmentMads(): { low: number; high: number } {
-  const buckets = benchmark.publication.by_capacity.filter(
-    (b) => b.bucket === "1–5 MW" || b.bucket === "5–20 MW",
-  );
-  const values = buckets
-    .map((b) => b.mean_abs_deviation_pct)
-    .filter((v): v is number => v != null);
-  return {
-    low: Math.min(...values),
-    high: Math.max(...values),
-  };
+  // The bucket lookup lives in shared/benchmark so the page, this report and
+  // the homepage cannot drift apart. Empty buckets are already filtered out
+  // there, so a missing range means the artifact itself is unusable.
+  const range = targetSegmentRange();
+  if (!range) {
+    throw new Error(
+      "benchmark artifact reports no usable 1–20 MW target-segment deviations",
+    );
+  }
+  return range;
 }
 
 export function buildVerificationReportModel(
