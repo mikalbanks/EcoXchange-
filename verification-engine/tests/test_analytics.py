@@ -289,6 +289,22 @@ class TestConfidenceIntervalIsMandatory:
         )
         assert result.confidence_level == 95.0
 
+    def test_an_interval_spanning_zero_is_called_out(self):
+        """The point estimate hides this, and it is the whole finding.
+
+        "−0.25 %/yr" reads as a measured decline. "−0.25, and the data is
+        equally consistent with the plant improving" is what was established.
+        A certificate that prints only the first is the failure §3 is written
+        against, so the engine attaches an explicit note.
+        """
+        import inspect
+
+        from analytics import trend
+
+        source = inspect.getsource(trend.run_degradation)
+        assert "NOT DISTINGUISHABLE FROM ZERO" in source
+        assert "ci_low < 0 < result.ci_high" in source.replace("result.ci_low", "ci_low")
+
     def test_confidence_level_reaches_rdtools_as_a_yoy_kwarg(self):
         """The constant only matters if it is actually passed.
 
@@ -335,6 +351,37 @@ class TestSoilingBoundsInvert:
                 ci_high=(1.0 - 0.99) * 100.0,    # 1.0
                 ratio=0.97,
             )
+
+    def test_an_implausibly_large_loss_is_flagged(self):
+        """SRR finds shapes, not causes.
+
+        Gradual decline then abrupt recovery is soiling's signature — and also
+        snow-and-melt's, and also a cloudy spell followed by a clear day when
+        the normalization has not removed weather. A double-digit "soiling"
+        result is usually the third case, and the number looks perfectly
+        well-formed either way.
+        """
+        result = SoilingResult(
+            project_id="p", method="clearsky",
+            window_start=date(2014, 8, 1), window_end=date(2018, 2, 28),
+            loss_pct=12.3, ci_low=7.7, ci_high=18.5, ratio=0.877,
+        )
+        assert result.implausibly_large is True
+
+    def test_an_ordinary_loss_is_not_flagged(self):
+        result = SoilingResult(
+            project_id="p", method="clearsky",
+            window_start=date(2016, 1, 1), window_end=date(2018, 1, 1),
+            loss_pct=1.8, ci_low=1.1, ci_high=2.6, ratio=0.982,
+        )
+        assert result.implausibly_large is False
+
+    def test_no_signal_is_not_implausible(self):
+        result = SoilingResult(
+            project_id="p", method="clearsky",
+            window_start=date(2016, 1, 1), window_end=date(2018, 1, 1),
+        )
+        assert result.implausibly_large is False
 
     def test_no_soiling_signal_is_a_recorded_result(self):
         result = SoilingResult(

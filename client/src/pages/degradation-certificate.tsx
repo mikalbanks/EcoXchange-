@@ -135,12 +135,27 @@ function RateCard({
 
         <IntervalBar rate={rate} low={low} high={high} />
 
-        <Qualifier>
-          The interval is the finding as much as the rate is. A central estimate
-          of {rate.toFixed(2)} %/yr with a band from {low?.toFixed(2)} to{" "}
-          {high?.toFixed(2)} says the data is consistent with any rate in that
-          range — quoting the midpoint alone overstates what was measured.
-        </Qualifier>
+        {/* An interval spanning zero is the most important thing on this page,
+            so it sits above the general explanation rather than below it. */}
+        {low !== null && high !== null && low < 0 && high > 0 ? (
+          <Qualifier tone="warning">
+            <strong>This analysis did not establish that the plant is
+            degrading.</strong> The 95% interval runs from {low.toFixed(2)} to{" "}
+            {high.toFixed(2)} %/yr and includes zero, so the record is equally
+            consistent with no degradation at all. The {rate.toFixed(2)} %/yr
+            figure is the centre of that range and should not be quoted on its
+            own — the honest summary is that the available record is too short
+            or too noisy to resolve a trend of this size.
+          </Qualifier>
+        ) : (
+          <Qualifier>
+            The interval is the finding as much as the rate is. A central
+            estimate of {rate.toFixed(2)} %/yr with a band from{" "}
+            {low?.toFixed(2)} to {high?.toFixed(2)} says the data is consistent
+            with any rate in that range — quoting the midpoint alone overstates
+            what was measured.
+          </Qualifier>
+        )}
 
         {inBand === false ? (
           <Qualifier tone="warning">
@@ -155,7 +170,11 @@ function RateCard({
         <NotesPanel
           notes={row.notes}
           match={(n) =>
-            n.startsWith("Site caveat:") || n.startsWith("Rate of")
+            n.startsWith("Site caveat:") ||
+            n.startsWith("Rate of") ||
+            n.startsWith("WIDE INTERVAL:") ||
+            n.startsWith("NOT DISTINGUISHABLE") ||
+            n.startsWith("This system publishes no plane-of-array")
           }
           title="Qualifications"
         />

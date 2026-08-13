@@ -59,6 +59,15 @@ const provenanceSchema = z
     degradation_within_plausible_range: z.boolean().nullable().optional(),
     soiling_signal_found: z.boolean().optional(),
     expected_annual_kwh: z.number().nullable().optional(),
+    /**
+     * Where the "measured" irradiance behind the clear-sky filter came from.
+     * `satellite_reanalysis` means no site pyranometer exists and hourly NASA
+     * POWER stood in — which screens cloud more coarsely, so soiling results in
+     * particular need reading with that in mind.
+     */
+    poa_source: z
+      .enum(["site_sensor", "satellite_reanalysis", "none"])
+      .optional(),
     gamma_pdc: z.number().optional(),
     gamma_pdc_source: z.string().optional(),
     temperature_model: z.string().optional(),

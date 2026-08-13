@@ -48,6 +48,20 @@ PLAUSIBLE_DEGRADATION_RANGE = (-2.5, -0.2)
 #: diagnostic and should be surfaced, not averaged away."
 METHOD_DISAGREEMENT_THRESHOLD = 0.5
 
+#: Annual soiling losses above this are real only in specific circumstances — a
+#: desert site with no cleaning programme, or heavy local industrial or
+#: agricultural dust. Elsewhere a large SRR result is usually the method
+#: recognising something that is not soiling.
+#:
+#: The mechanism matters, because it is not obvious: SRR looks for gradual
+#: decline followed by abrupt recovery. Any process with that shape reads as
+#: soiling. Snow cover and melt has it. So does weather itself, if the
+#: normalization has not successfully removed it — a run of cloudy days followed
+#: by a clear one is a decline and a recovery. That makes an unfiltered or
+#: weakly-filtered series prone to reporting large "soiling" that is entirely
+#: meteorological, and the result looks perfectly well-formed when it does.
+PLAUSIBLE_SOILING_MAX_PCT = 6.0
+
 
 @dataclass
 class DegradationResult:
@@ -160,6 +174,19 @@ class SoilingResult:
     @property
     def signal_found(self) -> bool:
         return self.loss_pct is not None
+
+    @property
+    def implausibly_large(self) -> bool:
+        """Whether the loss is too large to take at face value.
+
+        A property, not a filter. The result is reported either way; this exists
+        so the report can say "treat this as a flag that something is wrong,
+        not as a cleaning budget."
+        """
+        return (
+            self.loss_pct is not None
+            and self.loss_pct > PLAUSIBLE_SOILING_MAX_PCT
+        )
 
     def to_dict(self) -> dict:
         return _serializable(asdict(self))

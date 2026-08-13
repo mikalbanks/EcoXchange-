@@ -17,3 +17,8 @@ data/fleet/**
 # rather than re-reading a 1.8 GB CSV per month. Disposable; regenerate with
 # scripts/ingest_pvdaq.py.
 data/pvdaq_cache/
+# Assembled multi-year analytics windows (spec 22). Months concatenated across
+# the registry window, QC-error periods already dropped — tens of MB per system
+# and rebuildable from the lake. Disposable; regenerate with
+# scripts/run_analytics.py. The committed artifact is reports/plant_analytics.json.
+data/analytics_cache/

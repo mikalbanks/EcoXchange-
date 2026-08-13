@@ -35,7 +35,7 @@ ROOT = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(ROOT / "src"))
 
 from analytics.registry import (                                # noqa: E402
-    EXCLUDED_SYSTEMS, SEED_PROJECTS, AnalyticsProject,
+    EXCLUDED_SYSTEMS, SEED_PROJECTS, AnalyticsProject, project_uuid,
 )
 from analytics.results import (                                 # noqa: E402
     MIN_MONTHS_FOR_DEGRADATION, PLAUSIBLE_DEGRADATION_RANGE,
@@ -85,11 +85,11 @@ def score_acceptance(rows: list[dict], records: list[dict]) -> list[dict]:
     failed = [r for r in records if r.get("error")]
 
     low, high = PLAUSIBLE_DEGRADATION_RANGE
-    nrel_systems = {1332, 4902}
-    nrel_rows = [
-        r for r in clearsky
-        if any(str(s) in r["project_id"] for s in nrel_systems)
-    ]
+    # §6.2 names 1332 and 4902 specifically. Matched by their deterministic
+    # project uuids rather than by substring: `str(1332) in project_id` would
+    # also match any uuid that happens to contain those digits.
+    nrel_project_ids = {project_uuid(s) for s in (1332, 4902)}
+    nrel_rows = [r for r in clearsky if r["project_id"] in nrel_project_ids]
     in_band = [
         r for r in nrel_rows
         if r.get("degradation_pct_per_yr") is not None

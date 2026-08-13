@@ -55,6 +55,7 @@ from .registry import AnalyticsProject, get_project
 from .results import (
     METHOD_DISAGREEMENT_THRESHOLD,
     MIN_MONTHS_FOR_DEGRADATION,
+    PLAUSIBLE_SOILING_MAX_PCT,
     AvailabilityResult,
     DegradationResult,
     PlantAnalyticsRow,
@@ -75,6 +76,11 @@ CONFIDENCE_LEVEL = 95.0
 #: read as production.
 INTERP_FREQ = "15min"
 MAX_TIMEDELTA = pd.Timedelta("1h")
+
+#: The grid AvailabilityAnalysis runs on. Same reasoning as INTERP_FREQ, plus a
+#: hard requirement: RdTools derives the interval length from the index
+#: frequency and refuses an irregular one outright.
+AVAILABILITY_FREQ = "15min"
 
 
 def _rdtools_version() -> str:
@@ -126,8 +132,8 @@ def build_trend_analysis(project_id, window_years: float = 2.0):
     return _construct(project, series)[0]
 
 
-def _construct(project: AnalyticsProject, series: pd.DataFrame):
-    """`(TrendAnalysis, provenance)` for an already-assembled series."""
+def _construct(project: AnalyticsProject, series: pd.DataFrame, method: str = "clearsky"):
+    """`(TrendAnalysis, provenance, site, cfg)` for an already-assembled series."""
     from ingestion import get_adapter
     from rdtools import TrendAnalysis
 
@@ -145,8 +151,31 @@ def _construct(project: AnalyticsProject, series: pd.DataFrame):
         "interp_freq": INTERP_FREQ,
         "max_timedelta": MAX_TIMEDELTA,
     }
-    if "poa_irradiance_wm2" in series.columns:
+    poa_source = "none"
+    if "poa_irradiance_wm2" in series.columns and series["poa_irradiance_wm2"].notna().any():
         kwargs["poa_global"] = series["poa_irradiance_wm2"].astype(float)
+        poa_source = "site_sensor"
+    elif method == "clearsky":
+        # RdTools' clear-sky workflow needs a MEASURED irradiance series even
+        # though it normalizes against the modelled one: `_filter` calls
+        # `clearsky_filter` unconditionally for `case == "clearsky"`, and that
+        # filter is a comparison of measured against modelled. It is not
+        # configurable — deleting it from `filter_params` has no effect — so a
+        # system with no pyranometer cannot run the analysis at all as written.
+        #
+        # Satellite reanalysis supplies the measured leg. That is not a
+        # workaround dressed up as a method: hardware-free measurement is the
+        # premise of this product, the same NASA POWER series already drives the
+        # expected-energy leg these systems are reconciled against, and the
+        # resulting clear-sky index is a real comparison of observed sky against
+        # clear sky rather than a tautology.
+        #
+        # What must NOT happen is passing the modelled clear-sky series as both
+        # arguments. The clear-sky index would be 1.0 everywhere, every period
+        # would pass the filter, and the run would claim clear-sky filtering
+        # while filtering nothing.
+        kwargs["poa_global"] = _satellite_poa(cfg, series.index)
+        poa_source = "satellite_reanalysis"
     if "ambient_temp_c" in series.columns:
         kwargs["temperature_ambient"] = series["ambient_temp_c"].astype(float)
     if "module_temp_c" in series.columns:
@@ -158,6 +187,7 @@ def _construct(project: AnalyticsProject, series: pd.DataFrame):
 
     provenance = {
         **normalization_inputs(cfg),
+        "poa_source": poa_source,
         "interp_freq": INTERP_FREQ,
         "max_timedelta": str(MAX_TIMEDELTA),
         "aggregation_freq": "D",
@@ -171,6 +201,121 @@ def _construct(project: AnalyticsProject, series: pd.DataFrame):
         "azimuth_rows": site.extra.get("azimuth_rows"),
     }
     return ta, provenance, site, cfg
+
+
+def _pvlib_location(cfg):
+    import pvlib
+
+    return pvlib.location.Location(
+        latitude=cfg.location.latitude,
+        longitude=cfg.location.longitude,
+        altitude=cfg.location.altitude,
+        tz=cfg.location.tz,
+    )
+
+
+def _clearsky_poa(cfg, index: pd.DatetimeIndex) -> pd.Series:
+    """Modelled clear-sky plane-of-array irradiance on `index`."""
+    import pvlib
+
+    location = _pvlib_location(cfg)
+    solar = location.get_solarposition(index)
+    clearsky = location.get_clearsky(index, solar_position=solar)
+    return pvlib.irradiance.get_total_irradiance(
+        cfg.array.surface_tilt,
+        cfg.array.surface_azimuth,
+        solar["apparent_zenith"],
+        solar["azimuth"],
+        clearsky["dni"],
+        clearsky["ghi"],
+        clearsky["dhi"],
+        albedo=0.25,
+    )["poa_global"]
+
+
+def _satellite_poa(cfg, index: pd.DatetimeIndex) -> pd.Series:
+    """Observed plane-of-array irradiance from satellite reanalysis.
+
+    The stand-in for a site pyranometer, transposed from the same NASA POWER
+    series that drives the expected-energy leg. Perez, matching
+    `modelchain.py`'s `transposition_model="perez"` — a different transposition
+    here would put the two legs on different sky models.
+
+    NASA POWER is hourly and the analysis grid is sub-hourly, so the result is
+    interpolated. That is a resolution mismatch rather than an accuracy one:
+    what it feeds is a clear-sky index used to decide whether a period was
+    cloudy, and cloud cover does not resolve at fifteen minutes in an hourly
+    reanalysis product either way.
+    """
+    import pvlib
+
+    from verification_engine.irradiance import fetch_nasa_power
+
+    location = _pvlib_location(cfg)
+    start = index.min().date()
+    end = index.max().date()
+    weather = fetch_nasa_power(cfg.location, start.isoformat(), end.isoformat())
+    weather = weather.tz_convert("UTC")
+
+    solar = location.get_solarposition(weather.index)
+    poa = pvlib.irradiance.get_total_irradiance(
+        cfg.array.surface_tilt,
+        cfg.array.surface_azimuth,
+        solar["apparent_zenith"],
+        solar["azimuth"],
+        weather["dni"],
+        weather["ghi"],
+        weather["dhi"],
+        albedo=0.25,
+        model="perez",
+        dni_extra=pvlib.irradiance.get_extra_radiation(weather.index),
+        airmass=location.get_airmass(weather.index)["airmass_relative"],
+    )["poa_global"]
+
+    combined = poa.reindex(poa.index.union(index)).interpolate(
+        method="time", limit_direction="both"
+    )
+    return combined.reindex(index).clip(lower=0.0)
+
+
+def _prepare_clearsky(ta, cfg, has_poa: bool, notes: list[str]) -> None:
+    """Configure the clear-sky workflow, including for systems with no POA sensor.
+
+    RdTools models clear-sky POA itself, but only via `_calc_clearsky_poa`,
+    which with `times=None` reads `self.poa_global.index` to choose its grid and
+    then rescales the modelled series to the measured one. Supplying
+    `poa_global_clearsky` directly skips that path, which is what we want: the
+    rescale-to-measured step is the one part of the clear-sky workflow that
+    reintroduces a dependence on the irradiance measurement, and §2.2 chose this
+    method precisely to avoid that dependence.
+
+    (Without a `poa_global` at all, `_calc_clearsky_poa` dereferences `None` and
+    RdTools catches the AttributeError and re-raises it as *"No
+    poa_global_clearsky. 'set_clearsky' must be run prior to
+    'clearsky_analysis'"* — which is actively misleading, because `set_clearsky`
+    was run. `_construct` supplies satellite irradiance so that path is never
+    reached.)
+    """
+    ta.set_clearsky(
+        pvlib_location=_pvlib_location(cfg),
+        pv_tilt=cfg.array.surface_tilt,
+        pv_azimuth=cfg.array.surface_azimuth,
+        poa_global_clearsky=_clearsky_poa(cfg, ta.pv_energy.index),
+    )
+    if not has_poa:
+        notes.append(
+            "This system publishes no plane-of-array irradiance channel. "
+            "Clear-sky POA is modelled from solar geometry, and the observed "
+            "irradiance the clear-sky filter compares it against comes from "
+            "NASA POWER satellite reanalysis — the same source behind the "
+            "expected-energy leg — rather than a site pyranometer. Degradation "
+            "is therefore measured without depending on site instrumentation, "
+            "which is the point of the clear-sky method; the trade is that "
+            "hourly reanalysis resolves cloud cover more coarsely than an "
+            "on-site sensor would, so the clear-sky filter is a blunter "
+            "instrument here and the confidence interval is correspondingly "
+            "wider."
+        )
 
 
 def _run_analyses(project: AnalyticsProject, method: str) -> dict:
@@ -203,7 +348,7 @@ def _run_analyses(project: AnalyticsProject, method: str) -> dict:
         _ANALYSIS_CACHE[key] = result
         return result
 
-    ta, provenance, site, cfg = _construct(project, assembled.series)
+    ta, provenance, site, cfg = _construct(project, assembled.series, method=method)
     result["provenance"] = {**provenance, "method": method}
     result["site"] = site
     result["cfg"] = cfg
@@ -235,18 +380,7 @@ def _run_analyses(project: AnalyticsProject, method: str) -> dict:
         with warnings.catch_warnings(record=True) as caught:
             warnings.simplefilter("always")
             if method == "clearsky":
-                import pvlib
-
-                ta.set_clearsky(
-                    pvlib_location=pvlib.location.Location(
-                        latitude=cfg.location.latitude,
-                        longitude=cfg.location.longitude,
-                        altitude=cfg.location.altitude,
-                        tz=cfg.location.tz,
-                    ),
-                    pv_tilt=cfg.array.surface_tilt,
-                    pv_azimuth=cfg.array.surface_azimuth,
-                )
+                _prepare_clearsky(ta, cfg, assembled.has_poa, result["notes"])
                 ta.clearsky_analysis(analyses=analyses, yoy_kwargs=yoy_kwargs)
                 bucket = ta.results["clearsky"]
             else:
@@ -351,6 +485,32 @@ def run_degradation(project_id, method: str = "clearsky") -> DegradationResult:
             f"measured, with the site's caveats attached — the band is a "
             f"prompt to look, not a filter."
         )
+
+    # An interval spanning zero is the single most important thing a reader can
+    # be told about a degradation rate, and it is the thing a point estimate
+    # hides most effectively. "−0.25 %/yr" reads as a measurement of decline;
+    # "−0.25, and the data is equally consistent with the plant improving" is
+    # what was actually established. A certificate that omits this is the exact
+    # failure §3 is written against.
+    if result.ci_low is not None and result.ci_high is not None:
+        if result.ci_low < 0 < result.ci_high:
+            notes.append(
+                f"NOT DISTINGUISHABLE FROM ZERO: the 95% interval runs from "
+                f"{result.ci_low:.2f} to {result.ci_high:.2f} %/yr and includes "
+                f"zero. This analysis did not establish that the plant is "
+                f"degrading. The point estimate of {rate:.2f} %/yr is the "
+                f"centre of that range and should not be quoted on its own — "
+                f"the honest summary is that the available record is too short "
+                f"or too noisy to resolve a trend of this size."
+            )
+        elif abs(result.ci_high - result.ci_low) > 2.0:
+            notes.append(
+                f"WIDE INTERVAL: the 95% band spans "
+                f"{abs(result.ci_high - result.ci_low):.2f} percentage points. "
+                f"The sign of the trend is established but its magnitude is "
+                f"not well constrained; a longer record or on-site irradiance "
+                f"would narrow it."
+            )
     for caveat in project.caveats:
         notes.append(f"Site caveat: {caveat}")
     return result
@@ -412,7 +572,7 @@ def run_soiling(project_id, method: str = "clearsky") -> SoilingResult:
             f"{ci!r}. The point estimate is reported; treat it as indicative."
         )
 
-    return SoilingResult(
+    result = SoilingResult(
         **base,
         loss_pct=loss_pct,
         ci_low=ci_low,
@@ -420,6 +580,30 @@ def run_soiling(project_id, method: str = "clearsky") -> SoilingResult:
         ratio=ratio,
         notes=notes,
     )
+
+    if result.implausibly_large:
+        poa_source = (analysis.get("provenance") or {}).get("poa_source")
+        notes.append(
+            f"TREAT WITH CAUTION: {loss_pct:.1f}% is far above the "
+            f"{PLAUSIBLE_SOILING_MAX_PCT:.0f}% that soiling plausibly reaches "
+            f"outside a desert site with no cleaning programme. SRR identifies "
+            f"soiling by its shape — gradual decline, abrupt recovery — and "
+            f"anything with that shape reads as soiling, including snow cover "
+            f"and melt, and including weather itself whenever the normalization "
+            f"has not fully removed it."
+        )
+        if poa_source == "satellite_reanalysis":
+            notes.append(
+                "The likeliest explanation here is the second one. This system "
+                "has no irradiance sensor, so clear-sky filtering runs against "
+                "hourly satellite reanalysis interpolated to the analysis grid. "
+                "That filter is blunt: cloudy periods survive it, and a run of "
+                "cloudy days followed by a clear one has exactly the "
+                "decline-then-recovery signature SRR is looking for. Read this "
+                "number as evidence that the site needs an irradiance sensor "
+                "before a soiling claim can be made, NOT as a cleaning budget."
+            )
+    return result
 
 
 # ── Availability ──────────────────────────────────────────────────────────────
@@ -456,11 +640,26 @@ def run_availability(project_id, period: date | None = None) -> AvailabilityResu
             **base, notes=["No availability result: no usable telemetry."]
         )
 
-    series = assembled.series
+    # RdTools' `energy_from_power` needs a regular index — it derives the
+    # interval length from the index frequency and raises "Could not determine
+    # period of input power" on anything else. An assembled window never has
+    # one: it is months concatenated across gaps, refused periods and logger
+    # rate changes. Resampling to an explicit grid is what makes it an input.
+    #
+    # Gaps are preserved as NaN rather than filled. AvailabilityAnalysis reads
+    # NaN, zero and very-low values as the signature of an outage, so bridging a
+    # gap here would erase the exact events being measured.
+    series = assembled.series.resample(AVAILABILITY_FREQ).mean()
     power_system = series["ac_power_w"].astype(float)
 
     subsystem, subsystem_note = load_subsystem_power(project, series)
-    notes = [f"Subsystem power: {subsystem_note}."]
+    subsystem = subsystem.resample(AVAILABILITY_FREQ).mean().reindex(series.index)
+    notes = [
+        f"Subsystem power: {subsystem_note}.",
+        f"Series resampled to a regular {AVAILABILITY_FREQ} grid for this "
+        f"analysis; gaps are preserved as missing rather than filled, since a "
+        f"filled gap is an erased outage.",
+    ]
     if len(subsystem.columns) < 2:
         notes.append(
             "With a single power channel RdTools cannot see one subsystem fall "

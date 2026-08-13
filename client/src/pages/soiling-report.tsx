@@ -47,6 +47,11 @@ export default function SoilingReportPage() {
 function SoilingCard({ row }: { row: PlantAnalyticsRow }) {
   const loss = row.soiling_loss_pct;
   const estimated = row.provenance?.ppa_rate_basis === "estimated";
+  // Mirrors PLAUSIBLE_SOILING_MAX_PCT on the engine side. Above this, SRR has
+  // most likely locked onto something with a soiling-shaped signature that is
+  // not soiling — snow and melt, or weather the normalization did not remove.
+  const implausible = loss !== null && loss > 6;
+  const satellitePoa = row.provenance?.poa_source === "satellite_reanalysis";
 
   if (loss === null) {
     return (
@@ -108,6 +113,31 @@ function SoilingCard({ row }: { row: PlantAnalyticsRow }) {
           ) : null}
         </div>
 
+        {/* Above the dollar figure on purpose. A reader who stops at the
+            revenue number must already have been told not to trust it. */}
+        {implausible ? (
+          <Qualifier tone="warning">
+            <strong>Treat this figure with caution.</strong> {loss.toFixed(1)}%
+            is far above what soiling plausibly reaches outside a desert site
+            with no cleaning programme. The method identifies soiling by its
+            shape — gradual decline, abrupt recovery — so anything with that
+            shape reads as soiling, including snow cover and melt, and including
+            weather itself when the normalization has not fully removed it.
+            {satellitePoa ? (
+              <>
+                {" "}
+                That last case is the likeliest here: this system has no
+                irradiance sensor, so cloudy periods are screened using hourly
+                satellite data, and a run of cloudy days followed by a clear one
+                has exactly the decline-then-recovery signature the method looks
+                for. Read this as evidence that the site needs an irradiance
+                sensor before a soiling claim can be made — not as a cleaning
+                budget.
+              </>
+            ) : null}
+          </Qualifier>
+        ) : null}
+
         <div
           className="rounded-lg border border-border/60 bg-muted/30 p-4"
           data-testid="stat-soiling-usd"
@@ -140,7 +170,9 @@ function SoilingCard({ row }: { row: PlantAnalyticsRow }) {
           </Qualifier>
         ) : null}
 
-        <CleaningImplication lossPct={loss} lossUsd={row.soiling_loss_usd} />
+        {implausible ? null : (
+          <CleaningImplication lossPct={loss} lossUsd={row.soiling_loss_usd} />
+        )}
 
         <NotesPanel
           notes={row.notes}
