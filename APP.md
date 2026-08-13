@@ -1,36 +1,67 @@
 # EcoXchange
 
-**Digital Securities Platform for Renewable Energy**
+**Independent Production Verification for Solar Assets**
+
+---
+
+## Positioning rule — read before writing any user-facing copy
+
+Every surface communicates the business in this order. This is not a style
+preference; it is what the product actually is, and the public site, the demo
+and the investor dashboard are all built to it.
+
+1. **Verification leads.** EcoXchange independently verifies monthly solar
+   production using inverter telemetry, utility meter data, and
+   satellite-modeled expected generation.
+2. **The determination drives action.** Each project receives a verified,
+   flagged, or pending determination. Investor distributions are gated by that
+   determination.
+3. **Securities are the first application.** EcoXchange administers private
+   placements of interests in individual solar-project entities for verified
+   accredited investors under Reg D 506(c).
+4. **Tokenization is plumbing.** Permissioned digital records may support
+   ownership administration and distribution workflows, but they are not the
+   product and not the investment.
+
+Do not lead with `digital securities`, `tokens`, `blockchain`, `wallet`,
+`USDC`, or chain telemetry. Do not describe EcoXchange as a
+`regulated platform` unless counsel has approved that exact claim.
 
 ---
 
 ## What is EcoXchange?
 
-EcoXchange is a digital securities platform for renewable energy, enabling accredited investors to earn yield backed by real-world energy production. The platform provides compliant digital issuance, yield distribution, and investment infrastructure for tokenized renewable energy securities structured as SPV membership interests under Reg D 506(c).
+EcoXchange independently verifies how much electricity a solar project produces each month. The engine reconciles inverter telemetry, utility meter data, and satellite-modeled generation to issue a verified, flagged, or pending determination for each project-month, and investor distributions are released only after verification.
+
+The first application of that determination is capital formation: EcoXchange administers private placements of equity interests in individual U.S. solar-project entities to verified accredited investors under Reg D 506(c). Each offering stays tied to one project and one auditable production record.
 
 ### The Financial Product
 
 | Element | Detail |
 |---------|--------|
-| Asset Type | Digitized renewable energy securities |
-| Structure | Security token representing SPV membership interest (equity, revenue-share, or structured yield claim) |
+| What is verified | Monthly project-level production, reconciled across three independent sources |
+| Determination | Verified · flagged · pending — gates distribution processing |
+| Asset Type | Equity interest in a single project entity, governed by the offering documents |
+| Structure | SPV membership interest (equity, revenue-share, or structured yield claim) |
 | Backing | Real-world renewable energy projects held in project-level SPVs (Delaware LLCs) |
-| Yield Source | Energy production revenue, PPAs, structured project cash flows |
+| Distribution Source | Energy production revenue, PPAs, structured project cash flows |
 | Deal Size | $1M – $5M per project offering (Phase 1) |
+| Target Segment | Permitted 1–20 MW U.S. solar projects |
 | Minimum Investment | TBD — targeting $10K–$25K |
 
 ### Core Characteristics
 
-- **Income-generating**: yield derived from contracted energy revenues
-- **Asset-backed**: every token represents a claim on a real energy project SPV
+- **Independently verified**: three production sources reconciled monthly, not developer self-reporting
+- **Distribution-gated**: payment proceeds only after the period's determination is verified
+- **Income-generating**: distributions derived from contracted energy revenues
+- **Asset-backed**: every interest is a claim on a real energy project SPV
 - **Transparent**: production data, revenue flows, and distributions visible on platform
-- **Programmable**: distribution logic enforced through smart compliance engine
 - **Compliant**: issued under SEC exemptions with transfer restrictions
 - **Tradable**: secondary market planned for Phase 3 via ATS integration
 
 ### SPV Structure
 
-Each renewable energy project is held within a dedicated Special Purpose Vehicle (Delaware LLC). EcoXchange facilitates the tokenization of membership interests in these SPVs. Revenue flows from energy production through the PPA into the SPV, and is distributed pro rata to token holders after operating expenses, debt service, and reserves.
+Each renewable energy project is held within a dedicated Special Purpose Vehicle (Delaware LLC). Investors hold membership interests in these SPVs. Revenue flows from energy production through the PPA into the SPV, and is distributed pro rata to project-interest holders after operating expenses, debt service, and reserves. A permissioned digital record may support ownership administration; the investment itself is the interest described in the subscription and operating documents.
 
 ---
 
@@ -38,15 +69,36 @@ Each renewable energy project is held within a dedicated Special Purpose Vehicle
 
 | Phase | Positioning |
 |-------|-------------|
-| **Phase 1** (Current) | Digital securities issuance and yield platform |
-| **Phase 2** | Integrated securities and yield distribution infrastructure |
-| **Phase 3** | Regulated marketplace for renewable energy securities |
+| **Phase 1** (Current) | Independent production verification, applied to project-level capital formation |
+| **Phase 2** | Verification-gated distribution infrastructure at scale |
+| **Phase 3** | Capital-formation and production-verification platform with secondary liquidity |
 
 ### Brand Language
 
-**Use:** digital securities, structured yield, compliant platform, regulated infrastructure, asset-backed tokens, private capital infrastructure
+**Use:** independent production verification, monthly determination, verified/flagged/pending, distribution gate, three-source reconciliation, project interest, private placement, capital-formation and production-verification platform
 
 **Avoid:** crypto exchange, DeFi, permissionless, unregulated, democratizing finance, marketplace (until Phase 3)
+
+**Do not lead with:** digital securities, tokens, tokenized, blockchain, wallet, USDC, chain telemetry — these describe administration plumbing, not the product. They may appear in technical surfaces (`/explorer`, ownership-record detail) but never in a hero, a primary heading, or a first-row dashboard metric.
+
+**Never claim without counsel sign-off:** `regulated platform`.
+
+### Terminology
+
+| Do not write | Write |
+|---|---|
+| Digital securities for renewable energy | Independent production verification for solar assets |
+| Regulated digital-securities platform | Capital-formation and production-verification platform |
+| Token holders | Project-interest holders, or investors |
+| ESN holdings | Project interest / ownership interest |
+| Monthly yield | Latest distribution, or estimated monthly distribution |
+| Verified yield | Production-verified distribution data |
+| Distribution contract | Distribution workflow |
+| Cash out to wallet | Receive distribution |
+| Reinvest / auto-buy tokens | Reinvestment preference, if legally supported |
+| On-chain result | Tamper-evident verification record (technical detail secondary) |
+| One ledger | One auditable monthly determination |
+| Mean deviation (when the figure is absolute) | Mean absolute deviation |
 
 ---
 
@@ -54,8 +106,9 @@ Each renewable energy project is held within a dedicated Special Purpose Vehicle
 
 | Pillar | Description |
 |--------|-------------|
-| **Digital Securities Issuance** | Tokenized renewable energy securities (SPV membership interests), offering management workflows, cap table tracking, compliance gating |
-| **Yield Infrastructure** (Key Differentiator) | Revenue ingestion from SCADA systems, production-based yield calculations (MWh -> PPA revenue -> net distributable income), automated pro-rata distribution logic, transparent reporting dashboards |
+| **Production Verification** (Key Differentiator) | Three-source monthly reconciliation — inverter telemetry, utility meter, satellite-modeled generation — producing a verified/flagged/pending determination per project-month, benchmarked against EIA-923 reported generation |
+| **Distribution Infrastructure** | Revenue ingestion from SCADA systems, production-based distribution calculations (MWh -> PPA revenue -> net distributable income), automated pro-rata logic gated on the determination, transparent reporting dashboards |
+| **Capital Formation** | Private placements of project-entity interests, offering management workflows, cap table tracking, compliance gating |
 | **Investment Infrastructure** | Investor onboarding (KYC/AML, accreditation verification), project discovery, offering participation, investor dashboards |
 | **Compliance-First Architecture** | Broker-dealer partnership integration, transfer agent integration, securities transfer restrictions, KYC/AML with ongoing monitoring, blue sky compliance |
 | **Liquidity Layer** (Phase 3) | Compliant secondary trading via ATS, transfer restrictions enforced programmatically, holding period logic (Reg D 12-month lockup) |
@@ -337,8 +390,7 @@ Both projects include complete documents and checklists. The approved project ha
 - Background: near-black (#0B0F0C)
 - Card backgrounds: #101712
 - Tone: Institutional credibility, securities compliance awareness, climate infrastructure seriousness
-- Use: Digital securities, structured yield, compliant platform, regulated infrastructure, asset-backed tokens
-- Avoid: Crypto exchange, DeFi, permissionless, unregulated, democratizing finance, marketplace (until Phase 3)
+- Copy vocabulary: see **Brand Language** and **Terminology** above — that is the single source of truth, and it leads with verification, not with securities or tokens
 
 ---
 

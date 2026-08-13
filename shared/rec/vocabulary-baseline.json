@@ -151,17 +151,6 @@
       "category": "pending-decision",
       "reason": "'Solcast Sky Oracle' in seeded project summaries and the SCADA connector registry. Line 558 is an investor-visible project summary; line 658 is an approval note. Also carries the 'solcast-sky-oracle' slug, grouped for the same reason as operations.tsx.",
       "decision": "Same branding decision; the connector slug and seed copy move together."
-    },
-    {
-      "file": "web/index.html",
-      "termId": "patent-pending",
-      "count": 1,
-      "samples": [
-        "Patent-pending"
-      ],
-      "category": "pending-decision",
-      "reason": "'<h3>Patent-pending</h3>' on the marketing site. Same claim as landing.tsx, same decision.",
-      "decision": "Follows the landing.tsx decision."
     }
   ]
 }

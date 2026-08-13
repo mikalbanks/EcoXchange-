@@ -1,9 +1,10 @@
 # EcoXchange — Claude Code Instructions
 
-EcoXchange is a digital securities platform for renewable energy. For the product overview see `APP.md`; for the stack and operational notes see `replit.md`.
+EcoXchange independently verifies monthly solar production — reconciling inverter telemetry, utility meter data, and satellite-modeled generation into a verified/flagged/pending determination that gates investor distributions. Private placements of project-entity interests are the first application of that determination, not the product itself. For the product overview see `APP.md`; for the stack and operational notes see `replit.md`.
 
 ## Working agreements
 
+- **Before writing user-facing copy, read the positioning rule and terminology table at the top of `APP.md`.** Verification leads; the determination's consequence for distributions is always stated; securities are the first application; tokenization is plumbing. Do not lead with `digital securities`, `tokens`, `blockchain`, `wallet`, or `USDC`, and never call EcoXchange a `regulated platform` without counsel sign-off.
 - Develop on the assigned feature branch. Do not push to `main` without explicit approval.
 - Prefer editing existing files. The repo already has working modules for SCADA ingestion, backtest, SGT waterfall, and yield distribution — extend those rather than re-implementing.
 - Telemetry sources go through the spec 21 ingestion interface (`verification-engine/src/ingestion/base.py`). Implement `InverterAdapter` and `register()` it; never import a vendor module from reconciliation. Before extending the PVDAQ adapter, read `docs/specs/EcoXchange_Spec_21_Ingestion_Findings.md` — the published lake diverges from the spec in several ways that produce plausible wrong numbers rather than errors.
