@@ -146,7 +146,7 @@ function SoilingCard({ row }: { row: PlantAnalyticsRow }) {
           <p className="text-3xl font-semibold">
             {formatUsd(row.soiling_loss_usd)}
             {estimated ? (
-              <span className="ml-2 align-middle text-sm font-normal text-amber-300">
+              <span className="ml-2 align-middle text-sm font-normal text-amber-700 dark:text-amber-300">
                 estimated
               </span>
             ) : null}

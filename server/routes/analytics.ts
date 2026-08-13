@@ -54,11 +54,15 @@ export function registerAnalyticsRoutes(app: Express): void {
     analyticsLimiter,
     async (req, res) => {
       try {
-        const project = await getPlantAnalyticsProject(req.params.id);
+        // Express types a route param as `string | string[]` — a repeated
+        // `:id` in the query string arrives as an array. Coerce once here so
+        // the lookup and the 404 message agree on what was asked for.
+        const projectId = String(req.params.id);
+        const project = await getPlantAnalyticsProject(projectId);
         if (!project) {
           const analytics = await getPlantAnalytics();
           return res.status(404).json({
-            message: `No analytics for project ${req.params.id}.`,
+            message: `No analytics for project ${projectId}.`,
             available: analytics.projects.map((p) => ({
               projectId: p.projectId,
               name: p.name,

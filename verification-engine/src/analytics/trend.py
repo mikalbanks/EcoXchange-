@@ -975,12 +975,16 @@ def refresh_analytics(project_id, sink=None, as_of: date | None = None) -> str:
             lost_production_kwh=availability.lost_production_kwh,
         )
 
-        notes = [
+        # Deduplicated, order preserved. `run_degradation` and `run_soiling`
+        # share one cached RdTools pass, so anything that pass recorded — the
+        # satellite-irradiance explanation, the assembly notes — arrives on both
+        # and would otherwise be printed twice on the same report.
+        notes = _dedupe([
             *degradation.notes,
             *soiling.notes,
             *availability.notes,
             *economics.notes,
-        ]
+        ])
         if disagreement_note:
             notes.append(disagreement_note)
         if len(methods) > 1:
@@ -1041,6 +1045,17 @@ def refresh_analytics(project_id, sink=None, as_of: date | None = None) -> str:
             sink.write(row)
 
     return rows[0].id if rows else ""
+
+
+def _dedupe(notes: list[str]) -> list[str]:
+    """Drop repeats, keep first-seen order."""
+    seen: set[str] = set()
+    out: list[str] = []
+    for note in notes:
+        if note not in seen:
+            seen.add(note)
+            out.append(note)
+    return out
 
 
 def _method_disagreement(degradations: dict[str, DegradationResult]) -> str | None:

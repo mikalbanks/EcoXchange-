@@ -88,7 +88,7 @@ function AvailabilityCard({ row }: { row: PlantAnalyticsRow }) {
         {derived ? (
           <Badge
             variant="outline"
-            className="border-amber-500/40 bg-amber-500/10 text-amber-300"
+            className="border-amber-500/60 bg-amber-50 text-amber-900 dark:bg-amber-500/10 dark:text-amber-300"
             data-testid="badge-derived-basis"
           >
             Lower bound
@@ -206,7 +206,7 @@ function Stat({
       <p className="mt-1 text-2xl font-semibold" data-testid={testId}>
         {value}
         {suffix ? (
-          <span className="ml-2 align-middle text-xs font-normal text-amber-300">
+          <span className="ml-2 align-middle text-xs font-normal text-amber-700 dark:text-amber-300">
             {suffix}
           </span>
         ) : null}
@@ -241,11 +241,15 @@ function MonthlyChart({ row }: { row: PlantAnalyticsRow }) {
                 className="text-xs text-muted-foreground"
                 interval="preserveStartEnd"
               />
-              {/* Not zero-based on purpose: availability lives in the top few
-                  percent, and a 0-100 axis flattens every month into the same
-                  bar. The axis label says where it starts. */}
+              {/* Zero-based. A truncated axis exaggerates variation, and on a
+                  report someone takes to a lender that is the wrong direction
+                  to be wrong in. It was briefly [90, 100] on the theory that
+                  availability only varies in the top few percent — but these
+                  systems run months in the 40-60% range, Recharts silently
+                  widened the domain to fit them, and the caption underneath
+                  went on claiming a 90% floor that was not there. */}
               <YAxis
-                domain={[90, 100]}
+                domain={[0, 100]}
                 stroke="currentColor"
                 className="text-xs text-muted-foreground"
                 tickFormatter={(v: number) => `${v}%`}
@@ -262,9 +266,9 @@ function MonthlyChart({ row }: { row: PlantAnalyticsRow }) {
           </ResponsiveContainer>
         </div>
         <p className="mt-2 text-xs text-muted-foreground">
-          Axis starts at 90% — availability varies in the top few percent, and a
-          full 0–100% scale renders every month as an identical bar. Months below
-          90% are clipped at the axis floor.
+          Axis is zero-based, so bar heights are proportional to the figures they
+          represent. Months with no bar produced no availability figure — see the
+          qualifications above for why.
         </p>
       </CardContent>
     </Card>

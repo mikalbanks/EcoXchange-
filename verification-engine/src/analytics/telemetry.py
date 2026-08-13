@@ -300,8 +300,17 @@ def load_subsystem_power(
     note = f"{len(aligned.columns)} per-inverter AC power channels"
     dormant = _long_dormant_channels(aligned)
     if dormant:
+        # Named, but not all of them. On a 40-inverter site nearly every channel
+        # trips this, and pasting forty column names into the note buried the
+        # caution itself in a wall of identifiers — the reader skims past the
+        # thing the note exists to say.
+        shown = ", ".join(dormant[:3])
+        if len(dormant) > 3:
+            shown += f" and {len(dormant) - 3} other channel(s)"
         note += (
-            f". CAUTION — {', '.join(dormant)} carries a run of more than 30 days "
+            f". CAUTION — {shown} "
+            f"({len(dormant)} of {len(aligned.columns)} in total) "
+            f"carries a run of more than 30 days "
             f"with no data at all. Spec 21 §2.11 records that a PVDAQ system's "
             f"available channels change within its own record (1332's "
             f"inv3_ac_power is present through 2016 and absent by mid-2017), so a "

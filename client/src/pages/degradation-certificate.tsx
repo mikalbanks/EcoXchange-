@@ -98,7 +98,7 @@ function RateCard({
         {inBand === false ? (
           <Badge
             variant="outline"
-            className="border-amber-500/40 bg-amber-500/10 text-amber-300"
+            className="border-amber-500/60 bg-amber-50 text-amber-900 dark:bg-amber-500/10 dark:text-amber-300"
             data-testid="badge-outside-band"
           >
             Outside typical range
@@ -167,13 +167,16 @@ function RateCard({
           </Qualifier>
         ) : null}
 
+        {/* `NOT DISTINGUISHABLE FROM ZERO` and `Rate of ... falls outside` are
+            deliberately excluded: both are already rendered above as their own
+            callouts, and repeating them here trains the reader to skim the
+            qualifications block — which is where the site-specific caveats
+            live. */}
         <NotesPanel
           notes={row.notes}
           match={(n) =>
             n.startsWith("Site caveat:") ||
-            n.startsWith("Rate of") ||
             n.startsWith("WIDE INTERVAL:") ||
-            n.startsWith("NOT DISTINGUISHABLE") ||
             n.startsWith("This system publishes no plane-of-array")
           }
           title="Qualifications"

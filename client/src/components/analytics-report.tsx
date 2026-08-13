@@ -89,12 +89,17 @@ export function Qualifier({
 }) {
   const warning = tone === "warning";
   const Icon = warning ? AlertTriangle : Info;
+  // Light-first, with a dark: variant. The app's default palette is light
+  // (`darkMode: ["class"]`, no class on <html>), and amber-200 on amber-500/10
+  // renders as pale-on-pale there — which put the single most important
+  // sentence on the certificate, the one saying the rate cannot be
+  // distinguished from zero, at the lowest contrast on the page.
   return (
     <div
       className={`flex gap-2 rounded-md border p-3 text-sm ${
         warning
-          ? "border-amber-500/40 bg-amber-500/10 text-amber-200"
-          : "border-border/60 bg-muted/40 text-muted-foreground"
+          ? "border-amber-500/60 bg-amber-50 text-amber-900 dark:bg-amber-500/10 dark:text-amber-200"
+          : "border-border/60 bg-muted/40 text-foreground/80"
       }`}
       data-testid={`qualifier-${tone}`}
     >
@@ -222,7 +227,8 @@ export function ReportShell({
  */
 function WindowAndProvenance({ project }: { project: ProjectAnalytics }) {
   const row = primaryRow(project);
-  const provenance = row?.provenance ?? {};
+  const provenance: Partial<PlantAnalyticsRow["provenance"]> =
+    row?.provenance ?? {};
   return (
     <Card className="border-border/50" data-testid="card-provenance">
       <CardHeader>
