@@ -22,6 +22,23 @@ export interface LoadOptions {
 
 export { liveMode };
 
+/**
+ * The project any "show me a verification record" entry point lands on — the
+ * demo entry card and the sidebar's Verification item both need a concrete
+ * project and period, and neither can await a load before rendering a link.
+ *
+ * Derived from the portfolio fixture rather than hard-coded so the two links
+ * cannot drift from the data. Both the verified and flagged Savannah bundles
+ * cover the same period range, so this resolves under either scenario.
+ */
+export const PRIMARY_DEMO_PROJECT = {
+  id: portfolio.projects[0]?.id ?? "demo-savannah-5mw",
+  latestPeriod: portfolio.projects[0]?.latest_period ?? "2024-12-01",
+} as const;
+
+/** Route to the latest monthly determination for the primary demo project. */
+export const LATEST_VERIFICATION_PATH = `/investor/project/${PRIMARY_DEMO_PROJECT.id}/verification/${PRIMARY_DEMO_PROJECT.latestPeriod}`;
+
 // Investor placeholder constants — Phase 3 reads real production data from
 // Supabase, but the investor-account side (capital deployed, share pct) is
 // still mocked until that layer is built. Same values in demo mode for parity,

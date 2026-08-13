@@ -7,7 +7,6 @@ import {
   Leaf,
   Coins,
   Sparkles,
-  LineChart,
   FileText,
   Settings as SettingsIcon,
   Hammer,
@@ -15,12 +14,12 @@ import {
   BookOpen,
   PlayCircle,
   Link2,
-  Zap,
+  ShieldCheck,
   Sun,
 } from "lucide-react";
 import { useAuth } from "../../context/AuthContext.js";
 import { useDemo } from "../../context/DemoContext.js";
-import { liveMode } from "../../data/index.js";
+import { liveMode, LATEST_VERIFICATION_PATH } from "../../data/index.js";
 
 interface NavItem {
   to: string;
@@ -30,21 +29,27 @@ interface NavItem {
   disabled?: boolean;
   /** Hidden unless a live backend is configured (nothing to show without it). */
   liveOnly?: boolean;
+  /** Secondary items, rendered below the core portfolio nav under a heading. */
+  group?: "explore";
 }
 
+// Core order follows the determination: what the portfolio is, whether this
+// month verified, what it is invested in, what that pays out. Browsing tools
+// (marketplace, catalog, calculator, recommendations) are a different job and
+// sit under Explore so they don't compete with the status the investor came for.
 const INVESTOR_NAV: NavItem[] = [
-  { to: "/investor", label: "Portfolio", icon: LayoutDashboard, end: true },
-  { to: "/onboarding", label: "Recommendations", icon: Sparkles },
-  { to: "/investor/marketplace", label: "Marketplace", icon: Store },
-  { to: "/investor/catalog", label: "Solar Catalog", icon: Sun },
-  { to: "/investor/calculator", label: "Calculator", icon: CalculatorIcon },
-  { to: "/investor/impact", label: "Impact", icon: Leaf },
+  { to: "/investor", label: "Overview", icon: LayoutDashboard, end: true },
+  { to: LATEST_VERIFICATION_PATH, label: "Verification", icon: ShieldCheck },
+  { to: "/investor/marketplace", label: "Projects", icon: Store },
   { to: "/investor/distributions", label: "Distributions", icon: Coins },
-  { to: "/distribute", label: "Distribute", icon: Zap },
-  { to: "/investor/performance", label: "Performance", icon: LineChart, disabled: true },
+  { to: "/investor/impact", label: "Impact", icon: Leaf },
   { to: "/investor/documents", label: "Documents", icon: FileText, disabled: true },
-  { to: "/explorer", label: "Explorer", icon: Link2 },
+  { to: "/explorer", label: "Ownership Record", icon: Link2 },
   { to: "/investor/settings", label: "Settings", icon: SettingsIcon },
+
+  { to: "/onboarding", label: "Recommendations", icon: Sparkles, group: "explore" },
+  { to: "/investor/catalog", label: "Solar Catalog", icon: Sun, group: "explore" },
+  { to: "/investor/calculator", label: "Calculator", icon: CalculatorIcon, group: "explore" },
 ];
 
 const DEVELOPER_NAV: NavItem[] = [
@@ -57,9 +62,11 @@ const DEVELOPER_NAV: NavItem[] = [
 export function Sidebar({ onNavigate }: { onNavigate?: () => void }) {
   const { role } = useAuth();
   const { demoMode } = useDemo();
-  const items = (role === "developer" ? DEVELOPER_NAV : INVESTOR_NAV).filter(
+  const visible = (role === "developer" ? DEVELOPER_NAV : INVESTOR_NAV).filter(
     (item) => !item.liveOnly || liveMode,
   );
+  const items = visible.filter((item) => !item.group);
+  const exploreItems = visible.filter((item) => item.group === "explore");
 
   return (
     <div className="flex h-full flex-col bg-darkBg text-white">
@@ -73,40 +80,15 @@ export function Sidebar({ onNavigate }: { onNavigate?: () => void }) {
       </NavLink>
 
       <nav className="flex-1 px-3 space-y-1">
-        {items.map((item) => {
-          const Icon = item.icon;
-          if (item.disabled) {
-            return (
-              <span
-                key={item.to}
-                className="flex items-center gap-3 rounded-md px-3 py-2 text-sm text-paleGreen/50 cursor-not-allowed"
-                title="Coming soon"
-              >
-                <Icon className="h-5 w-5" />
-                <span className="flex-1">{item.label}</span>
-                <span className="text-[10px] uppercase tracking-wide">Soon</span>
-              </span>
-            );
-          }
-          return (
-            <NavLink
-              key={item.to}
-              to={item.to}
-              end={item.end}
-              onClick={onNavigate}
-              className={({ isActive }) =>
-                `flex items-center gap-3 rounded-md px-3 py-2 text-sm font-medium transition-colors duration-150 ${
-                  isActive
-                    ? "bg-accentBrt/20 text-accentBrt"
-                    : "text-paleGreen hover:bg-white/5 hover:text-white"
-                }`
-              }
-            >
-              <Icon className="h-5 w-5" />
-              {item.label}
-            </NavLink>
-          );
-        })}
+        {renderItems(items)}
+        {exploreItems.length > 0 ? (
+          <>
+            <p className="px-3 pb-1 pt-4 font-mono text-[10px] uppercase tracking-[0.08em] text-paleGreen/50">
+              Explore
+            </p>
+            {renderItems(exploreItems)}
+          </>
+        ) : null}
       </nav>
 
       <div className="px-3 pb-5 pt-3 border-t border-white/10">
@@ -127,4 +109,41 @@ export function Sidebar({ onNavigate }: { onNavigate?: () => void }) {
       </div>
     </div>
   );
+
+  function renderItems(list: NavItem[]) {
+    return list.map((item) => {
+      const Icon = item.icon;
+      if (item.disabled) {
+        return (
+          <span
+            key={item.to}
+            className="flex items-center gap-3 rounded-md px-3 py-2 text-sm text-paleGreen/50 cursor-not-allowed"
+            title="Coming soon"
+          >
+            <Icon className="h-5 w-5" />
+            <span className="flex-1">{item.label}</span>
+            <span className="text-[10px] uppercase tracking-wide">Soon</span>
+          </span>
+        );
+      }
+      return (
+        <NavLink
+          key={item.to}
+          to={item.to}
+          end={item.end}
+          onClick={onNavigate}
+          className={({ isActive }) =>
+            `flex items-center gap-3 rounded-md px-3 py-2 text-sm font-medium transition-colors duration-150 ${
+              isActive
+                ? "bg-accentBrt/20 text-accentBrt"
+                : "text-paleGreen hover:bg-white/5 hover:text-white"
+            }`
+          }
+        >
+          <Icon className="h-5 w-5" />
+          {item.label}
+        </NavLink>
+      );
+    });
+  }
 }

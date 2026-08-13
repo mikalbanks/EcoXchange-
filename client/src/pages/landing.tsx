@@ -1,91 +1,102 @@
 import { Link } from "wouter";
 import { SunPathDiagram } from "@/components/landing/SunPathDiagram";
+import { PUBLIC_NAV_LINKS, REQUEST_ACCESS } from "@/lib/nav";
+import {
+  BENCHMARK_YEAR,
+  FULL_FLEET_MAD_PCT,
+  PLANTS_TESTED,
+  PUBLICATION_MAD_PCT,
+  PUBLICATION_WITHIN_10_RATE,
+  ENGINE_VERSION_BENCHMARKED,
+} from "@shared/benchmark";
 import "./landing.css";
 
+const BENCHMARK_HREF = "https://demo.ecoxchange.net/benchmark";
+const fmtPlants = PLANTS_TESTED.toLocaleString("en-US");
+
+// Every benchmark figure below resolves from shared/benchmark — the same object
+// the /benchmark page and the exported PDF read. Do not re-type a number here.
 const STATS = [
   {
-    // The measured benchmark result, not a "confidence" figure. Matches the
-    // demo's /benchmark page exactly: publication-cohort mean absolute
-    // deviation, with its own n — the full 5,065-plant fleet is ±13.0%.
-    num: "±9.8%",
-    label: "Mean deviation vs. 3,882 of 5,065 EIA-923 solar plants (2024)",
-    href: "https://demo.ecoxchange.net/benchmark",
+    num: "3 independent sources",
+    label: "Inverter · utility meter · satellite model",
   },
   {
-    num: "$1–5M",
-    label: "Target deal size — the range institutional desks ignore",
+    num: "Monthly determination",
+    label: "Verified · flagged · pending",
   },
   {
-    num: "506(c)",
-    label: "Reg D exemption — verified accredited investors only",
+    num: "Distribution gate",
+    label: "Payment proceeds only after verification",
   },
   {
-    num: "3% + $15K + 0.5%",
-    label: "Origination + setup + AUA servicing — all paid by SPV, not investors",
+    num: `${fmtPlants} plants tested`,
+    label: `Engine ${ENGINE_VERSION_BENCHMARKED} benchmarked against EIA-923 data`,
+    href: BENCHMARK_HREF,
   },
 ] as const;
 
 const PROBLEM_CARDS = [
   {
     num: "01",
-    title: "Too Small for Wall Street",
-    body: "Tax-equity desks and infrastructure funds require $25M+ minimums. The $1M–$5M permitted solar project has no institutional capital path.",
+    title: "One source is not independent",
+    body: "Monitoring portals show useful operating data, but they do not independently confirm utility-delivered output.",
   },
   {
     num: "02",
-    title: "Too Complex for Individuals",
-    body: "SPV formation, accreditation, distributions, and production verification require institutional-grade infrastructure individuals cannot self-assemble.",
+    title: "Annual reporting arrives too late",
+    body: "Production shortfalls can compound for months before financial reporting reveals them.",
   },
   {
     num: "03",
-    title: "Verification is Opaque & Costly",
-    body: "Physical sensors, third-party audits, and developer self-reporting produce blended, unverifiable yield claims. No project-level audit trail exists.",
+    title: "Physical audits do not scale",
+    body: "On-site sensors and third-party reviews add cost and delay to smaller projects.",
   },
 ] as const;
 
 const METHOD_CARDS = [
   {
     num: "01",
-    title: "Hardware-free",
-    body: "No on-site sensors. Satellite irradiance is publicly available and continuously measured.",
+    title: "Inverter telemetry",
+    body: "What the project monitoring system reports it produced.",
     highlight: false,
   },
   {
     num: "02",
-    title: "Deterministic",
-    body: "A three-source reconciliation core. ML is restricted to post-calculation anomaly flagging only.",
+    title: "Utility meter data",
+    body: "What the serving utility records at the meter.",
     highlight: false,
   },
   {
     num: "03",
-    title: "Auditable",
-    body: "Every yield figure traces to inverter telemetry, utility meter data, and satellite irradiance. Full audit trail preserved.",
-    highlight: true,
+    title: "Satellite-modeled generation",
+    body: "What weather and known system characteristics indicate the project should have produced.",
+    highlight: false,
   },
   {
     num: "04",
-    title: "Patent-pending",
-    body: "Provisional on file. Non-provisional conversion in the 12-month window. The method is the moat.",
-    highlight: false,
+    title: "Verification determination",
+    body: "A traceable monthly result that gates distribution processing.",
+    highlight: true,
   },
 ] as const;
 
-const INVESTOR_STATS = [
+const BENCHMARK_FIGURES = [
   {
-    num: "506(c)",
-    text: "Reg D exemption — general solicitation permitted to verified accredited investors only",
+    num: fmtPlants,
+    text: "plants tested",
   },
   {
-    num: "Direct",
-    text: "One security per project — your capital exposed to exactly one auditable production asset",
+    num: `±${PUBLICATION_MAD_PCT.toFixed(1)}%`,
+    text: "publication-cohort mean absolute deviation",
   },
   {
-    num: "Physics",
-    text: "Distributions derive from inverter × utility meter × satellite irradiance reconciliation, not developer self-reports",
+    num: `±${FULL_FLEET_MAD_PCT.toFixed(1)}%`,
+    text: "full-fleet mean absolute deviation",
   },
   {
-    num: "Handled",
-    text: "Accreditation, AML, suitability, and tax reporting managed on-platform",
+    num: `${PUBLICATION_WITHIN_10_RATE.toFixed(1)}%`,
+    text: "of the publication cohort within ±10%",
   },
 ] as const;
 
@@ -95,7 +106,7 @@ const FEE_ROWS = [
   { label: "Servicing fee (recurring)", eco: "0.5% of AUA / year", other: "$10K–$25K / year per project" },
   { label: "Investor load charge", eco: "None", other: "0–5% upfront" },
   { label: "Production verification", eco: "Production-based, included", other: "$5K–$15K / year third-party" },
-  { label: "Distribution cadence", eco: "Monthly, USDC, auto", other: "Quarterly, manual, 30–90d" },
+  { label: "Distribution cadence", eco: "Monthly, automated", other: "Quarterly, manual, 30–90d" },
 ] as const;
 
 export default function LandingPage() {
@@ -109,14 +120,23 @@ export default function LandingPage() {
             <span className="brand-tag">Clean Energy Market</span>
           </div>
           <nav>
-            <Link href="/">Home</Link>
-            <Link href="/market">Marketplace</Link>
-            <Link href="/develop">Develop</Link>
-            <Link href="/method">Method</Link>
-            <Link href="/faq">FAQ</Link>
-            <a href="https://demo.ecoxchange.net/">Live Demo</a>
-            <Link href="/market#onboard" className="nav-cta">
-              Request Access →
+            {PUBLIC_NAV_LINKS.map((link) =>
+              link.external ? (
+                <a key={link.href} href={link.href} data-testid={link.testId}>
+                  {link.label}
+                </a>
+              ) : (
+                <Link key={link.href} href={link.href} data-testid={link.testId}>
+                  {link.label}
+                </Link>
+              ),
+            )}
+            <Link
+              href={REQUEST_ACCESS.href}
+              className="nav-cta"
+              data-testid={REQUEST_ACCESS.testId}
+            >
+              {REQUEST_ACCESS.label}
             </Link>
           </nav>
         </div>
@@ -125,26 +145,27 @@ export default function LandingPage() {
       <section>
         <div className="hero">
           <div className="hero-text">
-            <div className="label hero-eyebrow">Production-Verified Yield · Reg D 506(c)</div>
+            <div className="label hero-eyebrow">Independent Solar Production Verification</div>
             <h1 className="hero-headline">
               Light,
               <br />
               <em>accounted for.</em>
             </h1>
             <p className="hero-sub">
-              EcoXchange is a regulated digital-securities platform that gives accredited investors direct,
-              production-verified yield on individual solar projects — a return profile no pooled fund, REIT, or
-              crowdfunding platform can replicate.
+              EcoXchange independently verifies how much electricity a solar project produces each month. Our
+              engine reconciles inverter telemetry, utility meter data, and satellite-modeled generation to issue
+              a verified, flagged, or pending determination — with investor distributions released only after
+              verification.
             </p>
             <div className="hero-actions">
-              <a href="https://demo.ecoxchange.net/" className="btn btn-primary">
-                View the Live Demo
-              </a>
-              <Link href="/market#onboard" className="btn btn-outline">
-                Request Investor Access
+              <Link href="/verification" className="btn btn-primary">
+                See How Verification Works
               </Link>
-              <Link href="/method" className="btn btn-outline">
-                See the Method →
+              <a href="https://demo.ecoxchange.net/" className="btn btn-outline">
+                Run the Live Demo
+              </a>
+              <Link href="/market" className="btn btn-outline">
+                Explore Project Applications →
               </Link>
             </div>
           </div>
@@ -155,7 +176,7 @@ export default function LandingPage() {
       </section>
 
       <div className="stats">
-        <div className="stats-grid">
+        <div className="stats-grid stats-grid-phrases">
           {STATS.map((s) => (
             <div key={s.num} className="stat-item">
               <div className="stat-num">{s.num}</div>
@@ -176,13 +197,12 @@ export default function LandingPage() {
       <section id="problem" className="problem">
         <div className="section-header">
           <span className="label section-num">§ I</span>
-          <h2 className="section-title">The yield gap for accredited investors.</h2>
+          <h2 className="section-title">Solar production is reported. It is rarely reconciled.</h2>
         </div>
         <p className="problem-intro">
-          Accredited investors have no direct, production-verified yield instrument on individual solar projects.
-          Every available vehicle — pooled funds, REITs, yieldcos, Reg CF crowdfunding — delivers blended,
-          fund-level performance. EcoXchange provides both the verification method and the regulated platform
-          to change that.
+          Investors, developers, and asset managers often rely on a single monitoring feed or periodic
+          self-reporting. EcoXchange closes that trust gap with an independent, repeatable monthly determination
+          at the project level.
         </p>
         <div className="problem-cards">
           {PROBLEM_CARDS.map((card) => (
@@ -195,16 +215,17 @@ export default function LandingPage() {
         </div>
       </section>
 
-      <section id="method" className="method">
+      <section id="verification" className="method">
         <div className="method-inner">
           <div className="section-header">
             <span className="label section-num">§ II</span>
-            <h2 className="section-title">Hardware-Free. Deterministic. Auditable.</h2>
+            <h2 className="section-title">Three sources. One monthly determination.</h2>
           </div>
           <p className="method-intro">
-            A three-source reconciliation engine that cross-references inverter telemetry, utility net-meter
-            readings, and satellite irradiance — producing a securities-grade, per-project yield figure with
-            no on-site hardware required. Marginal verification cost approaches zero.
+            The engine compares the project&apos;s inverter telemetry and utility meter data with expected
+            generation modeled from NASA and NREL weather inputs. Agreement within the project&apos;s configured
+            tolerance produces a verified result. Missing or inconsistent data produces a pending or flagged
+            result for review.
           </p>
           <div className="method-cards">
             {METHOD_CARDS.map((card) => (
@@ -224,40 +245,67 @@ export default function LandingPage() {
       <section id="investors" className="investors">
         <div className="section-header">
           <span className="label section-num">§ III</span>
-          <h2 className="section-title">Built for accredited investors.</h2>
+          <span className="label">First Application · Project-Level Capital Formation</span>
+          <h2 className="section-title">
+            Verified production, applied to individual solar-project offerings.
+          </h2>
         </div>
         <div className="investors-grid">
           <div className="investors-body">
             <p>
-              EcoXchange structures each solar project as a separate Reg D 506(c) digital security. One offering.
-              One project. One auditable production trail. Investors receive pro-rata distributions derived
-              directly from verified physical output — not a fund manager&apos;s allocation, not a blended
-              portfolio return.
+              EcoXchange administers private placements of equity interests in individual U.S. solar-project
+              entities to verified accredited investors under Reg D 506(c). Each offering remains tied to one
+              project and one auditable production record.
             </p>
-            <p>
-              The platform handles accreditation verification, AML, suitability, and tax reporting end-to-end.
-              What you are buying is a deterministic yield instrument grounded in physics — a return profile no
-              pooled vehicle can structurally replicate.
+            <p className="investors-note">
+              The investment is an equity interest governed by the offering documents. Any permissioned digital
+              record supports ownership administration; it is not a cryptocurrency product or a separate
+              investment.
             </p>
-            <Link href="/market#onboard" className="btn btn-primary">
-              Request Investor Access →
+            <Link href="/market" className="btn btn-primary">
+              Explore Project Applications →
             </Link>
           </div>
           <div className="investors-stats">
-            {INVESTOR_STATS.map((row) => (
+            {METHOD_CARDS.map((row) => (
               <div key={row.num} className="investor-stat">
                 <span className="investor-stat-num">{row.num}</span>
-                <span className="investor-stat-text">{row.text}</span>
+                <span className="investor-stat-text">
+                  <strong>{row.title}</strong> — {row.body}
+                </span>
               </div>
             ))}
           </div>
         </div>
       </section>
 
+      <section id="benchmark" className="benchmark-module">
+        <div className="section-header">
+          <span className="label section-num">§ IV</span>
+          <h2 className="section-title">Tested against reported U.S. solar generation.</h2>
+        </div>
+        <p className="problem-intro">
+          Engine {ENGINE_VERSION_BENCHMARKED} was benchmarked against {BENCHMARK_YEAR} EIA-923 reported
+          generation using NASA POWER irradiance inputs. Review the publication cohort, full-fleet results,
+          assumptions, and documented exclusions.
+        </p>
+        <div className="benchmark-figures">
+          {BENCHMARK_FIGURES.map((f) => (
+            <div key={f.text} className="benchmark-figure">
+              <span className="benchmark-figure-num">{f.num}</span>
+              <span className="benchmark-figure-text">{f.text}</span>
+            </div>
+          ))}
+        </div>
+        <a href={BENCHMARK_HREF} className="btn btn-outline">
+          Review the Benchmark →
+        </a>
+      </section>
+
       <section id="fee" className="fee">
         <div className="fee-inner">
           <div className="section-header">
-            <span className="label section-num">§ IV</span>
+            <span className="label section-num">§ V</span>
             <h2 className="section-title">How the fee is structured.</h2>
           </div>
           <div className="fee-grid">
@@ -307,22 +355,23 @@ export default function LandingPage() {
         <div className="access-inner">
           <div className="label">Request Access · Reg D 506(c) · Accredited Investors Only</div>
           <h2 className="access-headline">A short conversation.</h2>
-          <p>
-            EcoXchange is pre-offering and operates a high-touch process during the pilot stage. If you are an
-            accredited investor, an RIA building an alternative sleeve, or a family office with a clean energy
-            mandate — we will respond personally within two business days.
-          </p>
-          <div className="access-actions">
-            <Link href="/market#onboard" className="btn btn-lime">
-              Begin investor onboarding
-            </Link>
-            <Link
-              href="/develop"
-              className="btn btn-outline"
-              style={{ color: "#fff", borderColor: "rgba(255,255,255,.4)" }}
-            >
-              Developer Submission →
-            </Link>
+          <div className="access-tracks">
+            <div className="access-track">
+              <p>Explore how verified production supports project-level private offerings.</p>
+              <Link href={REQUEST_ACCESS.href} className="btn btn-lime">
+                Request Investor Access
+              </Link>
+            </div>
+            <div className="access-track">
+              <p>Submit a project for an independent 12-month production backtest.</p>
+              <Link
+                href="/develop"
+                className="btn btn-outline"
+                style={{ color: "#fff", borderColor: "rgba(255,255,255,.4)" }}
+              >
+                Start a Project Backtest →
+              </Link>
+            </div>
           </div>
           <p className="access-legal">
             No offering is currently open. This page is for informational and pipeline-building purposes only
@@ -336,8 +385,10 @@ export default function LandingPage() {
         <div className="map-ticks map-ticks-bottom" aria-hidden="true" />
         <div className="footer-inner">
           <span className="footer-brand">EcoXchange</span>
-          <span className="footer-meta">Reg D 506(c) · Digital Securities · © MMXXVI</span>
-          <span className="footer-meta">Satellite × Utility Meter · Auditable · Hardware-Free</span>
+          <span className="footer-meta">Reg D 506(c) · Private Placements · © MMXXVI</span>
+          <span className="footer-meta">
+            Inverter × Utility Meter × Satellite Model · Auditable · Hardware-Free
+          </span>
         </div>
       </footer>
     </div>

@@ -122,7 +122,7 @@ export function ExplorerContract() {
       {/* Token cap table (differentiation spec §4) — token contract only. */}
       {contract.id === "token" ? (
         <div>
-          <h2 className="mb-3 font-heading text-lg text-darkBg">Token Holders</h2>
+          <h2 className="mb-3 font-heading text-lg text-darkBg">Project-Interest Holders</h2>
           <OwnershipVisualization />
         </div>
       ) : null}

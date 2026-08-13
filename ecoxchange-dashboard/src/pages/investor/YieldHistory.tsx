@@ -129,7 +129,7 @@ export function YieldHistory() {
       </div>
 
       <div>
-        <h2 className="font-heading text-xl text-darkBg mb-3">Monthly Yield</h2>
+        <h2 className="font-heading text-xl text-darkBg mb-3">Monthly Distributions</h2>
         <YieldTable
           projectId={project.id}
           records={records}

@@ -15,16 +15,8 @@ import {
 } from "@/components/ui/sheet";
 import { User, LogOut, LayoutDashboard, Menu } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { PUBLIC_NAV_LINKS, REQUEST_ACCESS } from "@/lib/nav";
 import "@/styles/public-pages.css";
-
-const PUBLIC_NAV_LINKS = [
-  { href: "/", label: "Home", testId: "link-home" },
-  { href: "/market", label: "Marketplace", testId: "link-marketplace" },
-  { href: "/portfolio", label: "Portfolio", testId: "link-portfolio" },
-  { href: "/develop", label: "Develop", testId: "link-develop" },
-  { href: "/method", label: "Method", testId: "link-method" },
-  { href: "/faq", label: "FAQ", testId: "link-faq" },
-] as const;
 
 function userDashboardPath(role: string) {
   if (role === "ADMIN") return "/admin";
@@ -48,6 +40,7 @@ function isPublicRoute(pathname: string) {
     pathname === "/develop/preview" ||
     pathname === "/invest/preview" ||
     pathname === "/method" ||
+    pathname === "/verification" ||
     pathname === "/faq" ||
     pathname === "/privacy"
   );
@@ -75,16 +68,27 @@ export function Header() {
           </Link>
 
           <nav className="public-nav" aria-label="Primary navigation">
-            {PUBLIC_NAV_LINKS.map((link) => (
-              <Link
-                key={link.href}
-                href={link.href}
-                className={cn("public-nav-link", isActiveNav(pathname, link.href) && "is-active")}
-                data-testid={link.testId}
-              >
-                {link.label}
-              </Link>
-            ))}
+            {PUBLIC_NAV_LINKS.map((link) =>
+              link.external ? (
+                <a
+                  key={link.href}
+                  href={link.href}
+                  className="public-nav-link"
+                  data-testid={link.testId}
+                >
+                  {link.label}
+                </a>
+              ) : (
+                <Link
+                  key={link.href}
+                  href={link.href}
+                  className={cn("public-nav-link", isActiveNav(pathname, link.href) && "is-active")}
+                  data-testid={link.testId}
+                >
+                  {link.label}
+                </Link>
+              ),
+            )}
           </nav>
 
           <div className="public-nav-actions">
@@ -130,8 +134,8 @@ export function Header() {
                 <Link href="/auth/login" className="public-nav-login" data-testid="button-login">
                   Log in
                 </Link>
-                <Link href="/market#onboard" className="public-nav-cta" data-testid="button-request-access">
-                  Request access →
+                <Link href={REQUEST_ACCESS.href} className="public-nav-cta" data-testid="button-request-access">
+                  {REQUEST_ACCESS.label}
                 </Link>
               </>
             )}
@@ -147,18 +151,29 @@ export function Header() {
               </SheetTrigger>
               <SheetContent side="right" className="w-72 border-border bg-background">
                 <nav className="public-mobile-nav" aria-label="Mobile navigation">
-                  {PUBLIC_NAV_LINKS.map((link) => (
-                    <Link
-                      key={link.href}
-                      href={link.href}
-                      className={cn("public-mobile-link", isActiveNav(pathname, link.href) && "is-active")}
-                      data-testid={`mobile-${link.testId}`}
-                    >
-                      {link.label}
-                    </Link>
-                  ))}
-                  <Link href="/market#onboard" className="public-btn public-btn-primary" data-testid="button-mobile-request-access">
-                    Request access →
+                  {PUBLIC_NAV_LINKS.map((link) =>
+                    link.external ? (
+                      <a
+                        key={link.href}
+                        href={link.href}
+                        className="public-mobile-link"
+                        data-testid={`mobile-${link.testId}`}
+                      >
+                        {link.label}
+                      </a>
+                    ) : (
+                      <Link
+                        key={link.href}
+                        href={link.href}
+                        className={cn("public-mobile-link", isActiveNav(pathname, link.href) && "is-active")}
+                        data-testid={`mobile-${link.testId}`}
+                      >
+                        {link.label}
+                      </Link>
+                    ),
+                  )}
+                  <Link href={REQUEST_ACCESS.href} className="public-btn public-btn-primary" data-testid="button-mobile-request-access">
+                    {REQUEST_ACCESS.label}
                   </Link>
                   {user ? (
                     <Link href={userDashboardPath(user.role)} className="public-btn public-btn-outline" data-testid="button-mobile-dashboard">
@@ -199,14 +214,14 @@ export function Header() {
           <Link href="/" className={navClass} data-testid="link-home">
             Home
           </Link>
-          <Link href="/market" className={navClass} data-testid="link-marketplace">
-            Marketplace
+          <Link href="/verification" className={navClass} data-testid="link-verification">
+            Verification
           </Link>
-          <Link href="/develop" className={navClass} data-testid="link-develop">
-            Develop
+          <Link href="/market" className={navClass} data-testid="link-projects">
+            Projects
           </Link>
-          <Link href="/method" className={navClass} data-testid="link-method">
-            Method
+          <Link href="/develop" className={navClass} data-testid="link-developers">
+            Developers
           </Link>
           <Link href="/faq" className={navClass} data-testid="link-faq">
             FAQ

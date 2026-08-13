@@ -156,6 +156,9 @@ function Router() {
       <Route path="/develop" component={DevelopPage} />
       <Route path="/develop/preview" component={DeveloperDashboardPreview} />
       <Route path="/invest/preview" component={InvestorDashboardPreview} />
+      {/* /verification is the canonical path — the nav says "Verification", so
+          the URL should too. /method stays live for existing links. */}
+      <Route path="/verification" component={MethodPage} />
       <Route path="/method" component={MethodPage} />
       <Route path="/faq" component={FaqPage} />
       

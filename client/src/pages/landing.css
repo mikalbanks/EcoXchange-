@@ -570,6 +570,69 @@ nav a:hover { color: var(--forest); }
 }
 
 /* ── Responsive ── */
+/* ── Proof strip: word-based proof points ──
+   The strip now carries phrases ("3 independent sources") rather than single
+   figures, so it needs a smaller, tighter type scale than the numeric variant. */
+.stats-grid-phrases .stat-num {
+  font-size: clamp(1.05rem, 1.7vw, 1.35rem);
+  line-height: 1.25;
+  letter-spacing: 0;
+  font-weight: 500;
+}
+
+/* ── Securities application: the not-a-crypto-product clarifier ── */
+.investors-note {
+  border-left: 2px solid var(--border);
+  padding-left: 1rem;
+  font-size: .92rem !important;
+}
+
+/* ── Homepage benchmark module ── */
+.benchmark-module {
+  padding: 6rem var(--gutter);
+  max-width: var(--max);
+  margin: 0 auto;
+}
+.benchmark-figures {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 0;
+  margin: 2.5rem 0;
+  border-top: 1px solid var(--border);
+  border-bottom: 1px solid var(--border);
+}
+.benchmark-figure {
+  padding: 1.6rem 1.5rem;
+  border-right: 1px solid var(--border);
+}
+.benchmark-figure:first-child { padding-left: 0; }
+.benchmark-figure:last-child { border-right: 0; }
+.benchmark-figure-num {
+  display: block;
+  font-family: var(--mono);
+  font-size: clamp(1.6rem, 2.6vw, 2.2rem);
+  color: var(--forest);
+  letter-spacing: -.01em;
+  margin-bottom: .4rem;
+}
+.benchmark-figure-text {
+  display: block;
+  font-size: .85rem;
+  color: var(--ink-soft);
+  line-height: 1.4;
+}
+
+/* ── Split investor / developer calls to action ── */
+.access-tracks {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 3rem;
+  text-align: left;
+  max-width: 46rem;
+  margin: 0 auto;
+}
+.access-track p { margin-bottom: 1.2rem; }
+
 @media (max-width: 900px) {
   nav a:not(.nav-cta) { display: none; }
   .hero { grid-template-columns: 1fr; gap: 3rem; }
@@ -584,6 +647,11 @@ nav a:hover { color: var(--forest); }
   .investors-grid { grid-template-columns: 1fr; gap: 3rem; }
   .fee-grid { grid-template-columns: 1fr; gap: 3rem; }
   .footer-inner { flex-direction: column; text-align: center; }
+  .benchmark-figures { grid-template-columns: repeat(2, 1fr); }
+  .benchmark-figure:nth-child(2) { border-right: 0; }
+  .benchmark-figure { padding: 1.4rem 1rem; }
+  .benchmark-figure:first-child { padding-left: 1rem; }
+  .access-tracks { grid-template-columns: 1fr; gap: 2.5rem; }
 }
 @media (max-width: 540px) {
   .hero { padding: 3.5rem var(--gutter) 3rem; }
@@ -594,4 +662,7 @@ nav a:hover { color: var(--forest); }
   .fee-row > span:last-child { border-bottom: 0; }
   .fee-row-labels { display: none; }
   .access-actions { flex-direction: column; align-items: center; }
+  .benchmark-figures { grid-template-columns: 1fr; }
+  .benchmark-figure { border-right: 0; border-bottom: 1px solid var(--border); }
+  .benchmark-figure:last-child { border-bottom: 0; }
 }

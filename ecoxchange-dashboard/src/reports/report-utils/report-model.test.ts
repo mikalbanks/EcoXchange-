@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import benchmark from "../../data/benchmark-results.json";
+import benchmark from "../../data/benchmark.js";
 import { DEMO_SCENARIOS } from "../../data/demo-scenarios.js";
 import type { StoredBacktestResult } from "../../utils/backtest-store.js";
 import { SPEC_COST } from "../../utils/cost-comparison.js";

@@ -1,6 +1,6 @@
 import { Link } from "react-router-dom";
 import { ENGINE_VERSION } from "../../config/engine.js";
-import benchmark from "../../data/benchmark-results.json";
+import benchmark from "../../data/benchmark.js";
 
 export interface BenchmarkDisplayProps {
   engineVersion?: string;
@@ -13,7 +13,7 @@ export interface BenchmarkDisplayProps {
 }
 
 // Defaults come from the committed benchmark artifact
-// (src/data/benchmark-results.json, produced by the engine repo's
+// (shared/benchmark/benchmark-results.json, produced by the engine repo's
 // run_eia_benchmark and mirrored to public/benchmark-results.json).
 // "validated" is asserted by the artifact itself only when the run met the
 // ≥80% success floor AND the publication (healthy-fleet) cohort's mean
@@ -47,8 +47,8 @@ export function EngineBenchmark({
       <p className="font-mono text-xs text-darkBg">
         {status === "validated" && meanDeviation !== null ? (
           <>
-            Mean deviation: ±{Math.abs(meanDeviation).toFixed(1)}% · {benchmarkSource} ·
-            Engine {engineVersion}
+            Mean absolute deviation: ±{Math.abs(meanDeviation).toFixed(1)}% ·{" "}
+            {benchmarkSource} · Engine {engineVersion}
           </>
         ) : status === "in_progress" ? (
           <>EIA fleet validation in progress · Engine {engineVersion} · pvlib ModelChain</>

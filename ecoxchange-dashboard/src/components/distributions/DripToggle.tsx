@@ -1,4 +1,4 @@
-import { Wallet, Repeat } from "lucide-react";
+import { Banknote, Repeat } from "lucide-react";
 import type { DistributionPref } from "../../types/distributions.js";
 
 interface Props {
@@ -9,25 +9,25 @@ interface Props {
 
 const OPTIONS: {
   key: DistributionPref;
-  icon: typeof Wallet;
+  icon: typeof Banknote;
   title: string;
   desc: string;
 }[] = [
   {
     key: "cash_out",
-    icon: Wallet,
-    title: "Cash Out to Wallet",
-    desc: "USDC sent to your wallet monthly",
+    icon: Banknote,
+    title: "Receive distribution",
+    desc: "Paid out monthly; the payment rail is shown in payment details",
   },
   {
     key: "reinvest",
     icon: Repeat,
-    title: "Reinvest (DRIP)",
-    desc: "Auto-buy more ESN tokens monthly",
+    title: "Reinvestment preference",
+    desc: "Apply monthly distributions toward additional project interest",
   },
 ];
 
-// Cash Out | Reinvest radio pair.
+// Receive | Reinvest radio pair.
 export function DripToggle({ value, onSelect, disabled }: Props) {
   return (
     <div className="grid grid-cols-1 gap-3 sm:grid-cols-2" role="radiogroup">

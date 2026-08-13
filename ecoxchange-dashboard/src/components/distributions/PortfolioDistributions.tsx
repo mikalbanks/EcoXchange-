@@ -43,7 +43,13 @@ export function PortfolioDistributions() {
 
   return (
     <div className="space-y-4">
-      <h2 className="font-heading text-xl text-darkBg">Holdings &amp; Distributions</h2>
+      <div>
+        <h2 className="font-heading text-xl text-darkBg">Distributions</h2>
+        <p className="mt-1 max-w-3xl text-sm text-textMuted">
+          Distribution amounts are calculated after the monthly production
+          determination is verified and all offering requirements are satisfied.
+        </p>
+      </div>
       {holdings.map((h) => (
         <DistributionCard
           key={h.id}

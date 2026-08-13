@@ -1,5 +1,4 @@
 import { useCompliance } from "../ComplianceProvider.js";
-import { ChainHeartbeat } from "../../components/web3/ChainHeartbeat.js";
 import { EngineHealth } from "../../components/EngineHealth.js";
 
 const TEXT = "font-mono text-[10px] leading-[1.6] tracking-[0.01em] text-textMuted";
@@ -61,9 +60,12 @@ export function DisclaimerFooter() {
             <span className={TEXT}>·</span>
             <span className={TEXT}>{MODE_LABEL[mode]}</span>
           </div>
+          {/* The chain heartbeat (live block height + TESTNET badge) used to
+              sit here, on every page. Settlement plumbing is not a site-wide
+              status line — it now lives inside the portfolio's ownership-record
+              section, next to what it actually describes. */}
           <div className="flex items-center gap-4">
             <EngineHealth />
-            <ChainHeartbeat />
           </div>
         </div>
       </div>

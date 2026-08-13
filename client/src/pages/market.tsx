@@ -12,6 +12,7 @@ import { EmptyState } from "@/components/empty-state";
 import { Search, MapPin, Zap, ArrowRight, ExternalLink, BarChart3 } from "lucide-react";
 import { ConfidenceBadge } from "@/components/marketplace/confidence-badge";
 import { ProjectImage } from "@/components/marketplace/project-image";
+import { isTargetCapacity } from "@shared/benchmark";
 
 interface FinancialField<T> {
   value: T;
@@ -254,6 +255,19 @@ export default function PublicMarketPage() {
                     <div className="flex flex-wrap gap-2">
                       {l.technology && <Badge variant="outline">{l.technology.replace(/_/g, " ")}</Badge>}
                       {l.stage && <Badge variant="secondary">{l.stage.replace(/_/g, " ")}</Badge>}
+                      {/* EcoXchange originates in the 1–20 MW band. Anything
+                          outside it is shown for comparison, not as a target
+                          project — say so on the card rather than leaving the
+                          reader to infer it from the capacity figure. */}
+                      {!isTargetCapacity(l.capacityMW * 1000) && (
+                        <Badge
+                          variant="outline"
+                          className="border-dashed text-muted-foreground"
+                          data-testid={`out-of-scope-${l.id}`}
+                        >
+                          Comparison · outside 1–20 MW target
+                        </Badge>
+                      )}
                     </div>
                     <div className="rounded-md border bg-muted/40 px-3 py-2">
                       <div className="flex items-baseline justify-between gap-2">

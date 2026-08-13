@@ -1,6 +1,7 @@
 import { MapPin } from "lucide-react";
 import type { EiaCatalogEntry } from "../../types/catalog.js";
 import { formatUsd, formatPct } from "../../utils/formatters.js";
+import { isTargetCapacity } from "../../data/benchmark.js";
 
 // Engine deviation badge: green within ±5%, amber within ±10%, neutral beyond.
 function DeviationBadge({ plant }: { plant: EiaCatalogEntry }) {
@@ -37,6 +38,14 @@ export function EiaCatalogCard({ plant }: { plant: EiaCatalogEntry }) {
         <MapPin className="h-3.5 w-3.5" />
         {plant.state} · {plant.latitude.toFixed(2)}, {plant.longitude.toFixed(2)}
       </p>
+      {/* The catalog is a real EIA fleet sample, not a pipeline. Plants outside
+          the 1–20 MW origination band are engine comparisons — labelled so they
+          can't read as EcoXchange target projects. */}
+      {!isTargetCapacity(plant.capacity_mw * 1000) ? (
+        <span className="mt-2 self-start rounded-full border border-dashed border-paleGreen px-2 py-0.5 font-mono text-[10px] uppercase tracking-wide text-textMuted">
+          Comparison · outside 1–20 MW target
+        </span>
+      ) : null}
 
       <div className="mt-4 grid grid-cols-3 gap-2 border-t border-paleGreen/50 pt-4">
         <Mini label="Capacity" value={`${plant.capacity_mw.toFixed(1)} MW`} />

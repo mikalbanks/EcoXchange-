@@ -42,7 +42,7 @@ export default function MethodPage() {
             <h1 className="public-title">
               Three sources,
               <br />
-              <em>one ledger.</em>
+              <em>one monthly determination.</em>
             </h1>
             <p className="public-copy">
               EcoXchange does not pay investors based on developer self-reporting. Every month, we pull three

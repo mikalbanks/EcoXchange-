@@ -1,6 +1,7 @@
 import { Link, useLocation } from "react-router-dom";
 import type { LucideIcon } from "lucide-react";
-import { LayoutDashboard, Store, Coins, Leaf, Link2 } from "lucide-react";
+import { LayoutDashboard, Store, Coins, Leaf, ShieldCheck } from "lucide-react";
+import { LATEST_VERIFICATION_PATH } from "../../data/index.js";
 
 interface NavTab {
   id: string;
@@ -11,15 +12,23 @@ interface NavTab {
   matches: (pathname: string) => boolean;
 }
 
-// The four primary investor destinations. Secondary items (Calculator,
-// Recommendations, Settings, …) stay in the hamburger drawer.
+// The five primary investor destinations, mirroring the sidebar's core order.
+// Secondary items (Calculator, Recommendations, Ownership Record, Settings, …)
+// stay in the hamburger drawer. 5 tabs is the mobile maximum.
 const TABS: NavTab[] = [
   {
-    id: "portfolio",
-    label: "Portfolio",
+    id: "overview",
+    label: "Overview",
     icon: LayoutDashboard,
     to: "/investor",
-    matches: (p) => p === "/investor" || p.startsWith("/investor/project"),
+    matches: (p) => p === "/investor",
+  },
+  {
+    id: "verification",
+    label: "Verification",
+    icon: ShieldCheck,
+    to: LATEST_VERIFICATION_PATH,
+    matches: (p) => p.includes("/verification/"),
   },
   {
     id: "projects",
@@ -29,11 +38,12 @@ const TABS: NavTab[] = [
     matches: (p) =>
       p.startsWith("/investor/marketplace") ||
       p.startsWith("/investor/offering") ||
-      p.startsWith("/investor/catalog"),
+      p.startsWith("/investor/catalog") ||
+      (p.startsWith("/investor/project") && !p.includes("/verification/")),
   },
   {
-    id: "yield",
-    label: "Yield",
+    id: "distributions",
+    label: "Distributions",
     icon: Coins,
     to: "/investor/distributions",
     matches: (p) => p.startsWith("/investor/distributions"),
@@ -44,14 +54,6 @@ const TABS: NavTab[] = [
     icon: Leaf,
     to: "/investor/impact",
     matches: (p) => p.startsWith("/investor/impact"),
-  },
-  {
-    // Spec 08: on-chain transparency. 5 tabs is the mobile maximum.
-    id: "explorer",
-    label: "Chain",
-    icon: Link2,
-    to: "/explorer",
-    matches: (p) => p.startsWith("/explorer"),
   },
 ];
 
@@ -77,7 +79,7 @@ export function MobileNav() {
               to={tab.to}
               aria-label={tab.label}
               aria-current={isActive ? "page" : undefined}
-              className="relative flex h-full min-h-[44px] flex-1 flex-col items-center justify-center gap-1"
+              className="relative flex h-full min-h-[44px] min-w-0 flex-1 flex-col items-center justify-center gap-1 px-1"
             >
               {isActive ? (
                 <span
@@ -91,7 +93,7 @@ export function MobileNav() {
                 className={isActive ? "text-accentBrt" : "text-lightGreen"}
               />
               <span
-                className={`font-mono text-[10px] uppercase tracking-wider ${
+                className={`max-w-full truncate font-mono text-[9px] uppercase tracking-wide ${
                   isActive ? "text-accentBrt" : "text-lightGreen"
                 }`}
               >
