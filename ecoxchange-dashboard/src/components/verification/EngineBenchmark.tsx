@@ -13,8 +13,9 @@ export interface BenchmarkDisplayProps {
 }
 
 // Defaults come from the committed benchmark artifact
-// (shared/benchmark/benchmark-results.json, produced by the engine repo's
-// run_eia_benchmark and mirrored to public/benchmark-results.json).
+// (src/data/benchmark-results.json, produced by the engine repo's
+// run_eia_benchmark, mirrored to public/benchmark-results.json and kept
+// byte-identical to the canonical shared/benchmark/ copy by the root suite).
 // "validated" is asserted by the artifact itself only when the run met the
 // ≥80% success floor AND the publication (healthy-fleet) cohort's mean
 // absolute deviation is ≤ 10%. The headline cites that cohort; the full-fleet

@@ -1,0 +1,269 @@
+{
+ "engine_version": "v2.0.0",
+ "benchmark_date": "2026-07-07",
+ "benchmark_year": 2024,
+ "data_source": "EIA-923 / EIA-860 / USPVDB",
+ "irradiance_source": "NASA POWER",
+ "plants_attempted": 5065,
+ "plants_succeeded": 5065,
+ "plants_failed": 0,
+ "success_rate_pct": 100.0,
+ "benchmark_valid": true,
+ "validation_gate_pct": 10.0,
+ "validated": true,
+ "failure_reasons": {},
+ "mean_absolute_deviation_pct": 12.96,
+ "median_absolute_deviation_pct": 8.25,
+ "mode_absolute_deviation_pct": 2.8,
+ "std_deviation_pct": 18.83,
+ "mean_signed_deviation_pct": 3.36,
+ "within_5_pct": 1601,
+ "within_5_pct_rate": 31.6,
+ "within_10_pct": 2938,
+ "within_10_pct_rate": 58.0,
+ "within_15_pct": 3633,
+ "within_15_pct_rate": 71.7,
+ "within_20_pct": 4025,
+ "within_20_pct_rate": 79.5,
+ "by_state": [
+  {
+   "state": "NC",
+   "count": 701,
+   "mean_abs_deviation_pct": 11.0,
+   "median_abs_deviation_pct": 7.6
+  },
+  {
+   "state": "CA",
+   "count": 669,
+   "mean_abs_deviation_pct": 18.9,
+   "median_abs_deviation_pct": 11.7
+  },
+  {
+   "state": "MN",
+   "count": 467,
+   "mean_abs_deviation_pct": 10.1,
+   "median_abs_deviation_pct": 6.7
+  },
+  {
+   "state": "MA",
+   "count": 463,
+   "mean_abs_deviation_pct": 10.3,
+   "median_abs_deviation_pct": 6.2
+  },
+  {
+   "state": "NY",
+   "count": 413,
+   "mean_abs_deviation_pct": 11.7,
+   "median_abs_deviation_pct": 7.5
+  },
+  {
+   "state": "NJ",
+   "count": 246,
+   "mean_abs_deviation_pct": 13.4,
+   "median_abs_deviation_pct": 9.3
+  },
+  {
+   "state": "FL",
+   "count": 138,
+   "mean_abs_deviation_pct": 15.4,
+   "median_abs_deviation_pct": 11.6
+  },
+  {
+   "state": "CO",
+   "count": 135,
+   "mean_abs_deviation_pct": 14.3,
+   "median_abs_deviation_pct": 9.6
+  },
+  {
+   "state": "IL",
+   "count": 134,
+   "mean_abs_deviation_pct": 13.9,
+   "median_abs_deviation_pct": 9.7
+  },
+  {
+   "state": "GA",
+   "count": 131,
+   "mean_abs_deviation_pct": 9.7,
+   "median_abs_deviation_pct": 5.1
+  }
+ ],
+ "by_capacity": [
+  {
+   "bucket": "< 1 MW",
+   "count": 0,
+   "mean_abs_deviation_pct": null
+  },
+  {
+   "bucket": "1\u20135 MW",
+   "count": 2705,
+   "mean_abs_deviation_pct": 13.4
+  },
+  {
+   "bucket": "5\u201320 MW",
+   "count": 1434,
+   "mean_abs_deviation_pct": 12.0
+  },
+  {
+   "bucket": "20\u2013100 MW",
+   "count": 575,
+   "mean_abs_deviation_pct": 14.1
+  },
+  {
+   "bucket": "100+ MW",
+   "count": 351,
+   "mean_abs_deviation_pct": 11.6
+  }
+ ],
+ "publication": {
+  "rule": "Excludes plants in high-curtailment states (CA, TX) and plants reporting a capacity factor below 12.5% with more than 15.0% overprediction (presumed availability/curtailment issues, not model error). All exclusions are listed with reasons in the results JSON; full-fleet figures are published alongside.",
+  "n": 3882,
+  "excluded_total": 1183,
+  "excluded_curtailment_state": 796,
+  "excluded_underperformer": 436,
+  "excluded_both": 49,
+  "mean_absolute_deviation_pct": 9.77,
+  "median_absolute_deviation_pct": 7.0,
+  "mode_absolute_deviation_pct": 2.8,
+  "std_deviation_pct": 13.47,
+  "mean_signed_deviation_pct": -1.46,
+  "within_5_pct": 1396,
+  "within_5_pct_rate": 36.0,
+  "within_10_pct": 2572,
+  "within_10_pct_rate": 66.3,
+  "within_15_pct": 3160,
+  "within_15_pct_rate": 81.4,
+  "within_20_pct": 3409,
+  "within_20_pct_rate": 87.8,
+  "by_state": [
+   {
+    "state": "NC",
+    "count": 647,
+    "mean_abs_deviation_pct": 8.7,
+    "median_abs_deviation_pct": 6.9
+   },
+   {
+    "state": "MN",
+    "count": 444,
+    "mean_abs_deviation_pct": 9.0,
+    "median_abs_deviation_pct": 6.3
+   },
+   {
+    "state": "MA",
+    "count": 409,
+    "mean_abs_deviation_pct": 8.4,
+    "median_abs_deviation_pct": 5.4
+   },
+   {
+    "state": "NY",
+    "count": 359,
+    "mean_abs_deviation_pct": 9.7,
+    "median_abs_deviation_pct": 6.5
+   },
+   {
+    "state": "NJ",
+    "count": 195,
+    "mean_abs_deviation_pct": 9.4,
+    "median_abs_deviation_pct": 7.6
+   },
+   {
+    "state": "CO",
+    "count": 128,
+    "mean_abs_deviation_pct": 11.5,
+    "median_abs_deviation_pct": 8.7
+   },
+   {
+    "state": "FL",
+    "count": 128,
+    "mean_abs_deviation_pct": 13.2,
+    "median_abs_deviation_pct": 10.4
+   },
+   {
+    "state": "GA",
+    "count": 125,
+    "mean_abs_deviation_pct": 8.1,
+    "median_abs_deviation_pct": 4.7
+   },
+   {
+    "state": "IL",
+    "count": 123,
+    "mean_abs_deviation_pct": 12.3,
+    "median_abs_deviation_pct": 9.3
+   },
+   {
+    "state": "MD",
+    "count": 115,
+    "mean_abs_deviation_pct": 10.6,
+    "median_abs_deviation_pct": 7.8
+   }
+  ],
+  "by_capacity": [
+   {
+    "bucket": "< 1 MW",
+    "count": 0,
+    "mean_abs_deviation_pct": null
+   },
+   {
+    "bucket": "1\u20135 MW",
+    "count": 2094,
+    "mean_abs_deviation_pct": 9.7
+   },
+   {
+    "bucket": "5\u201320 MW",
+    "count": 1190,
+    "mean_abs_deviation_pct": 9.2
+   },
+   {
+    "bucket": "20\u2013100 MW",
+    "count": 398,
+    "mean_abs_deviation_pct": 11.6
+   },
+   {
+    "bucket": "100+ MW",
+    "count": 200,
+    "mean_abs_deviation_pct": 9.5
+   }
+  ]
+ },
+ "cohorts": {
+  "all": {
+   "n": 5065,
+   "mean_deviation_pct": 3.36,
+   "median_deviation_pct": 0.46,
+   "mean_abs_deviation_pct": 12.96,
+   "p25_deviation_pct": -6.67,
+   "p75_deviation_pct": 11.0,
+   "pct_within_10": 58.0,
+   "pct_within_5": 31.6
+  },
+  "clean_fixed": {
+   "n": 2352,
+   "mean_deviation_pct": -2.18,
+   "median_deviation_pct": -2.26,
+   "mean_abs_deviation_pct": 10.41,
+   "p25_deviation_pct": -8.28,
+   "p75_deviation_pct": 5.08,
+   "pct_within_10": 65.2,
+   "pct_within_5": 37.2
+  },
+  "tracking": {
+   "n": 1917,
+   "mean_deviation_pct": 6.59,
+   "median_deviation_pct": 3.57,
+   "mean_abs_deviation_pct": 13.88,
+   "p25_deviation_pct": -5.59,
+   "p75_deviation_pct": 15.3,
+   "pct_within_10": 54.2,
+   "pct_within_5": 27.2
+  },
+  "curtailed": {
+   "n": 796,
+   "mean_deviation_pct": 11.96,
+   "median_deviation_pct": 6.04,
+   "mean_abs_deviation_pct": 18.29,
+   "p25_deviation_pct": -3.5,
+   "p75_deviation_pct": 22.96,
+   "pct_within_10": 46.0,
+   "pct_within_5": 25.8
+  }
+ }
+}
