@@ -85,6 +85,9 @@ import YieldSimulationPage from "@/pages/yield-simulation";
 import PerformancePage from "@/pages/performance";
 import OperationsPage from "@/pages/operations";
 import BacktestReportPage from "@/pages/backtest-report";
+import DegradationCertificatePage from "@/pages/degradation-certificate";
+import SoilingReportPage from "@/pages/soiling-report";
+import AvailabilityReportPage from "@/pages/availability-report";
 import DevelopPage from "@/pages/develop";
 import MethodPage from "@/pages/method";
 import FaqPage from "@/pages/faq";
@@ -135,6 +138,20 @@ function Router() {
       <Route path="/performance/:projectId" component={PerformancePage} />
       <Route path="/performance" component={PerformancePage} />
       <Route path="/backtest-report" component={BacktestReportPage} />
+
+      {/* Spec 22 paid-tier deliverables. Public routes: these are documents an
+          owner hands to a warranty adjuster, a lender or an acquirer, and a
+          report that needs a login to the reporting party's system is not
+          obviously independent of that party. */}
+      <Route
+        path="/reports/degradation/:projectId"
+        component={DegradationCertificatePage}
+      />
+      <Route path="/reports/soiling/:projectId" component={SoilingReportPage} />
+      <Route
+        path="/reports/availability/:projectId"
+        component={AvailabilityReportPage}
+      />
       <Route path="/privacy" component={PrivacyPolicy} />
       <Route path="/develop" component={DevelopPage} />
       <Route path="/develop/preview" component={DeveloperDashboardPreview} />

@@ -11,3 +11,13 @@ pvanalytics==0.2.2  # QC detectors; pinned — §5's thresholds are calibrated t
 ruptures>=1.1       # pvanalytics.quality.time.shifts_ruptures imports it lazily
 s3fs>=2023.1        # anonymous reads of the public oedi-data-lake bucket
 pyarrow>=14.0       # PVDAQ pvdata/metrics are parquet
+
+# Spec 22 analytics layer (src/analytics/).
+# Pinned rather than floated: §2's verified API surface is 3.2.1's, and the YoY
+# confidence-interval default this module overrides (68.2, not 95) is a library
+# default rather than a documented contract — a float could move it silently.
+# Heavy: rdtools pulls matplotlib, plotly, statsmodels, scikit-learn, xgboost,
+# h5py, arch and bayesian-filters. `pip install -r requirements.txt` in CI gets
+# materially slower. The analytics module imports it lazily so the rest of the
+# engine — and the offline half of the test suite — still runs without it.
+rdtools==3.2.1

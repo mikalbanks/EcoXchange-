@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "ecoxchange-verification-engine"
-version = "2.2.0"
+version = "2.3.0"
 description = "EcoXchange production-verification engine (pvlib PVWatts ModelChain, P50/P90, loss waterfall, reconciliation)."
 requires-python = ">=3.11"
 dependencies = [
@@ -19,6 +19,10 @@ dependencies = [
     "ruptures>=1.1",
     "s3fs>=2023.1",
     "pyarrow>=14.0",
+    # Spec 22 analytics layer (src/analytics/). Pinned: §2's verified API surface
+    # is 3.2.1's, and the YoY confidence-interval default this module overrides
+    # is a library default, not a documented contract.
+    "rdtools==3.2.1",
 ]
 
 [project.optional-dependencies]
@@ -30,7 +34,7 @@ package-dir = {"" = "src"}
 
 [tool.setuptools.packages.find]
 where = ["src"]
-include = ["verification_engine*", "ingestion*"]
+include = ["verification_engine*", "ingestion*", "analytics*"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
