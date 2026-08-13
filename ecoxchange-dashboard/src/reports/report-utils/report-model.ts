@@ -101,9 +101,9 @@ function coordsLabel(lat: number, lng: number): string {
 }
 
 function pickTargetSegmentMads(): { low: number; high: number } {
-  // The bucket lookup lives in shared/benchmark so the page, this report and
-  // the homepage cannot drift apart. Empty buckets are already filtered out
-  // there, so a missing range means the artifact itself is unusable.
+  // The bucket lookup lives in data/benchmark.ts so the page, this report and
+  // the PDF cannot drift apart. Empty buckets are already filtered out there,
+  // so a missing range means the artifact itself is unusable.
   const range = targetSegmentRange();
   if (!range) {
     throw new Error(

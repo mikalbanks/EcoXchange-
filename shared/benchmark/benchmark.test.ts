@@ -95,19 +95,54 @@ describe("cohort integrity", () => {
   });
 });
 
-describe("served mirror", () => {
-  // ecoxchange-dashboard serves a copy at /benchmark-results.json for anyone
-  // who wants the raw artifact. It has to be the same file.
-  it("matches the canonical artifact byte for byte", () => {
-    const canonical = fileURLToPath(
-      new URL("./benchmark-results.json", import.meta.url),
+describe("artifact copies", () => {
+  // There are three copies of this artifact on disk, and that is deliberate.
+  //
+  // `shared/benchmark/` is canonical and serves client/ (www), which builds
+  // from the repo root. `ecoxchange-dashboard/src/data/` is the demo app's
+  // own copy: that package must not read anything outside its own directory,
+  // because the Cloudflare build that deploys demo.ecoxchange.net fails when
+  // it does (see the header comment in ecoxchange-dashboard/src/data/
+  // benchmark.ts). `public/` is what the demo serves to anyone who wants the
+  // raw JSON.
+  //
+  // Duplication on disk is only safe while it is duplication in name alone.
+  // These are the assertions that make that true — if any copy drifts, the
+  // root suite goes red before the two sites can disagree in public.
+  const canonical = readFileSync(
+    fileURLToPath(new URL("./benchmark-results.json", import.meta.url)),
+    "utf8",
+  );
+
+  const copyOf = (relative: string) =>
+    readFileSync(fileURLToPath(new URL(relative, import.meta.url)), "utf8");
+
+  it("keeps the dashboard's copy byte-identical", () => {
+    expect(
+      copyOf("../../ecoxchange-dashboard/src/data/benchmark-results.json"),
+    ).toBe(canonical);
+  });
+
+  it("keeps the served mirror byte-identical", () => {
+    expect(
+      copyOf("../../ecoxchange-dashboard/public/benchmark-results.json"),
+    ).toBe(canonical);
+  });
+
+  // The headline figures are the ones both sites publish. Pin them against the
+  // canonical artifact so a regenerated run that moves them has to be a
+  // deliberate, reviewed change rather than a silent one.
+  it("still reports the figures both sites publish", () => {
+    expect(PLANTS_TESTED).toBe(5065);
+    expect(PUBLICATION_N).toBe(3882);
+    expect(PUBLICATION_MAD_PCT).toBeCloseTo(9.77, 2);
+    expect(FULL_FLEET_MAD_PCT).toBeCloseTo(12.96, 2);
+    expect(PUBLICATION_WITHIN_10_RATE).toBeCloseTo(66.3, 1);
+    expect(targetSegment().map((b) => [b.bucket, b.meanAbsDeviationPct])).toEqual(
+      [
+        ["1–5 MW", 9.7],
+        ["5–20 MW", 9.2],
+      ],
     );
-    const mirror = fileURLToPath(
-      new URL(
-        "../../ecoxchange-dashboard/public/benchmark-results.json",
-        import.meta.url,
-      ),
-    );
-    expect(readFileSync(mirror, "utf8")).toBe(readFileSync(canonical, "utf8"));
   });
 });

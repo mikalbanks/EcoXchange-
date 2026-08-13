@@ -17,5 +17,5 @@
     "noFallthroughCasesInSwitch": true,
     "types": []
   },
-  "include": ["src", "vite.config.ts", "../shared/benchmark"]
+  "include": ["src", "vite.config.ts"]
 }
