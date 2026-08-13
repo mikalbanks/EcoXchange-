@@ -174,9 +174,19 @@ function SoilingCard({ row }: { row: PlantAnalyticsRow }) {
           <CleaningImplication lossPct={loss} lossUsd={row.soiling_loss_usd} />
         )}
 
+        {/* `TREAT WITH CAUTION` is excluded: it is already the callout above
+            the revenue figure, and repeating it here teaches the reader to skim
+            the block. The RdTools warnings stay — "20% or more of the daily
+            data is assigned to invalid soiling intervals" is independent
+            corroboration that this number should not be trusted, and it comes
+            from the library rather than from us. */}
         <NotesPanel
           notes={row.notes}
-          match={(n) => n.toLowerCase().includes("soiling")}
+          match={(n) =>
+            !n.startsWith("TREAT WITH CAUTION") &&
+            (n.toLowerCase().includes("soiling") ||
+              n.startsWith("RdTools warning:"))
+          }
           title="Qualifications"
         />
       </CardContent>
