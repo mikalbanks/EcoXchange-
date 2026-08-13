@@ -3,6 +3,7 @@ import type {
   ReconciliationOutput,
 } from "../utils/types.js";
 import { classifyAnomaly } from "./classify.js";
+import { calibrationLabel, toToleranceConfig } from "./thresholds.js";
 
 /**
  * Three-way reconciliation: inverter ↔ utility meter ↔ expected (satellite).
@@ -77,21 +78,57 @@ export function reconcile(input: ReconciliationInput): ReconciliationOutput {
   }
 
   // STEP 3: tolerance checks
-  if (inv_vs_expected_pct > tolerances.inv_vs_expected_upper_pct) {
+  //
+  // CHECK A is the only leg with per-plant adaptive bands (spec 23). When
+  // `bands` is supplied, the effective CHECK A thresholds come from the plant's
+  // own calibration; `tolerances` still supplies B and C, which stay flat
+  // because neither leg has a measured residual distribution behind it.
+  const bandLabel = input.bands ? calibrationLabel(input.bands) : null;
+  const gateUpper = input.bands
+    ? input.bands.gate
+    : tolerances.inv_vs_expected_upper_pct;
+  const gateLower = input.bands
+    ? -input.bands.gate
+    : tolerances.inv_vs_expected_lower_pct;
+  const bandNote = input.bands
+    ? `plant gate band: ±${input.bands.gate.toFixed(1)}%, ${bandLabel}`
+    : null;
+
+  if (inv_vs_expected_pct > gateUpper) {
     flag_reasons.push(
       `Inverter production ${inv_vs_expected_pct.toFixed(1)}% ABOVE expected ` +
-        `(threshold: +${tolerances.inv_vs_expected_upper_pct}%). ` +
+        `(${bandNote ?? `threshold: +${gateUpper}%`}). ` +
         `Possible causes: satellite underestimate, meter calibration error, system upgrade not reflected in specs.`,
     );
     has_blocking_gap = true;
   }
-  if (inv_vs_expected_pct < tolerances.inv_vs_expected_lower_pct) {
+  if (inv_vs_expected_pct < gateLower) {
     flag_reasons.push(
       `Inverter production ${Math.abs(inv_vs_expected_pct).toFixed(1)}% BELOW expected ` +
-        `(threshold: ${tolerances.inv_vs_expected_lower_pct}%). ` +
+        `(${bandNote ?? `threshold: ${gateLower}%`}). ` +
         `Possible causes: panel degradation exceeding model, soiling, shading, inverter fault, curtailment.`,
     );
     has_blocking_gap = true;
+  }
+
+  // Spec 23 §5. The detect band observes; two consecutive breaches block.
+  // Residual lag-1 autocorrelation is +0.445, so a repeat is signal where a
+  // single month usually is not — and sustained moderate underperformance that
+  // never trips the wide gate is exactly what real degradation looks like.
+  let detect_exceeded = false;
+  let persistence_triggered = false;
+  if (input.bands) {
+    detect_exceeded = Math.abs(inv_vs_expected_pct) > input.bands.detect;
+    persistence_triggered = detect_exceeded && input.prior_detect_exceeded === true;
+    if (persistence_triggered) {
+      flag_reasons.push(
+        `Production has been outside the ±${input.bands.detect.toFixed(1)}% detection band ` +
+          `for two consecutive periods (${bandLabel}). Sustained divergence of this ` +
+          `shape indicates a developing issue — soiling, degradation beyond model, ` +
+          `or partial equipment failure — rather than single-month noise.`,
+      );
+      has_blocking_gap = true;
+    }
   }
 
   if (inv_vs_utility_pct !== null) {
@@ -142,7 +179,11 @@ export function reconcile(input: ReconciliationInput): ReconciliationOutput {
     inv_vs_utility_pct,
     util_vs_expected_pct,
     flag_reasons,
-    tolerance_config: tolerances,
+    // Records the bands actually used, not the defaults — with adaptive CHECK A
+    // the two differ, and this JSONB is what an investor dispute is settled from.
+    tolerance_config: input.bands
+      ? toToleranceConfig(input.bands, tolerances)
+      : tolerances,
     // Diagnosis only — the verdict above is already decided (spec 7).
     ...(status === "flagged"
       ? {
@@ -152,6 +193,16 @@ export function reconcile(input: ReconciliationInput): ReconciliationOutput {
             util_vs_expected_pct,
             input.classification_context,
           ),
+        }
+      : {}),
+    ...(input.bands
+      ? {
+          calibration_id: input.bands.calibrationId,
+          gate_band_pct: input.bands.gate,
+          detect_band_pct: input.bands.detect,
+          detect_exceeded,
+          persistence_triggered,
+          pending_calibration: input.bands.calibrationId === null,
         }
       : {}),
   };

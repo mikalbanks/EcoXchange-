@@ -49,6 +49,12 @@ interface DbVerificationRecord {
   status: "verified" | "flagged" | "pending";
   flag_reasons: string[] | null;
   estimated_revenue: number | null;
+  // Spec 23 (migration 015). Optional: null on every row written before it,
+  // and this app must render those without pretending they had bands.
+  gate_band_pct?: number | null;
+  detect_band_pct?: number | null;
+  detect_exceeded?: boolean | null;
+  persistence_triggered?: boolean | null;
 }
 
 function locationFromCoords(lat: number, lon: number): string {
@@ -82,7 +88,7 @@ export async function loadReferenceLibrary(): Promise<ReferenceLibrary | null> {
     const { data: recs, error: rerr } = await supabase
       .from("verification_records")
       .select(
-        "project_id, period_start, period_end, inverter_kwh, utility_kwh, expected_kwh, inv_vs_expected_pct, inv_vs_utility_pct, util_vs_expected_pct, status, flag_reasons, estimated_revenue",
+        "project_id, period_start, period_end, inverter_kwh, utility_kwh, expected_kwh, inv_vs_expected_pct, inv_vs_utility_pct, util_vs_expected_pct, status, flag_reasons, estimated_revenue, gate_band_pct, detect_band_pct, detect_exceeded, persistence_triggered",
       )
       .in("project_id", ids)
       .order("period_start", { ascending: true });
@@ -159,7 +165,7 @@ export async function loadReferenceDetail(
   const { data: recs, error: rerr } = await supabase
     .from("verification_records")
     .select(
-      "project_id, period_start, period_end, inverter_kwh, utility_kwh, expected_kwh, inv_vs_expected_pct, inv_vs_utility_pct, util_vs_expected_pct, status, flag_reasons, estimated_revenue",
+      "project_id, period_start, period_end, inverter_kwh, utility_kwh, expected_kwh, inv_vs_expected_pct, inv_vs_utility_pct, util_vs_expected_pct, status, flag_reasons, estimated_revenue, gate_band_pct, detect_band_pct, detect_exceeded, persistence_triggered",
     )
     .eq("project_id", id)
     .order("period_start", { ascending: true });

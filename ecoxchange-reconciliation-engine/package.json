@@ -9,7 +9,8 @@
     "test": "vitest run --exclude '**/backtest-integration.test.ts'",
     "test:watch": "vitest",
     "backtest": "tsx src/index.ts backtest",
-    "backtest:validate": "RUN_NETWORK_TESTS=1 vitest run src/__tests__/backtest-integration.test.ts"
+    "backtest:validate": "RUN_NETWORK_TESTS=1 vitest run src/__tests__/backtest-integration.test.ts",
+    "replay:holdout": "tsx scripts/replay-holdout.ts"
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.106.1",

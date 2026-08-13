@@ -46,6 +46,12 @@ export interface DbVerificationRecord {
   tolerance_config: Record<string, number>;
   estimated_revenue: number | null;
   engine_version: string;
+  /** Spec 23 — the per-plant bands this period was judged against. Null on
+   *  pre-spec-23 rows. */
+  gate_band_pct?: number | null;
+  detect_band_pct?: number | null;
+  detect_exceeded?: boolean | null;
+  persistence_triggered?: boolean | null;
 }
 
 export interface DbSatelliteReading {

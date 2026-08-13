@@ -20,16 +20,30 @@ below names the artifact that was checked.
 | 011 | `011_pcp_submissions.sql` | applied 2026-08-09 | `pcp_submissions` |
 | 012 | `012_polymesh.sql` | applied 2026-08-09 | `polymesh_assets`, `polymesh_holders`, `polymesh_distributions`, `polymesh_sync_runs` |
 | 013 | `013_ingestion_and_quality.sql` | **NOT APPLIED** | written for spec 21 §4; not yet run against `xgcroo…` |
+| 014 | `014_plant_analytics.sql` | unverified | written for spec 22 §3; no direct inspection recorded |
+| 015 | `015_project_calibration.sql` | **NOT APPLIED** | written for spec 23 §1; not yet run against `xgcroo…` |
 
 18 tables in `public`. `projects` holds 1 row and `verification_records` 12 — the
-Savannah demo year — unchanged by the 2026-08-09 applications. The engine schema
-is now fully migrated: every file in this directory has run against `xgcroo…`.
+Savannah demo year — unchanged by the 2026-08-09 applications.
 
-**The first twelve are applied. 013 is outstanding** — it is written and
-idempotent but has not been run, so nothing has verified it against the live
-database. Apply it before `supabase/seed/005_pvdaq_ingestion.sql`, which inserts
-into the `reading_quality` table and the `data_provenance` / `telemetry_source`
-columns that 013 creates.
+**The first twelve are applied. 013, 014 and 015 are outstanding.** All three are
+written and idempotent; none has been verified against the live database, so the
+schema is *not* fully migrated. (An earlier revision of this file claimed it was,
+while the row above it said 013 had not run. 014 had no row at all. Both fixed —
+this ledger is the only record there is, and a ledger that flatters itself is
+worse than none.)
+
+Apply in order:
+
+- **013** before `supabase/seed/005_pvdaq_ingestion.sql`, which inserts into the
+  `reading_quality` table and the `data_provenance` / `telemetry_source` columns
+  that 013 creates.
+- **014** — spec 22 `plant_analytics`. No dependency on 013.
+- **015** — spec 23 `project_calibration` plus five `verification_records`
+  columns. No dependency on 013 or 014. Note it installs an append-only trigger:
+  after it runs, `UPDATE`/`DELETE` on `project_calibration` raise
+  `restrict_violation` by design (spec 23 §4.3 / AC 8), so a "fix the row"
+  reflex will fail loudly rather than silently rewrite a frozen band.
 
 ### What 013 changes that is not additive
 

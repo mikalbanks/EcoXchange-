@@ -120,6 +120,38 @@ export interface VerificationRecord {
   reviewed_by: string | null;
   review_notes: string | null;
   review_resolved_at: string | null;
+
+  // ── Spec 23 (migration 015) ────────────────────────────────────────────────
+  // Nullable because rows written before spec 23 have no calibration and never
+  // will. Back-filling them with today's bands would invent a history.
+  /** The calibration in force when this period was judged. */
+  calibration_id?: string | null;
+  /** Inverter-vs-expected band whose breach blocks distribution, percent. */
+  gate_band_pct?: number | null;
+  /** Narrower observation band, percent. */
+  detect_band_pct?: number | null;
+  /** Whether the detect band was breached. Read by the NEXT period. */
+  detect_exceeded?: boolean | null;
+  /** This period and the prior one both exceeded detect. */
+  persistence_triggered?: boolean | null;
+}
+
+/** Spec 23 §1 — a frozen per-plant threshold calibration. Immutable once written. */
+export interface ProjectCalibration {
+  id: string;
+  project_id: string;
+  calibration_version: number;
+  residual_mad_pct: number;
+  plant_factor: number;
+  seasonal_factors: Record<string, number>;
+  window_start: string;
+  window_end: string;
+  n_months_used: number;
+  frozen_at: string;
+  frozen_by: string;
+  supersedes_id: string | null;
+  refit_reason: string | null;
+  engine_version: string;
 }
 
 export interface EngineRun {

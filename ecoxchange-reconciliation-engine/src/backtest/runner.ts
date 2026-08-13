@@ -3,6 +3,10 @@ import { getExpectedGeneration } from "../physics/pvlib-client.js";
 import { reconcile } from "../reconciliation/reconcile.js";
 import { fetchNasaPowerDaily } from "../ingestion/nasa-power.js";
 import { DEFAULT_TOLERANCES, type ToleranceConfig } from "../config/tolerances.js";
+import {
+  resolveBands,
+  type CalibrationBasis,
+} from "../reconciliation/thresholds.js";
 import { ENGINE_VERSION } from "../config/constants.js";
 import { monthRange } from "../utils/dates.js";
 import { randomNormal, seededRng } from "../utils/math.js";
@@ -77,6 +81,10 @@ export interface BacktestConfig {
   end_month: string;
   simulation: BacktestSimulation;
   tolerances?: ToleranceConfig;
+  /** Spec 23: run CHECK A against per-plant adaptive bands. Omit for the
+   *  pre-spec-23 flat-tolerance behaviour, which is what the committed Savannah
+   *  backtest and its report still use. */
+  calibration?: CalibrationBasis;
 }
 
 export interface BacktestMonthResult {
@@ -89,6 +97,11 @@ export interface BacktestMonthResult {
   inv_vs_expected_pct: number | null;
   status: VerificationStatus;
   flag_reasons: string[];
+  /** Spec 23. Undefined when the run supplied no calibration. */
+  gate_band_pct?: number;
+  detect_band_pct?: number;
+  detect_exceeded?: boolean;
+  persistence_triggered?: boolean;
 }
 
 export interface BacktestReport {
@@ -124,6 +137,7 @@ export async function runBacktest(config: BacktestConfig): Promise<BacktestRepor
   const results: BacktestMonthResult[] = [];
   let usedFallback = false;
   let usedPvlib = false;
+  let priorDetectExceeded = false;
 
   for (const m of months) {
     const irradiance = await fetchNasaPowerDaily(
@@ -152,6 +166,12 @@ export async function runBacktest(config: BacktestConfig): Promise<BacktestRepor
     const simulated_inverter_kwh = expected.expected_kwh * (1 + deviation_pct / 100);
     const simulated_utility_kwh = simulated_inverter_kwh * 0.97;
 
+    // Spec 23: months run in order here, so the runner already holds the prior
+    // period's detect state and needs no database to evaluate persistence.
+    const bands = config.calibration
+      ? resolveBands(config.calibration, Number(m.start.slice(5, 7)))
+      : undefined;
+
     const verification = reconcile({
       project: config.project,
       period_start: m.start,
@@ -168,7 +188,10 @@ export async function runBacktest(config: BacktestConfig): Promise<BacktestRepor
       },
       expected_generation: expected,
       tolerances,
+      bands,
+      prior_detect_exceeded: priorDetectExceeded,
     });
+    priorDetectExceeded = verification.detect_exceeded === true;
 
     results.push({
       month: m.start,
@@ -180,6 +203,10 @@ export async function runBacktest(config: BacktestConfig): Promise<BacktestRepor
       inv_vs_expected_pct: verification.inv_vs_expected_pct,
       status: verification.status,
       flag_reasons: verification.flag_reasons,
+      gate_band_pct: verification.gate_band_pct,
+      detect_band_pct: verification.detect_band_pct,
+      detect_exceeded: verification.detect_exceeded,
+      persistence_triggered: verification.persistence_triggered,
     });
   }
 
