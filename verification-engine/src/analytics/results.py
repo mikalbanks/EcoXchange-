@@ -18,6 +18,7 @@ nothing meaningful to report, and saying so is the correct output (§4).
 """
 from __future__ import annotations
 
+import math
 from dataclasses import asdict, dataclass, field
 from datetime import date, datetime
 
@@ -328,8 +329,14 @@ def _serializable(obj):
         return obj.isoformat()
     if isinstance(obj, date):
         return obj.isoformat()
-    if isinstance(obj, float) and obj != obj:      # NaN
-        # NaN is not JSON, and `json.dumps` emits a bare `NaN` that most parsers
-        # reject. An absent number is None here.
+    if isinstance(obj, float) and not math.isfinite(obj):
+        # NaN and +/-inf are all outside JSON. `json.dumps` emits them as bare
+        # `NaN` / `Infinity` tokens, which most parsers — including the
+        # TypeScript reader on the other side of this artifact — reject.
+        #
+        # None rather than a sentinel: every one of these means "no number was
+        # produced", and an infinity that survives into a report is a division
+        # by a zero denominator rendered as a real measurement. A soiling ratio
+        # of `Infinity` would print as a very confident answer.
         return None
     return obj

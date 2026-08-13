@@ -64,19 +64,67 @@ def fetch_nsrdb(loc: Location, year: int, api_key: str, email: str) -> pd.DataFr
     return _normalize(df)
 
 
+#: NASA POWER's hourly JSON endpoint caps the time extent of a single request.
+#: Past it the API returns 422 with *"please shorten your requested time extent
+#: for a JSON formatted data request"* — a hard refusal, not a truncation, so a
+#: long window fails outright rather than quietly returning a short one. A
+#: calendar year per request sits comfortably inside the limit.
+NASA_POWER_MAX_DAYS_PER_REQUEST = 366
+
+
 def fetch_nasa_power(loc: Location, start: str, end: str) -> pd.DataFrame:
     """NASA POWER hourly, indexed in UTC. No key required. start/end 'YYYY-MM-DD'.
 
     The endpoint itself defaults to local solar time; pvlib requests
     `time-standard=utc` and localizes accordingly. `_normalize` enforces the UTC
     result rather than trusting it — see the module docstring (spec 20 §2.1).
+
+    Windows longer than a year are split into year-sized requests and
+    concatenated. Spec 22's analytics windows run to 7.8 years, which the API
+    refuses outright; spec 21's 24-month windows were accepted as a single
+    request, so the true ceiling sits somewhere between two years and eight. The
+    error message does not say where, and neither do the docs, so the chunk size
+    here is deliberately well inside the range known to work rather than tuned
+    to a limit nobody has stated. The extra requests are cheap; a 422 partway
+    through a multi-hour analytics run is not.
+
+    The split is on whole days so no hour falls in two chunks, and duplicate
+    stamps at the seams are dropped.
     """
+    start_ts = pd.Timestamp(start)
+    end_ts = pd.Timestamp(end)
+    if end_ts < start_ts:
+        raise ValueError(f"end {end} precedes start {start}")
+
+    span_days = (end_ts - start_ts).days
+    if span_days <= NASA_POWER_MAX_DAYS_PER_REQUEST:
+        return _normalize(_nasa_power_request(loc, start_ts, end_ts))
+
+    frames = []
+    chunk_start = start_ts
+    while chunk_start <= end_ts:
+        chunk_end = min(
+            chunk_start + pd.Timedelta(days=NASA_POWER_MAX_DAYS_PER_REQUEST - 1),
+            end_ts,
+        )
+        frames.append(_normalize(_nasa_power_request(loc, chunk_start, chunk_end)))
+        chunk_start = chunk_end + pd.Timedelta(days=1)
+
+    combined = pd.concat(frames)
+    combined = combined[~combined.index.duplicated(keep="first")].sort_index()
+    return combined
+
+
+def _nasa_power_request(
+    loc: Location, start: pd.Timestamp, end: pd.Timestamp
+) -> pd.DataFrame:
     from pvlib import iotools
     df, _ = iotools.get_nasa_power(
         latitude=loc.latitude, longitude=loc.longitude,
-        start=start, end=end, map_variables=True,
+        start=start.strftime("%Y-%m-%d"), end=end.strftime("%Y-%m-%d"),
+        map_variables=True,
     )
-    return _normalize(df)
+    return df
 
 
 def fetch_pvgis(loc: Location, start_year: int, end_year: int) -> pd.DataFrame:

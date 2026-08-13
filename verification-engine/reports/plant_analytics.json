@@ -1,0 +1,884 @@
+{
+  "_generated_by": "verification-engine/scripts/run_analytics.py (spec 22)",
+  "generated_at": "2026-08-13T05:19:25.151574+00:00",
+  "engine_version": "2.3.0",
+  "rdtools_version": "3.2.1",
+  "as_of_date": "2026-08-13",
+  "min_months_for_degradation": 24.0,
+  "plausible_degradation_range_pct_per_yr": [
+    -2.5,
+    -0.2
+  ],
+  "systems": [
+    {
+      "system_id": 4902,
+      "project_id": "00004902-0000-4000-8000-000000004902",
+      "name": "NIST Ground 1",
+      "window": {
+        "start": "2014-08-01",
+        "end": "2018-02-28",
+        "rationale": "the full published record (2014-08 .. 2018-02), ~3.5 years. Longer than the 24-month ingestion window on purpose: this is the system with the most defensible record of the three, so it carries the tightest confidence interval. The whole-month -999 sentinel stretches in 2015-05, 2015-06 and parts of 2016 are masked to NaN by the adapter's MISSING_VALUE_SENTINELS before they reach any conversion, and RdTools' filters treat NaN as a gap. Left unmasked they would integrate June 2015 to -520 MWh on a 271 kW plant and still score 100% complete (spec 21 \u00a72.5)"
+      },
+      "caveats": [
+        "Whole months of the -999 missing-data sentinel fall inside this window. They are masked to NaN, not measured, so n_days_analyzed will sit well below the calendar day count."
+      ],
+      "row_id": "1b9923f0-23e0-4f13-86bb-f67a25c10d42"
+    },
+    {
+      "system_id": 1332,
+      "project_id": "00001332-0000-4000-8000-000000001332",
+      "name": "NREL Parking Garage",
+      "window": {
+        "start": "2016-01-01",
+        "end": "2018-07-31",
+        "rationale": "2016-01 .. 2018-07, ~2.6 years \u2014 hard-capped by the units break. The metrics dictionary declares raw_units=kW, units=W, calc_scale=1000 for metered_ac_power throughout, but the stored values are kW through 2018-07 and W from 2018-08: the channel peaks at 1,051 in 2017-03 and 934,400 in 2018-08 on a 1,153 kW plant. Dictionary-driven conversion after the break yields a 501 MW peak, and the adapter's magnitude guard rejects it (spec 21 \u00a72.6). Extending past 2018-07 would not fail loudly, it would just drop those months and quietly shorten the window"
+      },
+      "caveats": [
+        "NREL's own index flags this system: qa_status passes but qa_issue reads 'Wrong mounting config identified. Please manually review.' The \u00a73.2 filter selects on qa_status and never reads qa_issue.",
+        "Tilt is a DC-weighted merge of a 16.77 deg garage deck and a 60 deg face, giving 38.4 deg \u2014 which describes neither array. Clear-sky normalization models plane-of-array irradiance from that geometry, so the merge propagates directly into the degradation rate.",
+        "spec 21 \u00a73 records a detected time shift of up to 60 minutes over this system's record, consistent with a logger re-clock."
+      ],
+      "row_id": "78880f6d-c472-4dbe-8235-61efd1477679"
+    },
+    {
+      "system_id": 9069,
+      "project_id": "00009069-0000-4000-8000-000000009069",
+      "name": "Simon Solar Farm",
+      "window": {
+        "start": "2016-02-01",
+        "end": "2023-11-30",
+        "rationale": "the full record (2016-02 .. 2023-11), ~7.8 years. Far longer than the 24-month demo window, and deliberately so \u2014 but read the caveat before reading the rate"
+      },
+      "caveats": [
+        "Peak output falls from 33.0 MW in 2016 to 24.4 MW in 2023 on a 33 MW nameplate (spec 21 \u00a73). That is far too steep for degradation alone; partial outage, curtailment or a changed inverter limit are all likelier. Expect a degradation rate outside the -0.2 .. -2.5 %/yr sanity band, and read it as a finding about the plant rather than a bug in the method. It is reported with the collapse attached.",
+        "Reference system only: 33 MW is outside the 1-20 MW band, so it is never a segment example."
+      ],
+      "error": "HTTPError: {'header': 'The POWER Hourly API failed to complete your request; please review the errors below and the POWER Docs (https://power.larc.nasa.gov/docs/).', 'messages': ['The please shorten your requested time extent for a JSON formatted data request.']}",
+      "traceback": "Traceback (most recent call last):\n  File \"/home/user/EcoXchange-/verification-engine/scripts/run_analytics.py\", line 68, in analyze\n    row_id = trend.refresh_analytics(project, sink=sink, as_of=as_of)\n             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/user/EcoXchange-/verification-engine/src/analytics/trend.py\", line 869, in refresh_analytics\n    degradations[method] = run_degradation(project, method=method)\n                           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/user/EcoXchange-/verification-engine/src/analytics/trend.py\", line 436, in run_degradation\n    analysis = _run_analyses(project, method)\n               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/user/EcoXchange-/verification-engine/src/analytics/trend.py\", line 351, in _run_analyses\n    ta, provenance, site, cfg = _construct(project, assembled.series, method=method)\n                                ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/user/EcoXchange-/verification-engine/src/analytics/trend.py\", line 177, in _construct\n    kwargs[\"poa_global\"] = _satellite_poa(cfg, series.index)\n                           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/user/EcoXchange-/verification-engine/src/analytics/trend.py\", line 257, in _satellite_poa\n    weather = fetch_nasa_power(cfg.location, start.isoformat(), end.isoformat())\n              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\nrequests.exceptions.HTTPError: {'header': 'The POWER Hourly API failed to complete your request; please review the errors below and the POWER Docs (https://power.larc.nasa.gov/docs/).', 'messages': ['The please shorten your requested time extent for a JSON formatted data request.']}\n"
+    }
+  ],
+  "skipped": [
+    {
+      "system_id": 9069,
+      "reason": "HTTPError: {'header': 'The POWER Hourly API failed to complete your request; please review the errors below and the POWER Docs (https://power.larc.nasa.gov/docs/).', 'messages': ['The please shorten your requested time extent for a JSON formatted data request.']}"
+    },
+    {
+      "system_id": 2107,
+      "reason": "not seeded by spec 21. Its 24 AC power columns (e.g. 'inv_01_ac_power_inv_149583') state no unit, and the data-prize bundle carries no metrics dictionary to resolve one. Inferring kW from magnitudes against the 27.6 kW ABB inverter nameplate would be a guess, and a wrong guess is a clean 1000x error. Resolving it needs a unit statement from NREL, not more code (spec 21 \u00a72.7, \u00a74)."
+    }
+  ],
+  "acceptance": [
+    {
+      "criterion": "\u00a76.1",
+      "statement": "Degradation runs on all four spec 21 seed systems with >=2 years of data, producing a rate and a confidence interval",
+      "met": false,
+      "detail": "2 of 3 registered projects produced a rate with an interval. Four is not reachable: spec 21 seeded three systems, and 2107 is absent because not seeded by spec 21. Its 24 AC power columns (e.g. 'inv_01_ac_power_inv_149583') state no unit, and the data-prize bundle carries no metrics dictionary to resolve one. Inferring kW from magnitudes against the 27.6 kW ABB inverter nameplate would be a guess, and a wrong guess is a clean 1000x error. Resolving it needs a unit statement from NREL, not more code (spec 21 \u00a72.7, \u00a74). Failures this run: [9069]."
+    },
+    {
+      "criterion": "\u00a76.2",
+      "statement": "NREL systems (1332, 4902) sanity-checked; anything outside -2.5 .. -0.2 %/yr is a bug, not a finding",
+      "met": true,
+      "detail": "2 of 2 NREL system rate(s) inside the band. "
+    },
+    {
+      "criterion": "\u00a76.3",
+      "statement": "Clearsky and sensor both run where a POA channel exists, stored separately, disagreement >0.5 %/yr surfaced as a note",
+      "met": true,
+      "detail": "2 clearsky row(s), 0 sensor row(s). No system in this run publishes a verified POA channel, so sensor analysis did not apply \u2014 the PVDAQ optional-channel resolver only maps a POA channel whose declared unit is W/m^2, and drops anything ambiguous (spec 21 \u00a72.1)."
+    },
+    {
+      "criterion": "\u00a76.4",
+      "statement": "Soiling completes on at least one system; no soiling signal is recorded as a legitimate result, never forced",
+      "met": true,
+      "detail": "2 row(s) with a quantified soiling loss, 0 row(s) recording no soiling signal found. Both are completed analyses."
+    },
+    {
+      "criterion": "\u00a76.5",
+      "statement": "Availability produces monthly percentages and a lost-production estimate for at least one multi-inverter system",
+      "met": true,
+      "detail": "1 row(s) with an availability figure, 1 of them backed by per-inverter telemetry. "
+    },
+    {
+      "criterion": "\u00a76.6",
+      "statement": "Every stored degradation rate has non-null CI bounds",
+      "met": true,
+      "detail": "2 stored rate(s), 0 missing a bound. The invariant is enforced three times over: DegradationResult raises on construction, PlantAnalyticsRow raises before a sink sees it, and migration 014 carries it as a CHECK."
+    },
+    {
+      "criterion": "\u00a76.7",
+      "statement": "pytest: degradation returns NULL under 24 months; QC-error readings excluded; economic translation handles NULL PPA",
+      "met": null,
+      "detail": "Scored by `pytest tests/test_analytics.py`, not by this run. All three cases are offline and need no rdtools."
+    }
+  ],
+  "rows": [
+    {
+      "id": "1b9923f0-23e0-4f13-86bb-f67a25c10d42",
+      "project_id": "00004902-0000-4000-8000-000000004902",
+      "as_of_date": "2026-08-13",
+      "window_start": "2014-08-01",
+      "window_end": "2018-02-28",
+      "degradation_pct_per_yr": -0.25317176217915516,
+      "degradation_ci_low": -2.589798092742049,
+      "degradation_ci_high": 3.78107424406553,
+      "degradation_method": "clearsky",
+      "soiling_loss_pct": 12.691905437595107,
+      "soiling_ci_low": 8.002201026045652,
+      "soiling_ci_high": 18.95860074477016,
+      "soiling_ratio": 0.8730809456240489,
+      "availability_pct": null,
+      "lost_production_kwh": null,
+      "outage_count": 613,
+      "ppa_rate_per_kwh": 0.045,
+      "soiling_loss_usd": 1781.2650045337227,
+      "availability_loss_usd": null,
+      "n_days_analyzed": 1278,
+      "rdtools_version": "3.2.1",
+      "engine_version": "2.3.0",
+      "computed_at": "2026-08-13T05:14:06.052744+00:00",
+      "provenance": {
+        "gamma_pdc": -0.0035,
+        "gamma_pdc_source": "verification_engine.config.ArrayConfig \u2014 the same value build_modelchain() uses for the expected-energy leg. Spec 22 \u00a74 quotes -0.004 against a run_backtest.py that does not exist in this repository; matching the config of record is what the sentence is actually asking for.",
+        "temperature_model": "open_rack_glass_glass",
+        "dc_capacity_kw": 270.7,
+        "surface_tilt": 20.0,
+        "surface_azimuth": 180.0,
+        "tracking": false,
+        "latitude": 39.1319,
+        "longitude": -77.2141,
+        "timezone": "America/New_York",
+        "config_hash": "c34d5301083a9a87",
+        "poa_source": "satellite_reanalysis",
+        "interp_freq": "15min",
+        "max_timedelta": "0 days 01:00:00",
+        "aggregation_freq": "D",
+        "confidence_level": 95.0,
+        "channels_used": [
+          "ac_power_w",
+          "dc_power_w",
+          "module_temp_c"
+        ],
+        "site_qa_status": "pass",
+        "site_qa_issue": "Percent clipping exceeded threshold of 10%, Filtered time series less than 1.0 years data, Wrong mounting config identified. Please manually review., correlation coefficient less than 0.5",
+        "tilt_rows": [
+          20.0
+        ],
+        "azimuth_rows": [
+          180.0
+        ],
+        "method": "clearsky",
+        "window_rationale": "the full published record (2014-08 .. 2018-02), ~3.5 years. Longer than the 24-month ingestion window on purpose: this is the system with the most defensible record of the three, so it carries the tightest confidence interval. The whole-month -999 sentinel stretches in 2015-05, 2015-06 and parts of 2016 are masked to NaN by the adapter's MISSING_VALUE_SENTINELS before they reach any conversion, and RdTools' filters treat NaN as a gap. Left unmasked they would integrate June 2015 to -520 MWh on a 271 kW plant and still score 100% complete (spec 21 \u00a72.5)",
+        "site_caveats": [
+          "Whole months of the -999 missing-data sentinel fall inside this window. They are masked to NaN, not measured, so n_days_analyzed will sit well below the calendar day count."
+        ],
+        "ppa_rate_basis": "estimated",
+        "availability_basis": "derived_from_power",
+        "availability_subsystems": 1,
+        "availability_monthly": [
+          {
+            "period": "2014-08",
+            "availability_pct": 88.22355603275201,
+            "lost_production_kwh": 4382617.588465531,
+            "actual_production_kwh": 32832501.00467033
+          },
+          {
+            "period": "2014-09",
+            "availability_pct": 99.91924064869218,
+            "lost_production_kwh": 27515.758916201925,
+            "actual_production_kwh": 34043781.831532404
+          },
+          {
+            "period": "2014-10",
+            "availability_pct": 89.25663421648086,
+            "lost_production_kwh": 2932497.9000113015,
+            "actual_production_kwh": 24363397.623809554
+          },
+          {
+            "period": "2014-11",
+            "availability_pct": 99.3328797285243,
+            "lost_production_kwh": 156061.5265815915,
+            "actual_production_kwh": 23237250.482417688
+          },
+          {
+            "period": "2014-12",
+            "availability_pct": 99.49000774935513,
+            "lost_production_kwh": 81670.60597193467,
+            "actual_production_kwh": 15932417.033333361
+          },
+          {
+            "period": "2015-01",
+            "availability_pct": 97.10580352569269,
+            "lost_production_kwh": 528464.7189910751,
+            "actual_production_kwh": 17730997.749518663
+          },
+          {
+            "period": "2015-02",
+            "availability_pct": null,
+            "lost_production_kwh": null,
+            "actual_production_kwh": 18799664.23381424
+          },
+          {
+            "period": "2015-03",
+            "availability_pct": 90.92742127104897,
+            "lost_production_kwh": 2721139.585616133,
+            "actual_production_kwh": 27271871.95952314
+          },
+          {
+            "period": "2015-04",
+            "availability_pct": 86.8773058841374,
+            "lost_production_kwh": 5040285.65146107,
+            "actual_production_kwh": 33368638.666666687
+          },
+          {
+            "period": "2015-05",
+            "availability_pct": 19.402509257323896,
+            "lost_production_kwh": 35386848.383920036,
+            "actual_production_kwh": 8518796.88846165
+          },
+          {
+            "period": "2015-06",
+            "availability_pct": 0.0,
+            "lost_production_kwh": 34746299.880719684,
+            "actual_production_kwh": 0.0
+          },
+          {
+            "period": "2015-07",
+            "availability_pct": 96.9039282971227,
+            "lost_production_kwh": 1257636.4713372258,
+            "actual_production_kwh": 39362755.82023844
+          },
+          {
+            "period": "2015-08",
+            "availability_pct": 78.76419906961196,
+            "lost_production_kwh": 8793559.317083457,
+            "actual_production_kwh": 32615565.51842034
+          },
+          {
+            "period": "2015-09",
+            "availability_pct": 88.45004149325555,
+            "lost_production_kwh": 3965286.1057060077,
+            "actual_production_kwh": 30366318.664913118
+          },
+          {
+            "period": "2015-10",
+            "availability_pct": null,
+            "lost_production_kwh": null,
+            "actual_production_kwh": 28798643.893773437
+          },
+          {
+            "period": "2015-11",
+            "availability_pct": 2.8615062114305867,
+            "lost_production_kwh": 22874289.728099514,
+            "actual_production_kwh": 673830.9354630113
+          },
+          {
+            "period": "2015-12",
+            "availability_pct": 88.4458722387124,
+            "lost_production_kwh": 1823220.4754934164,
+            "actual_production_kwh": 13956598.764537513
+          },
+          {
+            "period": "2016-01",
+            "availability_pct": 93.9889437047247,
+            "lost_production_kwh": 1331981.0246159579,
+            "actual_production_kwh": 20826870.25187099
+          },
+          {
+            "period": "2016-02",
+            "availability_pct": 99.32240431013841,
+            "lost_production_kwh": 161885.8190943299,
+            "actual_production_kwh": 23729325.638788342
+          },
+          {
+            "period": "2016-03",
+            "availability_pct": 99.82539671633373,
+            "lost_production_kwh": 58399.15365854774,
+            "actual_production_kwh": 33388367.95879072
+          },
+          {
+            "period": "2016-04",
+            "availability_pct": 83.7688112647323,
+            "lost_production_kwh": 6005775.58115827,
+            "actual_production_kwh": 30995676.863964915
+          },
+          {
+            "period": "2016-05",
+            "availability_pct": 98.92627781189482,
+            "lost_production_kwh": 356649.1555266142,
+            "actual_production_kwh": 32859499.25582385
+          },
+          {
+            "period": "2016-06",
+            "availability_pct": 70.86183291497012,
+            "lost_production_kwh": 12506911.06239069,
+            "actual_production_kwh": 30415867.937034726
+          },
+          {
+            "period": "2016-07",
+            "availability_pct": 12.56644575039899,
+            "lost_production_kwh": 35921208.03946474,
+            "actual_production_kwh": 5162799.522344589
+          },
+          {
+            "period": "2016-08",
+            "availability_pct": 99.90857363581615,
+            "lost_production_kwh": 37724.90037160445,
+            "actual_production_kwh": 41224881.03214264
+          },
+          {
+            "period": "2016-09",
+            "availability_pct": 99.88557389307024,
+            "lost_production_kwh": 37358.79102812796,
+            "actual_production_kwh": 32611476.366025686
+          },
+          {
+            "period": "2016-10",
+            "availability_pct": null,
+            "lost_production_kwh": null,
+            "actual_production_kwh": 27561945.560073256
+          },
+          {
+            "period": "2016-11",
+            "availability_pct": 99.44715779516117,
+            "lost_production_kwh": 143824.97493777715,
+            "actual_production_kwh": 25871731.304762125
+          },
+          {
+            "period": "2016-12",
+            "availability_pct": 99.02701451023077,
+            "lost_production_kwh": 198220.2528613657,
+            "actual_production_kwh": 20174154.76666522
+          },
+          {
+            "period": "2017-01",
+            "availability_pct": 98.49676968112706,
+            "lost_production_kwh": 242048.47047301359,
+            "actual_production_kwh": 15859840.071429968
+          },
+          {
+            "period": "2017-02",
+            "availability_pct": 99.64427060398505,
+            "lost_production_kwh": 89825.9618956391,
+            "actual_production_kwh": 25161379.84282899
+          },
+          {
+            "period": "2017-03",
+            "availability_pct": 99.7036149597839,
+            "lost_production_kwh": 107114.20915308068,
+            "actual_production_kwh": 36033106.99600005
+          },
+          {
+            "period": "2017-04",
+            "availability_pct": 99.84226445625686,
+            "lost_production_kwh": 55481.059621209875,
+            "actual_production_kwh": 35117986.064285636
+          },
+          {
+            "period": "2017-05",
+            "availability_pct": 94.07312263828716,
+            "lost_production_kwh": 2045269.1789686468,
+            "actual_production_kwh": 32463107.730952263
+          },
+          {
+            "period": "2017-06",
+            "availability_pct": 99.81108546403205,
+            "lost_production_kwh": 81636.79253108011,
+            "actual_production_kwh": 43131974.12035823
+          },
+          {
+            "period": "2017-07",
+            "availability_pct": 99.64505824404087,
+            "lost_production_kwh": 141422.48071278242,
+            "actual_production_kwh": 39702433.12050545
+          },
+          {
+            "period": "2017-08",
+            "availability_pct": 99.83538577417696,
+            "lost_production_kwh": 62114.931983264825,
+            "actual_production_kwh": 37671520.58627093
+          },
+          {
+            "period": "2017-09",
+            "availability_pct": 99.83660761355021,
+            "lost_production_kwh": 56795.63508127573,
+            "actual_production_kwh": 34703474.604762316
+          },
+          {
+            "period": "2017-10",
+            "availability_pct": 90.29823960070472,
+            "lost_production_kwh": 3002677.517726559,
+            "actual_production_kwh": 27947143.897618532
+          },
+          {
+            "period": "2017-11",
+            "availability_pct": 99.17007903696448,
+            "lost_production_kwh": 201660.50973762228,
+            "actual_production_kwh": 24097100.30237961
+          },
+          {
+            "period": "2017-12",
+            "availability_pct": 88.28650034012729,
+            "lost_production_kwh": 2214009.8595705875,
+            "actual_production_kwh": 16687342.62994361
+          },
+          {
+            "period": "2018-01",
+            "availability_pct": 99.18435622303772,
+            "lost_production_kwh": 200091.65397126268,
+            "actual_production_kwh": 24331653.652351856
+          },
+          {
+            "period": "2018-02",
+            "availability_pct": 98.29845090774809,
+            "lost_production_kwh": 316689.7211550477,
+            "actual_production_kwh": 18295157.718164206
+          },
+          {
+            "period": "2018-03",
+            "availability_pct": null,
+            "lost_production_kwh": 0.0,
+            "actual_production_kwh": 0.0
+          }
+        ],
+        "months_kept": [
+          "2014-08",
+          "2014-09",
+          "2014-10",
+          "2014-11",
+          "2014-12",
+          "2015-01",
+          "2015-02",
+          "2015-03",
+          "2015-04",
+          "2015-05",
+          "2015-07",
+          "2015-08",
+          "2015-09",
+          "2015-10",
+          "2015-11",
+          "2015-12",
+          "2016-01",
+          "2016-02",
+          "2016-03",
+          "2016-04",
+          "2016-05",
+          "2016-06",
+          "2016-07",
+          "2016-08",
+          "2016-09",
+          "2016-10",
+          "2016-11",
+          "2016-12",
+          "2017-01",
+          "2017-02",
+          "2017-03",
+          "2017-04",
+          "2017-05",
+          "2017-06",
+          "2017-07",
+          "2017-08",
+          "2017-09",
+          "2017-10",
+          "2017-11",
+          "2017-12",
+          "2018-01",
+          "2018-02"
+        ],
+        "months_qc_excluded": [],
+        "months_unavailable": [
+          {
+            "period": "2015-06",
+            "reason": "ImplausibleMagnitudeError: system 4902: |AC power| p99.9 is 0.91 MW against a 0.27 MW DC nameplate (3.4x, limit 1.5x). The stored values do not match the units the dictionary declares for them. Skipping the period rather than picking a scale factor."
+          }
+        ],
+        "span_months": 42.97,
+        "degradation_within_plausible_range": true,
+        "soiling_signal_found": true,
+        "expected_annual_kwh": 311881.1983121462
+      },
+      "notes": [
+        "1 month(s) had no usable telemetry: 2015-06.",
+        "Series read from cache pvdaq_4902_201408_201802.parquet.",
+        "This system publishes no plane-of-array irradiance channel. Clear-sky POA is modelled from solar geometry, and the observed irradiance the clear-sky filter compares it against comes from NASA POWER satellite reanalysis \u2014 the same source behind the expected-energy leg \u2014 rather than a site pyranometer. Degradation is therefore measured without depending on site instrumentation, which is the point of the clear-sky method; the trade is that hourly reanalysis resolves cloud cover more coarsely than an on-site sensor would, so the clear-sky filter is a blunter instrument here and the confidence interval is correspondingly wider.",
+        "RdTools warning: 'd' is deprecated and will be removed in a future version. Please use 'D' instead of 'd'.",
+        "RdTools warning: Please import `convolve` from the `scipy.ndimage` namespace; the `scipy.ndimage.filters` namespace is deprecated and will be removed in SciPy 2.0.0.",
+        "RdTools warning: Please import `shift` from the `scipy.ndimage` namespace; the `scipy.ndimage.interpolation` namespace is deprecated and will be removed in SciPy 2.0.0.",
+        "RdTools warning: The soiling module is currently experimental. The API, results, and default behaviors may change in future releases (including MINOR and PATCH releases) as the code matures.",
+        "RdTools warning: 'd' is deprecated and will be removed in a future version. Please use 'D' instead of 'd'.",
+        "RdTools warning: 20% or more of the daily data is assigned to invalid soiling intervals. This can be problematic with the \"half_norm_clean\" and \"random_clean\" cleaning assumptions. Consider more permissive validity criteria such as increasing \"max_relative_slope_error\" and/or \"max_negative_step\" and/or decreasing \"min_interval_length\". Alternatively, consider using method=\"perfect_clean\". For more info see https:/",
+        "NOT DISTINGUISHABLE FROM ZERO: the 95% interval runs from -2.59 to 3.78 %/yr and includes zero. This analysis did not establish that the plant is degrading. The point estimate of -0.25 %/yr is the centre of that range and should not be quoted on its own \u2014 the honest summary is that the available record is too short or too noisy to resolve a trend of this size.",
+        "Site caveat: Whole months of the -999 missing-data sentinel fall inside this window. They are masked to NaN, not measured, so n_days_analyzed will sit well below the calendar day count.",
+        "1 month(s) had no usable telemetry: 2015-06.",
+        "Series read from cache pvdaq_4902_201408_201802.parquet.",
+        "This system publishes no plane-of-array irradiance channel. Clear-sky POA is modelled from solar geometry, and the observed irradiance the clear-sky filter compares it against comes from NASA POWER satellite reanalysis \u2014 the same source behind the expected-energy leg \u2014 rather than a site pyranometer. Degradation is therefore measured without depending on site instrumentation, which is the point of the clear-sky method; the trade is that hourly reanalysis resolves cloud cover more coarsely than an on-site sensor would, so the clear-sky filter is a blunter instrument here and the confidence interval is correspondingly wider.",
+        "RdTools warning: 'd' is deprecated and will be removed in a future version. Please use 'D' instead of 'd'.",
+        "RdTools warning: Please import `convolve` from the `scipy.ndimage` namespace; the `scipy.ndimage.filters` namespace is deprecated and will be removed in SciPy 2.0.0.",
+        "RdTools warning: Please import `shift` from the `scipy.ndimage` namespace; the `scipy.ndimage.interpolation` namespace is deprecated and will be removed in SciPy 2.0.0.",
+        "RdTools warning: The soiling module is currently experimental. The API, results, and default behaviors may change in future releases (including MINOR and PATCH releases) as the code matures.",
+        "RdTools warning: 'd' is deprecated and will be removed in a future version. Please use 'D' instead of 'd'.",
+        "RdTools warning: 20% or more of the daily data is assigned to invalid soiling intervals. This can be problematic with the \"half_norm_clean\" and \"random_clean\" cleaning assumptions. Consider more permissive validity criteria such as increasing \"max_relative_slope_error\" and/or \"max_negative_step\" and/or decreasing \"min_interval_length\". Alternatively, consider using method=\"perfect_clean\". For more info see https:/",
+        "TREAT WITH CAUTION: 12.7% is far above the 6% that soiling plausibly reaches outside a desert site with no cleaning programme. SRR identifies soiling by its shape \u2014 gradual decline, abrupt recovery \u2014 and anything with that shape reads as soiling, including snow cover and melt, and including weather itself whenever the normalization has not fully removed it.",
+        "The likeliest explanation here is the second one. This system has no irradiance sensor, so clear-sky filtering runs against hourly satellite reanalysis interpolated to the analysis grid. That filter is blunt: cloudy periods survive it, and a run of cloudy days followed by a clear one has exactly the decline-then-recovery signature SRR is looking for. Read this number as evidence that the site needs an irradiance sensor before a soiling claim can be made, NOT as a cleaning budget.",
+        "Subsystem power: 1 per-inverter AC power channels. CAUTION \u2014 InvPAC_kW_Avg carries a run of more than 30 days with no data at all. Spec 21 \u00a72.11 records that a PVDAQ system's available channels change within its own record (1332's inv3_ac_power is present through 2016 and absent by mid-2017), so a gap that long is ambiguous between an inverter that was offline and a channel that stopped being logged. RdTools cannot tell those apart: it separates a SYSTEM-level communications dropout from a real outage, and this is neither. Lost production attributed to that subsystem may be a metadata artifact.",
+        "Series resampled to a regular 15min grid for this analysis; gaps are preserved as missing rather than filled, since a filled gap is an erased outage.",
+        "With a single power channel RdTools cannot see one subsystem fall out while others keep producing, so a partial outage is only visible as a shortfall against expectation. Multi-inverter attribution needs per-inverter telemetry.",
+        "No cumulative meter channel on this system, so cumulative energy is integrated from the same AC power series the analysis is testing. That series is NaN during a communications dropout, so the derived cumulative does not advance across one either \u2014 which is exactly the signal the comms-vs-outage split relies on. Genuine outages and comms interruptions are therefore NOT reliably separated here, and availability should be read as a lower bound.",
+        "RdTools warning: divide by zero encountered in scalar divide",
+        "RdTools warning: divide by zero encountered in scalar divide",
+        "RdTools warning: divide by zero encountered in scalar divide",
+        "RdTools warning: divide by zero encountered in scalar divide",
+        "RdTools warning: divide by zero encountered in scalar divide",
+        "RdTools warning: divide by zero encountered in scalar divide",
+        "RdTools warning: divide by zero encountered in scalar divide",
+        "RdTools warning: invalid value encountered in scalar divide",
+        "RdTools warning: divide by zero encountered in scalar divide",
+        "RdTools warning: divide by zero encountered in scalar divide",
+        "RdTools warning: divide by zero encountered in scalar divide",
+        "RdTools warning: divide by zero encountered in scalar divide",
+        "RdTools warning: divide by zero encountered in scalar divide",
+        "RdTools warning: divide by zero encountered in scalar divide",
+        "RdTools warning: divide by zero encountered in scalar divide",
+        "RdTools warning: divide by zero encountered in scalar divide",
+        "RdTools warning: divide by zero encountered in scalar divide",
+        "RdTools warning: divide by zero encountered in scalar divide",
+        "RdTools warning: divide by zero encountered in scalar divide",
+        "RdTools warning: divide by zero encountered in scalar divide",
+        "RdTools warning: divide by zero encountered in scalar divide",
+        "RdTools warning: divide by zero encountered in scalar divide",
+        "RdTools warning: divide by zero encountered in scalar divide",
+        "RdTools warning: divide by zero encountered in scalar divide",
+        "RdTools warning: divide by zero encountered in scalar divide",
+        "RdTools warning: divide by zero encountered in scalar divide",
+        "RdTools warning: divide by zero encountered in scalar divide",
+        "RdTools warning: divide by zero encountered in scalar divide",
+        "RdTools warning: divide by zero encountered in scalar divide",
+        "RdTools warning: divide by zero encountered in scalar divide",
+        "613 genuine outage(s) and 650 communications interruption(s) detected. Only the former carry a production loss.",
+        "No PPA rate on this project, so the dollar figures use a stated default of $0.045/kWh (mid-range for US utility-scale solar). Every dollar amount below is an ESTIMATE and moves proportionally with the real rate \u2014 at $0.03/kWh they are a third lower, at $0.06/kWh a third higher. The percentages are measured; only the translation is assumed."
+      ]
+    },
+    {
+      "id": "78880f6d-c472-4dbe-8235-61efd1477679",
+      "project_id": "00001332-0000-4000-8000-000000001332",
+      "as_of_date": "2026-08-13",
+      "window_start": "2016-01-01",
+      "window_end": "2018-07-31",
+      "degradation_pct_per_yr": -0.3632610774052969,
+      "degradation_ci_low": -4.324176483149089,
+      "degradation_ci_high": 5.729300311358831,
+      "degradation_method": "clearsky",
+      "soiling_loss_pct": 4.761185589584949,
+      "soiling_ci_low": 1.9811985202214277,
+      "soiling_ci_high": 10.113988251831108,
+      "soiling_ratio": 0.9523881441041505,
+      "availability_pct": 82.09768597975821,
+      "lost_production_kwh": 858514936.8738549,
+      "outage_count": 380,
+      "ppa_rate_per_kwh": 0.045,
+      "soiling_loss_usd": 3269.622484240809,
+      "availability_loss_usd": 38633172.15932347,
+      "n_days_analyzed": 944,
+      "rdtools_version": "3.2.1",
+      "engine_version": "2.3.0",
+      "computed_at": "2026-08-13T05:19:19.120301+00:00",
+      "provenance": {
+        "gamma_pdc": -0.0035,
+        "gamma_pdc_source": "verification_engine.config.ArrayConfig \u2014 the same value build_modelchain() uses for the expected-energy leg. Spec 22 \u00a74 quotes -0.004 against a run_backtest.py that does not exist in this repository; matching the config of record is what the sentence is actually asking for.",
+        "temperature_model": "open_rack_glass_glass",
+        "dc_capacity_kw": 1153.488,
+        "surface_tilt": 38.385,
+        "surface_azimuth": 180.0,
+        "tracking": false,
+        "latitude": 39.7388,
+        "longitude": -105.1732,
+        "timezone": "America/Denver",
+        "config_hash": "d1bf0c848e52ff25",
+        "poa_source": "satellite_reanalysis",
+        "interp_freq": "15min",
+        "max_timedelta": "0 days 01:00:00",
+        "aggregation_freq": "D",
+        "confidence_level": 95.0,
+        "channels_used": [
+          "ac_power_w"
+        ],
+        "site_qa_status": "pass",
+        "site_qa_issue": "Filtered time series less than 1.0 years data, Less than 10% daytime values, Wrong mounting config identified. Please manually review.",
+        "tilt_rows": [
+          16.77,
+          60.0
+        ],
+        "azimuth_rows": [
+          180.0,
+          180.0
+        ],
+        "method": "clearsky",
+        "window_rationale": "2016-01 .. 2018-07, ~2.6 years \u2014 hard-capped by the units break. The metrics dictionary declares raw_units=kW, units=W, calc_scale=1000 for metered_ac_power throughout, but the stored values are kW through 2018-07 and W from 2018-08: the channel peaks at 1,051 in 2017-03 and 934,400 in 2018-08 on a 1,153 kW plant. Dictionary-driven conversion after the break yields a 501 MW peak, and the adapter's magnitude guard rejects it (spec 21 \u00a72.6). Extending past 2018-07 would not fail loudly, it would just drop those months and quietly shorten the window",
+        "site_caveats": [
+          "NREL's own index flags this system: qa_status passes but qa_issue reads 'Wrong mounting config identified. Please manually review.' The \u00a73.2 filter selects on qa_status and never reads qa_issue.",
+          "Tilt is a DC-weighted merge of a 16.77 deg garage deck and a 60 deg face, giving 38.4 deg \u2014 which describes neither array. Clear-sky normalization models plane-of-array irradiance from that geometry, so the merge propagates directly into the degradation rate.",
+          "spec 21 \u00a73 records a detected time shift of up to 60 minutes over this system's record, consistent with a logger re-clock."
+        ],
+        "ppa_rate_basis": "estimated",
+        "availability_basis": "derived_from_power",
+        "availability_subsystems": 3,
+        "availability_monthly": [
+          {
+            "period": "2016-01",
+            "availability_pct": 94.48543191696149,
+            "lost_production_kwh": 4913308.86907796,
+            "actual_production_kwh": 84183584.9418829
+          },
+          {
+            "period": "2016-02",
+            "availability_pct": 84.80873220106263,
+            "lost_production_kwh": 16937976.22696699,
+            "actual_production_kwh": 94560132.10176508
+          },
+          {
+            "period": "2016-03",
+            "availability_pct": 70.41365373842399,
+            "lost_production_kwh": 37098685.41989644,
+            "actual_production_kwh": 88292551.10489455
+          },
+          {
+            "period": "2016-04",
+            "availability_pct": 83.66908723202172,
+            "lost_production_kwh": 20908334.990462236,
+            "actual_production_kwh": 107120852.89093643
+          },
+          {
+            "period": "2016-05",
+            "availability_pct": 98.7320243184927,
+            "lost_production_kwh": 2013053.4794311838,
+            "actual_production_kwh": 156748152.1801433
+          },
+          {
+            "period": "2016-06",
+            "availability_pct": 98.12892025187654,
+            "lost_production_kwh": 3471857.224562596,
+            "actual_production_kwh": 182081817.22702503
+          },
+          {
+            "period": "2016-07",
+            "availability_pct": 98.30512760031088,
+            "lost_production_kwh": 2998667.5560104754,
+            "actual_production_kwh": 173927191.6744845
+          },
+          {
+            "period": "2016-08",
+            "availability_pct": 98.46124424004228,
+            "lost_production_kwh": 2597949.8915521125,
+            "actual_production_kwh": 166236504.4875821
+          },
+          {
+            "period": "2016-09",
+            "availability_pct": 97.20860188088882,
+            "lost_production_kwh": 4414361.137990201,
+            "actual_production_kwh": 153727220.5936693
+          },
+          {
+            "period": "2016-10",
+            "availability_pct": 96.0718647044416,
+            "lost_production_kwh": 5458092.565694995,
+            "actual_production_kwh": 133490598.22574806
+          },
+          {
+            "period": "2016-11",
+            "availability_pct": 88.50612862712617,
+            "lost_production_kwh": 12160158.711641023,
+            "actual_production_kwh": 93636733.53773355
+          },
+          {
+            "period": "2016-12",
+            "availability_pct": 65.62207798360792,
+            "lost_production_kwh": 32054673.647770558,
+            "actual_production_kwh": 61187360.098440886
+          },
+          {
+            "period": "2017-01",
+            "availability_pct": 69.12812655723572,
+            "lost_production_kwh": 29494604.17853134,
+            "actual_production_kwh": 66044152.91443753
+          },
+          {
+            "period": "2017-02",
+            "availability_pct": 79.88306106478812,
+            "lost_production_kwh": 23284060.57473477,
+            "actual_production_kwh": 92459495.88642883
+          },
+          {
+            "period": "2017-03",
+            "availability_pct": 74.76866040772465,
+            "lost_production_kwh": 43554501.72363746,
+            "actual_production_kwh": 129066145.56443524
+          },
+          {
+            "period": "2017-04",
+            "availability_pct": 77.35279785592869,
+            "lost_production_kwh": 43476428.9325374,
+            "actual_production_kwh": 148496198.22007918
+          },
+          {
+            "period": "2017-05",
+            "availability_pct": 74.89924994468315,
+            "lost_production_kwh": 53583192.655859426,
+            "actual_production_kwh": 159889283.41666102
+          },
+          {
+            "period": "2017-06",
+            "availability_pct": 77.34040056365308,
+            "lost_production_kwh": 50451102.1969234,
+            "actual_production_kwh": 172196709.11432934
+          },
+          {
+            "period": "2017-07",
+            "availability_pct": 74.97309846914439,
+            "lost_production_kwh": 49758961.80721907,
+            "actual_production_kwh": 149062940.87966108
+          },
+          {
+            "period": "2017-08",
+            "availability_pct": 77.6732976127823,
+            "lost_production_kwh": 46361974.331990734,
+            "actual_production_kwh": 161290609.23329878
+          },
+          {
+            "period": "2017-09",
+            "availability_pct": 72.75840165481998,
+            "lost_production_kwh": 42254962.16099399,
+            "actual_production_kwh": 112856942.89530516
+          },
+          {
+            "period": "2017-10",
+            "availability_pct": 81.30388653850356,
+            "lost_production_kwh": 26682080.164289232,
+            "actual_production_kwh": 116032501.76868534
+          },
+          {
+            "period": "2017-11",
+            "availability_pct": 84.45877431464437,
+            "lost_production_kwh": 16957676.065068375,
+            "actual_production_kwh": 92156472.3836441
+          },
+          {
+            "period": "2017-12",
+            "availability_pct": 86.27182127779739,
+            "lost_production_kwh": 12402585.90863193,
+            "actual_production_kwh": 77941414.99349213
+          },
+          {
+            "period": "2018-01",
+            "availability_pct": 87.30404904062998,
+            "lost_production_kwh": 10970322.400460033,
+            "actual_production_kwh": 75437717.73428535
+          },
+          {
+            "period": "2018-02",
+            "availability_pct": 71.29610931157848,
+            "lost_production_kwh": 29258651.62276578,
+            "actual_production_kwh": 72674051.30021477
+          },
+          {
+            "period": "2018-03",
+            "availability_pct": 81.64048238099066,
+            "lost_production_kwh": 35568400.88818666,
+            "actual_production_kwh": 158164362.82756233
+          },
+          {
+            "period": "2018-04",
+            "availability_pct": 76.83718567608639,
+            "lost_production_kwh": 45396966.08920025,
+            "actual_production_kwh": 150593751.85361814
+          },
+          {
+            "period": "2018-05",
+            "availability_pct": 76.5213025295591,
+            "lost_production_kwh": 48119883.19219565,
+            "actual_production_kwh": 156831363.5827899
+          },
+          {
+            "period": "2018-06",
+            "availability_pct": 76.73063686399836,
+            "lost_production_kwh": 51998085.76038459,
+            "actual_production_kwh": 171463490.97668886
+          },
+          {
+            "period": "2018-07",
+            "availability_pct": 77.44351430649968,
+            "lost_production_kwh": 52186355.862689994,
+            "actual_production_kwh": 179172183.63589668
+          },
+          {
+            "period": "2018-08",
+            "availability_pct": 0.8873593500681176,
+            "lost_production_kwh": 1727020.6364979746,
+            "actual_production_kwh": 15462.083337783813
+          }
+        ],
+        "months_kept": [
+          "2016-01",
+          "2016-02",
+          "2016-03",
+          "2016-04",
+          "2016-05",
+          "2016-06",
+          "2016-07",
+          "2016-08",
+          "2016-09",
+          "2016-10",
+          "2016-11",
+          "2016-12",
+          "2017-01",
+          "2017-02",
+          "2017-03",
+          "2017-04",
+          "2017-05",
+          "2017-06",
+          "2017-07",
+          "2017-08",
+          "2017-09",
+          "2017-10",
+          "2017-11",
+          "2017-12",
+          "2018-01",
+          "2018-02",
+          "2018-03",
+          "2018-04",
+          "2018-05",
+          "2018-06",
+          "2018-07"
+        ],
+        "months_qc_excluded": [],
+        "months_unavailable": [],
+        "span_months": 30.95,
+        "degradation_within_plausible_range": true,
+        "soiling_signal_found": true,
+        "expected_annual_kwh": 1526054.3001413948
+      },
+      "notes": [
+        "Series read from cache pvdaq_1332_201601_201807.parquet.",
+        "This system publishes no plane-of-array irradiance channel. Clear-sky POA is modelled from solar geometry, and the observed irradiance the clear-sky filter compares it against comes from NASA POWER satellite reanalysis \u2014 the same source behind the expected-energy leg \u2014 rather than a site pyranometer. Degradation is therefore measured without depending on site instrumentation, which is the point of the clear-sky method; the trade is that hourly reanalysis resolves cloud cover more coarsely than an on-site sensor would, so the clear-sky filter is a blunter instrument here and the confidence interval is correspondingly wider.",
+        "RdTools warning: rescaling failed to converge after 20 iterations",
+        "RdTools warning: 'd' is deprecated and will be removed in a future version. Please use 'D' instead of 'd'.",
+        "RdTools warning: 'd' is deprecated and will be removed in a future version. Please use 'D' instead of 'd'.",
+        "RdTools warning: 20% or more of the daily data is assigned to invalid soiling intervals. This can be problematic with the \"half_norm_clean\" and \"random_clean\" cleaning assumptions. Consider more permissive validity criteria such as increasing \"max_relative_slope_error\" and/or \"max_negative_step\" and/or decreasing \"min_interval_length\". Alternatively, consider using method=\"perfect_clean\". For more info see https:/",
+        "NOT DISTINGUISHABLE FROM ZERO: the 95% interval runs from -4.32 to 5.73 %/yr and includes zero. This analysis did not establish that the plant is degrading. The point estimate of -0.36 %/yr is the centre of that range and should not be quoted on its own \u2014 the honest summary is that the available record is too short or too noisy to resolve a trend of this size.",
+        "Site caveat: NREL's own index flags this system: qa_status passes but qa_issue reads 'Wrong mounting config identified. Please manually review.' The \u00a73.2 filter selects on qa_status and never reads qa_issue.",
+        "Site caveat: Tilt is a DC-weighted merge of a 16.77 deg garage deck and a 60 deg face, giving 38.4 deg \u2014 which describes neither array. Clear-sky normalization models plane-of-array irradiance from that geometry, so the merge propagates directly into the degradation rate.",
+        "Site caveat: spec 21 \u00a73 records a detected time shift of up to 60 minutes over this system's record, consistent with a logger re-clock.",
+        "Series read from cache pvdaq_1332_201601_201807.parquet.",
+        "This system publishes no plane-of-array irradiance channel. Clear-sky POA is modelled from solar geometry, and the observed irradiance the clear-sky filter compares it against comes from NASA POWER satellite reanalysis \u2014 the same source behind the expected-energy leg \u2014 rather than a site pyranometer. Degradation is therefore measured without depending on site instrumentation, which is the point of the clear-sky method; the trade is that hourly reanalysis resolves cloud cover more coarsely than an on-site sensor would, so the clear-sky filter is a blunter instrument here and the confidence interval is correspondingly wider.",
+        "RdTools warning: rescaling failed to converge after 20 iterations",
+        "RdTools warning: 'd' is deprecated and will be removed in a future version. Please use 'D' instead of 'd'.",
+        "RdTools warning: 'd' is deprecated and will be removed in a future version. Please use 'D' instead of 'd'.",
+        "RdTools warning: 20% or more of the daily data is assigned to invalid soiling intervals. This can be problematic with the \"half_norm_clean\" and \"random_clean\" cleaning assumptions. Consider more permissive validity criteria such as increasing \"max_relative_slope_error\" and/or \"max_negative_step\" and/or decreasing \"min_interval_length\". Alternatively, consider using method=\"perfect_clean\". For more info see https:/",
+        "Subsystem power: 3 per-inverter AC power channels. CAUTION \u2014 inv3_ac_power carries a run of more than 30 days with no data at all. Spec 21 \u00a72.11 records that a PVDAQ system's available channels change within its own record (1332's inv3_ac_power is present through 2016 and absent by mid-2017), so a gap that long is ambiguous between an inverter that was offline and a channel that stopped being logged. RdTools cannot tell those apart: it separates a SYSTEM-level communications dropout from a real outage, and this is neither. Lost production attributed to that subsystem may be a metadata artifact.",
+        "Series resampled to a regular 15min grid for this analysis; gaps are preserved as missing rather than filled, since a filled gap is an erased outage.",
+        "No cumulative meter channel on this system, so cumulative energy is integrated from the same AC power series the analysis is testing. That series is NaN during a communications dropout, so the derived cumulative does not advance across one either \u2014 which is exactly the signal the comms-vs-outage split relies on. Genuine outages and comms interruptions are therefore NOT reliably separated here, and availability should be read as a lower bound.",
+        "RdTools warning: divide by zero encountered in scalar divide",
+        "380 genuine outage(s) and 613 communications interruption(s) detected. Only the former carry a production loss.",
+        "No PPA rate on this project, so the dollar figures use a stated default of $0.045/kWh (mid-range for US utility-scale solar). Every dollar amount below is an ESTIMATE and moves proportionally with the real rate \u2014 at $0.03/kWh they are a third lower, at $0.06/kWh a third higher. The percentages are measured; only the translation is assumed."
+      ]
+    }
+  ]
+}

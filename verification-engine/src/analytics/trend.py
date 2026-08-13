@@ -659,10 +659,25 @@ def run_availability(project_id, period: date | None = None) -> AvailabilityResu
     if "meter_export_wh" in assembled.series.columns:
         series["meter_export_wh"] = resampler["meter_export_wh"].last()
 
-    power_system = series["ac_power_w"].astype(float)
+    # Everything below is in KILOwatts, not watts.
+    #
+    # RdTools has no unit system: `energy_from_power` multiplies power by an
+    # interval, so the energy it returns is in whatever base unit the power came
+    # in. Handing it watts makes every energy output Wh, and `lost_production`
+    # then lands in a column named `lost_production_kwh` a thousand times too
+    # large. It looks like a number, and on 1332 it looked like 858 GWh lost
+    # from a 1.15 MW plant — 33x more than that plant can physically generate in
+    # the window, which is only obviously wrong if someone checks it against the
+    # nameplate.
+    #
+    # Converting once at the boundary is what keeps the four inputs consistent
+    # with each other as well: `meter_export_wh / 1000` is kWh, so a metered
+    # cumulative paired with watt power would have carried the same 1000x
+    # mismatch in the opposite direction.
+    power_system = series["ac_power_w"].astype(float) / 1000.0
 
     subsystem, subsystem_note = load_subsystem_power(project, series)
-    subsystem = subsystem.reindex(series.index)
+    subsystem = subsystem.reindex(series.index) / 1000.0
     notes = [
         f"Subsystem power: {subsystem_note}.",
         f"Series resampled to a regular {AVAILABILITY_FREQ} grid for this "
@@ -701,7 +716,7 @@ def run_availability(project_id, period: date | None = None) -> AvailabilityResu
         )
 
     try:
-        power_expected = _expected_power_series(project, series.index)
+        power_expected = _expected_power_series(project, series.index) / 1000.0
     except Exception as exc:
         return AvailabilityResult(
             **base,
@@ -757,6 +772,54 @@ def run_availability(project_id, period: date | None = None) -> AvailabilityResu
     availability_pct = (
         (1.0 - lost_total / denominator) * 100.0 if denominator > 0 else None
     )
+    if availability_pct is None:
+        # Outages can still be detected when the production totals cannot be
+        # formed — the outage scan reads the power series, the totals read the
+        # corrected cumulative — and reporting a count beside a blank percentage
+        # invites the reader to infer the plant was fine. Say what is missing.
+        notes.append(
+            f"No availability percentage: the rolled-up production totals came "
+            f"to {denominator:.1f} kWh, so there is no denominator to express "
+            f"uptime against. Any outage count below describes events detected "
+            f"in the power series, and must NOT be read as evidence of good or "
+            f"bad availability — the measurement did not complete."
+        )
+
+    # A plant cannot lose more than it could ever have made. This is the check
+    # that catches a unit error, which is the failure mode this code path has
+    # actually produced: RdTools has no unit system, so handing it watts instead
+    # of kilowatts silently multiplies every energy output by 1000 and the
+    # result still looks like a number. On 1332 that read as 858 GWh lost from a
+    # 1.15 MW plant — impossible by a factor of 33, and invisible without
+    # comparing it to the nameplate.
+    #
+    # Refused rather than clamped, in the same spirit as the adapter's magnitude
+    # guard: a figure that violates conservation of energy is not a measurement
+    # to be scaled back into range, it is evidence that the computation is
+    # wrong, and publishing a smaller wrong number would be worse than
+    # publishing none.
+    if availability_pct is not None:
+        from ingestion import get_adapter
+
+        adapter = get_adapter(project.telemetry_source)
+        cfg = site_config(adapter.describe_site(project.external_id))
+        window_hours = (series.index.max() - series.index.min()).total_seconds() / 3600.0
+        physical_max_kwh = cfg.array.dc_capacity_kw * window_hours
+        if lost_total > physical_max_kwh:
+            notes.append(
+                f"AVAILABILITY SUPPRESSED: the analysis reported "
+                f"{lost_total:,.0f} kWh of lost production, but a "
+                f"{cfg.array.dc_capacity_kw:,.0f} kW plant can generate at most "
+                f"{physical_max_kwh:,.0f} kWh over this window even running flat "
+                f"out, day and night. A loss larger than the plant's total "
+                f"physical capacity is not a finding about the plant — it means "
+                f"the computation is wrong, most likely a unit mismatch. The "
+                f"figures are withheld rather than reported at a value that "
+                f"cannot be true."
+            )
+            availability_pct = None
+            lost_total = float("nan")
+            denominator = 0.0
 
     outage_info = getattr(aa, "outage_info", None)
     outage_count = None

@@ -414,6 +414,26 @@ class TestAvailabilityBasis:
                 basis="guessed",
             )
 
+    def test_a_loss_exceeding_the_plant_capacity_is_impossible(self):
+        """Conservation of energy as a unit-error detector.
+
+        RdTools has no unit system: its energy outputs come back in whatever
+        base unit the power went in, so watts instead of kilowatts inflates
+        every figure by 1000 and the result still looks like a number. The only
+        cheap way to notice is to compare it against what the plant could
+        physically generate — 1332 reported 858 GWh lost from a 1.15 MW plant,
+        which is 33x more than that plant can produce running flat out.
+        """
+        dc_capacity_kw = 1153.0
+        window_hours = 2.6 * 365.25 * 24
+        physical_max_kwh = dc_capacity_kw * window_hours
+
+        watts_bug = 858_514_936.0          # what the unit error produced
+        correct = watts_bug / 1000.0       # what it should have been
+
+        assert watts_bug > physical_max_kwh, "the guard must reject the bug"
+        assert correct < physical_max_kwh, "and must accept the corrected value"
+
     def test_subsystem_fallback_is_single_column(self):
         """A source with no per-inverter data gets one column and says so.
 
@@ -473,6 +493,82 @@ class TestAdapterContractUnchanged:
         adapter = AggregateOnlyAdapter()
         assert isinstance(adapter, InverterAdapter)
         assert getattr(adapter, "fetch_subsystem_power", None) is None
+
+
+# ── Long windows must not exceed NASA POWER's request limit ──────────────────
+
+class TestNasaPowerChunking:
+    """Spec 22 windows run to 7.8 years; the hourly JSON API refuses that.
+
+    It refuses outright — 422, *"please shorten your requested time extent"* —
+    rather than truncating, so the failure is loud. Spec 21's 24-month
+    reconciliation windows sit under the limit, which is why nothing hit it
+    until analytics asked for a system's whole record.
+    """
+
+    def _patch(self, monkeypatch):
+        calls = []
+
+        def fake_request(loc, start, end):
+            calls.append((start, end))
+            index = pd.date_range(start, end, freq="h", tz="UTC")
+            return pd.DataFrame(
+                {"ghi": 0.0, "dni": 0.0, "dhi": 0.0,
+                 "temp_air": 15.0, "wind_speed": 1.0},
+                index=index,
+            )
+
+        from verification_engine import irradiance
+
+        monkeypatch.setattr(irradiance, "_nasa_power_request", fake_request)
+        return calls
+
+    def test_a_window_inside_the_chunk_size_is_one_request(self, monkeypatch):
+        from verification_engine.config import Location
+        from verification_engine.irradiance import fetch_nasa_power
+
+        calls = self._patch(monkeypatch)
+        fetch_nasa_power(Location(39.1, -77.2), "2016-01-01", "2016-12-31")
+        assert len(calls) == 1, "a single year must not be split"
+
+    def test_a_two_year_window_splits(self, monkeypatch):
+        """Chunked below the API's real ceiling, not at it.
+
+        Spec 21's 24-month windows were accepted as one request, so two years
+        is demonstrably under the limit — but the limit's actual location is
+        undocumented and the error gives no number, so the chunk size stays
+        well inside what is known to work. Extra requests are cheap; a 422
+        partway through a multi-hour run is not.
+        """
+        from verification_engine.config import Location
+        from verification_engine.irradiance import fetch_nasa_power
+
+        calls = self._patch(monkeypatch)
+        fetch_nasa_power(Location(39.1, -77.2), "2016-01-01", "2017-12-31")
+        assert len(calls) == 2
+
+    def test_a_long_window_is_split(self, monkeypatch):
+        from verification_engine.config import Location
+        from verification_engine.irradiance import fetch_nasa_power
+
+        calls = self._patch(monkeypatch)
+        out = fetch_nasa_power(Location(33.7, -83.7), "2016-02-01", "2023-11-30")
+        assert len(calls) >= 8, f"7.8 years should split, got {len(calls)} request(s)"
+        # Contiguous and non-overlapping: every chunk starts the day after the
+        # previous one ends, so no hour is fetched twice or skipped.
+        for (_, prev_end), (next_start, _) in zip(calls, calls[1:]):
+            assert next_start == prev_end + pd.Timedelta(days=1)
+        assert out.index.is_monotonic_increasing
+        assert not out.index.has_duplicates
+        assert out.index.min().date().isoformat() == "2016-02-01"
+
+    def test_a_reversed_window_raises(self, monkeypatch):
+        from verification_engine.config import Location
+        from verification_engine.irradiance import fetch_nasa_power
+
+        self._patch(monkeypatch)
+        with pytest.raises(ValueError, match="precedes"):
+            fetch_nasa_power(Location(0, 0), "2018-01-01", "2017-01-01")
 
 
 # ── Registry ─────────────────────────────────────────────────────────────────
