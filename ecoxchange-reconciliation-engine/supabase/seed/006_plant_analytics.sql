@@ -10,7 +10,7 @@
 -- without one is not defensible and defensibility is the point (§3). RdTools'
 -- own default interval is 68.2%; the engine overrides it explicitly.
 --
--- Generated 2026-08-13T05:37:34.087042+00:00 — engine 2.3.0, rdtools 3.2.1.
+-- Generated 2026-08-13T05:59:17.034538+00:00 — engine 2.3.0, rdtools 3.2.1.
 
 -- 00004902-0000-4000-8000-000000004902 — method clearsky, window 2014-08-01 .. 2018-02-28, 1278 days analyzed
 -- Notes carried with this row:
@@ -23,7 +23,7 @@
 --   * RdTools warning: The soiling module is currently experimental. The API, results, and default behaviors may change in future releases (including MINOR and PATCH releases) as the code matures.
 --   * RdTools warning: 'd' is deprecated and will be removed in a future version. Please use 'D' instead of 'd'.
 --   * RdTools warning: 20% or more of the daily data is assigned to invalid soiling intervals. This can be problematic with the "half_norm_clean" and "random_clean" cleaning assumptions. Consider more permissive validity criteria such as increasing "max_relative_slope_error" and/or "max_negative_step" and/or decreasing "min_interval_length". Alternatively, consider using method="perfect_clean". For more info see https:/
---   * NOT DISTINGUISHABLE FROM ZERO: the 95% interval runs from -2.70 to 3.75 %/yr and includes zero. This analysis did not establish that the plant is degrading. The point estimate of -0.25 %/yr is the centre of that range and should not be quoted on its own — the honest summary is that the available record is too short or too noisy to resolve a trend of this size.
+--   * NOT DISTINGUISHABLE FROM ZERO: the 95% interval runs from -2.70 to 3.79 %/yr and includes zero. This analysis did not establish that the plant is degrading. The point estimate of -0.25 %/yr is the centre of that range and should not be quoted on its own — the honest summary is that the available record is too short or too noisy to resolve a trend of this size.
 --   * Site caveat: Whole months of the -999 missing-data sentinel fall inside this window. They are masked to NaN, not measured, so n_days_analyzed will sit well below the calendar day count.
 --   * 1 month(s) had no usable telemetry: 2015-06.
 --   * Series read from cache pvdaq_4902_201408_201802.parquet.
@@ -34,7 +34,7 @@
 --   * RdTools warning: The soiling module is currently experimental. The API, results, and default behaviors may change in future releases (including MINOR and PATCH releases) as the code matures.
 --   * RdTools warning: 'd' is deprecated and will be removed in a future version. Please use 'D' instead of 'd'.
 --   * RdTools warning: 20% or more of the daily data is assigned to invalid soiling intervals. This can be problematic with the "half_norm_clean" and "random_clean" cleaning assumptions. Consider more permissive validity criteria such as increasing "max_relative_slope_error" and/or "max_negative_step" and/or decreasing "min_interval_length". Alternatively, consider using method="perfect_clean". For more info see https:/
---   * TREAT WITH CAUTION: 12.5% is far above the 6% that soiling plausibly reaches outside a desert site with no cleaning programme. SRR identifies soiling by its shape — gradual decline, abrupt recovery — and anything with that shape reads as soiling, including snow cover and melt, and including weather itself whenever the normalization has not fully removed it.
+--   * TREAT WITH CAUTION: 13.0% is far above the 6% that soiling plausibly reaches outside a desert site with no cleaning programme. SRR identifies soiling by its shape — gradual decline, abrupt recovery — and anything with that shape reads as soiling, including snow cover and melt, and including weather itself whenever the normalization has not fully removed it.
 --   * The likeliest explanation here is the second one. This system has no irradiance sensor, so clear-sky filtering runs against hourly satellite reanalysis interpolated to the analysis grid. That filter is blunt: cloudy periods survive it, and a run of cloudy days followed by a clear one has exactly the decline-then-recovery signature SRR is looking for. Read this number as evidence that the site needs an irradiance sensor before a soiling claim can be made, NOT as a cleaning budget.
 --   * Subsystem power: 1 per-inverter AC power channels. CAUTION — InvPAC_kW_Avg carries a run of more than 30 days with no data at all. Spec 21 §2.11 records that a PVDAQ system's available channels change within its own record (1332's inv3_ac_power is present through 2016 and absent by mid-2017), so a gap that long is ambiguous between an inverter that was offline and a channel that stopped being logged. RdTools cannot tell those apart: it separates a SYSTEM-level communications dropout from a real outage, and this is neither. Lost production attributed to that subsystem may be a metadata artifact.
 --   * Series resampled to a regular 15min grid for this analysis; gaps are preserved as missing rather than filled, since a filled gap is an erased outage.
@@ -70,36 +70,35 @@
 --   * RdTools warning: divide by zero encountered in scalar divide
 --   * RdTools warning: divide by zero encountered in scalar divide
 --   * RdTools warning: divide by zero encountered in scalar divide
---   * AVAILABILITY SUPPRESSED: the analysis reported inf kWh of lost production, but a 271 kW plant can generate at most 8,498,017 kWh over this window even running flat out, day and night. A loss larger than the plant's total physical capacity is not a finding about the plant — it means the computation is wrong, most likely a unit mismatch. The figures are withheld rather than reported at a value that cannot be true.
+--   * 3 of 44 month(s) excluded from the totals: RdTools returned a non-finite loss for them. This is a known edge case in rdtools 3.2.1 (availability.py:514) where an outage falling entirely within night hours has zero expected energy over its window, and the production-fill scaling divides by it. The remaining 41 month(s) are unaffected. Availability below is computed over those, so it describes 41/44 of the window rather than all of it.
 --   * 613 genuine outage(s) and 650 communications interruption(s) detected. Only the former carry a production loss.
 --   * No PPA rate on this project, so the dollar figures use a stated default of $0.045/kWh (mid-range for US utility-scale solar). Every dollar amount below is an ESTIMATE and moves proportionally with the real rate — at $0.03/kWh they are a third lower, at $0.06/kWh a third higher. The percentages are measured; only the translation is assumed.
---   * No availability loss in dollars: no lost-production estimate was produced for this window.
 INSERT INTO plant_analytics (
     id, project_id, as_of_date, window_start, window_end, degradation_pct_per_yr, degradation_ci_low, degradation_ci_high, degradation_method, soiling_loss_pct, soiling_ci_low, soiling_ci_high, soiling_ratio, availability_pct, lost_production_kwh, outage_count, ppa_rate_per_kwh, soiling_loss_usd, availability_loss_usd, n_days_analyzed, rdtools_version, engine_version, computed_at
 ) VALUES (
-    '96b0f904-3091-41ee-aac4-dc55e41695b6',
+    '1abe3b37-df36-4815-9c42-344aafddf272',
     '00004902-0000-4000-8000-000000004902',
     '2026-08-13',
     '2014-08-01',
     '2018-02-28',
     -0.25317176217915516,
     -2.6987260033999902,
-    3.7463028389320474,
+    3.7927234405025434,
     'clearsky',
-    12.508838058247074,
-    8.199943679232879,
-    18.607667668205107,
-    0.8749116194175293,
-    NULL,
-    NULL,
+    13.023181332696876,
+    8.590950074431692,
+    19.38899880432281,
+    0.8697681866730312,
+    84.56698185623245,
+    190294.17043606308,
     613,
     0.045,
-    1755.5721313944046,
-    NULL,
+    1827.7584299450434,
+    8563.237669622838,
     1278,
     '3.2.1',
     '2.3.0',
-    '2026-08-13T05:30:15.256620+00:00'
+    '2026-08-13T05:52:05.162882+00:00'
 )
 ON CONFLICT (project_id, as_of_date, degradation_method) DO UPDATE SET
     window_start = EXCLUDED.window_start,
@@ -149,7 +148,7 @@ ON CONFLICT (project_id, as_of_date, degradation_method) DO UPDATE SET
 INSERT INTO plant_analytics (
     id, project_id, as_of_date, window_start, window_end, degradation_pct_per_yr, degradation_ci_low, degradation_ci_high, degradation_method, soiling_loss_pct, soiling_ci_low, soiling_ci_high, soiling_ratio, availability_pct, lost_production_kwh, outage_count, ppa_rate_per_kwh, soiling_loss_usd, availability_loss_usd, n_days_analyzed, rdtools_version, engine_version, computed_at
 ) VALUES (
-    '0123d0b2-4433-4d5d-b476-5f8b946145e0',
+    '4d69800f-c43b-461e-9d72-e7bfa63e16db',
     '00001332-0000-4000-8000-000000001332',
     '2026-08-13',
     '2016-01-01',
@@ -158,20 +157,20 @@ INSERT INTO plant_analytics (
     -4.324176483149089,
     5.729300311358831,
     'clearsky',
-    4.721762007488895,
-    1.8272019659204664,
-    9.897889243229962,
-    0.9527823799251111,
+    5.082562084440179,
+    1.8396200204154112,
+    9.97376062159968,
+    0.9491743791555982,
     82.09768597975835,
     858514.9368738449,
     380,
     0.045,
-    3242.5493470977117,
+    3490.319576112995,
     38633.17215932302,
     944,
     '3.2.1',
     '2.3.0',
-    '2026-08-13T05:35:30.466311+00:00'
+    '2026-08-13T05:57:18.055773+00:00'
 )
 ON CONFLICT (project_id, as_of_date, degradation_method) DO UPDATE SET
     window_start = EXCLUDED.window_start,
@@ -213,7 +212,7 @@ ON CONFLICT (project_id, as_of_date, degradation_method) DO UPDATE SET
 --   * RdTools warning: 'd' is deprecated and will be removed in a future version. Please use 'D' instead of 'd'.
 --   * RdTools warning: 'd' is deprecated and will be removed in a future version. Please use 'D' instead of 'd'.
 --   * RdTools warning: 20% or more of the daily data is assigned to invalid soiling intervals. This can be problematic with the "half_norm_clean" and "random_clean" cleaning assumptions. Consider more permissive validity criteria such as increasing "max_relative_slope_error" and/or "max_negative_step" and/or decreasing "min_interval_length". Alternatively, consider using method="perfect_clean". For more info see https:/
---   * TREAT WITH CAUTION: 7.7% is far above the 6% that soiling plausibly reaches outside a desert site with no cleaning programme. SRR identifies soiling by its shape — gradual decline, abrupt recovery — and anything with that shape reads as soiling, including snow cover and melt, and including weather itself whenever the normalization has not fully removed it.
+--   * TREAT WITH CAUTION: 7.8% is far above the 6% that soiling plausibly reaches outside a desert site with no cleaning programme. SRR identifies soiling by its shape — gradual decline, abrupt recovery — and anything with that shape reads as soiling, including snow cover and melt, and including weather itself whenever the normalization has not fully removed it.
 --   * The likeliest explanation here is the second one. This system has no irradiance sensor, so clear-sky filtering runs against hourly satellite reanalysis interpolated to the analysis grid. That filter is blunt: cloudy periods survive it, and a run of cloudy days followed by a clear one has exactly the decline-then-recovery signature SRR is looking for. Read this number as evidence that the site needs an irradiance sensor before a soiling claim can be made, NOT as a cleaning budget.
 --   * Subsystem power: 40 per-inverter AC power channels. CAUTION — inverter_01_ac_power_(kw)_inv_150953, inverter_02_ac_power_(kw)_inv_150954, inverter_03_ac_power_(kw)_inv_150955, inverter_04_ac_power_(kw)_inv_150956, inverter_05_ac_power_(kw)_inv_150957, inverter_06_ac_power_(kw)_inv_150958, inverter_07_ac_power_(kw)_inv_150959, inverter_08_ac_power_(kw)_inv_150960, inverter_09_ac_power_(kw)_inv_150961, inverter_10_ac_power_(kw)_inv_150962, inverter_11_ac_power_(kw)_inv_150963, inverter_12_ac_power_(kw)_inv_150964, inverter_13_ac_power_(kw)_inv_150965, inverter_14_ac_power_(kw)_inv_150966, inverter_15_ac_power_(kw)_inv_150967, inverter_16_ac_power_(kw)_inv_150968, inverter_17_ac_power_(kw)_inv_150969, inverter_18_ac_power_(kw)_inv_150970, inverter_19_ac_power_(kw)_inv_150971, inverter_20_ac_power_(kw)_inv_150972, inverter_21_ac_power_(kw)_inv_150973, inverter_22_ac_power_(kw)_inv_150974, inverter_23_ac_power_(kw)_inv_150975, inverter_24_ac_power_(kw)_inv_150976, inverter_25_ac_power_(kw)_inv_150977, inverter_26_ac_power_(kw)_inv_150978, inverter_27_ac_power_(kw)_inv_150979, inverter_28_ac_power_(kw)_inv_150980, inverter_29_ac_power_(kw)_inv_150981, inverter_30_ac_power_(kw)_inv_150982, inverter_31_ac_power_(kw)_inv_150983, inverter_32_ac_power_(kw)_inv_150984, inverter_33_ac_power_(kw)_inv_150985, inverter_34_ac_power_(kw)_inv_150986, inverter_35_ac_power_(kw)_inv_150987, inverter_36_ac_power_(kw)_inv_150988, inverter_37_ac_power_(kw)_inv_150989, inverter_38_ac_power_(kw)_inv_150990, inverter_39_ac_power_(kw)_inv_150991, inverter_40_ac_power_(kw)_inv_150992 carries a run of more than 30 days with no data at all. Spec 21 §2.11 records that a PVDAQ system's available channels change within its own record (1332's inv3_ac_power is present through 2016 and absent by mid-2017), so a gap that long is ambiguous between an inverter that was offline and a channel that stopped being logged. RdTools cannot tell those apart: it separates a SYSTEM-level communications dropout from a real outage, and this is neither. Lost production attributed to that subsystem may be a metadata artifact.
 --   * Series resampled to a regular 15min grid for this analysis; gaps are preserved as missing rather than filled, since a filled gap is an erased outage.
@@ -225,36 +224,35 @@ ON CONFLICT (project_id, as_of_date, degradation_method) DO UPDATE SET
 --   * RdTools warning: divide by zero encountered in scalar divide
 --   * RdTools warning: divide by zero encountered in scalar divide
 --   * RdTools warning: divide by zero encountered in scalar divide
---   * AVAILABILITY SUPPRESSED: the analysis reported inf kWh of lost production, but a 33,000 kW plant can generate at most 2,250,121,500 kWh over this window even running flat out, day and night. A loss larger than the plant's total physical capacity is not a finding about the plant — it means the computation is wrong, most likely a unit mismatch. The figures are withheld rather than reported at a value that cannot be true.
+--   * 3 of 94 month(s) excluded from the totals: RdTools returned a non-finite loss for them. This is a known edge case in rdtools 3.2.1 (availability.py:514) where an outage falling entirely within night hours has zero expected energy over its window, and the production-fill scaling divides by it. The remaining 91 month(s) are unaffected. Availability below is computed over those, so it describes 91/94 of the window rather than all of it.
 --   * 2651 genuine outage(s) and 158 communications interruption(s) detected. Only the former carry a production loss.
 --   * No PPA rate on this project, so the dollar figures use a stated default of $0.045/kWh (mid-range for US utility-scale solar). Every dollar amount below is an ESTIMATE and moves proportionally with the real rate — at $0.03/kWh they are a third lower, at $0.06/kWh a third higher. The percentages are measured; only the translation is assumed.
---   * No availability loss in dollars: no lost-production estimate was produced for this window.
 INSERT INTO plant_analytics (
     id, project_id, as_of_date, window_start, window_end, degradation_pct_per_yr, degradation_ci_low, degradation_ci_high, degradation_method, soiling_loss_pct, soiling_ci_low, soiling_ci_high, soiling_ratio, availability_pct, lost_production_kwh, outage_count, ppa_rate_per_kwh, soiling_loss_usd, availability_loss_usd, n_days_analyzed, rdtools_version, engine_version, computed_at
 ) VALUES (
-    'fc6b938b-7fdf-4ace-acf6-9026f9c9df14',
+    '31101544-6b55-4aa0-b077-f20d3c43d62e',
     '00009069-0000-4000-8000-000000009069',
     '2026-08-13',
     '2016-02-01',
     '2023-11-30',
     -4.942431696154126,
-    -5.835202777926955,
-    -4.126552962904961,
+    -5.8368792768787445,
+    -4.1875081773968805,
     'clearsky',
-    7.67438703211083,
-    6.145072205336244,
-    9.278017838519236,
-    0.9232561296788917,
-    NULL,
-    NULL,
+    7.75676529360001,
+    6.265408873955414,
+    9.467033029836458,
+    0.9224323470639999,
+    86.21178611768894,
+    56532223.703776926,
     2651,
     0.045,
-    161433.72846019643,
-    NULL,
+    163166.58736353603,
+    2543950.0666699614,
     2680,
     '3.2.1',
     '2.3.0',
-    '2026-08-13T05:37:34.083070+00:00'
+    '2026-08-13T05:59:17.030974+00:00'
 )
 ON CONFLICT (project_id, as_of_date, degradation_method) DO UPDATE SET
     window_start = EXCLUDED.window_start,
