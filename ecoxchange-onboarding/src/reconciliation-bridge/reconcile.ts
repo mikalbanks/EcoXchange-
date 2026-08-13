@@ -1,5 +1,20 @@
 // Mirror of /ecoxchange-reconciliation-engine/src/reconciliation/reconcile.ts.
 // Keep in sync.
+//
+// SPEC 23 DIVERGENCE — read before trusting a verdict from this file.
+//
+// The engine now judges CHECK A (inverter vs expected) against a per-plant
+// adaptive band derived from that plant's own residual volatility, not against
+// the flat ±15% below. This bridge deliberately does NOT implement that: it
+// serves developer onboarding, where a prospective project has no verification
+// history and therefore no calibration, so the engine itself would run it at
+// PENDING_CALIBRATION cap bands rather than at ±15%.
+//
+// The consequence, stated so nobody has to rediscover it: a verdict from this
+// bridge is NOT the verdict the engine would produce for a calibrated plant,
+// and it is more permissive than the engine's cap bands too. Treat it as an
+// onboarding preview. If this ever needs to agree with the engine, import
+// `thresholds.ts` rather than widening these constants.
 
 export interface ToleranceConfig {
   inv_vs_expected_upper_pct: number;

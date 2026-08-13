@@ -3,6 +3,7 @@ import type {
   AnomalyClassification,
   ClassificationContext,
 } from "../reconciliation/classify.js";
+import type { Bands } from "../reconciliation/thresholds.js";
 
 export interface ProjectConfig {
   name?: string;
@@ -79,6 +80,13 @@ export interface ReconciliationInput {
   /** Optional monthly context for anomaly classification (upgrade spec 7).
    *  Absent context degrades gracefully — deviation-only rules still run. */
   classification_context?: ClassificationContext;
+  /** Spec 23 per-plant bands for CHECK A. Absent → `tolerances` alone decides,
+   *  which is exactly the pre-spec-23 behaviour. Resolved upstream (orchestration
+   *  or the backtest runner) so `reconcile()` stays a pure function. */
+  bands?: Bands;
+  /** Spec 23 §5: whether the PRIOR period exceeded the detect band. Persistence
+   *  needs two consecutive months, so this period cannot evaluate it alone. */
+  prior_detect_exceeded?: boolean;
 }
 
 export type VerificationStatus = "verified" | "flagged" | "pending";
@@ -96,4 +104,18 @@ export interface ReconciliationOutput {
   /** Present only when status is "flagged" (upgrade spec 7). Additive:
    *  adds diagnosis context, never changes the verdict. */
   classification?: AnomalyClassification;
+
+  // ── Spec 23 ────────────────────────────────────────────────────────────────
+  // Present only when `bands` was supplied. Persisted to verification_records
+  // so a past verdict can be reproduced against the bands it actually used.
+  /** The calibration these bands came from; null when PENDING_CALIBRATION. */
+  calibration_id?: string | null;
+  gate_band_pct?: number;
+  detect_band_pct?: number;
+  /** Carried into the NEXT period as `prior_detect_exceeded`. */
+  detect_exceeded?: boolean;
+  /** This period and the prior one both exceeded detect — blocks distribution. */
+  persistence_triggered?: boolean;
+  /** True when running at cap bands with no calibration. NOT a verified state. */
+  pending_calibration?: boolean;
 }

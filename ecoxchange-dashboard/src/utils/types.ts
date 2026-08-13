@@ -74,6 +74,19 @@ export interface VerificationRecord {
   ghi_kwh_m2?: number;
   /** Present only on flagged records when the classifier has run (Spec 7). */
   classification?: AnomalyClassification;
+
+  // ── Spec 23: the bands this period was actually judged against ─────────────
+  // Absent on every record written before spec 23, so any surface rendering
+  // these must handle undefined rather than defaulting to 15 — a displayed band
+  // that was not the one applied is worse than no band at all.
+  /** Inverter-vs-expected band whose breach blocks distribution, percent. */
+  gate_band_pct?: number;
+  /** The narrower observation band, percent. */
+  detect_band_pct?: number;
+  /** Whether this period breached the detect band. */
+  detect_exceeded?: boolean;
+  /** This period and the prior one both breached detect (Spec 23 §5). */
+  persistence_triggered?: boolean;
 }
 
 export interface ProjectSummary {

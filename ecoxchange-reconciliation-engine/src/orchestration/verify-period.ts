@@ -7,6 +7,7 @@ import type {
   ProjectConfig,
   ReconciliationOutput,
 } from "../utils/types.js";
+import type { Bands } from "../reconciliation/thresholds.js";
 
 /**
  * One project-period, from readings to verdict.
@@ -32,6 +33,12 @@ export interface VerifyPeriodInput {
   satellite_reading?: RawReading | null;
   expected_generation: ExpectedGenerationOutput;
   tolerances: ToleranceConfig;
+  /** Spec 23 per-plant bands for CHECK A. Resolve with `resolveBandsForPeriod`
+   *  (which reads the database) and pass the result in, so this function and
+   *  `reconcile()` below it both stay pure and testable without a connection. */
+  bands?: Bands;
+  /** Spec 23 §5 — whether the immediately prior period exceeded detect. */
+  prior_detect_exceeded?: boolean;
 }
 
 export function verifyPeriod(input: VerifyPeriodInput): ReconciliationOutput {
@@ -52,5 +59,7 @@ export function verifyPeriod(input: VerifyPeriodInput): ReconciliationOutput {
     utility_reading: input.utility_reading,
     expected_generation: input.expected_generation,
     tolerances: input.tolerances,
+    bands: input.bands,
+    prior_detect_exceeded: input.prior_detect_exceeded,
   });
 }
