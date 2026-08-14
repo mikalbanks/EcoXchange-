@@ -1,4 +1,4 @@
-pvlib>=0.15  # irradiance.py uses get_nsrdb_psm4_aggregated (0.15.x+)
+pvlib==0.15.2  # Spec 20 evidence is version-sensitive; do not float the physics model.
 pandas>=2.0
 numpy>=1.24
 scipy>=1.10

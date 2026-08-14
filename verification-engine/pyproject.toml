@@ -8,7 +8,7 @@ version = "2.3.0"
 description = "EcoXchange production-verification engine (pvlib PVWatts ModelChain, P50/P90, loss waterfall, reconciliation)."
 requires-python = ">=3.11"
 dependencies = [
-    "pvlib>=0.15",
+    "pvlib==0.15.2",
     "pandas>=2.0",
     "numpy>=1.24",
     "scipy>=1.10",

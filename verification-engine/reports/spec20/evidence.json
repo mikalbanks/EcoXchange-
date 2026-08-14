@@ -1,0 +1,116 @@
+{
+  "artifacts": {
+    "cohort.csv": {
+      "rows": 2634,
+      "sha256": "49bbc81f88af93d1f22ec66df0a8ff4269aa01d03c446b6cb98f2bab3a7f1021"
+    },
+    "holdout_results.json": {
+      "status": "not_generated"
+    },
+    "merged_results.csv": {
+      "status": "not_generated"
+    },
+    "monthly_long.csv": {
+      "status": "not_generated"
+    },
+    "threshold_evaluation.json": {
+      "status": "not_generated"
+    }
+  },
+  "claims_unverified": [
+    "annual deviation distribution",
+    "monthly flag rates",
+    "seasonal residuals",
+    "odd/even calibration hold-out",
+    "adaptive threshold rates"
+  ],
+  "claims_verified": [],
+  "cohort_counts": {
+    "capacity_and_online_plants": 2919,
+    "capacity_factor_and_coordinates_plants": 2634,
+    "eia860_operable_solar_generators": 7154,
+    "eia923_pure_solar_matches": 2716,
+    "fixed_tilt_complete_generators": 3940,
+    "pure_fixed_tilt_complete_plants": 3459
+  },
+  "cohort_mismatches": {
+    "capacity_and_online_plants": {
+      "expected": 2915,
+      "observed": 2919
+    },
+    "capacity_factor_and_coordinates_plants": {
+      "expected": 2635,
+      "observed": 2634
+    },
+    "eia923_pure_solar_matches": {
+      "expected": 2711,
+      "observed": 2716
+    },
+    "fixed_tilt_complete_generators": {
+      "expected": 3931,
+      "observed": 3940
+    },
+    "pure_fixed_tilt_complete_plants": {
+      "expected": 3453,
+      "observed": 3459
+    }
+  },
+  "expected_cohort_counts": {
+    "capacity_and_online_plants": 2915,
+    "capacity_factor_and_coordinates_plants": 2635,
+    "eia860_operable_solar_generators": 7154,
+    "eia923_pure_solar_matches": 2711,
+    "fixed_tilt_complete_generators": 3931,
+    "model_cache_failures": 14,
+    "pure_fixed_tilt_complete_plants": 3453,
+    "successfully_modeled_plants": 2621,
+    "target_plant_months": 31356
+  },
+  "message": "The current official EIA files do not construct the Spec 20 cohort under the documented selection rules. The exact input revision or missing selection detail is not available. Downstream modeling is stopped to avoid substituting a different study.",
+  "model_contract": {
+    "aoi": "physical",
+    "dc": {
+      "gamma_pdc": -0.004,
+      "model": "pvwatts",
+      "pdc0": "EIA-860 DC net capacity"
+    },
+    "inverter": {
+      "eta_inv_nom": 0.96,
+      "model": "pvwatts",
+      "pdc0": "EIA-860 AC nameplate / 0.96"
+    },
+    "linear_degradation_per_year": 0.0075,
+    "month_boundary": "round(longitude / 15) fixed UTC offset",
+    "pvlib": "0.15.2",
+    "spectral": "no_loss",
+    "system_loss_fraction": 0.14,
+    "temperature": "sapm open_rack_glass_polymer",
+    "transposition": "haydavies",
+    "utc_guard_max_below_horizon_ghi_fraction": 0.01
+  },
+  "schema_version": 1,
+  "software_versions": {
+    "numpy": "2.5.2",
+    "openpyxl": "3.1.5",
+    "pandas": "3.0.5",
+    "pvlib": "0.15.2"
+  },
+  "source_hash_mismatches": {},
+  "source_year": 2024,
+  "sources": [
+    {
+      "name": "eia8602024.zip",
+      "sha256": "0aaae04812cd4ab87a3e346bdf93848a3cc15053fd4dc2a4cf82d2aeac95f12b",
+      "size_bytes": 22100342,
+      "url": "https://www.eia.gov/electricity/data/eia860/xls/eia8602024.zip"
+    },
+    {
+      "name": "f923_2024.zip",
+      "sha256": "272055f2d748f6486fc3076abd5a40ec736dbff45458bdb4c895761278c50f2b",
+      "size_bytes": 22755334,
+      "url": "https://www.eia.gov/electricity/data/eia923/archive/xls/f923_2024.zip"
+    }
+  ],
+  "status": "blocked_cohort_mismatch",
+  "study": "EcoXchange Spec 20 \u2014 Real-Data Backtest & Threshold Recalibration"
+}
