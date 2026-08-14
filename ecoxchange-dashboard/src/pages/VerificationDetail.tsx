@@ -10,11 +10,12 @@ import { ErrorState } from "../components/shared/ErrorState.js";
 import { CardSkeleton, Shimmer } from "../components/shared/LoadingState.js";
 import { formatMonthLong } from "../utils/formatters.js";
 import { ENGINE_VERSION } from "../config/engine.js";
+import { describeVerificationEvidence } from "../data/index.js";
 import type { ProjectMeta, VerificationRecord } from "../utils/types.js";
 
 export function VerificationDetail() {
   const { id = "", period = "" } = useParams();
-  const { getVerification, scenario } = useData();
+  const { getVerification, scenario, mode } = useData();
 
   const [state, setState] = useState<{
     project: ProjectMeta;
@@ -73,6 +74,7 @@ export function VerificationDetail() {
   }
 
   const { project, record } = state;
+  const evidence = describeVerificationEvidence(id, mode);
 
   return (
     <div className="space-y-6 animate-fade-in">
@@ -86,7 +88,7 @@ export function VerificationDetail() {
           <p className="text-textMuted mt-1">{project.name}</p>
         </div>
         <div className="flex items-center gap-3 self-start">
-          <span className="text-sm text-textMuted">Verdict:</span>
+          <span className="text-sm text-textMuted">Engine determination:</span>
           <span
             key={`${scenario}-${record.status}`}
             className="inline-block animate-badge-pulse"
@@ -96,17 +98,29 @@ export function VerificationDetail() {
         </div>
       </div>
 
+      <div className="rounded-xl border border-flagAmber/40 bg-amber-50 p-5" data-testid="verification-evidence-disclosure">
+        <p className="text-xs font-semibold tracking-[0.14em] text-flagAmber">{evidence.badge}</p>
+        <h2 className="mt-1 font-heading text-lg text-darkBg">{evidence.title}</h2>
+        <p className="mt-1 max-w-3xl text-base leading-relaxed text-textMuted">{evidence.description}</p>
+      </div>
+
       <div>
         <ReconciliationDiagram
           record={record}
           animate
           showFlagReasons={record.status !== "flagged"}
+          title={evidence.diagramTitle}
+          sourceLabels={{
+            inverter: evidence.sourceNames.inverter,
+            utility: evidence.sourceNames.utility,
+            expected: evidence.sourceNames.satellite,
+          }}
         />
         <DataSourceAttribution
           sources={[
-            { name: "Inverter Telemetry", type: "inverter" },
-            { name: "Utility Meter", type: "utility" },
-            { name: "NASA POWER", type: "satellite" },
+            { name: evidence.sourceNames.inverter, type: "inverter" },
+            { name: evidence.sourceNames.utility, type: "utility" },
+            { name: evidence.sourceNames.satellite, type: "satellite" },
           ]}
           engineVersion={ENGINE_VERSION}
         />
@@ -127,7 +141,7 @@ export function VerificationDetail() {
           </div>
           <div>
             <dt className="text-textMuted">Source</dt>
-            <dd className="text-textDark mt-1">NASA POWER</dd>
+            <dd className="text-textDark mt-1">{evidence.sourceNames.satellite}</dd>
           </div>
           <div>
             <dt className="text-textMuted">Engine Version</dt>

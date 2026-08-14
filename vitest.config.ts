@@ -17,7 +17,12 @@ export default defineConfig({
     },
   },
   test: {
-    include: ["server/**/*.test.ts", "shared/**/*.test.ts"],
+    include: [
+      "server/**/*.test.ts",
+      "shared/**/*.test.ts",
+      "client/src/components/evidence/**/*.test.ts",
+      "client/src/components/evidence/**/*.test.tsx",
+    ],
     environment: "node",
     // The distribution engine's property tests run 10,000 randomised
     // allocations (Spec 17 AC 2), which is comfortably inside this.

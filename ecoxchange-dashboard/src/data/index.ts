@@ -20,7 +20,67 @@ export interface LoadOptions {
   variant?: "verified" | "flagged";
 }
 
+export interface VerificationEvidence {
+  badge: string;
+  title: string;
+  description: string;
+  diagramTitle: string;
+  sourceNames: {
+    inverter: string;
+    utility: string;
+    satellite: string;
+  };
+}
+
 export { liveMode };
+
+export function describeVerificationEvidence(
+  id: string,
+  mode: "supabase" | "demo",
+): VerificationEvidence {
+  if (id === PVDAQ_9068_PROJECT_ID) {
+    return {
+      badge: "PARTIAL REAL DATA",
+      title: "Two independent inputs, one derived leg",
+      description:
+        "Inverter production is measured PVDAQ telemetry and expected production is modeled from NASA POWER. The utility leg is derived from the inverter series, not a utility measurement.",
+      diagramTitle: "Measured and Modeled Source Comparison",
+      sourceNames: {
+        inverter: "Measured Inverter Telemetry",
+        utility: "Utility Proxy (Derived)",
+        satellite: "NASA POWER Model Input",
+      },
+    };
+  }
+
+  if (mode === "demo") {
+    return {
+      badge: "SIMULATED COMPARISON",
+      title: "Illustrative engine determination",
+      description:
+        "All three legs on this Savannah scenario are static demo data. The status demonstrates the workflow and thresholds; it is not independent operating verification.",
+      diagramTitle: "Simulated Source Comparison",
+      sourceNames: {
+        inverter: "Simulated Inverter",
+        utility: "Simulated Utility Meter",
+        satellite: "Simulated NASA Model Input",
+      },
+    };
+  }
+
+  return {
+    badge: "DATABASE RECORD",
+    title: "Per-leg provenance is not encoded",
+    description:
+      "This determination is loaded from Supabase, but the current record does not identify whether each leg is measured, uploaded, or derived. Confirm source independence outside this screen before relying on the status.",
+    diagramTitle: "Stored Source Comparison",
+    sourceNames: {
+      inverter: "Inverter Telemetry (Basis Unstated)",
+      utility: "Utility Meter (Basis Unstated)",
+      satellite: "NASA POWER (Model Input)",
+    },
+  };
+}
 
 /**
  * The project any "show me a verification record" entry point lands on — the

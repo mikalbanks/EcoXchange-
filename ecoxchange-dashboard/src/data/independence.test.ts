@@ -24,7 +24,7 @@ import {
   PVDAQ_9068_RECORDS,
   toProjectBundle,
 } from "./demo-pvdaq-9068.js";
-import { loadProject } from "./index.js";
+import { describeVerificationEvidence, loadProject } from "./index.js";
 
 interface Leg {
   inverter: number;
@@ -167,6 +167,27 @@ describe("the measured asset is reachable, not dead data", () => {
         expect(r.inv_vs_expected_pct).toBe(source.inv_vs_expected_pct);
       }
     }
+  });
+});
+
+describe("verification evidence disclosures", () => {
+  it("states that the PVDAQ utility leg is derived", () => {
+    const evidence = describeVerificationEvidence(PVDAQ_9068_PROJECT_ID, "demo");
+    expect(evidence.badge).toBe("PARTIAL REAL DATA");
+    expect(evidence.description).toContain("utility leg is derived");
+    expect(evidence.sourceNames.utility).toContain("Derived");
+  });
+
+  it("does not present the Savannah fixture as independent verification", () => {
+    const evidence = describeVerificationEvidence("demo-savannah-5mw", "demo");
+    expect(evidence.badge).toBe("SIMULATED COMPARISON");
+    expect(evidence.description).toContain("not independent");
+  });
+
+  it("does not infer provenance merely because a record came from Supabase", () => {
+    const evidence = describeVerificationEvidence("some-live-project", "supabase");
+    expect(evidence.badge).toBe("DATABASE RECORD");
+    expect(evidence.description).toContain("does not identify");
   });
 });
 

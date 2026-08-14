@@ -6,7 +6,7 @@ Standalone React + Vite + Tailwind + Recharts prototype. Three immediate purpose
 
 - `/` — Portfolio overview (summary stats + project cards).
 - `/project/:id` — Project detail (production chart, latest verification, monthly yield table). Demo toggle: "Show Flagged".
-- `/project/:id/verification/:period` — Verification detail (three-way reconciliation diagram + tolerance bands + irradiance).
+- `/project/:id/verification/:period` — Verification detail (evidence-labeled source comparison + tolerance bands + irradiance).
 
 ## Run
 

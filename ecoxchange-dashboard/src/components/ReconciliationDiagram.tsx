@@ -120,6 +120,12 @@ export function ReconciliationDiagram({
   record,
   animate = false,
   showFlagReasons = true,
+  title = "Source Comparison",
+  sourceLabels = {
+    inverter: "Inverter",
+    utility: "Utility Meter",
+    expected: "Expected (Satellite)",
+  },
 }: {
   record: VerificationRecord;
   /** Opt-in entrance animation for click-to-expand contexts (default off,
@@ -128,11 +134,19 @@ export function ReconciliationDiagram({
   /** Set false when a FlagReasonCard is rendered alongside, to avoid
    *  repeating the same reasons twice. */
   showFlagReasons?: boolean;
+  /** Evidence-aware title supplied by the calling surface. */
+  title?: string;
+  /** Evidence-aware labels for each source leg. */
+  sourceLabels?: {
+    inverter: string;
+    utility: string;
+    expected: string;
+  };
 }) {
   return (
     <div className="bg-white rounded-lg border border-paleGreen/60 p-4 sm:p-6">
       <h2 className="font-heading text-xl text-darkBg mb-4">
-        Three-Way Reconciliation
+        {title}
       </h2>
       {/* Mobile: vertical Inverter -> Expected -> Utility stack with deviation
           connectors (DOM order = mobile order). Desktop (sm+): reordered via
@@ -142,7 +156,7 @@ export function ReconciliationDiagram({
           className={`sm:order-1 flex-1 flex${staggerClass(animate)}`}
           style={staggerStyle(animate, 0)}
         >
-          <Source label="Inverter" value={record.inverter_kwh} />
+          <Source label={sourceLabels.inverter} value={record.inverter_kwh} />
         </div>
         <MobileConnector
           pct={record.inv_vs_expected_pct}
@@ -152,7 +166,7 @@ export function ReconciliationDiagram({
           className={`sm:order-3 flex-1 flex${staggerClass(animate)}`}
           style={staggerStyle(animate, 240)}
         >
-          <Source label="Expected (Satellite)" value={record.expected_kwh} highlight />
+          <Source label={sourceLabels.expected} value={record.expected_kwh} highlight />
         </div>
         <MobileConnector
           pct={record.util_vs_expected_pct}
@@ -162,15 +176,15 @@ export function ReconciliationDiagram({
           className={`sm:order-2 flex-1 flex${staggerClass(animate)}`}
           style={staggerStyle(animate, 120)}
         >
-          <Source label="Utility Meter" value={record.utility_kwh} />
+          <Source label={sourceLabels.utility} value={record.utility_kwh} />
         </div>
       </div>
       <div className="space-y-2">
         {(
           [
-            ["Inverter vs Expected", record.inv_vs_expected_pct, TOL.inv_vs_expected],
-            ["Inverter vs Utility", record.inv_vs_utility_pct, TOL.inv_vs_utility],
-            ["Utility vs Expected", record.util_vs_expected_pct, TOL.util_vs_expected],
+            [`${sourceLabels.inverter} vs ${sourceLabels.expected}`, record.inv_vs_expected_pct, TOL.inv_vs_expected],
+            [`${sourceLabels.inverter} vs ${sourceLabels.utility}`, record.inv_vs_utility_pct, TOL.inv_vs_utility],
+            [`${sourceLabels.utility} vs ${sourceLabels.expected}`, record.util_vs_expected_pct, TOL.util_vs_expected],
           ] as const
         ).map(([label, pct, tolerance], i) => (
           <div
