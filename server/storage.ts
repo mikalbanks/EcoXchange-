@@ -536,7 +536,7 @@ export class MemStorage implements IStorage {
 
     const months = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
 
-    this.seedHourlyProductionAndRevenue(proj1Id, ppaId, 12000, 32.8476, months, now);
+    this.seedHourlyProductionAndRevenue(proj1Id, ppaId, 12000, 32.8476, -115.5695, months, now);
 
     // ─── Project 3: Lancaster Sun Ranch (SGT-verified, Solcast data) ────
     const proj3Id = "proj3";
@@ -674,7 +674,7 @@ export class MemStorage implements IStorage {
       createdAt: new Date(now.getFullYear() - 1, 0, 1),
     });
 
-    this.seedHourlyProductionAndRevenue(proj3Id, ppa3Id, 25000, 34.6868, months, now);
+    this.seedHourlyProductionAndRevenue(proj3Id, ppa3Id, 25000, 34.6868, -118.1542, months, now);
 
     // Investor interest on project 3
     const int3Id = randomUUID();
@@ -1383,6 +1383,7 @@ export class MemStorage implements IStorage {
     ppaId: string,
     capacityKw: number,
     latitude: number,
+    longitude: number,
     months: string[],
     now: Date
   ) {
@@ -1413,22 +1414,32 @@ export class MemStorage implements IStorage {
     // calendar year that happened to fall inside the window, which halved the
     // apparent capacity factor of every metered asset.
     for (let m = 0; m < 12; m++) {
-      const monthAnchor = new Date(now.getFullYear(), now.getMonth() - 12 + m, 1);
-      const year = monthAnchor.getFullYear();
-      const month = monthAnchor.getMonth();
-      const periodStart = new Date(year, month, 1);
-      const periodEnd = new Date(year, month + 1, 0);
-      const daysInMonth = periodEnd.getDate();
+      const monthAnchor = new Date(Date.UTC(
+        now.getUTCFullYear(),
+        now.getUTCMonth() - 12 + m,
+        1,
+      ));
+      const year = monthAnchor.getUTCFullYear();
+      const month = monthAnchor.getUTCMonth();
+      const periodEnd = new Date(Date.UTC(year, month + 1, 0, 23, 59, 59, 999));
+      const daysInMonth = periodEnd.getUTCDate();
       let totalMonthMwh = 0;
 
       for (let d = 1; d <= daysInMonth; d++) {
-        const date = new Date(year, month, d);
-        const dayOfYear = Math.floor((date.getTime() - new Date(date.getUTCFullYear(), 0, 0).getTime()) / 86400000);
         const cloudFactor = 0.7 + 0.3 * rng();
         const tempDerate = 0.95 + 0.05 * rng();
 
         for (let h = 0; h < 24; h++) {
-          const elev = solarElev(dayOfYear, h + 0.5, latitude);
+          const hourStart = new Date(Date.UTC(year, month, d, h, 0, 0));
+          const hourEnd = new Date(Date.UTC(year, month, d, h + 1, 0, 0));
+          const solarDate = new Date(
+            hourStart.getTime() + (longitude / 15) * 60 * 60 * 1000,
+          );
+          const dayOfYear = Math.floor(
+            (solarDate.getTime() - Date.UTC(solarDate.getUTCFullYear(), 0, 0)) / 86_400_000,
+          );
+          const solarHour = solarDate.getUTCHours() + 0.5;
+          const elev = solarElev(dayOfYear, solarHour, latitude);
           let productionKw = 0;
 
           if (elev > 2) {
@@ -1442,8 +1453,6 @@ export class MemStorage implements IStorage {
           const productionMwh = productionKw / 1000;
           totalMonthMwh += productionMwh;
 
-          const hourStart = new Date(Date.UTC(year, month, d, h, 0, 0));
-          const hourEnd = new Date(Date.UTC(year, month, d, h + 1, 0, 0));
           const cf = productionKw / capacityKw;
 
           const prodId = randomUUID();
