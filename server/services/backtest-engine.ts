@@ -77,6 +77,25 @@ function solarElevation(dayOfYear: number, hour: number, latitude: number): numb
   return Math.asin(Math.max(-1, Math.min(1, sinElev))) * 180 / Math.PI;
 }
 
+function localSolarDate(timestamp: Date, longitude: number): Date {
+  return new Date(timestamp.getTime() + (longitude / 15) * 60 * 60 * 1000);
+}
+
+export function solarElevationAtUtc(
+  timestamp: Date,
+  latitude: number,
+  longitude: number,
+): number {
+  const solarDate = localSolarDate(timestamp, longitude);
+  const dayOfYear = Math.floor(
+    (solarDate.getTime() - Date.UTC(solarDate.getUTCFullYear(), 0, 0)) / 86_400_000,
+  );
+  const solarHour = solarDate.getUTCHours()
+    + solarDate.getUTCMinutes() / 60
+    + solarDate.getUTCSeconds() / 3_600;
+  return solarElevation(dayOfYear, solarHour, latitude);
+}
+
 function seededRandom(seed: number): () => number {
   let s = seed;
   return () => {
@@ -95,8 +114,6 @@ function generatePvdaqProduction(config: BacktestSiteConfig): Map<string, number
   let dailyCloudPattern = 0.85;
 
   for (let d = new Date(start); d <= end; d.setUTCDate(d.getUTCDate() + 1)) {
-    const dayOfYear = Math.floor((d.getTime() - new Date(d.getUTCFullYear(), 0, 0).getTime()) / 86400000);
-
     dailyCloudPattern = 0.80 + rng() * 0.18;
     const hasMorningCloud = rng() < 0.25;
     const hasAfternoonCloud = rng() < 0.20;
@@ -107,7 +124,9 @@ function generatePvdaqProduction(config: BacktestSiteConfig): Map<string, number
       ts.setUTCHours(Math.floor(hour), (hour % 1) * 60, 0, 0);
       const key = ts.toISOString();
 
-      const elev = solarElevation(dayOfYear, hour, config.latitude);
+      const solarDate = localSolarDate(ts, config.longitude);
+      const solarHour = solarDate.getUTCHours() + solarDate.getUTCMinutes() / 60;
+      const elev = solarElevationAtUtc(ts, config.latitude, config.longitude);
 
       if (elev <= 2) {
         production.set(key, 0);
@@ -121,10 +140,10 @@ function generatePvdaqProduction(config: BacktestSiteConfig): Map<string, number
       const elevNorm = Math.sin(elev * Math.PI / 180);
 
       let cloudFactor = dailyCloudPattern;
-      if (hasMorningCloud && hour < 10) cloudFactor *= (0.6 + rng() * 0.3);
-      if (hasAfternoonCloud && hour > 14) cloudFactor *= (0.65 + rng() * 0.25);
+      if (hasMorningCloud && solarHour < 10) cloudFactor *= (0.6 + rng() * 0.3);
+      if (hasAfternoonCloud && solarHour > 14) cloudFactor *= (0.65 + rng() * 0.25);
 
-      const tempDerate = hour > 11 && hour < 16 ? (0.94 + rng() * 0.04) : (0.97 + rng() * 0.02);
+      const tempDerate = solarHour > 11 && solarHour < 16 ? (0.94 + rng() * 0.04) : (0.97 + rng() * 0.02);
       const soiling = 0.98;
 
       let powerKw = config.capacityKw * elevNorm * clearSkyFraction * trackingBoost * cloudFactor * tempDerate * soiling;
@@ -172,10 +191,13 @@ function parseSolcastRecords(records: any[]): Map<string, number> {
   return solcastMap;
 }
 
-function evaluateCoverage(solcastMap: Map<string, number>, timestamps: string[]): { matchedCount: number; coveragePct: number } {
+function evaluateCoverage(
+  solcastMap: Map<string, number>,
+  timestamps: string[],
+  config: BacktestSiteConfig,
+): { matchedCount: number; coveragePct: number } {
   const daylightTimestamps = timestamps.filter(t => {
-    const h = new Date(t).getUTCHours();
-    return h >= 5 && h <= 20;
+    return solarElevationAtUtc(new Date(t), config.latitude, config.longitude) > 0;
   });
   const matchedCount = daylightTimestamps.filter(t => solcastMap.has(t)).length;
   const coveragePct = daylightTimestamps.length > 0
@@ -284,7 +306,7 @@ async function fetchSolcastEstimatedActuals(
     console.log(`   🛰️ Solcast estimated_actuals: ${actuals.length} records`);
     const solcastMap = parseSolcastRecords(actuals);
 
-    const { matchedCount, coveragePct } = evaluateCoverage(solcastMap, timestamps);
+    const { matchedCount, coveragePct } = evaluateCoverage(solcastMap, timestamps, config);
     if (coveragePct < 10) {
       console.log(`   ⚠️ estimated_actuals coverage too low (${coveragePct.toFixed(1)}%), period outside ~7-day window`);
       return null;
@@ -323,7 +345,7 @@ async function fetchSolcastHistoricalSeries(
 
   const historicResult = await fetchSolcastHistoric(config, SOLCAST_API_KEY);
   if (historicResult) {
-    const { matchedCount, coveragePct } = evaluateCoverage(historicResult, timestamps);
+    const { matchedCount, coveragePct } = evaluateCoverage(historicResult, timestamps, config);
     if (coveragePct >= 10) {
       console.log(`   ✅ Using Solcast historic data: ${matchedCount}/${timestamps.length} intervals (${coveragePct.toFixed(1)}% daylight coverage)`);
       return { data: historicResult, source: "SOLCAST_HISTORICAL" };
@@ -350,8 +372,6 @@ function generateSyntheticSatelliteEstimates(config: BacktestSiteConfig): Map<st
   let dailyCloudPattern = 0.85;
 
   for (let d = new Date(start); d <= end; d.setUTCDate(d.getUTCDate() + 1)) {
-    const dayOfYear = Math.floor((d.getTime() - new Date(d.getUTCFullYear(), 0, 0).getTime()) / 86400000);
-
     dailyCloudPattern = 0.82 + rng() * 0.16;
     const hasMorningCloud = rng() < 0.22;
     const hasAfternoonCloud = rng() < 0.18;
@@ -362,7 +382,9 @@ function generateSyntheticSatelliteEstimates(config: BacktestSiteConfig): Map<st
       ts.setUTCHours(Math.floor(hour), (hour % 1) * 60, 0, 0);
       const key = ts.toISOString();
 
-      const elev = solarElevation(dayOfYear, hour, config.latitude);
+      const solarDate = localSolarDate(ts, config.longitude);
+      const solarHour = solarDate.getUTCHours() + solarDate.getUTCMinutes() / 60;
+      const elev = solarElevationAtUtc(ts, config.latitude, config.longitude);
 
       if (elev <= 2) {
         estimates.set(key, 0);
@@ -376,10 +398,10 @@ function generateSyntheticSatelliteEstimates(config: BacktestSiteConfig): Map<st
       const elevNorm = Math.sin(elev * Math.PI / 180);
 
       let cloudFactor = dailyCloudPattern;
-      if (hasMorningCloud && hour < 10) cloudFactor *= (0.62 + rng() * 0.28);
-      if (hasAfternoonCloud && hour > 14) cloudFactor *= (0.67 + rng() * 0.23);
+      if (hasMorningCloud && solarHour < 10) cloudFactor *= (0.62 + rng() * 0.28);
+      if (hasAfternoonCloud && solarHour > 14) cloudFactor *= (0.67 + rng() * 0.23);
 
-      const tempDerate = hour > 11 && hour < 16 ? (0.94 + rng() * 0.04) : (0.97 + rng() * 0.02);
+      const tempDerate = solarHour > 11 && solarHour < 16 ? (0.94 + rng() * 0.04) : (0.97 + rng() * 0.02);
       const soiling = 0.975;
 
       let powerKw = config.capacityKw * elevNorm * clearSkyFraction * trackingBoost * cloudFactor * tempDerate * soiling;
@@ -499,6 +521,45 @@ function calculateStatistics(intervals: BacktestInterval[], config: BacktestSite
   };
 }
 
+export function assertUtcPowerAlignment(
+  intervals: BacktestInterval[],
+  config: Pick<BacktestSiteConfig, "latitude" | "longitude">,
+  maxBelowHorizonFraction = 0.01,
+): void {
+  const series: Array<{ label: string; value: (interval: BacktestInterval) => number }> = [
+    { label: "meter", value: (interval) => interval.meterKw },
+    { label: "satellite", value: (interval) => interval.satelliteKw },
+  ];
+
+  for (const { label, value } of series) {
+    let totalPower = 0;
+    let belowHorizonPower = 0;
+
+    for (const interval of intervals) {
+      const power = Math.max(0, value(interval));
+      totalPower += power;
+      if (
+        power > 0
+        && solarElevationAtUtc(
+          new Date(interval.timestamp),
+          config.latitude,
+          config.longitude,
+        ) <= 0
+      ) {
+        belowHorizonPower += power;
+      }
+    }
+
+    const fraction = totalPower > 0 ? belowHorizonPower / totalPower : 0;
+    if (fraction > maxBelowHorizonFraction) {
+      throw new Error(
+        `${label} power UTC alignment failed: ${(fraction * 100).toFixed(2)}% `
+        + `lies below the horizon; maximum is ${(maxBelowHorizonFraction * 100).toFixed(2)}%`,
+      );
+    }
+  }
+}
+
 async function loadStoredMeterData(projectId: string, config: BacktestSiteConfig): Promise<Map<string, number> | null> {
   try {
     const { csvConnector } = await import("./scada-connector");
@@ -528,13 +589,12 @@ async function loadStoredMeterData(projectId: string, config: BacktestSiteConfig
 
         for (let d = new Date(interval.periodStart); d < interval.periodEnd && d < windowEnd; d = new Date(d.getTime() + 86400000)) {
           if (d < windowStart) continue;
-          const dayOfYear = Math.floor((d.getTime() - new Date(d.getUTCFullYear(), 0, 0).getTime()) / 86400000);
           for (let q = 0; q < 96; q++) {
             const hour = q * 0.25;
             const ts = new Date(d);
             ts.setUTCHours(Math.floor(hour), (hour % 1) * 60, 0, 0);
 
-            const elev = solarElevation(dayOfYear, hour, config.latitude);
+            const elev = solarElevationAtUtc(ts, config.latitude, config.longitude);
             if (elev <= 2) {
               meterMap.set(ts.toISOString(), 0);
               continue;
@@ -543,7 +603,9 @@ async function loadStoredMeterData(projectId: string, config: BacktestSiteConfig
             const elevNorm = Math.sin(elev * Math.PI / 180);
             const totalElevNormForDay = Array.from({ length: 96 }, (_, i) => {
               const h = i * 0.25;
-              const e = solarElevation(dayOfYear, h, config.latitude);
+              const sample = new Date(d);
+              sample.setUTCHours(Math.floor(h), (h % 1) * 60, 0, 0);
+              const e = solarElevationAtUtc(sample, config.latitude, config.longitude);
               return e > 2 ? Math.sin(e * Math.PI / 180) : 0;
             }).reduce((a, b) => a + b, 0);
 
@@ -631,6 +693,7 @@ export async function runBacktest(config?: BacktestSiteConfig): Promise<Backtest
 
   intervals.sort((a, b) => new Date(a.timestamp).getTime() - new Date(b.timestamp).getTime());
 
+  assertUtcPowerAlignment(intervals, site);
   const statistics = calculateStatistics(intervals, site);
 
   console.log(`\n╔══════════════════════════════════════════════════╗`);

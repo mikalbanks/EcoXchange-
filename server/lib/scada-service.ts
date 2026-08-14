@@ -1,6 +1,6 @@
 import { storage } from "../storage";
 import { buildSeasonalForecast } from "./yieldForecast";
-import type { ScadaDataSource, RevenueRecord } from "@shared/schema";
+import type { EnergyProduction, ScadaDataSource, RevenueRecord } from "@shared/schema";
 
 export interface ScadaProvenance {
   sourceType: string;
@@ -111,6 +111,101 @@ export interface ScadaRevenueBridge {
   provenance: ScadaProvenance;
 }
 
+interface MonthlyProductionAggregate {
+  key: string;
+  periodStart: Date;
+  periodEnd: Date;
+  productionMwh: number;
+  capacityFactor: number;
+  source: string;
+}
+
+interface MonthlyRevenueAggregate {
+  key: string;
+  grossRevenue: number;
+  operatingExpenses: number;
+  netRevenue: number;
+}
+
+function utcMonthKey(date: Date): string {
+  return `${date.getUTCFullYear()}-${String(date.getUTCMonth() + 1).padStart(2, "0")}`;
+}
+
+function aggregateProductionByMonth(
+  production: EnergyProduction[],
+): MonthlyProductionAggregate[] {
+  const buckets = new Map<string, {
+    periodStart: Date;
+    periodEnd: Date;
+    productionMwh: number;
+    weightedCapacityFactor: number;
+    durationHours: number;
+    sources: Set<string>;
+  }>();
+
+  for (const record of production) {
+    const key = utcMonthKey(record.periodStart);
+    const durationHours = Math.max(
+      (record.periodEnd.getTime() - record.periodStart.getTime()) / 3_600_000,
+      1,
+    );
+    const bucket = buckets.get(key) ?? {
+      periodStart: new Date(Date.UTC(
+        record.periodStart.getUTCFullYear(),
+        record.periodStart.getUTCMonth(),
+        1,
+      )),
+      periodEnd: record.periodEnd,
+      productionMwh: 0,
+      weightedCapacityFactor: 0,
+      durationHours: 0,
+      sources: new Set<string>(),
+    };
+
+    bucket.productionMwh += parseFloat(record.productionMwh);
+    bucket.weightedCapacityFactor += parseFloat(record.capacityFactor || "0") * durationHours;
+    bucket.durationHours += durationHours;
+    if (record.periodEnd > bucket.periodEnd) bucket.periodEnd = record.periodEnd;
+    bucket.sources.add(record.source);
+    buckets.set(key, bucket);
+  }
+
+  return Array.from(buckets.entries())
+    .sort(([a], [b]) => a.localeCompare(b))
+    .map(([key, bucket]) => ({
+      key,
+      periodStart: bucket.periodStart,
+      periodEnd: bucket.periodEnd,
+      productionMwh: bucket.productionMwh,
+      capacityFactor: bucket.durationHours > 0
+        ? bucket.weightedCapacityFactor / bucket.durationHours
+        : 0,
+      source: bucket.sources.size === 1
+        ? Array.from(bucket.sources)[0]
+        : "MIXED",
+    }));
+}
+
+function aggregateRevenueByMonth(revenue: RevenueRecord[]): MonthlyRevenueAggregate[] {
+  const buckets = new Map<string, MonthlyRevenueAggregate>();
+
+  for (const record of revenue) {
+    const key = utcMonthKey(record.periodStart);
+    const bucket = buckets.get(key) ?? {
+      key,
+      grossRevenue: 0,
+      operatingExpenses: 0,
+      netRevenue: 0,
+    };
+    bucket.grossRevenue += parseFloat(record.grossRevenue);
+    bucket.operatingExpenses += parseFloat(record.operatingExpenses);
+    bucket.netRevenue += parseFloat(record.netRevenue);
+    buckets.set(key, bucket);
+  }
+
+  return Array.from(buckets.values()).sort((a, b) => a.key.localeCompare(b.key));
+}
+
 function selectPrimarySource(dataSources: ScadaDataSource[]): ScadaDataSource | undefined {
   if (dataSources.length === 0) return undefined;
   const active = dataSources.filter(s => s.status === "ACTIVE");
@@ -177,20 +272,35 @@ export async function getProjectSummary(projectId: string): Promise<ScadaSummary
     };
   }
 
+  const monthlyProduction = aggregateProductionByMonth(production);
+  const monthlyRevenue = aggregateRevenueByMonth(revenue);
   const totalProduction = production.reduce((s, p) => s + parseFloat(p.productionMwh), 0);
   const totalGrossRevenue = revenue.reduce((s, r) => s + parseFloat(r.grossRevenue), 0);
   const totalNetRevenue = revenue.reduce((s, r) => s + parseFloat(r.netRevenue), 0);
   const totalDistributed = distributions
     .filter(d => d.status === "DISTRIBUTED")
     .reduce((s, d) => s + parseFloat(d.investorShare), 0);
-  const avgCapacityFactor = production.reduce((s, p) => s + parseFloat(p.capacityFactor || "0"), 0) / production.length;
+  const totalDurationHours = production.reduce((sum, record) => sum + Math.max(
+    (record.periodEnd.getTime() - record.periodStart.getTime()) / 3_600_000,
+    1,
+  ), 0);
+  const avgCapacityFactor = totalDurationHours > 0
+    ? production.reduce((sum, record) => {
+        const durationHours = Math.max(
+          (record.periodEnd.getTime() - record.periodStart.getTime()) / 3_600_000,
+          1,
+        );
+        return sum + parseFloat(record.capacityFactor || "0") * durationHours;
+      }, 0) / totalDurationHours
+    : 0;
 
-  const sortedRev = [...revenue].sort((a, b) => new Date(b.periodStart).getTime() - new Date(a.periodStart).getTime());
-  const trailing12 = sortedRev.slice(0, 12).reduce((s, r) => s + parseFloat(r.netRevenue), 0);
+  const trailing12 = monthlyRevenue
+    .slice(-12)
+    .reduce((sum, record) => sum + record.netRevenue, 0);
 
-  const annualized = production.length >= 12
-    ? totalProduction
-    : (totalProduction / production.length) * 12;
+  const annualized = monthlyProduction.length >= 12
+    ? monthlyProduction.slice(-12).reduce((sum, month) => sum + month.productionMwh, 0)
+    : (totalProduction / monthlyProduction.length) * 12;
 
   return {
     totalProductionMwh: Math.round(totalProduction * 100) / 100,
@@ -198,7 +308,7 @@ export async function getProjectSummary(projectId: string): Promise<ScadaSummary
     totalNetRevenue: Math.round(totalNetRevenue * 100) / 100,
     totalDistributed: Math.round(totalDistributed * 100) / 100,
     avgCapacityFactor: Math.round(avgCapacityFactor * 10000) / 10000,
-    periodsReported: production.length,
+    periodsReported: monthlyProduction.length,
     annualizedProductionMwh: Math.round(annualized * 100) / 100,
     trailing12MonthRevenue: Math.round(trailing12 * 100) / 100,
     provenance: buildProvenance(dataSources),
@@ -215,27 +325,25 @@ export async function getMonthlyHistory(projectId: string): Promise<ScadaMonthly
     storage.getScadaDataSourcesByProject(projectId),
   ]);
 
-  const revenueByPeriod = new Map<string, RevenueRecord>();
-  for (const r of revenue) {
-    const key = r.periodStart.toISOString();
-    revenueByPeriod.set(key, r);
-  }
+  const monthlyProduction = aggregateProductionByMonth(production);
+  const revenueByMonth = new Map(
+    aggregateRevenueByMonth(revenue).map((record) => [record.key, record]),
+  );
 
   const months = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
-  const sortedProduction = [...production].sort((a, b) => a.periodStart.getTime() - b.periodStart.getTime());
-  const records: ScadaMonthlyRecord[] = sortedProduction.map((p) => {
-    const rev = revenueByPeriod.get(p.periodStart.toISOString());
-    const month = p.periodStart.getMonth();
-    const year = p.periodStart.getFullYear();
+  const records: ScadaMonthlyRecord[] = monthlyProduction.map((p) => {
+    const rev = revenueByMonth.get(p.key);
+    const month = p.periodStart.getUTCMonth();
+    const year = p.periodStart.getUTCFullYear();
     return {
       period: `${months[month]} ${year}`,
       periodStart: p.periodStart.toISOString(),
       periodEnd: p.periodEnd.toISOString(),
-      productionMwh: parseFloat(p.productionMwh),
-      capacityFactor: parseFloat(p.capacityFactor || "0"),
-      grossRevenue: rev ? parseFloat(rev.grossRevenue) : 0,
-      operatingExpenses: rev ? parseFloat(rev.operatingExpenses) : 0,
-      netRevenue: rev ? parseFloat(rev.netRevenue) : 0,
+      productionMwh: Math.round(p.productionMwh * 100) / 100,
+      capacityFactor: Math.round(p.capacityFactor * 10000) / 10000,
+      grossRevenue: rev ? Math.round(rev.grossRevenue * 100) / 100 : 0,
+      operatingExpenses: rev ? Math.round(rev.operatingExpenses * 100) / 100 : 0,
+      netRevenue: rev ? Math.round(rev.netRevenue * 100) / 100 : 0,
       source: p.source,
     };
   });
@@ -266,9 +374,9 @@ export async function getForecast(
   const ppa = ppas[0];
   const effectivePpaRate = ppa ? parseFloat(ppa.pricePerMwh) / 1000 : ppaRatePerKwh;
 
-  const historyRows = production.map(p => ({
-    month: `${p.periodStart.getFullYear()}-${String(p.periodStart.getMonth() + 1).padStart(2, "0")}`,
-    monthly_energy_kwh: parseFloat(p.productionMwh) * 1000,
+  const historyRows = aggregateProductionByMonth(production).map((record) => ({
+    month: record.key,
+    monthly_energy_kwh: record.productionMwh * 1000,
   }));
 
   const forecastRows = buildSeasonalForecast(historyRows, effectivePpaRate, degradationRate, monthsForward);
@@ -345,10 +453,11 @@ export async function getHealthStatus(projectId: string): Promise<ScadaHealthSta
     checks.push({ name: "Data Quality", status: "FAIL", message: `Data quality: ${primary.dataQuality}` });
   }
 
-  if (production.length >= 12) {
-    checks.push({ name: "Coverage", status: "PASS", message: `${production.length} months of production data available.` });
-  } else if (production.length > 0) {
-    checks.push({ name: "Coverage", status: "WARN", message: `Only ${production.length} months of data. 12+ months recommended.` });
+  const productionMonths = aggregateProductionByMonth(production).length;
+  if (productionMonths >= 12) {
+    checks.push({ name: "Coverage", status: "PASS", message: `${productionMonths} months of production data available.` });
+  } else if (productionMonths > 0) {
+    checks.push({ name: "Coverage", status: "WARN", message: `Only ${productionMonths} months of data. 12+ months recommended.` });
   } else {
     checks.push({ name: "Coverage", status: "FAIL", message: "No production data available." });
   }
@@ -441,20 +550,19 @@ export async function getDistributions(projectId: string): Promise<ScadaDistribu
   }
 
   const monthNames = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
-  const revenueByLabel = new Map<string, typeof revenue[0]>();
-  for (const r of revenue) {
-    const dt = new Date(r.periodStart);
-    const label = `${monthNames[dt.getMonth()]} ${dt.getFullYear()}`;
-    revenueByLabel.set(label, r);
+  const revenueByLabel = new Map<string, MonthlyRevenueAggregate>();
+  for (const record of aggregateRevenueByMonth(revenue)) {
+    const [year, month] = record.key.split("-").map(Number);
+    revenueByLabel.set(`${monthNames[month - 1]} ${year}`, record);
   }
 
   const records = distributions.map((d) => {
     const rev = revenueByLabel.get(d.periodLabel);
     return {
       period: d.periodLabel,
-      grossRevenue: rev ? parseFloat(rev.grossRevenue) : 0,
-      operatingExpenses: rev ? parseFloat(rev.operatingExpenses) : 0,
-      netRevenue: rev ? parseFloat(rev.netRevenue) : 0,
+      grossRevenue: rev?.grossRevenue ?? 0,
+      operatingExpenses: rev?.operatingExpenses ?? 0,
+      netRevenue: rev?.netRevenue ?? 0,
       platformFee: parseFloat(d.platformFee),
       investorShare: parseFloat(d.investorShare),
       status: d.status,
