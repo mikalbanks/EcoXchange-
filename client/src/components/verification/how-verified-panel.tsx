@@ -44,10 +44,10 @@ export function HowVerifiedPanel({ projectId }: { projectId: string }) {
     return (
       <Card data-testid="how-verified-panel">
         <CardHeader>
-          <CardTitle className="text-base">How this yield is verified</CardTitle>
+          <CardTitle className="text-base">How the engine determines status</CardTitle>
         </CardHeader>
         <CardContent className="text-sm text-muted-foreground">
-          Verification engine is online. Once intervals are settled they appear here with a full evidence chain — irradiance read &rarr; meter read &rarr; reconciliation &rarr; price source &rarr; ledger transaction.
+          No settled evidence chain is available for this project. A complete run should show the source basis for irradiance, meter data, comparison, price, and any ledger transaction.
         </CardContent>
       </Card>
     );
@@ -62,12 +62,12 @@ export function HowVerifiedPanel({ projectId }: { projectId: string }) {
   return (
     <Card data-testid="how-verified-panel">
       <CardHeader>
-        <CardTitle className="text-base">How this yield is verified</CardTitle>
+        <CardTitle className="text-base">How the engine determines status</CardTitle>
       </CardHeader>
       <CardContent>
         <div className="flex items-center gap-2 flex-wrap text-sm">
           <Badge variant="default" data-testid="badge-verified-pct">
-            {summary.pctVerified30d.toFixed(1)}% verified (30d)
+            {summary.pctVerified30d.toFixed(1)}% engine-cleared (30d)
           </Badge>
           <span className="text-muted-foreground">&rsaquo;</span>
           <Badge variant="outline" data-testid="badge-runs-count">
@@ -107,9 +107,9 @@ export function HowVerifiedPanel({ projectId }: { projectId: string }) {
           )}
         </div>
         <p className="text-xs text-muted-foreground mt-3">
-          Deterministic reconciliation of utility net-meter against satellite irradiance. Every kWh ties
-          back to an archived irradiance snapshot and a frozen kWh price; every settled dollar ties back
-          to a ledger posting.
+          The engine compares the configured meter and irradiance inputs deterministically. A cleared
+          status does not prove those inputs are independently measured; check the source provenance
+          before relying on the result.
         </p>
       </CardContent>
     </Card>

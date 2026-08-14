@@ -1,6 +1,6 @@
 import { useMemo } from "react";
 import { Header } from "@/components/header";
-import { ScadaSummaryCards, ProductionChart, ForecastChart, ForecastVsActualChart, RevenueBridgeWaterfall, DistributionWaterfall, HealthBadge } from "@/components/scada";
+import { ScadaSummaryCards, ProductionChart, ForecastChart, ForecastVsActualChart, RevenueBridgeWaterfall, DistributionWaterfall } from "@/components/scada";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Link, useParams } from "wouter";
@@ -10,6 +10,8 @@ import { ProvenancePanel, type ScadaProvenance } from "@/components/scada/proven
 import { HowVerifiedPanel } from "@/components/verification/how-verified-panel";
 import { Sun, MapPin, Zap, ArrowRight, BarChart3 } from "lucide-react";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
+import { describePerformanceEvidence } from "@shared/evidence-disclosure";
+import { EvidenceDisclosureText } from "@/components/evidence/evidence-disclosure-text";
 
 const DEFAULT_PROJECT_ID = "";
 const LEVELTEN_Q1_2026_MARKET_REFERENCE_MWH = 64.49;
@@ -70,6 +72,13 @@ export default function PerformancePage() {
     staleTime: 60000,
   });
 
+  const evidence = describePerformanceEvidence(summary?.provenance?.verificationStatus);
+  const evidenceColors = evidence.level === "verified"
+    ? "border-emerald-500/30 bg-emerald-500/10 text-emerald-100"
+    : evidence.level === "partial"
+      ? "border-blue-500/30 bg-blue-500/10 text-blue-100"
+      : "border-amber-500/30 bg-amber-500/10 text-amber-100";
+
   return (
     <div className="min-h-screen bg-gradient-dark-green">
       <Header />
@@ -80,14 +89,27 @@ export default function PerformancePage() {
           <div className="max-w-4xl mx-auto text-center mb-12">
             <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-primary/10 border border-primary/20 mb-6">
               <BarChart3 className="h-4 w-4 text-primary" />
-              <span className="text-sm font-medium text-primary">Live Performance Data</span>
+              <span className="text-sm font-medium text-primary">Performance Evidence</span>
             </div>
             <h1 className="text-3xl md:text-5xl font-bold tracking-tight mb-4" data-testid="text-performance-title">
               Project Performance
             </h1>
             <p className="text-lg text-muted-foreground max-w-2xl mx-auto" data-testid="text-performance-subtitle">
-              Real-time production reconciled across three independent sources — inverter telemetry, utility net-meter readings, and satellite irradiance — then settled through the SGT waterfall.
+              Production, revenue, and reconciliation views with the evidence level shown alongside every result.
             </p>
+          </div>
+        </div>
+      </section>
+
+      <section className="container mx-auto px-4 pb-8">
+        <div className={`rounded-xl border p-5 ${evidenceColors}`} data-testid="performance-evidence-disclosure">
+          <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+            <EvidenceDisclosureText evidence={evidence} loading={isLoading} />
+            <Button asChild variant="outline" size="sm" className="shrink-0" data-testid="button-review-methodology">
+              <Link href="/verification">
+                Review methodology <ArrowRight className="ml-1 h-3.5 w-3.5" />
+              </Link>
+            </Button>
           </div>
         </div>
       </section>
@@ -110,12 +132,12 @@ export default function PerformancePage() {
                 </div>
               </div>
               <div className="flex items-center gap-3">
-                <HealthBadge projectId={projectId} size="md" usePublicApi />
-                <Link href="/auth/signup?role=investor">
-                  <Button size="sm" className="gap-1" data-testid="button-invest-featured">
-                    Invest <ArrowRight className="h-3.5 w-3.5" />
-                  </Button>
-                </Link>
+                {summary?.provenance ? <ProvenancePanel provenance={summary.provenance} compact /> : null}
+                <Button asChild size="sm" className="gap-1" data-testid="button-review-evidence">
+                  <Link href="/backtest-report">
+                    Review evidence <ArrowRight className="h-3.5 w-3.5" />
+                  </Link>
+                </Button>
               </div>
             </div>
           </CardHeader>
@@ -181,17 +203,17 @@ export default function PerformancePage() {
       <section className="container mx-auto px-4 pb-16">
         <Card>
           <CardContent className="py-8 text-center">
-            <h2 className="text-xl font-bold mb-2">Ready to invest in verified renewable energy?</h2>
+            <h2 className="text-xl font-bold mb-2">Review the evidence before relying on performance</h2>
             <p className="text-muted-foreground mb-6 max-w-lg mx-auto">
-              All performance data flows through the SGT Pipeline — satellite telemetry, utility metering, and waterfall settlement with full provenance tracking.
+              Source labels show what is measured, uploaded, modeled, or verified. A performance display is not an investment offer.
             </p>
-            <div className="flex items-center justify-center gap-3">
-              <Link href="/auth/signup?role=investor">
-                <Button size="lg" data-testid="button-performance-cta">Start Investing</Button>
-              </Link>
-              <Link href="/">
-                <Button size="lg" variant="outline" data-testid="button-performance-learn-more">Learn More</Button>
-              </Link>
+            <div className="flex flex-col items-stretch justify-center gap-3 sm:flex-row sm:items-center">
+              <Button asChild size="lg" className="w-full sm:w-auto" data-testid="button-performance-cta">
+                <Link href="/backtest-report">Open Backtest Evidence</Link>
+              </Button>
+              <Button asChild size="lg" variant="outline" className="w-full sm:w-auto" data-testid="button-performance-learn-more">
+                <Link href="/verification">Verification Method</Link>
+              </Button>
             </div>
           </CardContent>
         </Card>

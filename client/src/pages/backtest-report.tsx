@@ -1,22 +1,27 @@
-import { useState, useRef, useCallback, useEffect } from "react";
-import { useQuery, useMutation } from "@tanstack/react-query";
-import { queryClient } from "@/lib/queryClient";
+import { useState, useRef, useCallback } from "react";
+import { useQuery } from "@tanstack/react-query";
 import { useToast } from "@/hooks/use-toast";
 import { Header } from "@/components/header";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Switch } from "@/components/ui/switch";
 import {
   LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer,
   BarChart, Bar, Cell, PieChart, Pie,
 } from "recharts";
 import type { LucideIcon } from "lucide-react";
 import {
-  Shield, CheckCircle2, AlertTriangle, TrendingUp, Zap, Clock, BarChart3,
-  Printer, FileText, MapPin, Sun, Activity, Download, Loader2, Database, RefreshCw,
+  Shield, AlertTriangle, TrendingUp, Zap, Clock, BarChart3,
+  Printer, FileText, MapPin, Sun, Activity, Download, Loader2, Database,
 } from "lucide-react";
+import { describeBacktestEvidence } from "@shared/evidence-disclosure";
+import { EvidenceDisclosureText } from "@/components/evidence/evidence-disclosure-text";
+import {
+  describeMeterPresentation,
+  describeSatelliteSource,
+  type SatelliteSource,
+} from "@/components/evidence/backtest-presentation";
 
 interface BacktestSite {
   siteId: string;
@@ -59,7 +64,6 @@ interface BacktestInterval {
   handshakeCleared5Pct: boolean;
 }
 
-type SatelliteSource = "SOLCAST_HISTORICAL" | "SOLCAST_ESTIMATED_ACTUALS" | "SYNTHETIC_FALLBACK";
 type MeterDataSourceType = "synthetic" | "stored";
 
 interface BacktestReportData {
@@ -81,7 +85,7 @@ function ConfidenceGauge({ score }: { score: number }) {
   const radius = 80;
   const circumference = Math.PI * radius;
   const progress = (score / 100) * circumference;
-  const color = score >= 90 ? "#A3E635" : score >= 75 ? "#EAB308" : "#EF4444";
+  const color = "#3B82F6";
 
   return (
     <div className="flex flex-col items-center" data-testid="gauge-confidence">
@@ -106,7 +110,7 @@ function ConfidenceGauge({ score }: { score: number }) {
           {score.toFixed(1)}%
         </text>
         <text x="100" y="108" textAnchor="middle" className="fill-muted-foreground" fontSize="12">
-          CONFIDENCE
+          ALIGNMENT SCORE
         </text>
       </svg>
     </div>
@@ -213,26 +217,7 @@ async function exportToPdf(element: HTMLElement, filename: string) {
 export default function BacktestReportPage() {
   const reportRef = useRef<HTMLDivElement>(null);
   const [pdfExporting, setPdfExporting] = useState(false);
-  const [useRealData, setUseRealData] = useState(true);
-  const [selectedProjectId, setSelectedProjectId] = useState("proj1");
   const { toast } = useToast();
-
-  const { data: storedDataInfo } = useQuery<{ hasStoredData: boolean; recordCount: number }>({
-    queryKey: ["/api/public/backtest/has-stored-data", selectedProjectId],
-    queryFn: async () => {
-      const res = await fetch(`/api/public/backtest/has-stored-data?projectId=${selectedProjectId}`);
-      if (!res.ok) return { hasStoredData: false, recordCount: 0 };
-      return res.json();
-    },
-  });
-
-  const prevProjectRef = useRef(selectedProjectId);
-  useEffect(() => {
-    if (storedDataInfo && prevProjectRef.current !== selectedProjectId) {
-      prevProjectRef.current = selectedProjectId;
-      setUseRealData(storedDataInfo.hasStoredData);
-    }
-  }, [storedDataInfo, selectedProjectId]);
 
   const { data: report, isLoading, error } = useQuery<BacktestReportData>({
     queryKey: ["/api/public/backtest/report"],
@@ -242,33 +227,6 @@ export default function BacktestReportPage() {
       return res.json();
     },
   });
-
-  const runBacktestMutation = useMutation({
-    mutationFn: async ({ projectId, meterDataSource }: { projectId: string; meterDataSource: string }) => {
-      const res = await fetch("/api/public/backtest/run", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        credentials: "include",
-        body: JSON.stringify({ projectId, meterDataSource }),
-      });
-      if (!res.ok) {
-        const err = await res.json().catch(() => ({ message: "Failed to run backtest" }));
-        throw new Error(err.message);
-      }
-      return res.json();
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["/api/public/backtest/report"] });
-      toast({ title: "Backtest Complete", description: `Report regenerated using ${useRealData ? "stored meter" : "synthetic"} data.` });
-    },
-    onError: (err: Error) => {
-      toast({ title: "Backtest Failed", description: err.message, variant: "destructive" });
-    },
-  });
-
-  function handleRunBacktest() {
-    runBacktestMutation.mutate({ projectId: selectedProjectId, meterDataSource: useRealData ? "stored" : "synthetic" });
-  }
 
   const handleDownloadPdf = useCallback(async () => {
     if (!reportRef.current || !report) return;
@@ -315,6 +273,10 @@ export default function BacktestReportPage() {
   }
 
   const { site, statistics, intervals } = report;
+  const evidence = describeBacktestEvidence(report.meterDataSource, report.satelliteSource);
+  const satellitePresentation = describeSatelliteSource(report.satelliteSource);
+  const meterPresentation = describeMeterPresentation(report);
+  const satelliteLabel = satellitePresentation.displayLabel;
 
   const chartData = intervals
     .filter(i => i.meterKw > 0 || i.satelliteKw > 0)
@@ -349,9 +311,9 @@ export default function BacktestReportPage() {
   ];
 
   const pieData = [
-    { name: "Pass @2%", value: statistics.passRate2Pct, fill: "#A3E635" },
-    { name: "Pass @5% only", value: statistics.passRate5Pct - statistics.passRate2Pct, fill: "#EAB308" },
-    { name: "Fail", value: Math.max(0, 100 - statistics.passRate5Pct), fill: "#EF4444" },
+    { name: "Within ±2%", value: statistics.passRate2Pct, fill: "#3B82F6" },
+    { name: "Within ±5% only", value: statistics.passRate5Pct - statistics.passRate2Pct, fill: "#64748B" },
+    { name: "Outside ±5%", value: Math.max(0, 100 - statistics.passRate5Pct), fill: "#EF4444" },
   ].filter(d => d.value > 0);
 
   return (
@@ -384,34 +346,32 @@ export default function BacktestReportPage() {
           background-color: #f0fdf4 !important;
         }
         .pdf-capture-mode [data-testid="stat-mae"] { color: #A3E635 !important; }
-        .pdf-capture-mode [data-testid="stat-pass-@2%"] { color: #A3E635 !important; }
-        .pdf-capture-mode [data-testid="stat-pass-@5%"] { color: #A3E635 !important; }
       `}</style>
       <div className="print:hidden" data-pdf-app-header>
         <Header />
       </div>
 
       <div className="container mx-auto px-4 py-8 max-w-6xl space-y-8 print:space-y-6 print:py-4">
-        <div className="flex items-center justify-between print:hidden" data-pdf-action-bar>
+        <div className="flex flex-col gap-4 print:hidden sm:flex-row sm:items-start sm:justify-between" data-pdf-action-bar>
           <div>
-            <div className="flex items-center gap-2 text-muted-foreground text-sm mb-2">
+            <div className="flex flex-wrap items-center gap-2 text-muted-foreground text-sm mb-2">
               <FileText className="h-4 w-4" />
-              <span>SGT Validation Report</span>
+              <span>SGT Evidence Replay</span>
               <Badge variant="outline" className="text-xs">{report.engineVersion}</Badge>
               {report.meterDataSource === "stored" && (
-                <Badge className="bg-emerald-500/20 text-emerald-400 border-emerald-500/30 text-xs gap-1" data-testid="badge-real-data">
-                  <Database className="h-3 w-3" /> Real Meter Data
+                <Badge className="bg-amber-500/20 text-amber-400 border-amber-500/30 text-xs gap-1" data-testid="badge-stored-data">
+                  <Database className="h-3 w-3" /> Stored Production Records
                 </Badge>
               )}
             </div>
             <h1 className="text-3xl md:text-4xl font-bold tracking-tight" data-testid="text-report-title">
-              SGT Backtest Report
+              SGT Backtest Evidence Report
             </h1>
             <p className="text-muted-foreground mt-1">
               Generated {new Date(report.generatedAt).toLocaleDateString("en-US", { year: "numeric", month: "long", day: "numeric" })}
             </p>
           </div>
-          <div className="flex items-center gap-2">
+          <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
             <Button
               variant="default"
               size="sm"
@@ -433,46 +393,20 @@ export default function BacktestReportPage() {
           </div>
         </div>
 
-        <Card className="print:hidden border-border/50" data-testid="card-backtest-controls">
+        <Card className="print:hidden border-border/50" data-testid="card-backtest-read-only">
           <CardContent className="pt-5 pb-4">
-            <div className="flex flex-col sm:flex-row sm:items-center gap-4">
-              <div className="flex items-center gap-3 flex-1">
-                <div>
-                  <label className="text-xs font-medium text-muted-foreground mb-1 block">Project</label>
-                  <select
-                    className="bg-background border border-border rounded-md px-3 py-1.5 text-sm min-w-[200px]"
-                    value={selectedProjectId}
-                    onChange={(e) => setSelectedProjectId(e.target.value)}
-                    data-testid="select-backtest-project"
-                  >
-                    <option value="proj1">Imperial Valley Solar I (12 MW)</option>
-                    <option value="proj3">Lancaster Sun Ranch (25 MW)</option>
-                  </select>
-                </div>
-                <div className="flex items-center gap-2 pt-4">
-                  <Switch
-                    checked={useRealData}
-                    onCheckedChange={setUseRealData}
-                    data-testid="switch-real-data"
-                  />
-                  <label className="text-xs font-medium cursor-pointer" onClick={() => setUseRealData(!useRealData)}>
-                    Use Stored Meter Data
-                  </label>
-                </div>
-              </div>
-              <Button
-                size="sm"
-                onClick={handleRunBacktest}
-                disabled={runBacktestMutation.isPending}
-                className="shrink-0"
-                data-testid="button-run-backtest"
-              >
-                {runBacktestMutation.isPending ? (
-                  <><RefreshCw className="h-3.5 w-3.5 mr-1.5 animate-spin" /> Running...</>
-                ) : (
-                  <><Activity className="h-3.5 w-3.5 mr-1.5" /> Run Backtest</>
-                )}
-              </Button>
+            <p className="text-sm font-semibold">Read-only evidence snapshot</p>
+            <p className="mt-1 text-base leading-relaxed text-muted-foreground">
+              Public replay controls are disabled. This page displays the server-provided report and does not let visitors change project data or replace the report for other visitors.
+            </p>
+          </CardContent>
+        </Card>
+
+        <Card className={evidence.level === "partial" ? "border-blue-500/30 bg-blue-500/5" : "border-amber-500/30 bg-amber-500/5"} data-testid="backtest-evidence-disclosure">
+          <CardContent className="pt-5">
+            <div className="flex items-start gap-3">
+              <AlertTriangle className={evidence.level === "partial" ? "mt-0.5 h-5 w-5 shrink-0 text-blue-400" : "mt-0.5 h-5 w-5 shrink-0 text-amber-400"} />
+              <EvidenceDisclosureText evidence={evidence} descriptionTestId="text-evidence-description" />
             </div>
           </CardContent>
         </Card>
@@ -480,19 +414,19 @@ export default function BacktestReportPage() {
         <div className="hidden print:block border-b-2 border-black pb-4 mb-6" data-pdf-header>
           <div className="flex items-center justify-between">
             <div>
-              <h1 className="text-2xl font-bold">EcoXchange — SGT Backtest Validation Report</h1>
+              <h1 className="text-2xl font-bold">EcoXchange — SGT Backtest Evidence Report</h1>
               <p className="text-sm text-gray-600 mt-1">
                 Generated {new Date(report.generatedAt).toLocaleDateString("en-US", { year: "numeric", month: "long", day: "numeric" })} | Engine {report.engineVersion}
               </p>
             </div>
             <div className="text-right text-sm text-gray-500">
-              <p>CONFIDENTIAL</p>
-              <p>Investor Due Diligence</p>
+              <p>DEMONSTRATION EVIDENCE</p>
+              <p>Method and model review</p>
             </div>
           </div>
         </div>
 
-        <Card className="border-primary/30 bg-card/80 print:border-gray-300 print:bg-white">
+        <Card className="border-border/60 bg-card/80 print:border-gray-300 print:bg-white">
           <CardContent className="pt-6">
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6 items-center">
               <div className="md:col-span-1 flex justify-center">
@@ -501,62 +435,29 @@ export default function BacktestReportPage() {
               <div className="md:col-span-2 space-y-4">
                 <div>
                   <h2 className="text-xl font-bold flex items-center gap-2" data-testid="text-validation-summary">
-                    <Shield className="h-5 w-5 text-primary" />
-                    Validation Summary
+                    <Shield className="h-5 w-5 text-blue-400" />
+                    Evidence Replay Summary
                   </h2>
                   <p className="text-muted-foreground mt-2 print:text-gray-600 leading-relaxed" data-testid="text-validation-statement">
-                    {report.satelliteSource !== "SYNTHETIC_FALLBACK" ? (
-                      <>
-                        Validation against PVDAQ {site.siteId} site parameters confirms SGT reliability at ±{statistics.mae.toFixed(2)}% accuracy.
-                        Satellite estimates sourced from {report.satelliteSource === "SOLCAST_HISTORICAL" ? "Solcast historical" : "Solcast estimated actuals"} achieved a {statistics.passRate5Pct.toFixed(1)}% handshake pass rate
-                        within 5% tolerance across {statistics.daylightIntervals.toLocaleString()} daylight intervals,
-                        with a confidence score of {statistics.confidenceScore.toFixed(1)}%.
-                        {report.meterDataSource === "stored"
-                          ? "Meter data sourced from ingested SCADA production records."
-                          : "Meter data synthesized from site specifications (capacity, array type, solar geometry) to model PVDAQ ground truth."}
-                      </>
-                    ) : (
-                      <>
-                        Validation against PVDAQ {site.siteId} site parameters confirms SGT reliability at ±{statistics.mae.toFixed(2)}% accuracy.
-                        {report.meterDataSource === "stored" ? (
-                          <>
-                            Meter data sourced from verified SCADA production records.
-                            Satellite comparison derived from Solcast irradiance model for the period {site.startDate}–{site.endDate},
-                            achieving a {statistics.passRate5Pct.toFixed(1)}% handshake pass rate within 5% tolerance
-                            across {statistics.daylightIntervals.toLocaleString()} daylight intervals,
-                            with a confidence score of {statistics.confidenceScore.toFixed(1)}%.
-                          </>
-                        ) : (
-                          <>
-                            Satellite estimates generated by Solcast irradiance model (historical period {site.startDate}–{site.endDate})
-                            achieved a {statistics.passRate5Pct.toFixed(1)}% handshake pass rate within 5% tolerance
-                            across {statistics.daylightIntervals.toLocaleString()} daylight intervals,
-                            with a confidence score of {statistics.confidenceScore.toFixed(1)}%.
-                            Both satellite and meter data are modeled from site specifications (capacity, array type, solar geometry).
-                          </>
-                        )}
-                      </>
-                    )}
+                    This replay compares {report.meterDataSource === "stored" ? "stored production records whose origin is not encoded" : "a synthesized meter baseline"} with {satelliteLabel} for site label {site.siteId}.
+                    It produced {statistics.mae.toFixed(2)}% mean absolute error, with {statistics.passRate5Pct.toFixed(1)}% of intervals inside the configured 5% band,
+                    and a {statistics.confidenceScore.toFixed(1)}% alignment score across {statistics.daylightIntervals.toLocaleString()} daylight intervals. {evidence.description}
                   </p>
                 </div>
                 <div className="flex flex-wrap gap-2">
                   <Badge
-                    className={report.satelliteSource !== "SYNTHETIC_FALLBACK" || report.meterDataSource === "stored"
-                      ? "bg-primary/20 text-primary border-primary/30"
+                    className={evidence.level === "partial"
+                      ? "bg-blue-500/20 text-blue-300 border-blue-500/30"
                       : "bg-yellow-500/20 text-yellow-400 border-yellow-500/30"}
                     data-testid="badge-satellite-source"
                   >
-                    {report.satelliteSource === "SOLCAST_HISTORICAL" ? "🛰️ Solcast Historical"
-                      : report.satelliteSource === "SOLCAST_ESTIMATED_ACTUALS" ? "🛰️ Solcast Estimated Actuals"
-                      : "🛰️ Solcast Irradiance Model"}
+                    {satellitePresentation.badgeLabel}
                   </Badge>
-                  <Badge className="bg-primary/20 text-primary border-primary/30" data-testid="badge-mae-pass">
-                    <CheckCircle2 className="h-3 w-3 mr-1" />
-                    MAE {statistics.mae.toFixed(2)}% {statistics.mae < 5 ? "✓ PASS" : "✗ FAIL"}
+                  <Badge variant="outline" data-testid="badge-mae-band">
+                    MAE {statistics.mae.toFixed(2)}% {statistics.mae < 5 ? "within 5% band" : "outside 5% band"}
                   </Badge>
-                  <Badge className="bg-primary/20 text-primary border-primary/30" data-testid="badge-pass-rate">
-                    <CheckCircle2 className="h-3 w-3 mr-1" />
-                    {statistics.passRate5Pct.toFixed(1)}% Pass Rate @5%
+                  <Badge variant="outline" data-testid="badge-band-rate">
+                    {statistics.passRate5Pct.toFixed(1)}% within ±5% band
                   </Badge>
                   <Badge variant="outline" data-testid="badge-intervals">
                     {statistics.totalIntervals.toLocaleString()} intervals analyzed
@@ -578,7 +479,7 @@ export default function BacktestReportPage() {
             <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
               <div>
                 <p className="text-muted-foreground">Site ID</p>
-                <p className="font-medium" data-testid="text-site-id">PVDAQ {site.siteId}</p>
+                <p className="font-medium" data-testid="text-site-id">{meterPresentation.siteIdentifier}</p>
               </div>
               <div>
                 <p className="text-muted-foreground">Location</p>
@@ -593,7 +494,7 @@ export default function BacktestReportPage() {
                 <p className="font-medium capitalize">{site.arrayType.replace(/_/g, " ")}</p>
               </div>
               <div>
-                <p className="text-muted-foreground">Validation Period</p>
+                <p className="text-muted-foreground">Replay Period</p>
                 <p className="font-medium">{site.startDate} — {site.endDate}</p>
               </div>
               <div>
@@ -606,17 +507,17 @@ export default function BacktestReportPage() {
               </div>
               <div>
                 <p className="text-muted-foreground">Satellite Source</p>
-                <p className="font-medium">Solcast Sky Oracle</p>
+                <p className="font-medium">{satelliteLabel}</p>
               </div>
             </div>
           </CardContent>
         </Card>
 
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-          <StatCard icon={Activity} label="MAE" value={`${statistics.mae.toFixed(2)}%`} sublabel="Mean Absolute Error" color={statistics.mae < 5 ? "#A3E635" : "#EF4444"} />
+          <StatCard icon={Activity} label="MAE" value={`${statistics.mae.toFixed(2)}%`} sublabel="Mean Absolute Error" />
           <StatCard icon={BarChart3} label="RMSE" value={`${statistics.rmse.toFixed(2)}%`} sublabel="Root Mean Square Error" />
-          <StatCard icon={CheckCircle2} label="Pass @2%" value={`${statistics.passRate2Pct.toFixed(1)}%`} sublabel="Strict tolerance" color="#A3E635" />
-          <StatCard icon={Shield} label="Pass @5%" value={`${statistics.passRate5Pct.toFixed(1)}%`} sublabel="Standard tolerance" color="#A3E635" />
+          <StatCard icon={Activity} label="Within ±2%" value={`${statistics.passRate2Pct.toFixed(1)}%`} sublabel="Configured alignment band" />
+          <StatCard icon={Shield} label="Within ±5%" value={`${statistics.passRate5Pct.toFixed(1)}%`} sublabel="Configured alignment band" />
         </div>
 
         <Card className="print:break-before-page print:border-gray-300 print:bg-white">
@@ -626,7 +527,7 @@ export default function BacktestReportPage() {
               Daily Production Comparison
             </CardTitle>
             <p className="text-sm text-muted-foreground">
-              Satellite Power (Solcast Sky Oracle) vs. Meter Power (PVDAQ {site.siteId}) — daily energy in MWh
+              Satellite Power ({satelliteLabel}) vs. Meter Power (site label {site.siteId}) — daily energy in MWh
             </p>
           </CardHeader>
           <CardContent>
@@ -642,8 +543,8 @@ export default function BacktestReportPage() {
                     formatter={(value: number, name: string) => [`${value} MWh`, name === "satellite" ? "Satellite" : "Meter"]}
                   />
                   <Legend />
-                  <Bar dataKey="satellite" name="Satellite (Solcast)" fill="#A3E635" radius={[2, 2, 0, 0]} />
-                  <Bar dataKey="meter" name="Meter (PVDAQ)" fill="#3B82F6" radius={[2, 2, 0, 0]} />
+                  <Bar dataKey="satellite" name={satellitePresentation.seriesLabel} fill="#A3E635" radius={[2, 2, 0, 0]} />
+                  <Bar dataKey="meter" name={meterPresentation.seriesLabel} fill="#3B82F6" radius={[2, 2, 0, 0]} />
                 </BarChart>
               </ResponsiveContainer>
             </div>
@@ -684,7 +585,7 @@ export default function BacktestReportPage() {
             <CardHeader>
               <CardTitle className="text-base flex items-center gap-2">
                 <Zap className="h-4 w-4 text-primary" />
-                Handshake Clearance Rate
+                Configured Band Rate
               </CardTitle>
             </CardHeader>
             <CardContent>
@@ -736,8 +637,8 @@ export default function BacktestReportPage() {
                     formatter={(value: number, name: string) => [`${value} kW`, name === "satellite" ? "Satellite" : "Meter"]}
                   />
                   <Legend />
-                  <Line type="monotone" dataKey="satellite" name="Satellite (Solcast)" stroke="#A3E635" dot={false} strokeWidth={1.5} />
-                  <Line type="monotone" dataKey="meter" name="Meter (PVDAQ)" stroke="#3B82F6" dot={false} strokeWidth={1.5} />
+                  <Line type="monotone" dataKey="satellite" name={satellitePresentation.seriesLabel} stroke="#A3E635" dot={false} strokeWidth={1.5} />
+                  <Line type="monotone" dataKey="meter" name={meterPresentation.seriesLabel} stroke="#3B82F6" dot={false} strokeWidth={1.5} />
                 </LineChart>
               </ResponsiveContainer>
             </div>
@@ -753,28 +654,20 @@ export default function BacktestReportPage() {
               <div className="space-y-3">
                 <h4 className="font-semibold text-foreground print:text-black">Methodology</h4>
                 <ul className="space-y-1 text-muted-foreground print:text-gray-700">
-                  {report.satelliteSource !== "SYNTHETIC_FALLBACK" ? (
-                    <li>Satellite estimates sourced from {report.satelliteSource === "SOLCAST_HISTORICAL" ? "Solcast historical" : "Solcast estimated actuals"} period data</li>
-                  ) : (
-                    <li>Satellite comparison derived from Solcast irradiance model for the validation period</li>
-                  )}
-                  <li>{report.meterDataSource === "stored"
-                    ? `Meter data sourced from ingested SCADA production records (PVDAQ Site ${site.siteId})`
-                    : `Ground truth modeled from NREL PVDAQ Site ${site.siteId} specifications (capacity, array type, location)`}</li>
+                  <li>{satellitePresentation.methodology}</li>
+                  <li>{meterPresentation.methodology}</li>
                   <li>15-minute interval granularity across {statistics.totalIntervals.toLocaleString()} data points</li>
                   <li>Daylight-only statistical analysis ({statistics.daylightIntervals.toLocaleString()} intervals)</li>
                   <li>Handshake tolerance tested at 2% and 5% thresholds</li>
-                  <li>Data source: <strong>{report.satelliteSource === "SOLCAST_HISTORICAL" ? "Solcast Historical"
-                    : report.satelliteSource === "SOLCAST_ESTIMATED_ACTUALS" ? "Solcast Estimated Actuals"
-                    : "Solcast Irradiance Model"}</strong></li>
+                  <li>Data source: <strong>{satellitePresentation.displayLabel}</strong></li>
                 </ul>
               </div>
               <div className="space-y-3">
                 <h4 className="font-semibold text-foreground print:text-black">Findings</h4>
                 <ul className="space-y-1 text-muted-foreground print:text-gray-700">
-                  <li>MAE of {statistics.mae.toFixed(2)}% {statistics.mae < 5 ? "meets" : "exceeds"} the &lt;5% target threshold</li>
+                  <li>MAE of {statistics.mae.toFixed(2)}% is {statistics.mae < 5 ? "within" : "outside"} the configured 5% alignment band</li>
                   <li>RMSE of {statistics.rmse.toFixed(2)}% indicates {statistics.rmse < 3 ? "minimal" : statistics.rmse < 6 ? "moderate" : "significant"} outlier impact</li>
-                  <li>{statistics.passRate5Pct.toFixed(1)}% of daylight intervals pass the 5% handshake</li>
+                  <li>{statistics.passRate5Pct.toFixed(1)}% of daylight intervals fall within the configured ±5% band</li>
                   <li>{statistics.errorBuckets.within1Pct} intervals ({((statistics.errorBuckets.within1Pct / statistics.daylightIntervals) * 100).toFixed(1)}%) within ±1% — near-exact match</li>
                   <li>Peak production observed at {statistics.peakProductionHour}:00 UTC ({statistics.totalEnergyMwh.toLocaleString()} MWh total)</li>
                 </ul>
@@ -782,28 +675,17 @@ export default function BacktestReportPage() {
             </div>
             <div className="mt-6 p-4 bg-primary/5 border border-primary/20 rounded-lg print:bg-gray-50 print:border-gray-300">
               <p className="text-sm font-medium text-foreground print:text-black" data-testid="text-conclusion">
-                {report.satelliteSource !== "SYNTHETIC_FALLBACK" ? (
+                {report.meterDataSource === "stored" ? (
                   <>
-                    Conclusion: The SGT engine demonstrates institutional-grade accuracy for satellite-to-meter reconciliation.
-                    With a confidence score of {statistics.confidenceScore.toFixed(1)}% and MAE of {statistics.mae.toFixed(2)}%,
-                    the Solcast Sky Oracle provides reliable telemetry verification suitable for securities yield calculations
-                    and investor reporting under Reg D 506(c) compliance requirements.
-                    {report.meterDataSource === "stored" && " Meter data validated against ingested SCADA production records."}
-                  </>
-                ) : report.meterDataSource === "stored" ? (
-                  <>
-                    Conclusion: The SGT engine validates meter-to-satellite reconciliation using verified SCADA production records
-                    for site {site.siteId}. With a confidence score of {statistics.confidenceScore.toFixed(1)}% and MAE of {statistics.mae.toFixed(2)}%,
-                    the production data demonstrates strong alignment with the Solcast irradiance model,
-                    supporting securities yield calculations and investor reporting under Reg D 506(c) compliance requirements.
+                    Conclusion: This replay shows {statistics.mae.toFixed(2)}% mean absolute error and a {statistics.confidenceScore.toFixed(1)}% alignment score
+                    between stored production records of unstated origin and the configured {satellitePresentation.displayLabel.toLowerCase()}.
+                    It does not establish utility-meter provenance, full three-source independence, or suitability for investor reporting.
                   </>
                 ) : (
                   <>
-                    Conclusion: The SGT engine demonstrates correct pipeline architecture for satellite-to-meter reconciliation
-                    using modeled data from PVDAQ {site.siteId} site specifications.
-                    With a confidence score of {statistics.confidenceScore.toFixed(1)}% and MAE of {statistics.mae.toFixed(2)}%,
-                    the pipeline architecture is validated. Production deployment requires live Solcast data for independent
-                    satellite-to-meter validation suitable for Reg D 506(c) investor reporting.
+                    Conclusion: This model replay demonstrates pipeline behavior using a synthesized meter baseline for site {site.siteId}.
+                    The {statistics.confidenceScore.toFixed(1)}% alignment score and {statistics.mae.toFixed(2)}% mean absolute error describe agreement between modeled series.
+                    They do not validate operating production or independent meter-to-satellite verification.
                   </>
                 )}
               </p>
@@ -823,23 +705,19 @@ export default function BacktestReportPage() {
                   details: `EcoXchange internal project registry (${site.siteId}), coordinates ${site.latitude} / ${site.longitude}, capacity ${site.capacityKw.toLocaleString()} kW.`,
                 },
                 {
-                  label: "Satellite Telemetry",
+                  label: "Satellite Estimate",
                   details:
-                    report.satelliteSource === "SOLCAST_HISTORICAL"
-                      ? "Solcast Historical API (measured historical irradiance/production model)."
-                      : report.satelliteSource === "SOLCAST_ESTIMATED_ACTUALS"
-                        ? "Solcast Estimated Actuals API (satellite-derived actual irradiance estimate)."
-                        : "Solcast irradiance model fallback (modeled irradiance where direct historical endpoint is unavailable).",
+                    satellitePresentation.documentation,
                 },
                 {
-                  label: "Meter Ground Truth",
+                  label: "Meter Baseline",
                   details:
                     report.meterDataSource === "stored"
-                      ? "EcoXchange SCADA ingested production records (stored meter telemetry)."
+                      ? "EcoXchange stored production records. Their ingestion origin is not encoded, and this report does not attest utility-meter provenance."
                       : "Synthetic meter baseline modeled from site geometry, capacity, and production profile assumptions.",
                 },
                 {
-                  label: "Validation Method",
+                  label: "Comparison Method",
                   details:
                     "15-minute interval SGT handshake comparison; pass/fail at ±2% and ±5% tolerance bands; MAE and RMSE computed over daylight intervals.",
                 },
@@ -860,8 +738,8 @@ export default function BacktestReportPage() {
         </Card>
 
         <div className="text-center text-xs text-muted-foreground py-4 print:text-gray-500 print:border-t print:border-gray-300 print:mt-8">
-          <p>EcoXchange SGT Backtest Report — {report.engineVersion} — Generated {new Date(report.generatedAt).toISOString()}</p>
-          <p className="mt-1">This report is for informational purposes as part of investor due diligence. Past performance does not guarantee future results.</p>
+          <p>EcoXchange SGT Backtest Evidence Report — {report.engineVersion} — Generated {new Date(report.generatedAt).toISOString()}</p>
+          <p className="mt-1">Method demonstration only. This report does not establish independent production verification or investment suitability.</p>
         </div>
       </div>
     </div>

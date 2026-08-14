@@ -2,17 +2,6 @@
   "note": "Spec 16 § 6 pre-existing violations, recorded when the check landed (§ 9.4 step 1). The check fails on anything NEW; these are what already existed. 'technical' entries are not § 6 violations — the term is a code identifier or an industry term of art. 'pending-decision' entries ARE genuine violations in live user-facing copy and need a founder or counsel call; a build step must not silently rewrite securities-adjacent or brand copy. AC 16 is not met until every pending-decision entry is gone.",
   "entries": [
     {
-      "file": "client/src/pages/backtest-report.tsx",
-      "termId": "oracle",
-      "count": 3,
-      "samples": [
-        "Oracle"
-      ],
-      "category": "pending-decision",
-      "reason": "'Solcast Sky Oracle' rendered on the PUBLIC backtest report page. Line 789 reads 'the Solcast Sky Oracle provides reliable telemetry verification suitable for securities yield calculations' — the exact claim § 6 prohibits the word for, on a page a prospective investor can reach without logging in. Highest-priority instance.",
-      "decision": "Rename the product in user-facing copy, or record a counsel-cleared exception."
-    },
-    {
       "file": "client/src/pages/operations.tsx",
       "termId": "oracle",
       "count": 8,
