@@ -17,18 +17,18 @@ const sources = [
   },
   {
     icon: Satellite,
-    title: "Satellite irradiance",
+    title: "Modeled expected generation",
     source: "NASA POWER · NREL NSRDB",
-    detail: "What physics says the plant should have produced, derived from satellite irradiance plus known plant specs. No sensors required.",
+    detail: "Expected kWh derived from satellite weather data and known project specifications. No additional site sensors required.",
   },
 ];
 
 const flow = [
-  { day: "Day 1", text: "Pull production data from inverter API, utility meter, and satellite irradiance." },
-  { day: "Day 1", text: "Reconciliation runs. Three numbers compared within configurable tolerance." },
-  { day: "Day 2", text: "If verified, the verification engine writes the result on-chain to Polymesh via the Polymath Capital Platform." },
-  { day: "Day 3", text: "Distribution contract calculates pro-rata USDC per token holder. Transfers execute simultaneously." },
-  { day: "Day 3–4", text: "Investor dashboards update. Push notifications sent. If flagged, the run is held for review before any payment." },
+  { day: "T+0", text: "The clock starts after all month-end inverter, utility-meter, and modeled-generation data is confirmed." },
+  { day: "Within 24 hrs", text: "The verification engine compares the three production figures within the project's configured tolerances." },
+  { day: "Within 48 hrs", text: "A verified result marks the project distribution-eligible under its offering documents." },
+  { day: "Within 72 hrs", text: "The investor dashboard updates and eligible distribution processing begins." },
+  { day: "Exception", text: "A flagged or incomplete result pauses distribution eligibility for manual review; the 72-hour target does not apply while review is open." },
 ];
 
 export default function MethodPage() {
@@ -61,7 +61,7 @@ export default function MethodPage() {
               </div>
               <div className="public-mini-stat">
                 <span className="public-mini-stat-value">72 hrs</span>
-                <span className="public-mini-stat-label">Target receipt after month-end confirmation</span>
+                <span className="public-mini-stat-label">Target processing after all source data is confirmed</span>
               </div>
             </div>
           </aside>
@@ -110,8 +110,9 @@ export default function MethodPage() {
               <div className="mt-8 flex items-center gap-2 border border-primary/30 bg-primary/5 p-4">
                 <ArrowRight className="h-4 w-4 text-primary" />
                 <p className="text-sm">
-                  Target investor receipt: within <strong className="font-semibold">72 hours</strong> of month-end —
-                  versus the 30–90 day cycle of manual quarterly distribution administration.
+                  The <strong className="font-semibold">72-hour target</strong> begins only after every required
+                  month-end source is received and confirmed. Flagged, pending, or incomplete records remain on hold
+                  until review is complete.
                 </p>
               </div>
             </CardContent>

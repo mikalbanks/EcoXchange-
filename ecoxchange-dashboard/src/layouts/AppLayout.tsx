@@ -21,7 +21,7 @@ import {
 import { liveMode } from "../lib/supabase.js";
 import demoDistributions from "../data/demo-distributions.json";
 
-// Demo trigger: the Demo Controller navigates to /investor?simulate_distribution=1;
+// Demo trigger: Presenter controls navigate to /investor?simulate_distribution=1;
 // we read-and-clear the param here (inside the provider) and fire the banner
 // with the latest demo distribution amount.
 function SimulateDistributionTrigger() {
@@ -115,7 +115,7 @@ function AppLayoutInner() {
                 title={
                   liveMode
                     ? "Reading from Supabase"
-                    : "Static demo data (set VITE_SUPABASE_URL to go live)"
+                    : "Simulated demonstration data"
                 }
               >
                 <span

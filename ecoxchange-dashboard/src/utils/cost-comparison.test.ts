@@ -10,7 +10,7 @@ describe("computeCostComparison", () => {
     expect(r.savingsPct).toBe(62);
   });
 
-  it("scales the placement fee with the raise; fixed items stay fixed", () => {
+  it("scales the capital-raise fee benchmark with the raise; fixed items stay fixed", () => {
     const small = computeCostComparison(500_000);
     const large = computeCostComparison(5_000_000);
     expect(small.lines[1].traditional).toBe(30_000);

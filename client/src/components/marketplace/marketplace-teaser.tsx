@@ -57,7 +57,7 @@ export function MarketplaceTeaser() {
         <div>
           <h2 className="text-2xl font-bold">Live marketplace</h2>
           <p className="text-sm text-muted-foreground">
-            Real renewable-energy offerings with confidence-tagged financials. Refreshed daily.
+            Illustrative project candidates and market comparisons with confidence-tagged financials. No offering is currently open.
           </p>
         </div>
         <div className="flex items-center gap-3">

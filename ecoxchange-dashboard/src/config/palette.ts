@@ -3,7 +3,7 @@
 // gradients, overlays, and the particle/heartbeat systems.
 export const palette = {
   // === Existing brand (unchanged) ===
-  darkBg: "#1B4D35",
+  darkBg: "#004d1a",
   medGreen: "#2E7D52",
   accentBrt: "#76C945",
   lightGreen: "#8DC4A4",
@@ -32,7 +32,7 @@ export const palette = {
 
   // === Nature gradient stops ===
   gradientSunrise: ["#F7F3EE", "#C8E8D4"],
-  gradientForest: ["#1B4D35", "#0F3322"],
+  gradientForest: ["#004d1a", "#003611"],
   gradientLeaf: ["#76C945", "#2E7D52"],
   gradientGold: ["#E5A033", "#C48820"],
 } as const;

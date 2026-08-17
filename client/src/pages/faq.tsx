@@ -9,7 +9,7 @@ import {
 const FAQS = [
   {
     q: "What is an EcoXchange Solar Note (ESN)?",
-    a: "A fractional LLC membership interest in a single permitted U.S. solar project SPV, issued as an ST-20 compliant security token on Polymesh. One project, one SPV — not a pooled fund. Distributions are paid in USDC.",
+    a: "A project-level equity interest in the LLC that owns one permitted U.S. solar project. One project, one SPV — not a pooled fund. A permissioned digital record may support ownership administration, but it does not create a separate cryptocurrency product; the offering documents govern the investment.",
   },
   {
     q: "What is the minimum investment?",
@@ -17,15 +17,15 @@ const FAQS = [
   },
   {
     q: "What is the target return?",
-    a: "Underlying project pro-formas target a 6–8% cash distribution per year, paid monthly in USDC, and a net IRR of 10–14% over the 20–25 year asset life. Figures are project-specific and depend on PPA, capital structure, and tax-credit treatment.",
+    a: "Each offering's documents may present project-specific target returns based on its PPA, operating assumptions, capital structure, tax-credit treatment, and risks. Targets are estimates, not promises, and no current pipeline figure should be read as an available investment return.",
   },
   {
     q: "How are distributions verified?",
-    a: "Every month our verification engine reconciles three independent measurements — inverter API, utility net-meter, and satellite-derived expected production. If they agree within tolerance, the run is VERIFIED and the smart contract pays out. If any diverge, the run is FLAGGED and held for review before distribution.",
+    a: "Every month our verification engine reconciles inverter telemetry, utility-meter data, and modeled expected generation. Agreement within the project's tolerances produces a VERIFIED determination and marks the project distribution-eligible. A FLAGGED or incomplete result remains on hold for review.",
   },
   {
     q: "How often do I get paid?",
-    a: "Monthly. Target: USDC received within 72 hours of month-end production data confirmation. This replaces the traditional 30–90 day manual quarterly cycle.",
+    a: "The target is to begin eligible distribution processing within 72 hours after all required month-end source data is received and confirmed. Flagged, pending, and incomplete records are excluded from that target until review is complete. Payment method and timing are governed by each offering's documents.",
   },
   {
     q: "What fees do investors pay?",
@@ -48,12 +48,12 @@ const FAQS = [
     a: "20–25 years, aligned with standard PPA tenor and module manufacturer warranties. NREL field data shows meaningful output retained at year 25 for well-maintained crystalline-silicon systems.",
   },
   {
-    q: "Who custody my tokens?",
-    a: "You do. Polymath provisions a Web3Auth MPC wallet you control via email or phone login. The transfer agent maintains the on-chain cap table per SEC requirements.",
+    q: "How is my ownership recorded?",
+    a: "The transfer agent maintains the official ownership record. EcoXchange may use a permissioned digital account to support administration, reporting, and eligible distributions, but your rights come from the project LLC interest and its offering documents.",
   },
   {
     q: "What stops a developer from gaming the meter?",
-    a: "The reconciliation engine. Inverter data comes from the developer, but utility-meter data comes from the regulated utility and satellite irradiance comes from NASA/NREL. The developer cannot manipulate all three. Disagreement triggers a FLAGGED status and freezes the distribution until reviewed.",
+    a: "The reconciliation engine. Inverter data comes from the project monitoring system, utility-meter data comes from the serving utility, and modeled expected generation is derived from NASA/NREL weather inputs and project specifications. Disagreement triggers a FLAGGED status and pauses distribution eligibility until review.",
   },
   {
     q: "Is the ITC included?",
