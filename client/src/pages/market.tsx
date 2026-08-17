@@ -70,6 +70,7 @@ export default function PublicMarketPage() {
   const [search, setSearch] = useState("");
   const [sourceFilter, setSourceFilter] = useState<"" | "PROJECT" | "QUEUE">("");
   const [hurdleOnly, setHurdleOnly] = useState(false);
+  const [targetOnly, setTargetOnly] = useState(true);
 
   const { data, isLoading } = useQuery<MarketplaceListResponse>({
     queryKey: ["/api/public/market/projects"],
@@ -79,6 +80,7 @@ export default function PublicMarketPage() {
     const listings = data?.listings ?? [];
     const q = search.trim().toLowerCase();
     return listings.filter((l) => {
+      if (targetOnly && !isTargetCapacity(l.capacityMW * 1000)) return false;
       if (sourceFilter && l.source !== sourceFilter) return false;
       if (hurdleOnly && l.cashYieldOnEquityPct.value < HURDLE_PCT) return false;
       if (!q) return true;
@@ -88,7 +90,7 @@ export default function PublicMarketPage() {
         .toLowerCase()
         .includes(q);
     });
-  }, [data, search, sourceFilter, hurdleOnly]);
+  }, [data, search, sourceFilter, hurdleOnly, targetOnly]);
 
   return (
     <div className="public-page">
@@ -98,17 +100,17 @@ export default function PublicMarketPage() {
           <div>
             <p className="public-eyebrow">Project marketplace</p>
             <h1 className="public-title">
-              Browse yield,
+              Review projects,
               <br />
-              <em>before it lists.</em>
+              <em>before an offering opens.</em>
             </h1>
             <p className="public-copy">
-              Real renewable-energy offerings — curated projects with verified financials and live
-              interconnection queue entries with modeled financials. Every dollar carries a confidence tag.
+              Explore an illustrative pipeline of project candidates and market comparisons. No project shown here
+              is currently open for investment; known, estimated, and market-proxy figures are labeled separately.
             </p>
             <div className="public-actions">
               <a href="#onboard" className="public-btn public-btn-primary">
-                Begin investor onboarding
+                Join the investor waitlist
               </a>
               <a href="#pipeline" className="public-btn public-btn-outline">
                 Browse current pipeline →
@@ -130,7 +132,7 @@ export default function PublicMarketPage() {
               </div>
               <div className="public-mini-stat">
                 <span className="public-mini-stat-value">Monthly</span>
-                <span className="public-mini-stat-label">USDC distributions after data consensus</span>
+                <span className="public-mini-stat-label">Distribution eligibility after verified production</span>
               </div>
             </div>
           </aside>
@@ -142,8 +144,8 @@ export default function PublicMarketPage() {
             <h2 className="public-section-title">Begin onboarding before the next offering opens.</h2>
           </div>
           <p className="public-section-copy">
-            Five steps — accreditation, KYC, wallet, subscription, and funding. This is a preview of the real
-            launch flow, designed to make the investor path feel as polished as the home page.
+            Preview five future steps: accreditation, identity verification, ownership-record setup, subscription,
+            and funding. Completing this preview does not create an account or reserve an investment.
           </p>
           <InvestorOnboardingWizard />
         </section>
@@ -151,7 +153,7 @@ export default function PublicMarketPage() {
         <section id="pipeline" className="public-section public-section-tight scroll-mt-24">
           <div className="public-section-header">
             <span className="public-section-label">§ II</span>
-            <h2 className="public-section-title">Browse current offerings.</h2>
+            <h2 className="public-section-title">Illustrative target pipeline.</h2>
           </div>
 
           <Card className="public-toolbar-card mb-6">
@@ -185,13 +187,22 @@ export default function PublicMarketPage() {
                 >
                   {HURDLE_PCT}%+ yield
                 </Button>
+                <Button
+                  size="sm"
+                  variant={targetOnly ? "default" : "outline"}
+                  onClick={() => setTargetOnly((value) => !value)}
+                  aria-pressed={targetOnly}
+                  data-testid="filter-target-capacity"
+                >
+                  {targetOnly ? "1–20 MW target only" : "All projects + comparisons"}
+                </Button>
               </div>
             </CardContent>
           </Card>
 
           <div className="mb-5 flex items-center justify-between gap-4">
             <p className="font-mono text-[0.65rem] uppercase tracking-[0.28em] text-muted-foreground">
-              Active pipeline
+              Illustrative pipeline · not open for investment
             </p>
             <Badge variant="outline" data-testid="badge-refreshed">
               {timeAgo(data?.refreshedAt ?? null)}
@@ -239,12 +250,12 @@ export default function PublicMarketPage() {
                   <CardHeader className="pb-2">
                     <div className="flex items-start justify-between gap-2">
                       <CardTitle className="text-base leading-tight">{l.name}</CardTitle>
-                      <Badge
-                        variant={l.isOperating ? "default" : l.source === "QUEUE" ? "secondary" : "outline"}
-                        className="shrink-0"
-                      >
-                        {l.isOperating ? "Operating" : l.source === "QUEUE" ? "Queue" : "Pre-COD"}
-                      </Badge>
+                      <div className="flex shrink-0 flex-col items-end gap-1">
+                        <Badge variant="outline">Illustrative</Badge>
+                        <Badge variant={l.isOperating ? "default" : l.source === "QUEUE" ? "secondary" : "outline"}>
+                          {l.isOperating ? "Operating" : l.source === "QUEUE" ? "Queue" : "Pre-COD"}
+                        </Badge>
+                      </div>
                     </div>
                   </CardHeader>
                   <CardContent className="space-y-3">

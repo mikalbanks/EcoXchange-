@@ -124,7 +124,7 @@ export function ReconciliationDiagram({
   sourceLabels = {
     inverter: "Inverter",
     utility: "Utility Meter",
-    expected: "Expected (Satellite)",
+    expected: "Modeled Expected Generation",
   },
 }: {
   record: VerificationRecord;

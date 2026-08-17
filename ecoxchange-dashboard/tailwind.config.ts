@@ -30,7 +30,7 @@ export default {
     },
     extend: {
       colors: {
-        darkBg: "#1B4D35",
+        darkBg: "#004d1a",
         medGreen: "#2E7D52",
         accentBrt: "#76C945",
         lightGreen: "#8DC4A4",

@@ -2,7 +2,6 @@ import { useNavigate } from "react-router-dom";
 import { LineChart, Hammer, ShieldCheck } from "lucide-react";
 import { useAuth } from "../context/AuthContext.js";
 import { useDemo } from "../context/DemoContext.js";
-import { SolarParticles } from "../components/ambient/SolarParticles.js";
 import { DemoModeBanner } from "../compliance/components/DemoModeBanner.js";
 import { RegDBanner } from "../compliance/components/RegDBanner.js";
 import { DisclaimerFooter } from "../compliance/components/DisclaimerFooter.js";
@@ -24,28 +23,21 @@ export function Landing() {
   };
 
   return (
-    <div className="min-h-screen flex flex-col">
+    <div className="min-h-screen flex flex-col bg-cream text-darkBg">
       <DemoModeBanner />
       <RegDBanner />
-      <div className="relative flex-1 flex flex-col items-center justify-center bg-darkBg text-white px-4 py-16 overflow-hidden">
-      <SolarParticles
-        count={30}
-        color="#76C945"
-        minSize={1}
-        maxSize={3}
-        speed={0.3}
-        direction="up"
-        opacity={0.2}
-        connectDistance={100}
-      />
+      <div className="hero-gradient relative flex-1 flex flex-col items-center justify-center px-4 py-16 overflow-hidden">
       <div className="relative flex items-center gap-3 mb-2">
         <img src="/ecoxchange-logo.svg" alt="EcoXchange" className="h-10 w-10" />
-        <span className="font-heading text-3xl">EcoXchange</span>
+        <span className="font-heading text-3xl text-darkBg">EcoXchange</span>
       </div>
-      <h1 className="relative font-heading text-3xl sm:text-4xl text-center mt-4">
+      <p className="relative mt-5 font-mono text-xs uppercase tracking-[0.22em] text-medGreen">
+        Production verification demonstration
+      </p>
+      <h1 className="relative font-heading text-4xl sm:text-5xl text-center mt-3 text-darkBg">
         Explore production verification in action.
       </h1>
-      <p className="relative text-paleGreen mt-3 mb-10 text-center max-w-xl">
+      <p className="relative text-textMuted mt-4 mb-10 text-center max-w-xl text-base leading-relaxed">
         See how EcoXchange reconciles three independent production sources, issues
         a monthly determination, and carries that result into investor and
         developer workflows.
@@ -57,11 +49,11 @@ export function Landing() {
         <button
           type="button"
           onClick={() => go("investor", LATEST_VERIFICATION_PATH)}
-          className="w-full bg-accentBrt/10 hover:bg-accentBrt/20 rounded-xl border-2 border-accentBrt p-6 text-left transition-colors duration-150"
+          className="w-full bg-white hover:bg-paleGreen/30 rounded-md border-2 border-medGreen p-6 text-left transition-colors duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-medGreen focus-visible:ring-offset-2"
         >
           <ShieldCheck className="h-8 w-8 text-accentBrt" />
-          <h2 className="font-heading text-2xl mt-3">Verification Engine</h2>
-          <p className="text-sm text-paleGreen mt-1">
+          <h2 className="font-heading text-2xl mt-3 text-darkBg">Verification Engine</h2>
+          <p className="text-base text-textMuted mt-1">
             Run a sample monthly reconciliation and inspect a verified or flagged
             determination.
           </p>
@@ -74,15 +66,15 @@ export function Landing() {
           <button
             type="button"
             onClick={() => go("investor", "/investor")}
-            className="bg-white/5 hover:bg-white/10 rounded-xl border border-white/15 p-6 text-left transition-colors duration-150"
+            className="bg-white hover:bg-paleGreen/30 rounded-md border border-paleGreen p-6 text-left transition-colors duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-medGreen focus-visible:ring-offset-2"
           >
             <LineChart className="h-7 w-7 text-accentBrt" />
-            <h2 className="font-heading text-xl mt-3">Investor Application</h2>
-            <p className="text-sm text-paleGreen mt-1">
+            <h2 className="font-heading text-xl mt-3 text-darkBg">Investor Application</h2>
+            <p className="text-base text-textMuted mt-1">
               See how verified production status informs project reporting and
               distribution eligibility.
             </p>
-            <span className="mt-3 inline-block font-mono text-xs uppercase tracking-wide text-paleGreen">
+            <span className="mt-3 inline-block font-mono text-xs uppercase tracking-wide text-medGreen">
               View investor experience →
             </span>
           </button>
@@ -90,15 +82,15 @@ export function Landing() {
           <button
             type="button"
             onClick={() => go("developer", "/onboard")}
-            className="bg-white/5 hover:bg-white/10 rounded-xl border border-white/15 p-6 text-left transition-colors duration-150"
+            className="bg-white hover:bg-paleGreen/30 rounded-md border border-paleGreen p-6 text-left transition-colors duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-medGreen focus-visible:ring-offset-2"
           >
             <Hammer className="h-7 w-7 text-accentBrt" />
-            <h2 className="font-heading text-xl mt-3">Developer Application</h2>
-            <p className="text-sm text-paleGreen mt-1">
+            <h2 className="font-heading text-xl mt-3 text-darkBg">Developer Application</h2>
+            <p className="text-base text-textMuted mt-1">
               Submit a project profile and preview the production-backtest
               workflow.
             </p>
-            <span className="mt-3 inline-block font-mono text-xs uppercase tracking-wide text-paleGreen">
+            <span className="mt-3 inline-block font-mono text-xs uppercase tracking-wide text-medGreen">
               View developer experience →
             </span>
           </button>
@@ -112,13 +104,13 @@ export function Landing() {
             enterDemo();
             navigate("/demo");
           }}
-          className="font-mono text-xs uppercase tracking-wide text-paleGreen/70 underline underline-offset-4 hover:text-paleGreen"
+          className="min-h-11 font-mono text-xs uppercase tracking-wide text-medGreen underline underline-offset-4 hover:text-darkBg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-medGreen"
         >
           Open presentation controls
         </button>
       </div>
 
-      <p className="relative mt-10 max-w-xl text-center text-xs text-paleGreen/80">
+      <p className="relative mt-10 max-w-xl text-center text-sm text-textMuted">
         This technology demonstration uses simulated project, ownership, and
         financial data. It does not display an actual offering or investment.
       </p>

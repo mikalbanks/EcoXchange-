@@ -62,7 +62,7 @@ export function Header() {
             title={
               liveMode
                 ? "Reading from Supabase"
-                : "Static demo data (set VITE_SUPABASE_URL to go live)"
+                : "Simulated demonstration data"
             }
           >
             <span

@@ -6,7 +6,7 @@ import { Check, ArrowRight, ArrowLeft, ShieldCheck, Wallet, FileSignature, Dolla
 const STEPS = [
   { id: 1, label: "Accreditation", icon: ShieldCheck },
   { id: 2, label: "KYC / AML", icon: UserCheck },
-  { id: 3, label: "Wallet", icon: Wallet },
+  { id: 3, label: "Ownership record", icon: Wallet },
   { id: 4, label: "Subscription", icon: FileSignature },
   { id: 5, label: "Funding", icon: DollarSign },
 ];
@@ -18,7 +18,7 @@ export function InvestorOnboardingWizard() {
   const [dob, setDob] = useState("");
   const [address, setAddress] = useState("");
   const [subscribed, setSubscribed] = useState(false);
-  const [fundingMethod, setFundingMethod] = useState("USDC");
+  const [fundingMethod, setFundingMethod] = useState("ACH");
   const [amount, setAmount] = useState("");
   const [email, setEmail] = useState("");
   const [submitted, setSubmitted] = useState(false);
@@ -56,8 +56,9 @@ export function InvestorOnboardingWizard() {
           </div>
           <h3 className="font-serif text-2xl font-semibold">You're on the early-investor list.</h3>
           <p className="mx-auto mt-3 max-w-md text-muted-foreground">
-            We'll email you the moment a live offering matches your accreditation. Real KYC, wallet creation, and
-            USDC funding happen at offering launch through Persona, Polymath, and Circle.
+            We'll email you if a live offering matches your accreditation. Identity verification,
+            ownership-record setup, subscription, and funding occur only after you review the project-specific
+            offering documents.
           </p>
         </CardContent>
       </Card>
@@ -199,18 +200,20 @@ export function InvestorOnboardingWizard() {
 
         {step === 3 && (
           <div className="space-y-4">
-            <h3 className="font-serif text-2xl font-semibold">Your secure wallet</h3>
+            <h3 className="font-serif text-2xl font-semibold">Your digital ownership record</h3>
             <p className="text-sm text-muted-foreground">
-              Polymath provisions a Web3Auth MPC wallet at launch. You sign in with email or phone — no seed phrase, no
-              extension, no crypto experience required.
+              At launch, the transfer agent maintains the official record of your project-level LLC interest.
+              A permissioned digital account may support administration and reporting, but the offering documents
+              govern your ownership rights.
             </p>
             <div className="rounded-md border border-border bg-muted/30 p-5">
               <p className="font-mono text-[0.65rem] uppercase tracking-wider text-muted-foreground mb-2">
-                Sample wallet address (illustrative)
+                Sample ownership-record identifier (illustrative)
               </p>
               <p className="font-mono text-sm break-all">0x9F8a3e21Cf42b8d17b9c2A4D6e89dC7f0a31b7C2D</p>
               <p className="mt-4 text-xs text-muted-foreground">
-                Distributions arrive here monthly in USDC on Polymesh. You can withdraw to a bank at any time.
+                This identifier is an administrative record, not a separate investment or cryptocurrency product.
+                Eligible payments follow the method stated in the project's offering documents.
               </p>
             </div>
           </div>
@@ -224,10 +227,10 @@ export function InvestorOnboardingWizard() {
               illustrative summary of the terms you'd see for an active offering.
             </p>
             <div className="max-h-56 overflow-y-auto rounded-md border border-border bg-muted/30 p-5 text-xs text-muted-foreground space-y-3">
-              <p><strong className="text-foreground">Instrument:</strong> Fractional LLC membership in a single permitted U.S. solar project SPV (the "EcoXchange Solar Note" or ESN).</p>
+              <p><strong className="text-foreground">Instrument:</strong> Project-level equity interest in the LLC that owns one permitted U.S. solar project. Any digital record supports administration only; the offering documents govern the security.</p>
               <p><strong className="text-foreground">Offering type:</strong> Reg D 506(c) — verified accredited investors only.</p>
               <p><strong className="text-foreground">Minimum ticket:</strong> $10,000.</p>
-              <p><strong className="text-foreground">Target cash yield:</strong> 6–8% per year, paid monthly in USDC. Target net IRR 10–14% over 20–25 year asset life.</p>
+              <p><strong className="text-foreground">Return information:</strong> Any project-specific targets, payment method, and timing appear in the offering documents and are estimates, not guarantees.</p>
               <p><strong className="text-foreground">Tax treatment:</strong> K-1 pass-through.</p>
               <p><strong className="text-foreground">Fees (all paid by the SPV):</strong> 3% origination at close, $15,000 setup at close, 0.5% AUA servicing per year.</p>
               <p>Subject to securities counsel review and project-specific offering documents.</p>
@@ -251,11 +254,11 @@ export function InvestorOnboardingWizard() {
           <div className="space-y-4">
             <h3 className="font-serif text-2xl font-semibold">Funding</h3>
             <p className="text-sm text-muted-foreground">
-              At launch, fund your subscription with USDC directly, or with a bank transfer that Circle converts
-              into USDC. Tell us what you'd like to commit and we'll be in touch when a matching offering opens.
+              Tell us your preferred funding method and intended ticket size. No funds are collected in this preview;
+              available methods will be stated in the project-specific offering documents.
             </p>
             <div className="grid grid-cols-2 gap-3">
-              {(["USDC", "ACH"] as const).map((m) => (
+              {(["ACH", "USDC"] as const).map((m) => (
                 <label
                   key={m}
                   className={`flex cursor-pointer items-center justify-center rounded-md border px-4 py-3 transition-colors ${
@@ -272,7 +275,7 @@ export function InvestorOnboardingWizard() {
                     onChange={(e) => setFundingMethod(e.target.value)}
                     className="sr-only"
                   />
-                  <span className="text-sm font-semibold">{m === "USDC" ? "USDC direct" : "ACH → USDC"}</span>
+                  <span className="text-sm font-semibold">{m === "USDC" ? "USDC, if offered" : "Bank transfer"}</span>
                 </label>
               ))}
             </div>

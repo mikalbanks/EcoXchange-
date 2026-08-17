@@ -24,7 +24,7 @@ export function CostComparison() {
       <SectionTag>Cost Comparison</SectionTag>
       <h2 className="font-heading text-2xl text-darkBg">Traditional vs. EcoXchange</h2>
       <p className="mt-1 text-sm text-textMuted">
-        See how EcoXchange compares to traditional Reg D placement
+        Compare first-year capital-raising cost benchmarks. Traditional placement and EcoXchange origination are labeled separately.
       </p>
 
       <div className="mt-5 sm:max-w-md">
@@ -100,8 +100,8 @@ export function CostComparison() {
       </div>
 
       <p className="mt-3 text-[11px] text-textMuted">
-        Estimates based on industry benchmarks; subject to actual deal terms and securities
-        counsel review.
+        Illustrative estimates only. "Placement" describes the traditional benchmark; EcoXchange's 3% line is an
+        origination fee. Actual scope, providers, and fees are subject to deal terms and securities counsel review.
       </p>
       <DataSourceAttribution
         sources={[

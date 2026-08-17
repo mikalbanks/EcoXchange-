@@ -98,7 +98,7 @@ export function Sidebar({ onNavigate }: { onNavigate?: () => void }) {
           className="flex items-center gap-3 rounded-md px-3 py-2 text-sm font-medium text-paleGreen hover:bg-white/5 hover:text-white transition-colors duration-150"
         >
           <PlayCircle className="h-5 w-5" />
-          Demo Controller
+          Presenter controls
         </NavLink>
         {demoMode ? (
           <div className="mt-2 flex items-center gap-2 px-3 text-xs text-accentBrt">

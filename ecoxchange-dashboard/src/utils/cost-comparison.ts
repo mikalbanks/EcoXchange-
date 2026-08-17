@@ -50,7 +50,7 @@ export function computeCostComparison(equityRaise: number): CostComparisonResult
       zeroLabel: "Included",
     },
     {
-      label: `Placement fee (${TRADITIONAL_PLACEMENT_FEE_PCT * 100}% vs ${ECOXCHANGE_ORIGINATION_FEE_PCT * 100}%)`,
+      label: `Capital-raise fee benchmark (${TRADITIONAL_PLACEMENT_FEE_PCT * 100}% placement / ${ECOXCHANGE_ORIGINATION_FEE_PCT * 100}% origination)`,
       traditional: Math.round(equityRaise * TRADITIONAL_PLACEMENT_FEE_PCT),
       ecoxchange: Math.round(equityRaise * ECOXCHANGE_ORIGINATION_FEE_PCT),
     },

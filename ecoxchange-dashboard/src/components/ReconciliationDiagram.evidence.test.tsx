@@ -49,7 +49,7 @@ describe("ReconciliationDiagram evidence labels", () => {
     expect(html).toContain("Source Comparison");
     expect(html).toContain("Inverter");
     expect(html).toContain("Utility Meter");
-    expect(html).toContain("Expected (Satellite)");
+    expect(html).toContain("Modeled Expected Generation");
   });
 
   it("labels the PVDAQ utility leg as derived", () => {
