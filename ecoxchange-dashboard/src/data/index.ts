@@ -1,5 +1,4 @@
 import demoPortfolio from "./demo-portfolio.json";
-import { DEMO_OFFERING } from "./demo-offering.js";
 import demoSavannah from "./demo-savannah.json";
 import demoSavannahFlagged from "./demo-savannah-flagged.json";
 import { PVDAQ_9068_PROJECT_ID, toProjectBundle } from "./demo-pvdaq-9068.js";
@@ -15,6 +14,7 @@ import { supabase, liveMode } from "../lib/supabase.js";
 const simulatedAccountPortfolio = demoPortfolio as Portfolio;
 const verified = demoSavannah as ProjectBundle;
 const flagged = demoSavannahFlagged as ProjectBundle;
+export const SIMULATED_STRESS_PROJECT_ID = "demo-savannah-5mw";
 
 export interface LoadOptions {
   variant?: "verified" | "flagged";
@@ -30,6 +30,18 @@ export interface VerificationEvidence {
     utility: string;
     satellite: string;
   };
+  sourceBasis: {
+    inverter: "measured" | "simulated" | "unconfirmed";
+    utility: "measured" | "derived" | "simulated" | "unconfirmed";
+    satellite: "modeled" | "simulated" | "unconfirmed";
+  };
+}
+
+export interface TransactionPolicy {
+  state: "disabled" | "simulated";
+  badge: string;
+  title: string;
+  description: string;
 }
 
 export { liveMode };
@@ -50,6 +62,11 @@ export function describeVerificationEvidence(
         utility: "Utility Proxy (Derived)",
         satellite: "NASA POWER Model Input",
       },
+      sourceBasis: {
+        inverter: "measured",
+        utility: "derived",
+        satellite: "modeled",
+      },
     };
   }
 
@@ -65,6 +82,11 @@ export function describeVerificationEvidence(
         utility: "Simulated Utility Meter",
         satellite: "Simulated NASA Model Input",
       },
+      sourceBasis: {
+        inverter: "simulated",
+        utility: "simulated",
+        satellite: "simulated",
+      },
     };
   }
 
@@ -79,22 +101,67 @@ export function describeVerificationEvidence(
       utility: "Utility Meter (Basis Unstated)",
       satellite: "NASA POWER (Model Input)",
     },
+    sourceBasis: {
+      inverter: "unconfirmed",
+      utility: "unconfirmed",
+      satellite: "unconfirmed",
+    },
   };
 }
 
-// Investor placeholder constants — Phase 3 reads real production data from
-// Supabase, but the investor-account side (capital deployed, share pct) is
-// still mocked until that layer is built. Same values in demo mode for parity,
-// both derived from the canonical offering so live and demo agree.
-const INVESTOR_SHARE_PCT = DEMO_OFFERING.demo_investor.ownership_pct;
-const INVESTOR_SHARE = INVESTOR_SHARE_PCT / 100;
-const INVESTOR_TOTAL_INVESTED = DEMO_OFFERING.demo_investor.position_value_usd;
+/**
+ * Transaction data is only exposed in the explicitly selected Savannah stress
+ * scenario. The primary PVDAQ path is a research dataset with no offering,
+ * ownership, or distribution attached. Supabase verification records also
+ * fail closed until a real offering/account data source is connected.
+ */
+export function describeTransactionPolicy(
+  mode: "supabase" | "demo",
+  scenario: "verified" | "flagged",
+  projectId?: string,
+): TransactionPolicy {
+  if (
+    mode === "demo" &&
+    scenario === "flagged" &&
+    (projectId === undefined || projectId === SIMULATED_STRESS_PROJECT_ID)
+  ) {
+    return {
+      state: "simulated",
+      badge: "SIMULATED TRANSACTION WORKFLOW",
+      title: "Savannah financial activity is illustrative",
+      description:
+        "Offering, ownership, distribution, wallet, and legal-document figures in this stress scenario are static fixtures. No investment, payment, or legal agreement is created.",
+    };
+  }
+
+  return {
+    state: "disabled",
+    badge: "VERIFICATION-ONLY PILOT",
+    title: "No transaction is attached to this dataset",
+    description:
+      mode === "supabase"
+        ? "The connected records contain verification data only. Offering, ownership, and distribution workflows remain disabled until their authoritative sources and approvals are connected."
+        : projectId && projectId !== PVDAQ_9068_PROJECT_ID
+          ? "This project is not the active Savannah transaction simulation. It has no EcoXchange offering, investor position, ownership record, or distribution attached."
+          : "PVDAQ 9068 is a production-research dataset. It has no EcoXchange offering, investor position, ownership record, or distribution attached.",
+  };
+}
+
+export function describeDeterminationConsequence(
+  status: VerificationRecord["status"],
+  policy: TransactionPolicy,
+): string {
+  if (policy.state === "disabled") return "No transaction attached";
+  if (status === "flagged") return "On hold (simulated)";
+  if (status === "pending") return "Pending (simulated)";
+  return "Eligible (simulated)";
+}
 
 /**
  * The public investor demo must start from a production series that was not
  * generated from the expected series. PVDAQ 9068 supplies measured inverter
  * telemetry; NASA POWER + pvlib supplies the independent expected leg. The
- * account, ownership, and distribution figures remain explicit demo fixtures.
+ * research dataset has no investor-account or distribution figures attached.
  */
 function buildMeasuredDemoPortfolio(): Portfolio {
   const bundle = toProjectBundle();
@@ -103,7 +170,9 @@ function buildMeasuredDemoPortfolio(): Portfolio {
 
   return {
     portfolio: {
-      ...simulatedAccountPortfolio.portfolio,
+      total_invested: 0,
+      monthly_yield_usd: 0,
+      lifetime_yield_usd: 0,
       active_projects: 1,
     },
     projects: [
@@ -116,9 +185,8 @@ function buildMeasuredDemoPortfolio(): Portfolio {
         latest_verification: latest.status,
         latest_period: latest.period_start,
         ytd_production_mwh: bundle.summary.annual_production_mwh,
-        monthly_yield_usd:
-          simulatedAccountPortfolio.portfolio.monthly_yield_usd,
-        investor_share_pct: INVESTOR_SHARE_PCT,
+        monthly_yield_usd: 0,
+        investor_share_pct: 0,
       },
     ],
   };
@@ -258,19 +326,11 @@ async function loadPortfolioLive(): Promise<Portfolio> {
     );
   }
 
-  let monthlyYield = 0;
-  let lifetimeYield = 0;
   const projectCards: PortfolioProject[] = list.map((p) => {
     const recs = recordsByProject.get(p.id) ?? [];
     const totalMwh =
       recs.reduce((s, r) => s + (r.inverter_kwh ?? 0), 0) / 1000;
     const latest = recs[recs.length - 1];
-    const projectMonthly =
-      (latest?.estimated_revenue ?? 0) * INVESTOR_SHARE;
-    const projectLifetime =
-      recs.reduce((s, r) => s + (r.estimated_revenue ?? 0), 0) * INVESTOR_SHARE;
-    monthlyYield += projectMonthly;
-    lifetimeYield += projectLifetime;
     return {
       id: p.id,
       name: p.name,
@@ -280,16 +340,16 @@ async function loadPortfolioLive(): Promise<Portfolio> {
       latest_verification: latest?.status ?? "pending",
       latest_period: latest?.period_start ?? "",
       ytd_production_mwh: round1(totalMwh),
-      monthly_yield_usd: round2(projectMonthly),
-      investor_share_pct: INVESTOR_SHARE_PCT,
+      monthly_yield_usd: 0,
+      investor_share_pct: 0,
     };
   });
 
   return {
     portfolio: {
-      total_invested: INVESTOR_TOTAL_INVESTED,
-      monthly_yield_usd: round2(monthlyYield),
-      lifetime_yield_usd: round2(lifetimeYield),
+      total_invested: 0,
+      monthly_yield_usd: 0,
+      lifetime_yield_usd: 0,
       active_projects: projectCards.length,
     },
     projects: projectCards,
@@ -329,12 +389,14 @@ async function loadProjectLive(id: string): Promise<ProjectBundle | null> {
       util_vs_expected_pct: rec.util_vs_expected_pct,
       status: rec.status,
       flag_reasons: rec.flag_reasons ?? [],
-      estimated_revenue: rec.estimated_revenue ?? 0,
+      // Verification records do not establish an investor entitlement. Keep
+      // finance out of this investor adapter until an authoritative offering
+      // and account source is connected.
+      estimated_revenue: 0,
     };
   });
 
   const totalKwh = records.reduce((s, r) => s + r.inverter_kwh, 0);
-  const totalRevenue = records.reduce((s, r) => s + r.estimated_revenue, 0);
   const months = records.length;
   const annualKwh = months > 0 ? (totalKwh * 12) / months : 0;
   const cf =
@@ -354,8 +416,8 @@ async function loadProjectLive(id: string): Promise<ProjectBundle | null> {
     module_efficiency: p.module_efficiency,
     system_losses: p.system_losses,
     commissioning_date: p.commissioning_date,
-    offtake_type: p.offtake_type ?? "community_solar",
-    ppa_rate_per_kwh: p.ppa_rate_per_kwh ?? 0,
+    offtake_type: "not_attached",
+    ppa_rate_per_kwh: 0,
     status: p.status,
   };
 
@@ -367,8 +429,8 @@ async function loadProjectLive(id: string): Promise<ProjectBundle | null> {
       capacity_factor_pct: round1(cf),
       months_verified: records.filter((r) => r.status === "verified").length,
       months_flagged: records.filter((r) => r.status === "flagged").length,
-      total_revenue_estimate: Math.round(totalRevenue),
-      ppa_rate: p.ppa_rate_per_kwh ?? 0,
+      total_revenue_estimate: 0,
+      ppa_rate: 0,
     },
   };
 }
@@ -390,10 +452,6 @@ function groupBy<T, K extends keyof T>(arr: T[], key: K): Map<T[K], T[]> {
 
 function round1(n: number): number {
   return Math.round(n * 10) / 10;
-}
-
-function round2(n: number): number {
-  return Math.round(n * 100) / 100;
 }
 
 function locationFromCoords(lat: number, lon: number): string {

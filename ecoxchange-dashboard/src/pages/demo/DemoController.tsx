@@ -144,13 +144,14 @@ export function DemoController() {
             onClick={() => {
               enterDemo();
               setRole("investor");
+              setScenario("flagged");
               // AppLayout reads-and-clears this param and fires the
               // distribution notification banner.
               navigate("/investor?simulate_distribution=1");
             }}
             className="inline-flex items-center gap-2 rounded-md border border-medGreen px-6 py-3 text-medGreen font-medium transition-colors duration-150 hover:bg-paleGreen/40"
           >
-            <BellRing className="h-5 w-5" /> Simulate Distribution
+            <BellRing className="h-5 w-5" /> Open Simulated Distribution
           </button>
         </div>
       </div>

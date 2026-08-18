@@ -2,6 +2,7 @@ import { Link, useLocation } from "react-router-dom";
 import type { LucideIcon } from "lucide-react";
 import { LayoutDashboard, Store, Coins, Leaf, ShieldCheck } from "lucide-react";
 import { LATEST_VERIFICATION_PATH } from "../../data/index.js";
+import { useData } from "../../context/DataContext.js";
 
 interface NavTab {
   id: string;
@@ -63,6 +64,11 @@ const TABS: NavTab[] = [
  */
 export function MobileNav() {
   const { pathname } = useLocation();
+  const { transactionPolicy } = useData();
+  const visibleTabs =
+    transactionPolicy.state === "simulated"
+      ? TABS
+      : TABS.filter((tab) => tab.id !== "projects" && tab.id !== "distributions");
 
   return (
     <nav
@@ -70,7 +76,7 @@ export function MobileNav() {
       className="fixed inset-x-0 bottom-0 z-50 lg:hidden bg-darkBg/95 backdrop-blur-[12px] pb-[env(safe-area-inset-bottom,0px)]"
     >
       <div className="flex h-16 items-center justify-around">
-        {TABS.map((tab) => {
+        {visibleTabs.map((tab) => {
           const isActive = tab.matches(pathname);
           const Icon = tab.icon;
           return (

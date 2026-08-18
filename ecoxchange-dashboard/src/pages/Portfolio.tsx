@@ -19,6 +19,7 @@ import { LazyMount } from "../components/shared/LazyMount.js";
 import { PipelineMap } from "../components/map/PipelineMap.js";
 import { MapSkeleton } from "../components/shared/LoadingState.js";
 import { DataSourceAttribution } from "../compliance/components/DataSourceAttribution.js";
+import { TransactionBoundaryNotice } from "../compliance/components/PilotTransactionGate.js";
 import { useData } from "../context/DataContext.js";
 import { useAuth } from "../context/AuthContext.js";
 import { useIsMobile, useIsTablet } from "../hooks/useMediaQuery.js";
@@ -30,6 +31,7 @@ import type {
   VerificationRecord,
 } from "../utils/types.js";
 import { formatMonthLong, formatUsd } from "../utils/formatters.js";
+import { describeDeterminationConsequence } from "../data/index.js";
 
 // Recharts stays out of the initial Portfolio render path: the donut only
 // loads (and its chunk only downloads) once the section scrolls into view.
@@ -40,7 +42,7 @@ const OwnershipVisualization = lazy(() =>
 );
 
 export function Portfolio() {
-  const { getPortfolio, getVerification, scenario, mode } = useData();
+  const { getPortfolio, getVerification, scenario, mode, transactionPolicy } = useData();
   const { user } = useAuth();
   const isMobile = useIsMobile();
   const isTablet = useIsTablet();
@@ -111,12 +113,12 @@ export function Portfolio() {
   const firstName = user.name.split(" ")[0];
   const latestMonthMwh = latest ? latest.inverter_kwh / 1000 : null;
   const ytdMwh = data.projects.reduce((s, p) => s + p.ytd_production_mwh, 0);
-  const distributionStatus =
-    latest?.status === "verified"
-      ? "Eligible"
-      : latest?.status === "flagged"
-        ? "On hold"
-        : "Pending";
+  const showSimulatedFinance = transactionPolicy.state === "simulated";
+  const determinationConsequence = latest
+    ? describeDeterminationConsequence(latest.status, transactionPolicy)
+    : showSimulatedFinance
+      ? "Pending (simulated)"
+      : "No transaction attached";
 
   return (
     <div ref={containerRef} className="relative space-y-8 animate-fade-in">
@@ -154,14 +156,12 @@ export function Portfolio() {
             Good to see you, {firstName}.
           </h1>
           <p className="text-textMuted mt-1">
-            Production evidence with source-level provenance for your U.S.
-            solar-project interests · {data.portfolio.active_projects} active
+            Production evidence with source-level provenance · {data.portfolio.active_projects} active
             project{data.portfolio.active_projects === 1 ? "" : "s"}
           </p>
 
-          {/* Production and the determination lead. Money follows, because the
-              determination is what releases it — see the Distributions section
-              below for the amounts. */}
+          {/* Production and provenance lead. Financial fixtures only appear in
+              the explicitly selected simulated Savannah scenario. */}
           <div className="mt-6 grid grid-cols-2 gap-3 sm:gap-4 xl:grid-cols-4">
             <StatCard
               label="Latest Inverter Production"
@@ -189,20 +189,30 @@ export function Portfolio() {
               }
             />
             <StatCard
-              label="Distribution Status"
-              value={distributionStatus}
-              sublabel={latest ? formatMonthLong(latest.period_start) : undefined}
+              label={showSimulatedFinance ? "Distribution Status" : "Engine Determination"}
+              value={showSimulatedFinance ? determinationConsequence : latest?.status.toUpperCase() ?? "PENDING"}
+              sublabel={
+                showSimulatedFinance
+                  ? "illustrative workflow"
+                  : latest
+                    ? formatMonthLong(latest.period_start)
+                    : undefined
+              }
             />
             <StatCard
-              label="Project Interest"
+              label={showSimulatedFinance ? "Simulated Project Interest" : "Data Scope"}
               value={
-                <AnimatedNumber
-                  value={data.portfolio.total_invested}
-                  format={(n) => formatUsd(n)}
-                  startOnView
-                />
+                showSimulatedFinance ? (
+                  <AnimatedNumber
+                    value={data.portfolio.total_invested}
+                    format={(n) => formatUsd(n)}
+                    startOnView
+                  />
+                ) : (
+                  "Production only"
+                )
               }
-              sublabel="invested"
+              sublabel={showSimulatedFinance ? "fixture amount" : "no offering attached"}
             />
           </div>
         </div>
@@ -219,7 +229,7 @@ export function Portfolio() {
           <p className="mt-2 max-w-4xl text-sm leading-relaxed text-textDark">
             {scenario === "flagged"
               ? "All production inputs in this Savannah stress case are simulated to demonstrate repeated underperformance and the FLAGGED workflow. Account, ownership, distribution, and financial figures are also simulated."
-              : "Inverter production is measured NREL PVDAQ telemetry and expected production is modeled from NASA POWER. The utility leg is derived from the inverter series. Account, ownership, distribution, and financial figures on this investor screen are simulated."}
+              : "Inverter production is measured NREL PVDAQ telemetry and expected production is modeled from NASA POWER. The utility leg is derived from the inverter series. No offering, investor position, ownership record, or distribution is attached or displayed."}
           </p>
         </section>
       ) : null}
@@ -251,16 +261,17 @@ export function Portfolio() {
       </Link>
 
       {data.projects.length === 0 ? (
-        <EmptyState
-          title="No investments yet"
-          message="When you subscribe to an offering, your projects will appear here."
-          cta={{ label: "Browse Available Projects", to: "/investor/marketplace" }}
+          <EmptyState
+          title="No verification projects"
+          message="Connected production-verification projects will appear here."
         />
       ) : (
         <div className="space-y-4">
           <div>
             <SectionTag>Active Projects</SectionTag>
-            <h2 className="font-heading text-xl text-darkBg">Your Projects</h2>
+            <h2 className="font-heading text-xl text-darkBg">
+              {showSimulatedFinance ? "Simulated Holding" : "Research Project"}
+            </h2>
           </div>
           {data.projects.map((p) => (
             <SwipeActionRow
@@ -274,19 +285,23 @@ export function Portfolio() {
                 </Link>
               }
             >
-              <ProjectCard project={p} />
+              <ProjectCard project={p} showSimulatedFinance={showSimulatedFinance} />
             </SwipeActionRow>
           ))}
         </div>
       )}
 
-      <PortfolioDistributions />
+      {showSimulatedFinance ? (
+        <PortfolioDistributions />
+      ) : (
+        <TransactionBoundaryNotice surface="Holdings and distributions" compact />
+      )}
 
       {/* Ownership administration (differentiation spec §4). Collapsed, because
           the digital record is plumbing for the interest described in the
           offering documents — not the investment, and not the headline.
           Recharts stays below-fold either way. */}
-      <section className="space-y-3">
+      {showSimulatedFinance ? <section className="space-y-3">
         <details className="rounded-xl border border-paleGreen/60 bg-white px-5 py-4">
           <summary className="cursor-pointer font-heading text-xl text-darkBg">
             Ownership record details
@@ -307,16 +322,15 @@ export function Portfolio() {
             <ChainHeartbeat />
           </div>
         </details>
-      </section>
+      </section> : null}
 
       {/* Pipeline & target markets map (differentiation spec §1). */}
       <section className="space-y-3">
         <div>
           <SectionTag>Pipeline &amp; Target Markets</SectionTag>
-          <h2 className="font-heading text-xl text-darkBg">Where We Deploy</h2>
+          <h2 className="font-heading text-xl text-darkBg">Target Pilot Markets</h2>
           <p className="mt-1 text-sm text-textMuted">
-            EcoXchange focuses on high-yield state programs with long-term contracted
-            revenue
+            Illustrative target-state research; these markers are not active EcoXchange projects.
           </p>
         </div>
         <LazyMount placeholder={<MapSkeleton />}>
@@ -332,7 +346,7 @@ export function Portfolio() {
         />
       </section>
 
-      <Link
+      {showSimulatedFinance ? <Link
         to="/onboarding"
         className="flex items-center justify-between rounded-xl border border-paleGreen/60 bg-paleGreen/30 px-6 py-4 transition-colors duration-150 hover:bg-paleGreen/50"
       >
@@ -348,9 +362,9 @@ export function Portfolio() {
           </span>
         </span>
         <ArrowRight className="h-5 w-5 text-medGreen" />
-      </Link>
+      </Link> : null}
 
-      <Link
+      {showSimulatedFinance ? <Link
         to="/investor/marketplace"
         className="flex items-center justify-between rounded-xl border border-dashed border-paleGreen bg-white/60 px-6 py-5 text-textMuted hover:border-medGreen hover:text-darkBg transition-colors duration-150"
       >
@@ -363,7 +377,7 @@ export function Portfolio() {
           </span>
         </span>
         <ArrowRight className="h-5 w-5" />
-      </Link>
+      </Link> : null}
     </div>
   );
 }

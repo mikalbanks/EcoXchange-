@@ -232,7 +232,7 @@ export function InvestorOnboardingWizard() {
               <p><strong className="text-foreground">Minimum ticket:</strong> $10,000.</p>
               <p><strong className="text-foreground">Return information:</strong> Any project-specific targets, payment method, and timing appear in the offering documents and are estimates, not guarantees.</p>
               <p><strong className="text-foreground">Tax treatment:</strong> K-1 pass-through.</p>
-              <p><strong className="text-foreground">Fees (all paid by the SPV):</strong> 3% origination at close, $15,000 setup at close, 0.5% AUA servicing per year.</p>
+              <p><strong className="text-foreground">Fees:</strong> Not established for the pilot. Any future terms require project-specific approval and documents.</p>
               <p>Subject to securities counsel review and project-specific offering documents.</p>
             </div>
             <label className="flex cursor-pointer items-start gap-3 rounded-md border border-border p-4 hover:bg-muted/30">

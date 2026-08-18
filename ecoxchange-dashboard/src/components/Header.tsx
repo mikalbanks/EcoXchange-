@@ -24,12 +24,6 @@ export function Header() {
             </Link>
           ) : null}
           <Link
-            to="/projects"
-            className="hidden sm:inline text-sm text-paleGreen hover:text-white transition-colors duration-150"
-          >
-            Projects
-          </Link>
-          <Link
             to="/benchmark"
             className="hidden sm:inline text-sm text-paleGreen hover:text-white transition-colors duration-150"
           >
@@ -47,12 +41,6 @@ export function Header() {
           >
             Developer Onboarding
           </Link>
-          <Link
-            to="/developer/loi"
-            className="hidden sm:inline text-sm text-paleGreen hover:text-white transition-colors duration-150"
-          >
-            LOI Builder
-          </Link>
           <span
             className={`inline-flex items-center gap-2 rounded-full px-2 py-0.5 text-xs font-medium ${
               liveMode
@@ -62,7 +50,7 @@ export function Header() {
             title={
               liveMode
                 ? "Reading from Supabase"
-                : "Simulated demonstration data"
+                : "Mixed-source pilot demo; review per-source provenance"
             }
           >
             <span
@@ -70,7 +58,7 @@ export function Header() {
                 liveMode ? "bg-accentBrt" : "bg-paleGreen"
               }`}
             />
-            {liveMode ? "Live" : "Demo"}
+            {liveMode ? "Live" : "Pilot Demo"}
           </span>
           <span className="hidden sm:inline text-sm sm:text-base text-paleGreen">
             Investor Dashboard

@@ -60,7 +60,6 @@ import LoginPage from "@/pages/auth/login";
 import SignupPage from "@/pages/auth/signup";
 
 import DeveloperDashboard from "@/pages/developer/dashboard";
-import DeveloperProjectWizard from "@/pages/developer/project-wizard";
 import DeveloperProjectDetail from "@/pages/developer/project-detail";
 import DeveloperProjectIntake from "@/pages/developer/project-intake";
 import DeveloperBacktestView from "@/pages/developer/backtest-view";
@@ -68,10 +67,7 @@ import DeveloperProjectDashboard from "@/pages/developer/project-dashboard";
 
 import PrivacyPolicy from "@/pages/privacy";
 import InvestorDashboard from "@/pages/investor/dashboard";
-import InvestorDeals from "@/pages/investor/deals";
 import InvestorQueueDeal from "@/pages/investor/queue-deal";
-import InvestorDealRoom from "@/pages/investor/deal-room";
-import InvestorInterests from "@/pages/investor/interests";
 
 import AdminDashboard from "@/pages/admin/dashboard";
 import AdminProjects from "@/pages/admin/projects";
@@ -80,7 +76,6 @@ import AdminExportPacket from "@/pages/admin/export-packet";
 import AdminUsers from "@/pages/admin/users";
 import AdminVerificationPage from "@/pages/admin/verification";
 import AdminDistributions from "@/pages/admin/distributions";
-import YieldSimulationPage from "@/pages/yield-simulation";
 
 import PerformancePage from "@/pages/performance";
 import OperationsPage from "@/pages/operations";
@@ -93,6 +88,7 @@ import MethodPage from "@/pages/method";
 import FaqPage from "@/pages/faq";
 import InvestorDashboardPreview from "@/pages/invest-preview";
 import DeveloperDashboardPreview from "@/pages/develop-preview";
+import { PilotTransactionBoundary } from "@/components/pilot-transaction-boundary";
 
 function ProtectedRoute({ 
   children, 
@@ -133,7 +129,9 @@ function Router() {
       <Route path="/portfolio/shared/:token" component={SharedPortfolioPage} />
       <Route path="/auth/login" component={LoginPage} />
       <Route path="/auth/signup" component={SignupPage} />
-      <Route path="/yield-simulation" component={YieldSimulationPage} />
+      <Route path="/yield-simulation">
+        <PilotTransactionBoundary surface="Yield simulation" />
+      </Route>
 
       <Route path="/performance/:projectId" component={PerformancePage} />
       <Route path="/performance" component={PerformancePage} />
@@ -174,7 +172,7 @@ function Router() {
       </Route>
       <Route path="/developer/projects/new">
         <ProtectedRoute allowedRoles={["DEVELOPER"]}>
-          <DeveloperProjectWizard />
+          <PilotTransactionBoundary surface="Offering creation" />
         </ProtectedRoute>
       </Route>
       <Route path="/developer/onboard">
@@ -205,12 +203,12 @@ function Router() {
       </Route>
       <Route path="/investor/deals">
         <ProtectedRoute allowedRoles={["INVESTOR"]}>
-          <InvestorDeals />
+          <PilotTransactionBoundary surface="Investment marketplace" />
         </ProtectedRoute>
       </Route>
       <Route path="/investor/deals/:id">
         <ProtectedRoute allowedRoles={["INVESTOR"]}>
-          <InvestorDealRoom />
+          <PilotTransactionBoundary surface="Deal room and commitment" />
         </ProtectedRoute>
       </Route>
       <Route path="/investor/queue/:id">
@@ -220,7 +218,7 @@ function Router() {
       </Route>
       <Route path="/investor/interests">
         <ProtectedRoute allowedRoles={["INVESTOR"]}>
-          <InvestorInterests />
+          <PilotTransactionBoundary surface="Investment commitments" />
         </ProtectedRoute>
       </Route>
 

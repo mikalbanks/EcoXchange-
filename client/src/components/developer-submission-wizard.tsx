@@ -12,7 +12,7 @@ import {
   Plug,
   FileText,
   Network,
-  DollarSign,
+  Mail,
 } from "lucide-react";
 
 const STEPS = [
@@ -23,7 +23,7 @@ const STEPS = [
   { id: 5, label: "Utility", icon: Plug },
   { id: 6, label: "Off-take", icon: FileText },
   { id: 7, label: "Interconnect", icon: Network },
-  { id: 8, label: "Raise", icon: DollarSign },
+  { id: 8, label: "Contact", icon: Mail },
 ];
 
 export function DeveloperSubmissionWizard() {
@@ -37,7 +37,6 @@ export function DeveloperSubmissionWizard() {
   const [bayouConsent, setBayouConsent] = useState(false);
   const [offtake, setOfftake] = useState("");
   const [interconnect, setInterconnect] = useState("");
-  const [raise, setRaise] = useState("");
   const [contactEmail, setContactEmail] = useState("");
   const [submitted, setSubmitted] = useState(false);
 
@@ -49,10 +48,7 @@ export function DeveloperSubmissionWizard() {
     if (step === 5) return utilityProvider !== "" && bayouConsent;
     if (step === 6) return offtake !== "";
     if (step === 7) return interconnect !== "";
-    if (step === 8) {
-      const r = parseInt(raise, 10);
-      return r >= 1000000 && r <= 5000000 && contactEmail.includes("@");
-    }
+    if (step === 8) return contactEmail.includes("@");
     return false;
   };
 
@@ -65,11 +61,10 @@ export function DeveloperSubmissionWizard() {
         `System capacity: ${capacityKw} kW dc\n` +
         `Inverter brand: ${inverter}\n` +
         `Plant / portal ID: ${plantId}\n` +
-        `Utility: ${utilityProvider} (Bayou consent: ${bayouConsent ? "yes" : "no"})\n` +
+        `Utility: ${utilityProvider} (willing to discuss data access: ${bayouConsent ? "yes" : "no"})\n` +
         `Off-take notes: ${offtake}\n` +
-        `Interconnect notes: ${interconnect}\n` +
-        `Equity raise requested: $${raise}\n\n` +
-        `Target intake-to-live timeline: 2-4 weeks.`,
+        `Interconnect notes: ${interconnect}\n\n` +
+        `Request: Release 1 production-verification pilot fit review.`,
     );
     window.location.href = `mailto:contact@ecoxchange.net?subject=${subject}&body=${body}`;
     setSubmitted(true);
@@ -84,8 +79,8 @@ export function DeveloperSubmissionWizard() {
           </div>
           <h3 className="font-serif text-2xl font-semibold">Submission received.</h3>
           <p className="mx-auto mt-3 max-w-md text-muted-foreground">
-            Target intake-to-live offering timeline: <strong className="text-foreground">2–4 weeks</strong>. Our team
-            will reach out within two business days to schedule a project review and start the backtest.
+            This submission requests a pilot-fit review; it is not a financing application or offering agreement.
+            If the project fits the current pilot, the team will contact you to confirm data access and next steps.
           </p>
         </CardContent>
       </Card>
@@ -152,7 +147,8 @@ export function DeveloperSubmissionWizard() {
           <div className="space-y-4">
             <h3 className="font-serif text-2xl font-semibold">System capacity</h3>
             <p className="text-sm text-muted-foreground">
-              dc nameplate. EcoXchange currently underwrites projects in the 1–20 MW band (1,000–20,000 kW dc).
+              DC nameplate. The current pilot is designed for permitted projects in the 1–20 MW band
+              (1,000–20,000 kW DC); other sizes may be reviewed separately.
             </p>
             <div>
               <label className="mb-2 block font-mono text-[0.65rem] uppercase tracking-wider text-muted-foreground">
@@ -174,8 +170,8 @@ export function DeveloperSubmissionWizard() {
           <div className="space-y-4">
             <h3 className="font-serif text-2xl font-semibold">Inverter brand</h3>
             <p className="text-sm text-muted-foreground">
-              We currently support SolarEdge, Enphase, Fronius, and SMA monitoring portals. Other brands require
-              a manual telemetry connector.
+              Select the installed platform for compatibility review. Connector availability and the secure access
+              method are confirmed separately for each pilot project.
             </p>
             <div className="grid grid-cols-2 gap-3 md:grid-cols-5">
               {["SolarEdge", "Enphase", "Fronius", "SMA", "Other"].map((b) => (
@@ -206,8 +202,8 @@ export function DeveloperSubmissionWizard() {
           <div className="space-y-4">
             <h3 className="font-serif text-2xl font-semibold">Inverter portal access</h3>
             <p className="text-sm text-muted-foreground">
-              Provide the plant / site ID we'll use to pull production data. At launch you'll authorize API
-              access through the monitoring portal — no key paste required.
+              Provide the plant or site identifier used during the compatibility review. Do not provide a password,
+              token, or API key in this preview form.
             </p>
             <div>
               <label className="mb-2 block font-mono text-[0.65rem] uppercase tracking-wider text-muted-foreground">
@@ -222,8 +218,8 @@ export function DeveloperSubmissionWizard() {
               />
             </div>
             <p className="text-xs text-muted-foreground">
-              For security, do not paste production API keys into this preview form. Real credentials are
-              exchanged through OAuth at offering setup.
+              If the project enters the pilot, EcoXchange and the operator will agree a secure, least-privilege
+              access method before any data connection is attempted.
             </p>
           </div>
         )}
@@ -232,8 +228,8 @@ export function DeveloperSubmissionWizard() {
           <div className="space-y-4">
             <h3 className="font-serif text-2xl font-semibold">Utility provider</h3>
             <p className="text-sm text-muted-foreground">
-              We reconcile inverter data against utility net-meter data via Bayou — a regulated third-party
-              utility data provider — so investors see an independent confirmation of every kWh.
+              Identify the serving utility and whether utility-originated production data may be available. The pilot
+              will document the actual origin and access path before calling this leg independent.
             </p>
             <div>
               <label className="mb-2 block font-mono text-[0.65rem] uppercase tracking-wider text-muted-foreground">
@@ -255,7 +251,7 @@ export function DeveloperSubmissionWizard() {
                 className="mt-1"
               />
               <span className="text-sm">
-                I'll authorize Bayou to access utility data for this account when the project goes live.
+                I am willing to discuss a secure utility-data access method if the project enters the pilot.
               </span>
             </label>
           </div>
@@ -286,8 +282,8 @@ export function DeveloperSubmissionWizard() {
           <div className="space-y-4">
             <h3 className="font-serif text-2xl font-semibold">Interconnection</h3>
             <p className="text-sm text-muted-foreground">
-              Summarize your interconnection status. At launch you'll upload your executed Interconnection
-              Agreement; here just describe it in a sentence.
+              Summarize the interconnection status for pilot-fit review. Supporting documents, if needed, are
+              requested through a separate secure process.
             </p>
             <div>
               <label className="mb-2 block font-mono text-[0.65rem] uppercase tracking-wider text-muted-foreground">
@@ -306,26 +302,11 @@ export function DeveloperSubmissionWizard() {
 
         {step === 8 && (
           <div className="space-y-4">
-            <h3 className="font-serif text-2xl font-semibold">Equity raise & contact</h3>
+            <h3 className="font-serif text-2xl font-semibold">Pilot contact</h3>
             <p className="text-sm text-muted-foreground">
-              EcoXchange currently underwrites equity raises between $1M and $5M per project. SPV pays 3% origination
-              + $15,000 setup at close, then 0.5% AUA / year billed monthly.
+              Provide a contact for the technical pilot-fit review. This intake does not request or approve a capital
+              raise, quote commercial terms, or create a legal agreement.
             </p>
-            <div>
-              <label className="mb-2 block font-mono text-[0.65rem] uppercase tracking-wider text-muted-foreground">
-                Equity raise requested (USD)
-              </label>
-              <input
-                type="number"
-                min={1000000}
-                max={5000000}
-                step={50000}
-                value={raise}
-                onChange={(e) => setRaise(e.target.value)}
-                placeholder="2500000"
-                className="w-full rounded-md border border-border bg-background px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-primary/50"
-              />
-            </div>
             <div>
               <label className="mb-2 block font-mono text-[0.65rem] uppercase tracking-wider text-muted-foreground">
                 Contact email

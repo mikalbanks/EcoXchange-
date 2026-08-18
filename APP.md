@@ -31,16 +31,16 @@ Do not lead with `digital securities`, `tokens`, `blockchain`, `wallet`,
 
 ## What is EcoXchange?
 
-EcoXchange independently verifies how much electricity a solar project produces each month. The engine reconciles inverter telemetry, utility meter data, and satellite-modeled generation to issue a verified, flagged, or pending determination for each project-month, and investor distributions are released only after verification.
+EcoXchange is building a source-aware production-verification workflow for solar projects. The engine compares available inverter telemetry, utility data, and modeled generation, labels each leg as measured, modeled, derived, or simulated, and issues a verified, flagged, or pending engine determination for each project-month.
 
-The first application of that determination is capital formation: EcoXchange administers private placements of equity interests in individual U.S. solar-project entities to verified accredited investors under Reg D 506(c). Each offering stays tied to one project and one auditable production record.
+The current public pilot demo is verification-only: it does not host an open offering, accept investments, or execute distributions. After pilot validation and the required legal, compliance, and operating approvals, EcoXchange intends to apply those determinations to project-level capital-formation and distribution workflows.
 
-### The Financial Product
+### Planned Financial Product (Not Currently Offered)
 
 | Element | Detail |
 |---------|--------|
-| What is verified | Monthly project-level production, reconciled across three independent sources |
-| Determination | Verified · flagged · pending — gates distribution processing |
+| What is evaluated | Monthly project-level production with source-level provenance; independence must be established for each input |
+| Determination | Verified · flagged · pending — intended to gate future distribution processing |
 | Asset Type | Equity interest in a single project entity, governed by the offering documents |
 | Structure | SPV membership interest (equity, revenue-share, or structured yield claim) |
 | Backing | Real-world renewable energy projects held in project-level SPVs (Delaware LLCs) |
@@ -49,15 +49,15 @@ The first application of that determination is capital formation: EcoXchange adm
 | Target Segment | Permitted 1–20 MW U.S. solar projects |
 | Minimum Investment | TBD — targeting $10K–$25K |
 
-### Core Characteristics
+### Target Characteristics
 
-- **Independently verified**: three production sources reconciled monthly, not developer self-reporting
-- **Distribution-gated**: payment proceeds only after the period's determination is verified
-- **Income-generating**: distributions derived from contracted energy revenues
-- **Asset-backed**: every interest is a claim on a real energy project SPV
-- **Transparent**: production data, revenue flows, and distributions visible on platform
-- **Compliant**: issued under SEC exemptions with transfer restrictions
-- **Tradable**: secondary market planned for Phase 3 via ATS integration
+- **Source-aware**: measured, modeled, derived, and simulated inputs are disclosed separately
+- **Distribution-gated**: the planned payment workflow proceeds only after the period's determination is verified
+- **Income-linked design**: any future distributions would derive from documented project cash flows
+- **Project-specific design**: any future interest would be governed by its project entity and offering documents
+- **Transparent**: production provenance leads; future revenue and distribution records require authoritative sources
+- **Approval-dependent**: any issuance requires the applicable legal, compliance, and operating approvals
+- **No liquidity claim**: secondary-market functionality is outside the current pilot
 
 ### SPV Structure
 

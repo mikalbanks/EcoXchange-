@@ -5,6 +5,12 @@ import { Card } from "../ui/Card.js";
 import { SectionTag } from "../ui/SectionTag.js";
 import { formatMonthLong } from "../../utils/formatters.js";
 import type { VerificationRecord } from "../../utils/types.js";
+import { useData } from "../../context/DataContext.js";
+import {
+  describeDeterminationConsequence,
+  describeTransactionPolicy,
+  describeVerificationEvidence,
+} from "../../data/index.js";
 
 interface Props {
   projectId: string;
@@ -13,13 +19,13 @@ interface Props {
 
 /**
  * The investor's first screen: what the monthly determination is, which sources
- * produced it, and — the part that actually matters to them — what it means for
- * their distribution.
- *
- * Every status states its distribution consequence in plain language. A badge
- * that says FLAGGED without saying "payment is on hold" is not information.
+ * produced it, and whether any transaction consequence is actually attached.
+ * Verification status must never imply a payment when the dataset has no
+ * offering or distribution source.
  */
 export function DeterminationCard({ projectId, record }: Props) {
+  const { mode, scenario } = useData();
+  const transactionPolicy = describeTransactionPolicy(mode, scenario, projectId);
   const month = formatMonthLong(record.period_start);
   const flagged = record.status === "flagged";
   const pending = record.status === "pending";
@@ -30,23 +36,27 @@ export function DeterminationCard({ projectId, record }: Props) {
       ? `${month} production is pending verification.`
       : `${month} engine status is VERIFIED.`;
 
-  const body = flagged
-    ? "The available production inputs did not reconcile within the configured tolerance. Distribution processing is on hold while the discrepancy and each input's provenance are reviewed."
+  const evidence = describeVerificationEvidence(projectId, mode);
+  const consequence = describeDeterminationConsequence(record.status, transactionPolicy);
+  const statusBody = flagged
+    ? "The available production inputs did not reconcile within the configured tolerance. Review the discrepancy and each input's provenance."
     : pending
-      ? "One or more production inputs are unavailable for this period. Distribution processing begins once the determination completes."
-      : "The available production inputs reconciled within the project's configured tolerance. Review the record's source provenance before treating the status as independent verification.";
+      ? "One or more production inputs are unavailable for this period."
+      : "The available production inputs reconciled within the project's configured tolerance. Review source provenance before treating the status as independent verification.";
+  const transactionBody =
+    transactionPolicy.state === "disabled"
+      ? "This dataset has no offering or distribution attached, so the determination does not trigger a payment."
+      : `Transaction consequence: ${consequence.toLowerCase()}.`;
+  const body = `${statusBody} ${transactionBody}`;
 
-  // Source legs read from the record itself rather than being asserted — a
-  // missing utility read is a real state and has to show as one.
+  // Every determination names the source basis of each leg. A missing value is
+  // still shown as unavailable rather than being promoted to a confident zero.
   const rows: Array<[string, string]> = [
-    ["Inverter leg", record.inverter_kwh > 0 ? "Present" : "Unavailable"],
-    ["Utility leg", record.utility_kwh != null ? "Present" : "Unavailable"],
-    ["Expected model", record.expected_kwh > 0 ? "Complete" : "Incomplete"],
+    ["Inverter leg", record.inverter_kwh > 0 ? evidence.sourceNames.inverter : "Unavailable"],
+    ["Utility leg", record.utility_kwh != null ? evidence.sourceNames.utility : "Unavailable"],
+    ["Expected leg", record.expected_kwh > 0 ? evidence.sourceNames.satellite : "Unavailable"],
     ["Determination", record.status],
-    [
-      "Distribution eligibility",
-      flagged ? "On hold" : pending ? "Pending" : "Released",
-    ],
+    ["Transaction consequence", consequence],
   ];
 
   return (

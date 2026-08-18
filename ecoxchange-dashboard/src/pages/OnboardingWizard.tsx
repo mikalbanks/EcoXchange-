@@ -101,7 +101,7 @@ export function OnboardingWizard() {
           Developer Onboarding
         </h1>
         <p className="text-textMuted mt-1">
-          Get a 12-month production backtest in under 24 hours.
+          Submit project details for a source-labeled pilot backtest review.
         </p>
       </div>
 

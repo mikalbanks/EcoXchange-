@@ -10,7 +10,11 @@ import { ErrorState } from "../components/shared/ErrorState.js";
 import { CardSkeleton, Shimmer } from "../components/shared/LoadingState.js";
 import { formatMonthLong } from "../utils/formatters.js";
 import { ENGINE_VERSION } from "../config/engine.js";
-import { describeVerificationEvidence } from "../data/index.js";
+import {
+  describeDeterminationConsequence,
+  describeTransactionPolicy,
+  describeVerificationEvidence,
+} from "../data/index.js";
 import type { ProjectMeta, VerificationRecord } from "../utils/types.js";
 
 export function VerificationDetail() {
@@ -75,6 +79,11 @@ export function VerificationDetail() {
 
   const { project, record } = state;
   const evidence = describeVerificationEvidence(id, mode);
+  const transactionPolicy = describeTransactionPolicy(mode, scenario, id);
+  const transactionConsequence = describeDeterminationConsequence(
+    record.status,
+    transactionPolicy,
+  );
 
   return (
     <div className="space-y-6 animate-fade-in">
@@ -102,6 +111,9 @@ export function VerificationDetail() {
         <p className="text-xs font-semibold tracking-[0.14em] text-flagAmber">{evidence.badge}</p>
         <h2 className="mt-1 font-heading text-lg text-darkBg">{evidence.title}</h2>
         <p className="mt-1 max-w-3xl text-base leading-relaxed text-textMuted">{evidence.description}</p>
+        <p className="mt-3 border-t border-flagAmber/20 pt-3 font-mono text-xs text-darkBg" data-testid="verification-transaction-consequence">
+          Transaction consequence: {transactionConsequence}. {transactionPolicy.title}.
+        </p>
       </div>
 
       <div>

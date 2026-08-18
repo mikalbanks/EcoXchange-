@@ -2,14 +2,13 @@ import { Header } from "@/components/header";
 import { DeveloperSubmissionWizard } from "@/components/developer-submission-wizard";
 import { Card, CardContent } from "@/components/ui/card";
 
-const costRows = [
-  { item: "Securities counsel (PPM, sub docs)", traditional: "$12,000–$30,000", ecox: "Included (templated)" },
-  { item: "Placement agent fee", traditional: "4–8% of capital raised", ecox: "3% origination fee" },
-  { item: "Setup fee", traditional: "—", ecox: "$15,000 fixed" },
-  { item: "Investor marketing", traditional: "$35K + 6–8% of capital", ecox: "Investor pool included" },
-  { item: "Distribution administration", traditional: "$10K–$25K / year", ecox: "Automated (smart contract)" },
-  { item: "Third-party production audit", traditional: "$5K–$15K / year", ecox: "Included (verification engine)" },
-  { item: "Time to capital", traditional: "3–9 months", ecox: "Target 2–6 weeks" },
+const pilotRows = [
+  { item: "Production backtest", scope: "12-month model-to-measurement comparison", status: "Pilot evaluation" },
+  { item: "Evidence labeling", scope: "Measured, modeled, derived, or simulated per source leg", status: "Included" },
+  { item: "Utility data", scope: "Partner-provided data preferred; any proxy is disclosed", status: "Availability-dependent" },
+  { item: "Project intake", scope: "Technical and operating-data collection", status: "Included" },
+  { item: "Securities offering", scope: "No offer, subscription, or capital raise", status: "Not included" },
+  { item: "Legal and payment execution", scope: "No LOI, offering document, or distribution execution", status: "Not included" },
 ];
 
 export default function DevelopPage() {
@@ -26,10 +25,10 @@ export default function DevelopPage() {
               <em>solar project.</em>
             </h1>
             <p className="public-copy">
-              EcoXchange underwrites equity raises of <strong>$1M–$5M</strong> for permitted 1–20 MW U.S.
-              solar projects. Target intake-to-live offering timeline: <strong>2–4 weeks</strong>. No on-site
-              verification hardware required — provide inverter portal and utility account access, and we handle
-              the rest.
+              EcoXchange is accepting permitted <strong>1–20 MW U.S. solar projects</strong> for a
+              verification-led pilot. Selected partners provide available inverter and utility-source access; we
+              review coverage and produce a source-labeled backtest. Capital-formation services are not part of
+              the current pilot.
             </p>
             <div className="public-actions">
               <a href="#submit" className="public-btn public-btn-primary">Start project intake</a>
@@ -39,16 +38,16 @@ export default function DevelopPage() {
           <aside className="public-hero-aside">
             <div className="public-mini-stat-grid">
               <div className="public-mini-stat">
-                <span className="public-mini-stat-value">$1–5M</span>
-                <span className="public-mini-stat-label">Target equity raise per project</span>
+                <span className="public-mini-stat-value">1–20 MW</span>
+                <span className="public-mini-stat-label">Pilot target project size</span>
               </div>
               <div className="public-mini-stat">
-                <span className="public-mini-stat-value">2–4 wks</span>
-                <span className="public-mini-stat-label">Target intake-to-live timeline</span>
+                <span className="public-mini-stat-value">12 mo</span>
+                <span className="public-mini-stat-label">Backtest analysis window</span>
               </div>
               <div className="public-mini-stat">
-                <span className="public-mini-stat-value">0</span>
-                <span className="public-mini-stat-label">New sensors required for verification</span>
+                <span className="public-mini-stat-value">3</span>
+                <span className="public-mini-stat-label">Evidence roles traced per period</span>
               </div>
             </div>
           </aside>
@@ -65,39 +64,34 @@ export default function DevelopPage() {
         <section id="cost" className="public-section scroll-mt-24">
           <div className="public-section-header">
             <span className="public-section-label">§ II</span>
-            <h2 className="public-section-title">~55–65% lower all-in cost than a traditional Reg D raise.</h2>
+            <h2 className="public-section-title">What the Release 1 pilot includes.</h2>
           </div>
           <Card className="public-table-card border-border">
             <CardContent className="p-0 overflow-x-auto">
               <div className="min-w-[720px]">
                 <div className="public-table-head grid grid-cols-3 border-b border-border px-5 py-3">
-                  <p className="font-mono text-[0.6rem] uppercase tracking-wider">Cost item</p>
-                  <p className="font-mono text-[0.6rem] uppercase tracking-wider">Traditional Reg D 506(c)</p>
-                  <p className="font-mono text-[0.6rem] uppercase tracking-wider">EcoXchange</p>
+                  <p className="font-mono text-[0.6rem] uppercase tracking-wider">Scope item</p>
+                  <p className="font-mono text-[0.6rem] uppercase tracking-wider">Release 1 scope</p>
+                  <p className="font-mono text-[0.6rem] uppercase tracking-wider">Status</p>
                 </div>
-                {costRows.map((row, i) => (
+                {pilotRows.map((row, i) => (
                   <div
                     key={row.item}
                     className={`grid grid-cols-3 px-5 py-3 ${
-                      i < costRows.length - 1 ? "border-b border-border/60" : ""
+                      i < pilotRows.length - 1 ? "border-b border-border/60" : ""
                     }`}
                   >
                     <p className="text-sm text-muted-foreground">{row.item}</p>
-                    <p className="text-sm text-muted-foreground">{row.traditional}</p>
-                    <p className="text-sm font-semibold text-primary">{row.ecox}</p>
+                    <p className="text-sm text-muted-foreground">{row.scope}</p>
+                    <p className="text-sm font-semibold text-primary">{row.status}</p>
                   </div>
                 ))}
-                <div className="public-total-row grid grid-cols-3 border-t-2 border-primary/20 px-5 py-4">
-                  <p className="text-sm font-semibold text-foreground">All-in cost (Year 1)</p>
-                  <p className="text-sm font-semibold text-foreground">$325K–$500K</p>
-                  <p className="text-sm font-bold text-primary">~$125K–$175K</p>
-                </div>
               </div>
             </CardContent>
           </Card>
           <p className="mt-4 font-mono text-[0.6rem] text-muted-foreground/70">
-            Cost figures benchmarked from Manhattan Street Capital, Growth Turbine, and industry tax-equity practice.
-            Final per-project economics subject to underwriting and securities counsel review.
+            Pilot participation, data access, timing, and any commercial terms are confirmed separately in writing.
+            This page is not an offering, financing commitment, or quote.
           </p>
         </section>
       </main>

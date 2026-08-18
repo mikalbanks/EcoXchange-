@@ -14,6 +14,7 @@ import { AccreditationGate } from "../compliance/components/AccreditationGate.js
 import { DisclaimerFooter } from "../compliance/components/DisclaimerFooter.js";
 import { useAuth } from "../context/AuthContext.js";
 import { useDemo } from "../context/DemoContext.js";
+import { useData } from "../context/DataContext.js";
 import {
   NotificationProvider,
   useNotifications,
@@ -27,15 +28,22 @@ import demoDistributions from "../data/demo-distributions.json";
 function SimulateDistributionTrigger() {
   const [searchParams, setSearchParams] = useSearchParams();
   const { showDistributionBanner } = useNotifications();
+  const { transactionPolicy } = useData();
 
   useEffect(() => {
     if (searchParams.get("simulate_distribution") !== "1") return;
+    if (transactionPolicy.state !== "simulated") {
+      const next = new URLSearchParams(searchParams);
+      next.delete("simulate_distribution");
+      setSearchParams(next, { replace: true });
+      return;
+    }
     const latest = demoDistributions.history[0];
     showDistributionBanner({ amountUsd: latest?.net_distribution ?? 0 });
     const next = new URLSearchParams(searchParams);
     next.delete("simulate_distribution");
     setSearchParams(next, { replace: true });
-  }, [searchParams, setSearchParams, showDistributionBanner]);
+  }, [searchParams, setSearchParams, showDistributionBanner, transactionPolicy.state]);
 
   return null;
 }
@@ -55,6 +63,7 @@ function AppLayoutInner() {
   const [drawerOpen, setDrawerOpen] = useState(false);
   const { user, role } = useAuth();
   const { demoMode } = useDemo();
+  const { transactionPolicy } = useData();
 
   return (
     <div className="min-h-screen flex bg-cream">
@@ -105,7 +114,13 @@ function AppLayoutInner() {
             </div>
 
             <div className="flex items-center gap-3">
-              <WalletIndicator />
+              {transactionPolicy.state === "simulated" ? (
+                <WalletIndicator />
+              ) : (
+                <span className="hidden rounded-full border border-white/20 px-2.5 py-1 font-mono text-[10px] uppercase tracking-wide text-paleGreen sm:inline">
+                  No wallet attached
+                </span>
+              )}
               <span
                 className={`inline-flex items-center gap-2 rounded-full px-2 py-0.5 text-xs font-medium ${
                   liveMode
@@ -115,7 +130,7 @@ function AppLayoutInner() {
                 title={
                   liveMode
                     ? "Reading from Supabase"
-                    : "Simulated demonstration data"
+                    : "Mixed-source pilot demo; review per-source provenance"
                 }
               >
                 <span
@@ -123,7 +138,7 @@ function AppLayoutInner() {
                     liveMode ? "bg-accentBrt" : "bg-paleGreen"
                   }`}
                 />
-                {liveMode ? "Live" : "Demo"}
+                {liveMode ? "Live" : "Pilot Demo"}
               </span>
               <span className="hidden sm:inline text-sm text-paleGreen capitalize">
                 {user.name} · {role}

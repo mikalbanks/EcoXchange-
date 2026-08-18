@@ -17,7 +17,7 @@ export interface BannerConfig {
 export const bannerConfig: Record<ComplianceMode, BannerConfig> = {
   demo: {
     regD: "",
-    demo: "DEMONSTRATION MODE · SIMULATED DATA · NOT AN INVESTMENT OFFERING",
+    demo: "PILOT DEMO · MEASURED, MODELED, DERIVED, AND SIMULATED SOURCES ARE LABELED · NOT AN OFFERING",
   },
   preview: {
     regD: "FOR ACCREDITED INVESTORS ONLY · THIS IS NOT AN OFFER TO SELL SECURITIES · REG D 506(C)",
