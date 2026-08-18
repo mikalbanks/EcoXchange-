@@ -61,7 +61,7 @@ export function YieldHistory() {
         <BackLink id={id} />
         <EmptyState
           title="No yield history yet"
-          message="This project has no verified production periods to report yet."
+          message="This project has no engine-qualified production periods to report yet."
         />
       </div>
     );

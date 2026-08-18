@@ -44,8 +44,8 @@ export function ImpactDashboard() {
   if (status === "empty" || !impact) {
     return (
       <EmptyState
-        title="No verified impact yet"
-        message="Once your projects have production-verified months, your environmental impact will appear here."
+        title="No qualifying impact data yet"
+        message="Once your projects have periods with a VERIFIED engine status, an illustrative impact estimate will appear here."
       />
     );
   }
@@ -53,12 +53,13 @@ export function ImpactDashboard() {
   return (
     <div className="space-y-8">
       <header className="space-y-3">
-        <h1 className="font-heading text-3xl text-darkBg">Your Verified Impact</h1>
+        <h1 className="font-heading text-3xl text-darkBg">Illustrative Impact Estimate</h1>
         <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
           <VerifiedBadge />
           <p className="text-sm text-textMuted">
-            Based on production-verified data from EcoXchange's three-source
-            reconciliation engine — not developer estimates.
+            Calculated from records whose engine status is VERIFIED. Status alone
+            does not establish independent source provenance; demo-mode impact
+            data is simulated.
           </p>
         </div>
       </header>

@@ -22,7 +22,7 @@ export function scoreOfferings(
       }
       if (profile.primary_objective === "impact") {
         score += 15;
-        reasons.push("Production-verified solar aligns with your impact goals");
+        reasons.push("Source-aware solar reporting aligns with your impact goals");
       }
       if (profile.primary_objective === "diversification") {
         score += 10;

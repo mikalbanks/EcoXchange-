@@ -1,14 +1,23 @@
 import { X } from "lucide-react";
+import { useNavigate } from "react-router-dom";
 import { useAuth } from "../../context/AuthContext.js";
 import { useDemo } from "../../context/DemoContext.js";
 import { RoleSwitcher } from "./RoleSwitcher.js";
 
 // Persistent presentation control. Visible on every shell page while demo mode
-// is on, so a presenter can flip role and dataset scenario mid-demo without
-// navigating away from the current context.
+// is on. Dataset changes return to the investor portfolio because the measured
+// comparison and simulated stress case intentionally use different projects.
 export function FloatingDemoBar() {
+  const navigate = useNavigate();
   const { role } = useAuth();
   const { scenario, setScenario, exitDemo } = useDemo();
+
+  const selectInvestorScenario = (next: "verified" | "flagged") => {
+    setScenario(next);
+    // The two investor scenarios use different projects. Return to the
+    // portfolio so the route and evidence disclosure switch atomically.
+    navigate("/investor");
+  };
 
   // Below lg the investor shell shows the bottom tab bar (64px + safe area);
   // stack the demo bar directly above it so neither is obscured.
@@ -41,25 +50,25 @@ export function FloatingDemoBar() {
             <div className="inline-flex rounded-md border border-white/20 p-0.5">
               <button
                 type="button"
-                onClick={() => setScenario("verified")}
+                onClick={() => selectInvestorScenario("verified")}
                 className={`rounded px-2.5 py-1 text-xs font-medium transition-colors duration-150 ${
                   scenario === "verified"
                     ? "bg-accentBrt text-darkBg"
                     : "text-paleGreen hover:text-white"
                 }`}
               >
-                Verified
+                Measured
               </button>
               <button
                 type="button"
-                onClick={() => setScenario("flagged")}
+                onClick={() => selectInvestorScenario("flagged")}
                 className={`rounded px-2.5 py-1 text-xs font-medium transition-colors duration-150 ${
                   scenario === "flagged"
                     ? "bg-flagAmber text-white"
                     : "text-paleGreen hover:text-white"
                 }`}
               >
-                Flagged
+                Simulated stress
               </button>
             </div>
           </div>

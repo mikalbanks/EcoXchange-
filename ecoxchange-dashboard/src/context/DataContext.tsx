@@ -11,9 +11,10 @@ import type {
 } from "../utils/types.js";
 
 // Single data entry point per spec §6.1. Pages call these methods without
-// knowing whether they resolve against Supabase or static demo JSON. The active
-// demo scenario ("verified" | "flagged") is injected here so a presenter can
-// flip the whole investor experience from the floating demo bar.
+// knowing whether they resolve against Supabase or static demo JSON. In demo
+// mode the historical enum names now mean "measured comparison" (verified) and
+// "simulated stress case" (flagged); the visible controls use those honest
+// labels while the stored values remain backward-compatible.
 interface DataContextValue {
   mode: "supabase" | "demo";
   scenario: "verified" | "flagged";
@@ -47,7 +48,7 @@ export function DataProvider({ children }: { children: ReactNode }) {
       getVerification: (id, period) =>
         loadVerification(id, period, { variant }),
       getPortfolio: async () => {
-        const base = await loadPortfolio();
+        const base = await loadPortfolio({ variant });
         if (!useFlagged) return base;
         // Re-derive each project card from the flagged dataset so the portfolio
         // badge, yield, and production flip alongside the detail pages.

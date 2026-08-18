@@ -12,12 +12,13 @@ export function ImpactMethodology({ impact }: { impact: ImpactMetrics }) {
           {impact.egrid_region} ({impact.egrid_factor_used} kg CO₂/kWh)
         </span>{" "}
         rather than the national average, reflecting the grid your project
-        displaces. Only production-verified months
+        displaces. Only months with a VERIFIED engine status
         {impact.months_flagged > 0
           ? ` (${impact.months_verified} verified; ${impact.months_flagged} flagged months excluded)`
           : ` (${impact.months_verified} verified)`}{" "}
-        are included in these calculations. Figures derive from EcoXchange's
-        three-source reconciliation engine, not developer estimates.
+        are included in these calculations. That status is a tolerance result,
+        not proof that every source leg was independently measured. Review the
+        project record for provenance before relying on the estimate.
       </p>
     </div>
   );

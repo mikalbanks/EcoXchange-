@@ -51,8 +51,8 @@ export function ProjectsOverview() {
             Projects Across the Platform
           </h1>
           <p className="mt-1 max-w-2xl text-textMuted">
-            Every project is production-verified monthly across inverter,
-            utility, and satellite data before distributions release.
+            This simulated portfolio demonstrates monthly engine statuses across
+            inverter, utility, and expected-generation inputs before distributions release.
           </p>
         </div>
 

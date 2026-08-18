@@ -30,7 +30,7 @@
   "developer_logo_url": null,
 
   "headline": "5 MW Ground-Mount Solar — Savannah, GA",
-  "description": "A 5 MW (DC) ground-mount solar installation in Savannah, Georgia, interconnected to Georgia Power under a 20-year PPA with 2% annual escalator. The project sits on 25 leased acres with excellent irradiance (4.8 kWh/m²/day annual average) and is production-verified by EcoXchange's three-source reconciliation engine.",
+  "description": "A simulated 5 MW (DC) ground-mount solar project in Savannah, Georgia, used to demonstrate the investor workflow. Its project, PPA, ownership, financial, and production figures are illustrative and do not establish independent operating verification.",
   "investment_thesis": "Savannah offers top-decile irradiance for the Southeast, a credit-worthy utility counterparty in Georgia Power, and a locked-in 20-year revenue stream with built-in inflation protection. The 1–20 MW segment remains structurally underserved by institutional capital — this project fills that gap.",
   "risk_factors": [
     "Solar production varies with weather conditions and may underperform projections in any given period",
