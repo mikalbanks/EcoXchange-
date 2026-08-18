@@ -1,5 +1,5 @@
 import { sql } from "drizzle-orm";
-import { pgTable, text, varchar, boolean, decimal, timestamp, integer, serial, jsonb, index, uniqueIndex, uuid, type AnyPgColumn } from "drizzle-orm/pg-core";
+import { pgTable, text, varchar, boolean, decimal, timestamp, integer, serial, jsonb, index, uniqueIndex, type AnyPgColumn } from "drizzle-orm/pg-core";
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod";
 import type {
@@ -1791,22 +1791,3 @@ export const insertItcPositionSchema = createInsertSchema(itcPositions).omit({
 
 export type InsertItcPosition = z.infer<typeof insertItcPositionSchema>;
 export type ItcPosition = typeof itcPositions.$inferSelect;
-
-/** Immutable, API-mediated evidence artifacts for the Release 1 pilot. */
-export const pilotBacktestArtifacts = pgTable(
-  "pilot_backtest_artifacts",
-  {
-    resultId: uuid("result_id").primaryKey(),
-    siteId: text("site_id").notNull(),
-    generatedAt: timestamp("generated_at", { withTimezone: true }).notNull(),
-    engineVersion: text("engine_version").notNull(),
-    report: jsonb("report").$type<Record<string, unknown>>().notNull(),
-    createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
-  },
-  (t) => ({
-    latestIdx: index("pilot_backtest_artifacts_latest_idx").on(
-      t.generatedAt,
-      t.resultId,
-    ),
-  }),
-);
