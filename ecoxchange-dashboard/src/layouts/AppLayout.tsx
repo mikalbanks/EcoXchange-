@@ -67,6 +67,9 @@ function AppLayoutInner() {
 
   return (
     <div className="min-h-screen flex bg-cream">
+      <a href="#main-content" className="sr-only focus:not-sr-only focus:fixed focus:left-4 focus:top-4 focus:z-[100] focus:rounded focus:bg-white focus:px-4 focus:py-2 focus:text-darkBg">
+        Skip to main content
+      </a>
       <SimulateDistributionTrigger />
       <DistributionBanner />
       {/* Desktop sidebar */}
@@ -148,6 +151,8 @@ function AppLayoutInner() {
         </header>
 
         <main
+          id="main-content"
+          tabIndex={-1}
           className={`relative flex-1 w-full lg:max-w-[1200px] mx-auto px-4 sm:px-6 py-6 sm:py-10 ${
             role === "investor"
               ? demoMode

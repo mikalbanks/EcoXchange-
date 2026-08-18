@@ -6,6 +6,7 @@ const repoRoot = fileURLToPath(new URL("../", import.meta.url));
 
 const publicClaimFiles = [
   "APP.md",
+  "client/index.html",
   "client/src/pages/landing.tsx",
   "client/src/pages/develop.tsx",
   "client/src/pages/method.tsx",
@@ -18,6 +19,7 @@ const publicClaimFiles = [
   "ecoxchange-dashboard/src/pages/OnboardingWizard.tsx",
   "ecoxchange-dashboard/src/compliance/config/bannerConfig.ts",
   "ecoxchange-dashboard/src/compliance/config/disclaimerConfig.ts",
+  "ecoxchange-dashboard/src/components/loi/LOIDocument.tsx",
 ] as const;
 
 const prohibitedClaims = [
@@ -34,6 +36,9 @@ const prohibitedClaims = [
   /3% origination/i,
   /\$15,000 setup/i,
   /0\.5% AUA/i,
+  /production-verified yield/i,
+  /three independent sources/i,
+  /before any distribution is released/i,
 ] as const;
 
 function read(relativePath: string): string {
@@ -60,6 +65,48 @@ describe("Release 1 public claims", () => {
     );
     expect(read("ecoxchange-dashboard/src/pages/Landing.tsx")).toContain(
       "no project ownership, account, or",
+    );
+  });
+});
+
+describe("Release 1 deployment ownership", () => {
+  it("assigns the investor-demo hostname to exactly one Cloudflare Worker", () => {
+    const configs = [
+      "ecoxchange-dashboard/wrangler.jsonc",
+      "ecoxchange-demo/wrangler.jsonc",
+    ];
+    const owners = configs.filter((file) =>
+      /"pattern"\s*:\s*"demo\.ecoxchange\.net"/.test(read(file)),
+    );
+
+    expect(owners).toEqual(["ecoxchange-dashboard/wrangler.jsonc"]);
+  });
+});
+
+describe("Release 1 pilot security gates", () => {
+  const routes = read("server/routes.ts");
+
+  it("fails identity verification closed when Persona is unavailable", () => {
+    expect(routes).not.toMatch(/personaStatus:\s*"completed"[\s\S]{0,180}demo mode/i);
+    expect(routes).toContain("Webhook verification is not configured");
+    expect(routes).toContain("crypto.timingSafeEqual");
+  });
+
+  it("does not expose backtest execution on the public route", () => {
+    expect(routes).toMatch(
+      /post\("\/api\/public\/backtest\/run"[\s\S]{0,220}status\(410\)/,
+    );
+    expect(routes).toMatch(
+      /post\("\/api\/admin\/backtest\/run", requireRole\("ADMIN"\), backtestRunLimiter/,
+    );
+  });
+
+  it("stores immutable reports and discloses scored coverage", () => {
+    expect(read("migrations/0010_pilot_backtest_artifacts.sql")).toContain(
+      "pilot_backtest_artifacts_append_only",
+    );
+    expect(read("server/services/backtest-engine.ts")).toContain(
+      "Missing provider observations are unknown, not zero production",
     );
   });
 });

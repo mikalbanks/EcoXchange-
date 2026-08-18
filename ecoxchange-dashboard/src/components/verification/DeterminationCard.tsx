@@ -36,7 +36,7 @@ export function DeterminationCard({ projectId, record }: Props) {
       ? `${month} production is pending verification.`
       : `${month} engine status is VERIFIED.`;
 
-  const evidence = describeVerificationEvidence(projectId, mode);
+  const evidence = describeVerificationEvidence(projectId, mode, record);
   const consequence = describeDeterminationConsequence(record.status, transactionPolicy);
   const statusBody = flagged
     ? "The available production inputs did not reconcile within the configured tolerance. Review the discrepancy and each input's provenance."

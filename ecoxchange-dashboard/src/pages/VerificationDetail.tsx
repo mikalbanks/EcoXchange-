@@ -78,7 +78,7 @@ export function VerificationDetail() {
   }
 
   const { project, record } = state;
-  const evidence = describeVerificationEvidence(id, mode);
+  const evidence = describeVerificationEvidence(id, mode, record);
   const transactionPolicy = describeTransactionPolicy(mode, scenario, id);
   const transactionConsequence = describeDeterminationConsequence(
     record.status,
