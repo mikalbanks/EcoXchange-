@@ -78,7 +78,5 @@ export default defineConfig({
     "capital_account_entries",
     "tax_allocations",
     "itc_positions",
-    // Immutable Release 1 evidence artifacts; public access is API-mediated.
-    "pilot_backtest_artifacts",
   ],
 });
