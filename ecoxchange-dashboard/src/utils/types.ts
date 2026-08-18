@@ -61,6 +61,7 @@ export interface ProjectMeta {
 }
 
 export interface VerificationRecord {
+  id?: string;
   period_start: string;
   inverter_kwh: number;
   expected_kwh: number;
@@ -71,6 +72,7 @@ export interface VerificationRecord {
   status: VerificationStatus;
   flag_reasons: string[];
   estimated_revenue: number;
+  source_legs?: VerificationSourceLeg[];
   ghi_kwh_m2?: number;
   /** Present only on flagged records when the classifier has run (Spec 7). */
   classification?: AnomalyClassification;
@@ -87,6 +89,19 @@ export interface VerificationRecord {
   detect_exceeded?: boolean;
   /** This period and the prior one both breached detect (Spec 23 §5). */
   persistence_triggered?: boolean;
+}
+
+export interface VerificationSourceLeg {
+  source: "inverter" | "utility_meter" | "satellite";
+  basis: "measured" | "uploaded" | "modeled" | "derived" | "simulated" | "unconfirmed";
+  provider: string;
+  source_record_id: string | null;
+  retrieved_at: string | null;
+  depends_on_source: "inverter" | "utility_meter" | "satellite" | null;
+  lineage: Record<string, unknown>;
+  expected_intervals: number;
+  observed_intervals: number;
+  coverage_pct: number;
 }
 
 export interface ProjectSummary {

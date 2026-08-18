@@ -12,7 +12,7 @@ export function ErrorState({
   onRetry,
 }: Props) {
   return (
-    <div className="bg-red-50 border border-red-200 rounded-xl p-8 text-center flex flex-col items-center gap-3">
+    <div role="alert" aria-live="assertive" className="bg-red-50 border border-red-200 rounded-xl p-8 text-center flex flex-col items-center gap-3">
       <div className="h-14 w-14 rounded-full bg-red-100 flex items-center justify-center">
         <AlertTriangle className="h-7 w-7 text-red-600" aria-hidden="true" />
       </div>

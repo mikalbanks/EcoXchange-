@@ -31,6 +31,7 @@ export type DataProvenance =
 export type OfftakeType = "ppa" | "community_solar" | "net_metering" | "merchant";
 export type ProjectStatus = "onboarding" | "active" | "suspended" | "decommissioned";
 export type DataSource = "inverter" | "utility_meter" | "satellite";
+export type SourceBasis = "measured" | "uploaded" | "modeled" | "derived" | "simulated" | "unconfirmed";
 export type DataQuality = "complete" | "partial" | "missing" | "error";
 export type TriggerType = "manual" | "scheduled" | "backtest";
 export type RunStatus = VerificationStatus | "errored";
@@ -134,6 +135,22 @@ export interface VerificationRecord {
   detect_exceeded?: boolean | null;
   /** This period and the prior one both exceeded detect. */
   persistence_triggered?: boolean | null;
+}
+
+export interface VerificationSourceLeg {
+  id: string;
+  verification_record_id: string;
+  source: DataSource;
+  basis: SourceBasis;
+  provider: string;
+  source_record_id: string | null;
+  retrieved_at: string | null;
+  depends_on_source: DataSource | null;
+  lineage: Record<string, unknown>;
+  expected_intervals: number;
+  observed_intervals: number;
+  coverage_pct: number;
+  created_at: string;
 }
 
 /** Spec 23 §1 — a frozen per-plant threshold calibration. Immutable once written. */
