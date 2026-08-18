@@ -28,7 +28,7 @@ export function ImpactExtended({ impact }: { impact: ImpactMetrics }) {
     {
       icon: "⚡",
       value: fmtKwh(impact.verified_kwh),
-      label: "verified production",
+      label: "production input",
     },
   ];
 

@@ -129,9 +129,9 @@ export function Distribute() {
       <SimulationStepCard stepNumber={2} title="Oracle Write" state={steps.oracle} isLive={isLive}>
         <p className="text-sm text-textMuted">
           {steps.oracle.status === "active"
-            ? `Writing verified production to ${activeNetwork.name}…`
+            ? `Writing the demo engine result to ${activeNetwork.name}…`
             : steps.oracle.status === "complete"
-              ? `Verified production recorded on ${activeNetwork.name}.`
+              ? `Demo engine result recorded on ${activeNetwork.name}.`
               : `Writes the verification verdict (${formatKwh(DEMO_DISTRIBUTION.verifiedKwh)}, ${DEMO_DISTRIBUTION.verdict}) to the DemoOracleBridge contract.`}
         </p>
       </SimulationStepCard>

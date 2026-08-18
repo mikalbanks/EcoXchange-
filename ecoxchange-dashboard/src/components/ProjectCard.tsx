@@ -27,16 +27,16 @@ export function ProjectCard({ project }: { project: PortfolioProject }) {
       {/* Say what the status means, not just what it is. */}
       <p className="text-sm text-textDark">
         {project.latest_verification === "verified"
-          ? "All three sources reconciled within tolerance. No open production exceptions."
+          ? "The available source legs are within tolerance. Open the record to review provenance before relying on the status."
           : project.latest_verification === "flagged"
-            ? "Sources did not reconcile within tolerance. Distribution processing is on hold pending review."
-            : "Awaiting one or more production sources for this period."}
+            ? "The available source legs did not reconcile within tolerance. Distribution processing is on hold pending review."
+            : "Awaiting one or more production inputs for this period."}
       </p>
 
       <div className="grid grid-cols-2 gap-4">
         <div>
           <div className="text-xs uppercase tracking-wide text-textMuted">
-            YTD Verified Production
+            Demo-Period Production
           </div>
           <div className="font-heading text-xl text-darkBg mt-1">
             {formatMwh(project.ytd_production_mwh)}

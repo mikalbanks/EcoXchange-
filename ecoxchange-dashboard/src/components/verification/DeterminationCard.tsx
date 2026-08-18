@@ -28,20 +28,20 @@ export function DeterminationCard({ projectId, record }: Props) {
     ? `${month} production is flagged for review.`
     : pending
       ? `${month} production is pending verification.`
-      : `${month} production is verified.`;
+      : `${month} engine status is VERIFIED.`;
 
   const body = flagged
-    ? "The three production sources did not reconcile within the configured tolerance. Distribution processing is on hold while the discrepancy is reviewed."
+    ? "The available production inputs did not reconcile within the configured tolerance. Distribution processing is on hold while the discrepancy and each input's provenance are reviewed."
     : pending
-      ? "One or more production sources have not yet been received for this period. Distribution processing begins once the determination completes."
-      : "Inverter telemetry, utility meter data, and satellite-modeled generation reconciled within the project’s configured tolerance. This period is eligible for distribution processing.";
+      ? "One or more production inputs are unavailable for this period. Distribution processing begins once the determination completes."
+      : "The available production inputs reconciled within the project's configured tolerance. Review the record's source provenance before treating the status as independent verification.";
 
   // Source legs read from the record itself rather than being asserted — a
   // missing utility read is a real state and has to show as one.
   const rows: Array<[string, string]> = [
-    ["Inverter telemetry", record.inverter_kwh > 0 ? "Received" : "Not received"],
-    ["Utility meter", record.utility_kwh != null ? "Received" : "Not received"],
-    ["Satellite model", record.expected_kwh > 0 ? "Complete" : "Incomplete"],
+    ["Inverter leg", record.inverter_kwh > 0 ? "Present" : "Unavailable"],
+    ["Utility leg", record.utility_kwh != null ? "Present" : "Unavailable"],
+    ["Expected model", record.expected_kwh > 0 ? "Complete" : "Incomplete"],
     ["Determination", record.status],
     [
       "Distribution eligibility",

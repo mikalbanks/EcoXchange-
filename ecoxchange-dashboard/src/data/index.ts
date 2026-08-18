@@ -12,7 +12,7 @@ import type {
 } from "../utils/types.js";
 import { supabase, liveMode } from "../lib/supabase.js";
 
-const portfolio = demoPortfolio as Portfolio;
+const simulatedAccountPortfolio = demoPortfolio as Portfolio;
 const verified = demoSavannah as ProjectBundle;
 const flagged = demoSavannahFlagged as ProjectBundle;
 
@@ -82,23 +82,6 @@ export function describeVerificationEvidence(
   };
 }
 
-/**
- * The project any "show me a verification record" entry point lands on — the
- * demo entry card and the sidebar's Verification item both need a concrete
- * project and period, and neither can await a load before rendering a link.
- *
- * Derived from the portfolio fixture rather than hard-coded so the two links
- * cannot drift from the data. Both the verified and flagged Savannah bundles
- * cover the same period range, so this resolves under either scenario.
- */
-export const PRIMARY_DEMO_PROJECT = {
-  id: portfolio.projects[0]?.id ?? "demo-savannah-5mw",
-  latestPeriod: portfolio.projects[0]?.latest_period ?? "2024-12-01",
-} as const;
-
-/** Route to the latest monthly determination for the primary demo project. */
-export const LATEST_VERIFICATION_PATH = `/investor/project/${PRIMARY_DEMO_PROJECT.id}/verification/${PRIMARY_DEMO_PROJECT.latestPeriod}`;
-
 // Investor placeholder constants — Phase 3 reads real production data from
 // Supabase, but the investor-account side (capital deployed, share pct) is
 // still mocked until that layer is built. Same values in demo mode for parity,
@@ -107,19 +90,77 @@ const INVESTOR_SHARE_PCT = DEMO_OFFERING.demo_investor.ownership_pct;
 const INVESTOR_SHARE = INVESTOR_SHARE_PCT / 100;
 const INVESTOR_TOTAL_INVESTED = DEMO_OFFERING.demo_investor.position_value_usd;
 
+/**
+ * The public investor demo must start from a production series that was not
+ * generated from the expected series. PVDAQ 9068 supplies measured inverter
+ * telemetry; NASA POWER + pvlib supplies the independent expected leg. The
+ * account, ownership, and distribution figures remain explicit demo fixtures.
+ */
+function buildMeasuredDemoPortfolio(): Portfolio {
+  const bundle = toProjectBundle();
+  const latest = bundle.verification_records[bundle.verification_records.length - 1];
+  if (!latest) throw new Error("PVDAQ 9068 demo bundle has no verification records");
+
+  return {
+    portfolio: {
+      ...simulatedAccountPortfolio.portfolio,
+      active_projects: 1,
+    },
+    projects: [
+      {
+        id: bundle.project.id,
+        name: bundle.project.name,
+        location: bundle.project.location,
+        capacity_kw: bundle.project.capacity_kw,
+        status: bundle.project.status,
+        latest_verification: latest.status,
+        latest_period: latest.period_start,
+        ytd_production_mwh: bundle.summary.annual_production_mwh,
+        monthly_yield_usd:
+          simulatedAccountPortfolio.portfolio.monthly_yield_usd,
+        investor_share_pct: INVESTOR_SHARE_PCT,
+      },
+    ],
+  };
+}
+
+const measuredDemoPortfolio = buildMeasuredDemoPortfolio();
+
+/**
+ * The project any "show me a verification record" entry point lands on. It is
+ * derived from the default measured portfolio returned by loadPortfolio(), so
+ * the landing page and sidebar cannot drift back to Savannah accidentally.
+ */
+export const PRIMARY_DEMO_PROJECT = {
+  id: measuredDemoPortfolio.projects[0]!.id,
+  latestPeriod: measuredDemoPortfolio.projects[0]!.latest_period,
+} as const;
+
+/** Route to the latest monthly determination for the primary demo project. */
+export const LATEST_VERIFICATION_PATH = `/investor/project/${PRIMARY_DEMO_PROJECT.id}/verification/${PRIMARY_DEMO_PROJECT.latestPeriod}`;
+
 // ─────────────────────────────────────────────────────────────────────────
 // Public API
 // ─────────────────────────────────────────────────────────────────────────
 
-export async function loadPortfolio(): Promise<Portfolio> {
+export async function loadPortfolio(
+  opts: LoadOptions = {},
+): Promise<Portfolio> {
   if (supabase) return loadPortfolioLive();
-  return portfolio;
+  return opts.variant === "flagged"
+    ? simulatedAccountPortfolio
+    : measuredDemoPortfolio;
 }
 
 export async function loadProject(
   id: string,
   opts: LoadOptions = {},
 ): Promise<ProjectBundle | null> {
+  // The investor golden path always resolves the measured asset first. This
+  // also keeps a stale "flagged" presentation preference from making the
+  // project disappear: PVDAQ already contains an observed flagged month.
+  if (id === PVDAQ_9068_PROJECT_ID) return toProjectBundle();
+
   // The flagged demo toggle always reads from the static JSON, even when
   // Supabase is configured — it's a UX demo of the FLAGGED state.
   if (opts.variant === "flagged") {
@@ -127,11 +168,6 @@ export async function loadProject(
       ? flagged
       : null;
   }
-  // PVDAQ 9068 is served from the static bundle in BOTH modes. Its production
-  // leg is measured telemetry, so it is the same data either way, and it stays
-  // reachable before anyone applies supabase/seed/004_pvdaq_9068_measured.sql.
-  // See demo-pvdaq-9068.ts for what each leg is and is not.
-  if (id === PVDAQ_9068_PROJECT_ID) return toProjectBundle();
   if (supabase) return loadProjectLive(id);
   if (id !== "demo-savannah-5mw") return null;
   return verified;

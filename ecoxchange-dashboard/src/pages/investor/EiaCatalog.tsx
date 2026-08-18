@@ -181,11 +181,12 @@ export function EiaCatalog() {
           <p className="border-t border-paleGreen/50 pt-4 text-xs text-textMuted">
             Catalog data: U.S. EIA-923 reported generation ({data.benchmark_year}),
             EIA-860 plant characteristics, and USPVDB geometry. Production expectations
-            verified by the EcoXchange engine {data.engine_version} (pvlib ModelChain,
+            backtested by the EcoXchange engine {data.engine_version} (pvlib ModelChain,
             NASA POWER irradiance). Indicative values are derived from published NREL
             installed-cost benchmarks and state-average PPA rates — they are estimates
             for demonstration, not appraisals, offers to sell, or solicitations. These
-            plants are real EIA-registered facilities; they are not EcoXchange offerings.
+            plants are real EIA-registered facilities, but the annual model comparison
+            is not project-level operating verification. They are not EcoXchange offerings.
           </p>
         </>
       ) : (
@@ -205,8 +206,8 @@ function Header({ total }: { total: number | null }) {
       <h1 className="font-heading text-3xl text-darkBg">Solar Asset Catalog</h1>
       <p className="mt-1 text-textMuted">
         {total != null
-          ? `${total.toLocaleString("en-US")} real U.S. solar plants from federal EIA data — every one production-verified by the EcoXchange engine.`
-          : "Real U.S. solar plants from federal EIA data, production-verified by the EcoXchange engine."}
+          ? `${total.toLocaleString("en-US")} real U.S. solar plants from federal EIA data, each with an EcoXchange annual model backtest.`
+          : "Real U.S. solar plants from federal EIA data with EcoXchange annual model backtests."}
       </p>
     </header>
   );

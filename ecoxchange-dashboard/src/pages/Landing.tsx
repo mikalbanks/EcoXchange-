@@ -38,9 +38,9 @@ export function Landing() {
         Explore production verification in action.
       </h1>
       <p className="relative text-textMuted mt-4 mb-10 text-center max-w-xl text-base leading-relaxed">
-        See how EcoXchange reconciles three independent production sources, issues
-        a monthly determination, and carries that result into investor and
-        developer workflows.
+        Compare measured inverter production with a weather-adjusted NASA POWER
+        model, inspect the provenance of every input, and follow the resulting
+        determination into investor and developer workflows.
       </p>
 
       <div className="relative w-full max-w-3xl space-y-4">
@@ -54,8 +54,8 @@ export function Landing() {
           <ShieldCheck className="h-8 w-8 text-accentBrt" />
           <h2 className="font-heading text-2xl mt-3 text-darkBg">Verification Engine</h2>
           <p className="text-base text-textMuted mt-1">
-            Run a sample monthly reconciliation and inspect a verified or flagged
-            determination.
+            Inspect measured PVDAQ production against a pvlib expectation. The
+            utility proxy is labeled as derived, not presented as a meter reading.
           </p>
           <span className="mt-3 inline-block font-mono text-xs uppercase tracking-wide text-accentBrt">
             Run verification demo →
@@ -71,7 +71,7 @@ export function Landing() {
             <LineChart className="h-7 w-7 text-accentBrt" />
             <h2 className="font-heading text-xl mt-3 text-darkBg">Investor Application</h2>
             <p className="text-base text-textMuted mt-1">
-              See how verified production status informs project reporting and
+              See how source-comparison status informs project reporting and
               distribution eligibility.
             </p>
             <span className="mt-3 inline-block font-mono text-xs uppercase tracking-wide text-medGreen">
@@ -111,8 +111,10 @@ export function Landing() {
       </div>
 
       <p className="relative mt-10 max-w-xl text-center text-sm text-textMuted">
-        This technology demonstration uses simulated project, ownership, and
-        financial data. It does not display an actual offering or investment.
+        This technology demonstration uses measured public PVDAQ production with
+        modeled and derived comparison inputs. Project ownership, account, and
+        financial data are simulated. It does not display an actual offering or
+        investment.
       </p>
       </div>
 

@@ -29,7 +29,8 @@ export function Marketplace() {
       <header>
         <h1 className="font-heading text-3xl text-darkBg">Marketplace</h1>
         <p className="mt-1 text-textMuted">
-          Production-verified solar offerings open to accredited investors.
+          Illustrative solar offerings with source-aware production evidence.
+          Demo listings are not open for investment.
         </p>
       </header>
 

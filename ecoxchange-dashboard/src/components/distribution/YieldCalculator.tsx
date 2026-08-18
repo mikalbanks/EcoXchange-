@@ -215,7 +215,7 @@ export function YieldCalculator() {
 
       <DataSourceAttribution
         sources={[
-          { name: "2024 verified production (demo dataset)", type: "model" },
+          { name: "2024 production input (simulated demo dataset)", type: "model" },
           { name: "Pro-forma PPA economics (modeled)", type: "model" },
         ]}
         engineVersion={ENGINE_VERSION}

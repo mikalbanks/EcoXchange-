@@ -74,11 +74,13 @@ export function ReportThreeSourceDiagram() {
       </div>
 
       <p className="mt-4 text-[10px] leading-relaxed text-textDark">
-        If all three sources agree within tolerance, production is{" "}
+        When all three inputs are independently sourced and agree within
+        tolerance, the engine can return{" "}
         <span className="font-mono font-bold text-medGreen">VERIFIED</span>. If
-        any diverge, the month is{" "}
+        an input diverges, the month is{" "}
         <span className="font-mono font-bold text-flagAmber">FLAGGED</span> for
-        manual review. No distribution occurs until production is verified.
+        manual review. A status without source provenance is only a tolerance
+        result, not proof of independent operating verification.
       </p>
     </div>
   );

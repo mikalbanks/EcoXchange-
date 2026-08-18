@@ -1,6 +1,7 @@
 import { ShieldCheck } from "lucide-react";
 
-// "Production Verified" trust badge — visually distinct from estimated metrics.
+// Status-qualified badge. It deliberately does not claim source independence;
+// the project verification record carries that evidence boundary.
 export function VerifiedBadge({ size = "md" }: { size?: "sm" | "md" }) {
   const pad = size === "sm" ? "px-2.5 py-1 text-xs" : "px-3 py-1.5 text-sm";
   return (
@@ -12,7 +13,7 @@ export function VerifiedBadge({ size = "md" }: { size?: "sm" | "md" }) {
         <span className="relative inline-flex h-2 w-2 rounded-full bg-accentBrt" />
       </span>
       <ShieldCheck className="h-4 w-4" />
-      Production Verified
+      Engine-Qualified Periods
     </span>
   );
 }

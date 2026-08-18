@@ -21,21 +21,20 @@ export function ReportMethodologyPage({
     <ReportPage page={page} total={total}>
       <ReportSectionHeader>HOW VERIFICATION WORKS</ReportSectionHeader>
       <p className="mb-4 text-[10.5px] leading-relaxed text-textDark">
-        EcoXchange's proprietary verification engine reconciles three
-        independent data sources before any investor distribution is
-        triggered:
+        EcoXchange's target verification architecture compares three
+        independently sourced legs before an investor distribution is
+        released:
       </p>
 
       <ReportThreeSourceDiagram />
 
       <p className="mt-4 text-[10.5px] leading-relaxed text-textDark">
         This report uses the satellite irradiance source (NASA POWER) to
-        model expected generation. In live operation, all three sources are
-        active: the developer's existing inverter monitoring portal provides
-        gross production, the utility meter provides independent net export
-        data via Bayou (66% U.S. meter coverage), and satellite data
-        provides the physics-based benchmark. No on-site hardware is
-        required.
+        model expected generation. It does not establish independently sourced
+        inverter or utility evidence unless those inputs are identified in the
+        report. The planned live workflow adds the developer's inverter portal
+        for gross production and a utility-meter connection for net export;
+        satellite data supplies the physics-based benchmark.
       </p>
 
       <ReportSectionHeader>ENGINE VALIDATION</ReportSectionHeader>

@@ -8,14 +8,16 @@ import type { Audience, Scenario } from "../../context/DemoContext.js";
 const SCENARIOS: { value: Scenario; label: string; hint: string; role: Role }[] = [
   {
     value: "verified",
-    label: "Investor views verified project",
-    hint: "Happy path — all months reconciled and verified.",
+    label: "Investor reviews measured production",
+    hint:
+      "PVDAQ inverter telemetry is compared with a NASA POWER model; the utility leg is explicitly labeled as derived.",
     role: "investor",
   },
   {
     value: "flagged",
-    label: "Investor views flagged project",
-    hint: "Shows how the verification engine catches underperformance.",
+    label: "Investor reviews simulated stress case",
+    hint:
+      "A clearly labeled Savannah fixture demonstrates repeated underperformance and the FLAGGED workflow.",
     role: "investor",
   },
 ];

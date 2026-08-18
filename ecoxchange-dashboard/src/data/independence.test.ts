@@ -24,7 +24,12 @@ import {
   PVDAQ_9068_RECORDS,
   toProjectBundle,
 } from "./demo-pvdaq-9068.js";
-import { describeVerificationEvidence, loadProject } from "./index.js";
+import {
+  PRIMARY_DEMO_PROJECT,
+  describeVerificationEvidence,
+  loadPortfolio,
+  loadProject,
+} from "./index.js";
 
 interface Leg {
   inverter: number;
@@ -167,6 +172,37 @@ describe("the measured asset is reachable, not dead data", () => {
         expect(r.inv_vs_expected_pct).toBe(source.inv_vs_expected_pct);
       }
     }
+  });
+});
+
+describe("the deployed investor demo selects the independent production leg", () => {
+  it("uses PVDAQ 9068 for the primary verification route", () => {
+    expect(PRIMARY_DEMO_PROJECT.id).toBe(PVDAQ_9068_PROJECT_ID);
+  });
+
+  it("puts the measured asset first in the static investor portfolio", async () => {
+    const portfolio = await loadPortfolio();
+    expect(portfolio.projects[0]?.id).toBe(PVDAQ_9068_PROJECT_ID);
+  });
+
+  it("does not route investors to a series derived from expected generation", async () => {
+    const portfolio = await loadPortfolio();
+    const primary = await loadProject(portfolio.projects[0]!.id);
+    const rows = primary!.verification_records
+      .filter((r) => r.status !== "pending")
+      .map((r) => ({ inverter: r.inverter_kwh, expected: r.expected_kwh }));
+
+    expect(detectDerivedFromExpected(rows)).toBe(false);
+  });
+
+  it("keeps the circular Savannah fixture behind an explicit stress-case choice", async () => {
+    const stressCase = await loadPortfolio({ variant: "flagged" });
+    const project = stressCase.projects[0]!;
+
+    expect(project.id).toBe("demo-savannah-5mw");
+    expect(describeVerificationEvidence(project.id, "demo").badge).toBe(
+      "SIMULATED COMPARISON",
+    );
   });
 });
 

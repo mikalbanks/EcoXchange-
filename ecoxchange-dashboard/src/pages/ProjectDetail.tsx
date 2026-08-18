@@ -30,6 +30,7 @@ import { formatKwh, formatMonthLong, formatPct } from "../utils/formatters.js";
 import { VerificationReportTemplate } from "../reports/VerificationReportTemplate.js";
 import { useEngineData } from "../hooks/useEngineData.js";
 import { engineParamsForProject, mergeEngineExpected } from "../utils/engine-params.js";
+import { describeVerificationEvidence } from "../data/index.js";
 import type { ProjectBundle, VerificationRecord } from "../utils/types.js";
 
 type ProjectTab = "overview" | "production" | "verification" | "documents";
@@ -43,7 +44,7 @@ const TABS: Array<{ id: ProjectTab; label: string }> = [
 
 export function ProjectDetail() {
   const { id = "" } = useParams();
-  const { getProject, scenario } = useData();
+  const { getProject, scenario, mode } = useData();
   const [bundle, setBundle] = useState<ProjectBundle | null>(null);
   const [tab, setTab] = useState<ProjectTab>("overview");
   // Month picked on the verification timeline; expands the reconciliation
@@ -159,6 +160,10 @@ export function ProjectDetail() {
 
   const { project, verification_records: records, summary } = bundle;
   const latest = records[records.length - 1];
+  const evidence = describeVerificationEvidence(project.id, mode);
+  const evidencePeriod = records.length > 0
+    ? `${formatMonthLong(records[0].period_start)}–${formatMonthLong(latest.period_start)}`
+    : undefined;
   const estIrr = ((summary.total_revenue_estimate * 0.6) / 50_000_000) * 100; // rough placeholder
 
   const nextDist = new Date(`${nextDistributionDate()}T00:00:00`);
@@ -229,9 +234,23 @@ export function ProjectDetail() {
             summary={summary}
             generatedAt={new Date()}
             dataSource={isFromEngine ? "live" : "cached"}
+            evidence={evidence}
           />
         </div>
       ) : null}
+
+      <section
+        className="rounded-xl border border-flagAmber/40 bg-amber-50 p-5"
+        data-testid="project-evidence-disclosure"
+      >
+        <p className="font-mono text-xs font-semibold uppercase tracking-[0.12em] text-flagAmber">
+          {evidence.badge}
+        </p>
+        <h2 className="mt-1 font-heading text-lg text-darkBg">{evidence.title}</h2>
+        <p className="mt-1 max-w-4xl text-sm leading-relaxed text-textMuted">
+          {evidence.description}
+        </p>
+      </section>
 
       {/* Tabbed sections (Spec 03 §5.2) — client-side, no route change. */}
       <div
@@ -364,10 +383,18 @@ export function ProjectDetail() {
             <ProductionChart records={displayRecords} />
             <DataSourceAttribution
               sources={[
-                { name: "NASA POWER", type: "satellite", dateRange: "Jan–Dec 2024" },
-                { name: "EcoXchange Verification Engine", type: "model" },
+                {
+                  name: evidence.sourceNames.inverter,
+                  type: "inverter",
+                  dateRange: evidencePeriod,
+                },
+                {
+                  name: evidence.sourceNames.satellite,
+                  type: "satellite",
+                  dateRange: evidencePeriod,
+                },
               ]}
-              isEstimate
+              isEstimate={evidence.badge !== "PARTIAL REAL DATA"}
               sourceMode={isFromEngine ? "live" : "cached"}
             />
           </div>
@@ -380,7 +407,7 @@ export function ProjectDetail() {
           <div className="bg-white rounded-xl border border-paleGreen/60 p-5">
             <SectionTag>Verification History</SectionTag>
             <p className="mb-4 text-sm text-textMuted">
-              Click a month to open its three-source reconciliation.
+              Click a month to open its source comparison and provenance limits.
             </p>
             <VerificationTimeline
               records={displayRecords}
@@ -399,6 +426,12 @@ export function ProjectDetail() {
                 record={selectedVerification}
                 animate
                 showFlagReasons={selectedVerification.status !== "flagged"}
+                title={evidence.diagramTitle}
+                sourceLabels={{
+                  inverter: evidence.sourceNames.inverter,
+                  utility: evidence.sourceNames.utility,
+                  expected: evidence.sourceNames.satellite,
+                }}
               />
               {selectedVerification.status === "flagged" ? (
                 <FlagReasonCard record={selectedVerification} />
@@ -441,16 +474,16 @@ export function ProjectDetail() {
             </span>
           </div>
           <dl className="mt-4 space-y-2 text-sm">
-            <Row label="Inverter" value={formatKwh(latest.inverter_kwh)} />
+            <Row label={evidence.sourceNames.inverter} value={formatKwh(latest.inverter_kwh)} />
             <Row
-              label="Utility"
+              label={evidence.sourceNames.utility}
               value={
                 latest.utility_kwh !== null
                   ? formatKwh(latest.utility_kwh)
                   : "—"
               }
             />
-            <Row label="Expected" value={formatKwh(latest.expected_kwh)} />
+            <Row label={evidence.sourceNames.satellite} value={formatKwh(latest.expected_kwh)} />
             <Row
               label="Deviation"
               value={formatPct(latest.inv_vs_expected_pct)}

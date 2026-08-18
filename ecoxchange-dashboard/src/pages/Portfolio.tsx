@@ -109,8 +109,7 @@ export function Portfolio() {
   }
 
   const firstName = user.name.split(" ")[0];
-  const verifiedMonthMwh =
-    latest && latest.status === "verified" ? latest.inverter_kwh / 1000 : null;
+  const latestMonthMwh = latest ? latest.inverter_kwh / 1000 : null;
   const ytdMwh = data.projects.reduce((s, p) => s + p.ytd_production_mwh, 0);
   const distributionStatus =
     latest?.status === "verified"
@@ -150,12 +149,12 @@ export function Portfolio() {
           connectDistance={100}
         />
         <div className="relative">
-          <SectionTag>Your Verified Solar Portfolio</SectionTag>
+          <SectionTag>Investor Demo</SectionTag>
           <h1 className="font-heading text-3xl text-darkBg">
             Good to see you, {firstName}.
           </h1>
           <p className="text-textMuted mt-1">
-            Independent monthly production verification for your U.S.
+            Production evidence with source-level provenance for your U.S.
             solar-project interests · {data.portfolio.active_projects} active
             project{data.portfolio.active_projects === 1 ? "" : "s"}
           </p>
@@ -165,11 +164,11 @@ export function Portfolio() {
               below for the amounts. */}
           <div className="mt-6 grid grid-cols-2 gap-3 sm:gap-4 xl:grid-cols-4">
             <StatCard
-              label="Verified Production"
+              label="Latest Inverter Production"
               value={
-                verifiedMonthMwh != null ? (
+                latestMonthMwh != null ? (
                   <AnimatedNumber
-                    value={verifiedMonthMwh}
+                    value={latestMonthMwh}
                     format={(n) => `${n.toFixed(1)} MWh`}
                     startOnView
                   />
@@ -180,7 +179,7 @@ export function Portfolio() {
               sublabel={latest ? formatMonthLong(latest.period_start) : undefined}
             />
             <StatCard
-              label="YTD Verified Production"
+              label={`${latest?.period_start.slice(0, 4) ?? "Period"} Inverter Production`}
               value={
                 <AnimatedNumber
                   value={ytdMwh}
@@ -209,6 +208,22 @@ export function Portfolio() {
         </div>
       </section>
 
+      {mode === "demo" ? (
+        <section
+          className="rounded-xl border border-flagAmber/40 bg-amber-50 p-5"
+          data-testid="portfolio-evidence-disclosure"
+        >
+          <p className="font-mono text-xs font-semibold uppercase tracking-[0.12em] text-flagAmber">
+            {scenario === "flagged" ? "Simulated stress case" : "Partial real data"}
+          </p>
+          <p className="mt-2 max-w-4xl text-sm leading-relaxed text-textDark">
+            {scenario === "flagged"
+              ? "All production inputs in this Savannah stress case are simulated to demonstrate repeated underperformance and the FLAGGED workflow. Account, ownership, distribution, and financial figures are also simulated."
+              : "Inverter production is measured NREL PVDAQ telemetry and expected production is modeled from NASA POWER. The utility leg is derived from the inverter series. Account, ownership, distribution, and financial figures on this investor screen are simulated."}
+          </p>
+        </section>
+      ) : null}
+
       {latest ? (
         <DeterminationCard
           projectId={data.projects[0]!.id}
@@ -224,11 +239,11 @@ export function Portfolio() {
           <Leaf className="h-5 w-5 text-medGreen" />
           <span>
             <span className="block font-medium text-darkBg">
-              Environmental impact calculated from verified production
+              Illustrative impact from engine-qualified periods
             </span>
             <span className="text-sm text-textMuted">
-              CO₂ avoided and equivalent-impact estimates are calculated only from
-              production periods that have completed verification.
+              CO₂ avoided and equivalent-impact estimates use periods with a
+              VERIFIED engine status; source provenance remains visible on each record.
             </span>
           </span>
         </span>
@@ -344,7 +359,7 @@ export function Portfolio() {
             Browse Available Projects
           </span>
           <span className="text-sm">
-            Explore production-verified solar offerings
+            Explore illustrative solar offering workflows
           </span>
         </span>
         <ArrowRight className="h-5 w-5" />

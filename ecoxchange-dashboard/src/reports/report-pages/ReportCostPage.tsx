@@ -95,7 +95,7 @@ export function ReportCostPage({
           <br />
           <br />
           Powered by EcoXchange Verification Engine {model.engineVersion} ·
-          Three-source reconciliation: inverter telemetry · utility meter
+          Target three-source architecture: inverter telemetry · utility meter
           data · satellite irradiance
         </ReportDisclaimer>
       </div>

@@ -1,8 +1,11 @@
 import { renderToStaticMarkup } from "react-dom/server";
-import { readFileSync } from "node:fs";
 import { describe, expect, it } from "vitest";
 import { describeVerificationEvidence } from "../data/index.js";
-import { PVDAQ_9068_PROJECT_ID } from "../data/demo-pvdaq-9068.js";
+import {
+  PVDAQ_9068_PROJECT_ID,
+  toProjectBundle,
+} from "../data/demo-pvdaq-9068.js";
+import { VerificationReportTemplate } from "../reports/VerificationReportTemplate.js";
 import { ReconciliationDiagram } from "./ReconciliationDiagram.js";
 import type { VerificationRecord } from "../utils/types.js";
 
@@ -36,12 +39,8 @@ function renderEvidence(id: string, mode: "demo" | "supabase") {
 
 describe("ReconciliationDiagram evidence labels", () => {
   it("uses the evidence-aware satellite label in the irradiance section", () => {
-    const source = readFileSync(
-      new URL("../pages/VerificationDetail.tsx", import.meta.url),
-      "utf8",
-    );
-    expect(source).toContain("{evidence.sourceNames.satellite}");
-    expect(source).not.toContain('>NASA POWER</dd>');
+    const html = renderEvidence(PVDAQ_9068_PROJECT_ID, "demo");
+    expect(html).toContain("NASA POWER Model Input");
   });
 
   it("retains conservative generic labels when no evidence descriptor is supplied", () => {
@@ -71,5 +70,24 @@ describe("ReconciliationDiagram evidence labels", () => {
     expect(html).toContain("Stored Source Comparison");
     expect(html).toContain("Utility Meter (Basis Unstated)");
     expect(html).toContain("Inverter Telemetry (Basis Unstated)");
+  });
+
+  it("carries the PVDAQ evidence limit into the downloadable report", () => {
+    const bundle = toProjectBundle();
+    const evidence = describeVerificationEvidence(PVDAQ_9068_PROJECT_ID, "demo");
+    const html = renderToStaticMarkup(
+      <VerificationReportTemplate
+        project={bundle.project}
+        records={bundle.verification_records}
+        summary={bundle.summary}
+        generatedAt={new Date("2026-08-18T00:00:00Z")}
+        evidence={evidence}
+      />,
+    );
+
+    expect(html).toContain("Production Evidence Report");
+    expect(html).toContain("PARTIAL REAL DATA");
+    expect(html).toContain("Utility Proxy (Derived)");
+    expect(html).not.toContain("three independent measurements");
   });
 });

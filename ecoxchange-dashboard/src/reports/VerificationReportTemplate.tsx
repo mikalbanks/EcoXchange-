@@ -4,6 +4,7 @@ import { disclaimerConfig } from "../compliance/config/disclaimerConfig.js";
 import { ENGINE_VERSION } from "../config/engine.js";
 import benchmarkData, { targetSegmentWeightedMad } from "../data/benchmark.js";
 import { formatMonthShort, formatUsd } from "../utils/formatters.js";
+import type { VerificationEvidence } from "../data/index.js";
 import type { ProjectMeta, ProjectSummary, VerificationRecord } from "../utils/types.js";
 
 export interface ReportInput {
@@ -13,6 +14,7 @@ export interface ReportInput {
   generatedAt: Date;
   /** "live" = expected series from the deployed pvlib engine at generation time. */
   dataSource?: "live" | "cached";
+  evidence: VerificationEvidence;
 }
 
 // Count-weighted mean absolute deviation over the 1–5 and 5–20 MW buckets of
@@ -41,7 +43,7 @@ function Page({ children, footer = true, page, total }: {
       <div className="flex-1">{children}</div>
       {footer ? (
         <div className="mt-8 flex items-center justify-between border-t border-paleGreen pt-3 font-mono text-[9px] uppercase tracking-[0.08em] text-textMuted">
-          <span>EcoXchange · Production Verification Report</span>
+          <span>EcoXchange · Production Evidence Report</span>
           <span>
             Engine {ENGINE_VERSION} · Page {page} of {total}
           </span>
@@ -69,7 +71,7 @@ function SpecRow({ label, value }: { label: string; value: string }) {
 }
 
 /**
- * The 6-page Production Verification Report, laid out as fixed A4 pages for
+ * The 6-page Production Evidence Report, laid out as fixed A4 pages for
  * the html2canvas -> jsPDF pipeline (src/reports/pdf.ts). Rendered in an
  * offscreen container only while a download is in flight.
  */
@@ -79,6 +81,7 @@ export function VerificationReportTemplate({
   summary,
   generatedAt,
   dataSource = "cached",
+  evidence,
 }: ReportInput) {
   const totalExpected = records.reduce((s, r) => s + r.expected_kwh, 0);
   const totalInverter = records.reduce((s, r) => s + r.inverter_kwh, 0);
@@ -108,7 +111,7 @@ export function VerificationReportTemplate({
 
           <div className="mt-40">
             <p className="font-mono text-[12px] uppercase tracking-[0.2em] text-medGreen">
-              Production Verification Report
+              Production Evidence Report
             </p>
             <div className="mt-2 h-px w-64 bg-medGreen" />
             <h1 className="mt-10 font-heading text-[40px] italic leading-tight text-darkBg">
@@ -125,6 +128,15 @@ export function VerificationReportTemplate({
             <p>Report Period: {periodLabel}</p>
             <p>Generated: {fmtDate(generatedAt)}</p>
             <p>Engine Version: {ENGINE_VERSION} (pvlib ModelChain)</p>
+          </div>
+
+          <div className="mt-8 border border-flagAmber/50 bg-amber-50 px-4 py-3">
+            <p className="font-mono text-[9px] font-semibold uppercase tracking-[0.08em] text-flagAmber">
+              {evidence.badge}
+            </p>
+            <p className="mt-1 text-[10px] leading-relaxed text-textDark">
+              {evidence.description}
+            </p>
           </div>
 
           <p className="mt-14 font-mono text-[10px] uppercase tracking-[0.08em] text-olive">
@@ -169,7 +181,7 @@ export function VerificationReportTemplate({
             </div>
             <div>
               <p className="font-mono text-[22px] tabular-nums text-accentBrt">{fmtInt(totalInverter / 1000)}</p>
-              <p className="mt-1 font-mono text-[9px] uppercase tracking-[0.06em] text-paleGreen">Verified MWh</p>
+              <p className="mt-1 font-mono text-[9px] uppercase tracking-[0.06em] text-paleGreen">Inverter-Leg MWh</p>
             </div>
             <div>
               <p className="font-mono text-[22px] tabular-nums text-accentBrt">{fmtSigned(meanDev)}</p>
@@ -200,11 +212,10 @@ export function VerificationReportTemplate({
           Across the {records.length}-month report period, inverter-metered production tracked
           the physics-model expectation with a mean deviation of {fmtSigned(meanDev)} and a mean
           absolute deviation of {meanAbsDev.toFixed(1)}%, within the engine's ±15% verification
-          band in {verifiedCount} of {records.length} months. Three-source reconciliation
-          (inverter telemetry, utility meter, modeled expectation) produced a{" "}
-          {verifiedCount === records.length ? "VERIFIED verdict for every month" : `VERIFIED verdict in ${verifiedCount} months`} of
-          the period. All figures are methodology-documented estimates derived from the sources
-          listed in the attribution section.
+          band in {verifiedCount} of {records.length} months. The engine produced a{" "}
+          {verifiedCount === records.length ? "VERIFIED status for every month" : `VERIFIED status in ${verifiedCount} months`} of
+          the period. A status means the provided inputs met the configured tolerances; it does
+          not by itself prove that those inputs were independent measurements. {evidence.description}
         </p>
       </Page>
 
@@ -216,7 +227,7 @@ export function VerificationReportTemplate({
         <table className="mt-6 w-full border-collapse">
           <thead>
             <tr className="bg-cream">
-              {["Month", "Expected kWh", "Inverter kWh", "Utility kWh", "INV→EXP", "Verdict"].map((h) => (
+              {["Month", "Expected kWh", "Inverter kWh", "Utility leg kWh", "INV→EXP", "Verdict"].map((h) => (
                 <th
                   key={h}
                   className="border-b border-paleGreen px-2 py-2 text-left font-mono text-[9px] uppercase tracking-[0.04em] text-textMuted"
@@ -273,7 +284,7 @@ export function VerificationReportTemplate({
             <span className="inline-block h-2.5 w-2.5 bg-paleGreen" /> Expected (model)
           </span>
           <span className="inline-flex items-center gap-1.5">
-            <span className="inline-block h-2.5 w-2.5 bg-medGreen" /> Verified (inverter)
+            <span className="inline-block h-2.5 w-2.5 bg-medGreen" /> Inverter leg
           </span>
         </div>
       </Page>
@@ -284,19 +295,18 @@ export function VerificationReportTemplate({
         <h2 className="mt-1 font-heading text-[26px] italic text-darkBg">Verification Methodology</h2>
 
         <p className="mt-5 text-[12px] leading-relaxed">
-          EcoXchange's proprietary verification engine reconciles three independent measurements
-          of the same month of production. The inverter reports what the system generated; the
-          utility meter reports what was delivered to the grid; and a physics model computes what
-          the system should have produced given the weather that actually occurred. A month is
-          VERIFIED only when all three sources agree within engineering tolerances — a
-          disagreement flags the month for review instead of silently passing it through.
+          EcoXchange's comparison engine evaluates the available inverter, utility, and
+          expected-generation legs for the same production period. A VERIFIED status means the
+          values supplied to the engine agreed within the configured tolerances. It does not by
+          itself establish that every leg was independently measured. This report therefore
+          states each leg's provenance and evidence limits alongside the determination.
         </p>
 
         <Tag>Data Sources</Tag>
         <dl className="mt-2 max-w-md">
-          <SpecRow label="Satellite Irradiance" value="NASA POWER" />
-          <SpecRow label="Production" value="Inverter telemetry" />
-          <SpecRow label="Delivery" value="Utility meter" />
+          <SpecRow label="Expected Generation" value={evidence.sourceNames.satellite} />
+          <SpecRow label="Production" value={evidence.sourceNames.inverter} />
+          <SpecRow label="Utility Leg" value={evidence.sourceNames.utility} />
         </dl>
 
         <Tag>Physics Model</Tag>
@@ -317,7 +327,7 @@ export function VerificationReportTemplate({
         <Tag>Engine Configuration</Tag>
         <dl className="mt-2 max-w-md">
           <SpecRow label="Engine Version" value={`${ENGINE_VERSION} (pvlib ModelChain)`} />
-          <SpecRow label="Verdict Basis" value="Three-source reconciliation" />
+          <SpecRow label="Evidence Level" value={evidence.badge} />
           <SpecRow label="Estimates" value="Methodology-documented" />
         </dl>
 
@@ -352,14 +362,14 @@ export function VerificationReportTemplate({
           <Tag>Revenue Estimate</Tag>
           <h2 className="mt-1 font-heading text-[26px] italic text-darkBg">Revenue Estimate</h2>
           <p className="mt-3 text-[12px] text-textMuted">
-            Verified production × contracted PPA rate (${project.ppa_rate_per_kwh.toFixed(3)}/kWh).
+            Inverter-leg production × illustrative PPA rate (${project.ppa_rate_per_kwh.toFixed(3)}/kWh).
             Forward years assume a 2.0% annual escalator. Estimates only — not a guarantee.
           </p>
 
           <table className="mt-5 w-full border-collapse">
             <thead>
               <tr className="bg-cream">
-                {["Month", "Verified kWh", "Revenue", "Cumulative"].map((h) => (
+                {["Month", "Inverter-Leg kWh", "Revenue", "Cumulative"].map((h) => (
                   <th
                     key={h}
                     className="border-b border-paleGreen px-2 py-2 text-left font-mono text-[9px] uppercase tracking-[0.04em] text-textMuted"
@@ -415,10 +425,13 @@ export function VerificationReportTemplate({
 
         <Tag>Data Attribution</Tag>
         <dl className="mt-2 max-w-md">
-          <SpecRow label="NASA POWER" value={`Satellite irradiance · ${periodLabel}`} />
-          <SpecRow label="Inverter Telemetry" value={`Production · ${periodLabel}`} />
-          <SpecRow label="Utility Meter" value={`Delivery · ${periodLabel}`} />
+          <SpecRow label="Expected Generation" value={`${evidence.sourceNames.satellite} · ${periodLabel}`} />
+          <SpecRow label="Production" value={`${evidence.sourceNames.inverter} · ${periodLabel}`} />
+          <SpecRow label="Utility Leg" value={`${evidence.sourceNames.utility} · ${periodLabel}`} />
         </dl>
+        <p className="mt-3 font-mono text-[9px] leading-relaxed text-textMuted">
+          {evidence.description}
+        </p>
         <p className="mt-3 font-mono text-[9px] text-medGreen">
           § Methodology-documented estimates · EcoXchange proprietary verification engine{" "}
           {ENGINE_VERSION} ·{" "}

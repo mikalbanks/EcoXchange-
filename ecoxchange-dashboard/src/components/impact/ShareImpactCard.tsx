@@ -70,7 +70,7 @@ export function ShareImpactCard({ impact }: { impact: ImpactMetrics }) {
         className="mx-auto max-w-md rounded-2xl bg-darkBg p-8 text-white"
       >
         <div className="text-sm font-semibold uppercase tracking-wide text-accentBrt">
-          EcoXchange — Production-Verified Impact
+          EcoXchange — Illustrative Impact Estimate
         </div>
         <div className="mt-5 text-paleGreen">My solar investment has avoided</div>
         <div className="mt-2 font-mono text-4xl font-bold text-white">
@@ -82,8 +82,9 @@ export function ShareImpactCard({ impact }: { impact: ImpactMetrics }) {
           or powering {fmtHomes(impact.homes_powered_years)} homes for a year 🏠
         </div>
         <div className="mt-6 border-t border-white/15 pt-4 text-sm text-paleGreen">
-          <span className="text-accentBrt">●</span> Verified by 3-source
-          reconciliation
+          <span className="text-accentBrt">●</span> Based on periods with a
+          VERIFIED engine status
+          <div className="mt-1 text-white/70">Demo estimate · review source provenance</div>
           <div className="mt-1 text-white/70">ecoxchange.net</div>
         </div>
       </div>
