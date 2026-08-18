@@ -18,10 +18,10 @@ export interface DisclaimerConfig {
 export const disclaimerConfig: Record<ComplianceMode, DisclaimerConfig> = {
   demo: {
     yieldBasis:
-      "methodology-documented estimates based on backtest simulations using historical weather and production data",
+      "simulated estimates shown only inside explicitly labeled fixture-backed workflows",
     blocks: [
-      "This platform is a technology demonstration. No securities are being offered or sold. All data displayed is simulated using historical backtest scenarios and does not represent any actual investment, project, or financial instrument.",
-      "EcoXchange is in development. The verification engine, distribution mechanics, and investor dashboard shown here represent the intended product architecture. Actual product features, terms, and availability are subject to change.",
+      "This platform is a technology demonstration. No securities are being offered or sold. The primary PVDAQ scenario combines measured public inverter data, a modeled NASA POWER expectation, and a derived utility proxy; the Savannah stress scenario and all financial figures are simulated and labeled.",
+      "EcoXchange is in development. Release 1 demonstrates production verification and provenance. Offering, ownership, legal-document, and distribution execution are unavailable in the primary pilot path.",
       "No investment advice is provided. Nothing on this platform constitutes an offer to sell, a solicitation of an offer to buy, or a recommendation of any security or investment product.",
     ],
   },

@@ -1,6 +1,12 @@
 import { createContext, useContext, useMemo } from "react";
 import type { ReactNode } from "react";
-import { loadPortfolio, loadProject, loadVerification } from "../data/index.js";
+import {
+  describeTransactionPolicy,
+  loadPortfolio,
+  loadProject,
+  loadVerification,
+} from "../data/index.js";
+import type { TransactionPolicy } from "../data/index.js";
 import { liveMode } from "../lib/supabase.js";
 import { useDemo } from "./DemoContext.js";
 import type {
@@ -18,6 +24,7 @@ import type {
 interface DataContextValue {
   mode: "supabase" | "demo";
   scenario: "verified" | "flagged";
+  transactionPolicy: TransactionPolicy;
   getPortfolio: () => Promise<Portfolio>;
   getProject: (id: string) => Promise<ProjectBundle | null>;
   getVerification: (
@@ -41,9 +48,12 @@ export function DataProvider({ children }: { children: ReactNode }) {
     const useFlagged = scenario === "flagged" && !liveMode;
     const variant = useFlagged ? "flagged" : "verified";
 
+    const mode = liveMode ? "supabase" : "demo";
+
     return {
-      mode: liveMode ? "supabase" : "demo",
+      mode,
       scenario,
+      transactionPolicy: describeTransactionPolicy(mode, scenario),
       getProject: (id) => loadProject(id, { variant }),
       getVerification: (id, period) =>
         loadVerification(id, period, { variant }),

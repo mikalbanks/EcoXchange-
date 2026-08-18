@@ -99,11 +99,13 @@ export const PVDAQ_9068_PROJECT_ID = PVDAQ_9068.project.id;
  * Adapt the measured bundle to the shared `ProjectBundle` shape so existing
  * project surfaces can render it without special-casing.
  *
- * Two fields in `ProjectMeta` have no measured counterpart in the PVDAQ record
+ * Several fields in `ProjectMeta` have no measured counterpart in the PVDAQ record
  * and are carried as MODELLING INPUTS, not site facts: `module_efficiency`
  * (CdTe nameplate assumption) and `system_losses` (the PVWatts reference stack
  * Engine A ran with). `tilt_deg` is 0 because the array tracks — the tilt varies
- * through the day and a fixed number would misdescribe it.
+ * through the day and a fixed number would misdescribe it. Financial fields are
+ * intentionally zeroed in the public adapter because this research asset has no
+ * EcoXchange offering or contract attached.
  */
 export function toProjectBundle(): ProjectBundle {
   const p = PVDAQ_9068.project;
@@ -120,8 +122,8 @@ export function toProjectBundle(): ProjectBundle {
       module_efficiency: 0.18,
       system_losses: 0.14,
       commissioning_date: p.commissioning_date,
-      offtake_type: "ppa",
-      ppa_rate_per_kwh: p.ppa_rate_per_kwh,
+      offtake_type: "not_attached",
+      ppa_rate_per_kwh: 0,
       status: "active",
     },
     verification_records: PVDAQ_9068_RECORDS.map(toVerificationRecord),
@@ -130,8 +132,8 @@ export function toProjectBundle(): ProjectBundle {
       capacity_factor_pct: PVDAQ_9068.summary.capacity_factor_pct,
       months_verified: PVDAQ_9068.summary.months_verified,
       months_flagged: PVDAQ_9068.summary.months_flagged,
-      total_revenue_estimate: PVDAQ_9068.summary.total_revenue_estimate,
-      ppa_rate: PVDAQ_9068.summary.ppa_rate,
+      total_revenue_estimate: 0,
+      ppa_rate: 0,
     },
   };
 }
@@ -149,6 +151,6 @@ function toVerificationRecord(r: MeasuredVerificationRecord): VerificationRecord
     util_vs_expected_pct: r.util_vs_expected_pct,
     status: r.status,
     flag_reasons: r.flag_reasons,
-    estimated_revenue: r.estimated_revenue,
+    estimated_revenue: 0,
   };
 }

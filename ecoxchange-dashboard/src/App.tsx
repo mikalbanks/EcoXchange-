@@ -41,13 +41,6 @@ const DemoBacktestResults = lazy(() =>
   })),
 );
 
-// Multi-project portfolio simulation (Spec 5) — lazy for the Leaflet chunk.
-const ProjectsOverview = lazy(() =>
-  import("./pages/ProjectsOverview.js").then((m) => ({
-    default: m.ProjectsOverview,
-  })),
-);
-
 // EIA fleet benchmark presentation (Spec 4).
 const Benchmark = lazy(() =>
   import("./pages/Benchmark.js").then((m) => ({ default: m.Benchmark })),
@@ -86,6 +79,10 @@ import { DemoModeBanner } from "./compliance/components/DemoModeBanner.js";
 import { RegDBanner } from "./compliance/components/RegDBanner.js";
 import { DisclaimerFooter } from "./compliance/components/DisclaimerFooter.js";
 import { PageTransition } from "./components/shared/PageTransition.js";
+import {
+  PilotTransactionGate,
+  ReleaseOneBoundary,
+} from "./compliance/components/PilotTransactionGate.js";
 
 // Public/developer routes keep the original top-bar Header layout.
 // Compliance banners at top, disclaimer footer at bottom; no accreditation
@@ -123,7 +120,14 @@ export function App() {
         {/* Investor experience — role-based shell */}
         <Route element={<AppLayout />}>
           <Route path="/investor" element={<Portfolio />} />
-          <Route path="/investor/marketplace" element={<Marketplace />} />
+          <Route
+            path="/investor/marketplace"
+            element={
+              <PilotTransactionGate surface="Offering marketplace">
+                <Marketplace />
+              </PilotTransactionGate>
+            }
+          />
           <Route
             path="/investor/catalog"
             element={
@@ -134,18 +138,38 @@ export function App() {
           />
           <Route
             path="/investor/offering/:slug"
-            element={<OfferingSummary />}
+            element={
+              <PilotTransactionGate surface="Offering detail">
+                <OfferingSummary />
+              </PilotTransactionGate>
+            }
           />
-          <Route path="/investor/calculator" element={<Calculator />} />
+          <Route
+            path="/investor/calculator"
+            element={
+              <PilotTransactionGate surface="Investment calculator">
+                <Calculator />
+              </PilotTransactionGate>
+            }
+          />
           <Route path="/investor/impact" element={<Impact />} />
-          <Route path="/investor/distributions" element={<Distributions />} />
+          <Route
+            path="/investor/distributions"
+            element={
+              <PilotTransactionGate surface="Distribution history">
+                <Distributions />
+              </PilotTransactionGate>
+            }
+          />
           {/* USDC distribution simulation — verification -> oracle -> settlement */}
           <Route
             path="/distribute"
             element={
-              <Suspense fallback={null}>
-                <Distribute />
-              </Suspense>
+              <PilotTransactionGate surface="Distribution execution">
+                <Suspense fallback={null}>
+                  <Distribute />
+                </Suspense>
+              </PilotTransactionGate>
             }
           />
           <Route path="/investor/project/:id" element={<ProjectDetail />} />
@@ -155,11 +179,19 @@ export function App() {
           />
           <Route
             path="/investor/project/:id/yields"
-            element={<YieldHistory />}
+            element={
+              <PilotTransactionGate surface="Yield history" projectScoped>
+                <YieldHistory />
+              </PilotTransactionGate>
+            }
           />
           <Route
             path="/investor/project/:id/documents"
-            element={<Documents />}
+            element={
+              <PilotTransactionGate surface="Offering document vault" projectScoped>
+                <Documents />
+              </PilotTransactionGate>
+            }
           />
           {/* Spec 18 § 2.8 — on-chain record. The spec names /project/:id/chain;
               LegacyProjectRedirect below already rewrites that here, so the
@@ -173,29 +205,42 @@ export function App() {
             <Route
               path="/investor/project/:id/chain"
               element={
-                <Suspense fallback={null}>
-                  <ChainView />
-                </Suspense>
+                <PilotTransactionGate surface="On-chain ownership record" projectScoped>
+                  <Suspense fallback={null}>
+                    <ChainView />
+                  </Suspense>
+                </PilotTransactionGate>
               }
             />
           ) : null}
           <Route path="/investor/settings" element={<Settings />} />
-          <Route path="/investor/onboard" element={<InvestorOnboarding />} />
+          <Route
+            path="/investor/onboard"
+            element={
+              <PilotTransactionGate surface="Investor onboarding">
+                <InvestorOnboarding />
+              </PilotTransactionGate>
+            }
+          />
           {/* Smart Contract Explorer (Spec 08) — read-only on-chain transparency */}
           <Route
             path="/explorer"
             element={
-              <Suspense fallback={null}>
-                <Explorer />
-              </Suspense>
+              <PilotTransactionGate surface="Ownership record explorer">
+                <Suspense fallback={null}>
+                  <Explorer />
+                </Suspense>
+              </PilotTransactionGate>
             }
           />
           <Route
             path="/explorer/:contractType"
             element={
-              <Suspense fallback={null}>
-                <ExplorerContract />
-              </Suspense>
+              <PilotTransactionGate surface="Ownership contract explorer">
+                <Suspense fallback={null}>
+                  <ExplorerContract />
+                </Suspense>
+              </PilotTransactionGate>
             }
           />
         </Route>
@@ -205,7 +250,9 @@ export function App() {
           path="/onboarding"
           element={
             <HeaderLayout>
-              <SuitabilityOnboarding />
+              <PilotTransactionGate surface="Investment suitability workflow">
+                <SuitabilityOnboarding />
+              </PilotTransactionGate>
             </HeaderLayout>
           }
         />
@@ -254,9 +301,10 @@ export function App() {
           path="/projects"
           element={
             <HeaderLayout>
-              <Suspense fallback={null}>
-                <ProjectsOverview />
-              </Suspense>
+              <ReleaseOneBoundary
+                title="Multi-project portfolio simulator is not part of the pilot path"
+                description="Release 1 uses one measured PVDAQ research project and one explicitly selected Savannah stress scenario. The separate eight-project fixture is disabled so it cannot be mistaken for the active investor dataset."
+              />
             </HeaderLayout>
           }
         />
@@ -286,9 +334,11 @@ export function App() {
           path="/developer/loi"
           element={
             <HeaderLayout>
-              <Suspense fallback={null}>
-                <DeveloperLOI />
-              </Suspense>
+              <PilotTransactionGate surface="Letter of intent builder">
+                <Suspense fallback={null}>
+                  <DeveloperLOI />
+                </Suspense>
+              </PilotTransactionGate>
             </HeaderLayout>
           }
         />

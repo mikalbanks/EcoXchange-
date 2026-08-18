@@ -8,60 +8,40 @@ import {
 
 const FAQS = [
   {
-    q: "What is an EcoXchange Solar Note (ESN)?",
-    a: "A project-level equity interest in the LLC that owns one permitted U.S. solar project. One project, one SPV — not a pooled fund. A permissioned digital record may support ownership administration, but it does not create a separate cryptocurrency product; the offering documents govern the investment.",
+    q: "What is available in the current pilot?",
+    a: "A production-verification workflow that compares available project evidence, exposes source provenance, and issues a verified, flagged, or pending engine determination. Release 1 does not include an open offering, investment acceptance, ownership administration, or payment execution.",
   },
   {
-    q: "What is the minimum investment?",
-    a: "$10,000 per offering. The instrument is available only to verified accredited investors under Reg D 506(c).",
+    q: "Is an EcoXchange offering open now?",
+    a: "No. The public product is a pilot and demonstration environment. It does not accept funds or investment commitments and does not create a legal agreement.",
   },
   {
-    q: "What is the target return?",
-    a: "Each offering's documents may present project-specific target returns based on its PPA, operating assumptions, capital structure, tax-credit treatment, and risks. Targets are estimates, not promises, and no current pipeline figure should be read as an available investment return.",
+    q: "What sources does the engine compare?",
+    a: "The target design uses inverter telemetry, utility-originated evidence, and modeled expected generation. Each leg is labeled measured, modeled, derived, simulated, or unconfirmed. Availability and independence are evaluated per project and period.",
   },
   {
-    q: "How are distributions verified?",
-    a: "Every month our verification engine reconciles inverter telemetry, utility-meter data, and modeled expected generation. Agreement within the project's tolerances produces a VERIFIED determination and marks the project distribution-eligible. A FLAGGED or incomplete result remains on hold for review.",
+    q: "Does VERIFIED mean every source was independently measured?",
+    a: "No. VERIFIED means the values available to the engine reconciled within the configured tolerance. The provenance panel must still be reviewed. A derived, simulated, or unconfirmed leg is not promoted to an independent measurement.",
   },
   {
-    q: "How often do I get paid?",
-    a: "The target is to begin eligible distribution processing within 72 hours after all required month-end source data is received and confirmed. Flagged, pending, and incomplete records are excluded from that target until review is complete. Payment method and timing are governed by each offering's documents.",
+    q: "Does a determination trigger a distribution?",
+    a: "Not in Release 1. The measured PVDAQ demo has no offering or distribution attached. A separate Savannah stress scenario can illustrate transaction UX, but every financial and payment value there is explicitly simulated.",
   },
   {
-    q: "What fees do investors pay?",
-    a: "Zero direct fees. All EcoXchange fees — 3% origination, $15,000 setup, 0.5% AUA servicing — are paid by the project SPV. Investor returns are quoted net of these fees.",
+    q: "What happens when utility data is unavailable?",
+    a: "The record remains pending or uses a clearly disclosed derived proxy for comparison, depending on the demonstration. A proxy is never labeled as a utility measurement and does not establish three-source independence.",
   },
   {
-    q: "What if the project underperforms?",
-    a: "NREL's 2020 fleet study found that real-world solar plants degrade faster than many projections. EcoXchange surfaces this monthly so investors see underperformance in near-real time. Distributions follow verified production.",
+    q: "Are pilot pricing and turnaround times published?",
+    a: "No. Data access, timing, responsibilities, and any commercial terms are confirmed separately in writing after a project-fit review. The public site is not a quote or financing commitment.",
   },
   {
-    q: "How is my investment taxed?",
-    a: "K-1 pass-through. The SPV's tax attributes flow through to investors via an annual Schedule K-1. EcoXchange coordinates K-1 preparation; investors should consult their own tax advisor.",
+    q: "What legal or investment structure will a future product use?",
+    a: "No structure is offered through this pilot. Any future securities product, eligibility rules, fees, tax treatment, documents, and payment mechanics require project-specific legal and operating approval before publication.",
   },
   {
-    q: "Can I sell before maturity?",
-    a: "Not at launch. Phase 2 of the roadmap is listing ESNs on a FINRA-regulated ATS, enabling peer-to-peer secondary trading between verified accredited investors. Plan to hold to maturity until secondary liquidity is operational.",
-  },
-  {
-    q: "What is the asset life?",
-    a: "20–25 years, aligned with standard PPA tenor and module manufacturer warranties. NREL field data shows meaningful output retained at year 25 for well-maintained crystalline-silicon systems.",
-  },
-  {
-    q: "How is my ownership recorded?",
-    a: "The transfer agent maintains the official ownership record. EcoXchange may use a permissioned digital account to support administration, reporting, and eligible distributions, but your rights come from the project LLC interest and its offering documents.",
-  },
-  {
-    q: "What stops a developer from gaming the meter?",
-    a: "The reconciliation engine. Inverter data comes from the project monitoring system, utility-meter data comes from the serving utility, and modeled expected generation is derived from NASA/NREL weather inputs and project specifications. Disagreement triggers a FLAGGED status and pauses distribution eligibility until review.",
-  },
-  {
-    q: "Is the ITC included?",
-    a: "Where applicable, federal incentives and depreciation are reflected in the deal structure and offering documents. Legislative risk disclosure appears in every offering package.",
-  },
-  {
-    q: "What is the legal structure?",
-    a: "Reg D 506(c) private placement to verified accredited investors. General solicitation is permitted, and securities counsel reviews every offering before launch.",
+    q: "How can a project operator start?",
+    a: "Submit a permitted 1–20 MW U.S. solar project for a pilot-fit review. Do not send API keys through the preview form; source access and security requirements are agreed separately.",
   },
 ];
 
@@ -99,9 +79,8 @@ export default function FaqPage() {
           </div>
 
           <p className="mt-10 font-mono text-[0.6rem] text-muted-foreground/70">
-            All financial figures, target returns, and tax-treatment descriptions are illustrative and subject to
-            counsel review. They will be restated, with full risk factors, in each project's offering documents at
-            launch. No offering is currently open.
+            Pilot information only. No offering is currently open, and no investment, payment, or legal agreement
+            is created through this site.
           </p>
         </section>
       </main>

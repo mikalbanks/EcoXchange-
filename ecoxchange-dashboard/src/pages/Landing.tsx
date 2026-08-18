@@ -71,8 +71,8 @@ export function Landing() {
             <LineChart className="h-7 w-7 text-accentBrt" />
             <h2 className="font-heading text-xl mt-3 text-darkBg">Investor Application</h2>
             <p className="text-base text-textMuted mt-1">
-              See how source-comparison status informs project reporting and
-              distribution eligibility.
+              See how source-comparison status informs project reporting while
+              transaction workflows remain disabled for the research dataset.
             </p>
             <span className="mt-3 inline-block font-mono text-xs uppercase tracking-wide text-medGreen">
               View investor experience →
@@ -111,10 +111,10 @@ export function Landing() {
       </div>
 
       <p className="relative mt-10 max-w-xl text-center text-sm text-textMuted">
-        This technology demonstration uses measured public PVDAQ production with
-        modeled and derived comparison inputs. Project ownership, account, and
-        financial data are simulated. It does not display an actual offering or
-        investment.
+        The primary scenario uses measured public PVDAQ production with modeled
+        and derived comparison inputs. It has no project ownership, account, or
+        financial data attached. The separate Savannah stress scenario is fully
+        simulated and explicitly labeled. No actual offering or investment is displayed.
       </p>
       </div>
 

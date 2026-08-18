@@ -18,16 +18,16 @@ const fmtPlants = PLANTS_TESTED.toLocaleString("en-US");
 // the /benchmark page and the exported PDF read. Do not re-type a number here.
 const STATS = [
   {
-    num: "3 independent sources",
-    label: "Inverter · utility meter · satellite model",
+    num: "3 evidence roles",
+    label: "Measured · modeled · derived status shown per source",
   },
   {
     num: "Monthly determination",
     label: "Verified · flagged · pending",
   },
   {
-    num: "Distribution gate",
-    label: "Payment proceeds only after verification",
+    num: "Verification-only pilot",
+    label: "No offering or payment execution in the current demo",
   },
   {
     num: `${fmtPlants} plants tested`,
@@ -76,7 +76,7 @@ const METHOD_CARDS = [
   {
     num: "04",
     title: "Verification determination",
-    body: "A traceable monthly result that gates distribution processing.",
+    body: "A traceable monthly result designed to support a future, separately approved transaction workflow.",
     highlight: true,
   },
 ] as const;
@@ -100,13 +100,13 @@ const BENCHMARK_FIGURES = [
   },
 ] as const;
 
-const FEE_ROWS = [
-  { label: "Origination fee (one-time, at close)", eco: "3% of equity raised", other: "4–8% placement + 1–3% warrants" },
-  { label: "Setup fee (one-time, at close)", eco: "$15,000 fixed", other: "$80K–$250K legal + admin" },
-  { label: "Servicing fee (recurring)", eco: "0.5% of AUA / year", other: "$10K–$25K / year per project" },
-  { label: "Investor load charge", eco: "None", other: "0–5% upfront" },
-  { label: "Production verification", eco: "Production-based, included", other: "$5K–$15K / year third-party" },
-  { label: "Distribution cadence", eco: "Monthly, automated", other: "Quarterly, manual, 30–90d" },
+const PILOT_ROWS = [
+  { label: "Production backtest", eco: "Included", other: "Source coverage reviewed" },
+  { label: "Per-source provenance", eco: "Included", other: "Measured · modeled · derived · simulated" },
+  { label: "Utility evidence", eco: "Availability-dependent", other: "A proxy is disclosed, never promoted" },
+  { label: "Open securities offering", eco: "Not included", other: "Requires counsel and operating approvals" },
+  { label: "Investment acceptance", eco: "Disabled", other: "No funds or commitments accepted" },
+  { label: "Distribution execution", eco: "Disabled", other: "Simulation only in the labeled stress scenario" },
 ] as const;
 
 export default function LandingPage() {
@@ -145,17 +145,16 @@ export default function LandingPage() {
       <section>
         <div className="hero">
           <div className="hero-text">
-            <div className="label hero-eyebrow">Independent Solar Production Verification</div>
+            <div className="label hero-eyebrow">Source-Aware Solar Production Verification</div>
             <h1 className="hero-headline">
               Light,
               <br />
               <em>accounted for.</em>
             </h1>
             <p className="hero-sub">
-              EcoXchange independently verifies how much electricity a solar project produces each month. Our
-              engine reconciles inverter telemetry, utility meter data, and satellite-modeled generation to issue
-              a verified, flagged, or pending determination — with investor distributions released only after
-              verification.
+              EcoXchange compares available inverter telemetry, utility evidence, and satellite-modeled generation
+              to issue a verified, flagged, or pending engine determination. Every source is labeled by basis. The
+              current pilot demo is production-verification only and does not execute investments or distributions.
             </p>
             <div className="hero-actions">
               <Link href="/verification" className="btn btn-primary">
@@ -201,8 +200,8 @@ export default function LandingPage() {
         </div>
         <p className="problem-intro">
           Investors, developers, and asset managers often rely on a single monitoring feed or periodic
-          self-reporting. EcoXchange closes that trust gap with an independent, repeatable monthly determination
-          at the project level.
+          self-reporting. EcoXchange addresses that trust gap with a repeatable monthly determination and an
+          explicit provenance label for every input.
         </p>
         <div className="problem-cards">
           {PROBLEM_CARDS.map((card) => (
@@ -219,13 +218,13 @@ export default function LandingPage() {
         <div className="method-inner">
           <div className="section-header">
             <span className="label section-num">§ II</span>
-            <h2 className="section-title">Three sources. One monthly determination.</h2>
+            <h2 className="section-title">Three evidence roles. One monthly determination.</h2>
           </div>
           <p className="method-intro">
             The engine compares the project&apos;s inverter telemetry and utility meter data with expected
             generation modeled from NASA and NREL weather inputs. Agreement within the project&apos;s configured
-            tolerance produces a verified result. Missing or inconsistent data produces a pending or flagged
-            result for review.
+            tolerance produces a verified engine result. Missing or inconsistent data produces a pending or flagged
+            result for review. A derived or simulated leg is disclosed and is not counted as an independent measurement.
           </p>
           <div className="method-cards">
             {METHOD_CARDS.map((card) => (
@@ -253,17 +252,17 @@ export default function LandingPage() {
         <div className="investors-grid">
           <div className="investors-body">
             <p>
-              EcoXchange administers private placements of equity interests in individual U.S. solar-project
-              entities to verified accredited investors under Reg D 506(c). Each offering remains tied to one
-              project and one auditable production record.
+              EcoXchange is preparing a verification-led pilot for individual U.S. solar projects. After pilot
+              validation and required legal, compliance, and operating approvals, the planned product may support
+              project-level capital formation tied to an auditable production record.
             </p>
             <p className="investors-note">
-              The investment is an equity interest governed by the offering documents. Any permissioned digital
-              record supports ownership administration; it is not a cryptocurrency product or a separate
-              investment.
+              This demo does not display an open offering, accept investments, or execute distributions. Any future
+              investment would be governed by counsel-approved offering documents; a permissioned digital record
+              would support ownership administration rather than create a separate investment.
             </p>
-            <Link href="/market" className="btn btn-primary">
-              Explore Project Applications →
+            <Link href="/develop" className="btn btn-primary">
+              View Pilot Scope →
             </Link>
           </div>
           <div className="investors-stats">
@@ -306,34 +305,32 @@ export default function LandingPage() {
         <div className="fee-inner">
           <div className="section-header">
             <span className="label section-num">§ V</span>
-            <h2 className="section-title">How the fee is structured.</h2>
+            <h2 className="section-title">Release 1 pilot boundaries.</h2>
           </div>
           <div className="fee-grid">
             <div className="fee-body">
               <p>
-                EcoXchange charges three fees, <strong>all borne by the project SPV — not by investors directly</strong>.
-                Investor returns are quoted net of these fees.
+                Release 1 is a <strong>verification-led pilot</strong>. It evaluates production evidence and makes
+                source provenance visible; it is not a securities offering or financing commitment.
               </p>
               <p>
-                A <strong>3% origination fee</strong> and a fixed <strong>$15,000 setup fee</strong> are paid by the SPV
-                at offering close from the capital raised. Together they replace the 4–8% placement-agent commission and
-                $80K+ in soft costs typical of a traditional Reg D 506(c) raise.
+                Pilot timing, data-access responsibilities, and any commercial terms are confirmed separately in
+                writing after a fit review. The public site does not publish a price quote or time-to-capital promise.
               </p>
               <p>
-                After close, a <strong>0.5% annual servicing fee on assets under administration</strong> is billed monthly
-                to the SPV — covering production verification, smart-contract distribution infrastructure, investor
-                reporting, and K-1 coordination throughout the life of the offering.
+                Offering, subscription, ownership, legal-document, and payment execution remain disabled until the
+                necessary authoritative systems, partners, and approvals are in place.
               </p>
             </div>
             <div>
               <div className="fee-table">
-                <div className="fee-table-head">Fee Comparison</div>
+                <div className="fee-table-head">Pilot Scope</div>
                 <div className="fee-row fee-row-labels">
                   <span />
-                  <span>EcoXchange</span>
-                  <span>Fund / REIT / Reg CF</span>
+                  <span>Release 1</span>
+                  <span>Boundary</span>
                 </div>
-                {FEE_ROWS.map((row) => (
+                {PILOT_ROWS.map((row) => (
                   <div key={row.label} className="fee-row">
                     <span>{row.label}</span>
                     <span className="fee-yes">{row.eco}</span>
@@ -341,9 +338,9 @@ export default function LandingPage() {
                   </div>
                 ))}
                 <div className="fee-row fee-total">
-                  <span>Borne by</span>
-                  <span>Project SPV (not investors)</span>
-                  <span className="fee-no">Investor + SPV — varies</span>
+                  <span>Pilot objective</span>
+                  <span>Verify the evidence workflow</span>
+                  <span className="fee-no">Do not imply a live transaction</span>
                 </div>
               </div>
             </div>
@@ -353,13 +350,13 @@ export default function LandingPage() {
 
       <section id="access" className="access">
         <div className="access-inner">
-          <div className="label">Request Access · Reg D 506(c) · Accredited Investors Only</div>
+          <div className="label">Request Pilot Access · Partners and Project Operators</div>
           <h2 className="access-headline">A short conversation.</h2>
           <div className="access-tracks">
             <div className="access-track">
-              <p>Explore how verified production supports project-level private offerings.</p>
+              <p>Review the verification workflow and discuss pilot requirements.</p>
               <Link href={REQUEST_ACCESS.href} className="btn btn-lime">
-                Request Investor Access
+                Request Pilot Access
               </Link>
             </div>
             <div className="access-track">
@@ -374,9 +371,8 @@ export default function LandingPage() {
             </div>
           </div>
           <p className="access-legal">
-            No offering is currently open. This page is for informational and pipeline-building purposes only
-            and does not constitute a solicitation of securities. EcoXchange offerings are restricted to verified
-            accredited investors under Reg D 506(c).
+            No offering is currently open. This page is for pilot evaluation and informational purposes only; it
+            does not accept investments, execute payments, or constitute a solicitation of securities.
           </p>
         </div>
       </section>
@@ -385,9 +381,9 @@ export default function LandingPage() {
         <div className="map-ticks map-ticks-bottom" aria-hidden="true" />
         <div className="footer-inner">
           <span className="footer-brand">EcoXchange</span>
-          <span className="footer-meta">Reg D 506(c) · Private Placements · © MMXXVI</span>
+          <span className="footer-meta">Verification-Led Pilot · © MMXXVI</span>
           <span className="footer-meta">
-            Inverter × Utility Meter × Satellite Model · Auditable · Hardware-Free
+            Inverter × Utility Evidence × Satellite Model · Source-Labeled
           </span>
         </div>
       </footer>

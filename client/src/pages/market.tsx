@@ -2,7 +2,6 @@ import { useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Link } from "wouter";
 import { Header } from "@/components/header";
-import { InvestorOnboardingWizard } from "@/components/investor-onboarding-wizard";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -98,11 +97,11 @@ export default function PublicMarketPage() {
       <main className="public-main">
         <section className="public-hero public-hero-split">
           <div>
-            <p className="public-eyebrow">Project marketplace</p>
+            <p className="public-eyebrow">Illustrative project research</p>
             <h1 className="public-title">
-              Review projects,
+              Review source-labeled projects,
               <br />
-              <em>before an offering opens.</em>
+              <em>without implying an offering.</em>
             </h1>
             <p className="public-copy">
               Explore an illustrative pipeline of project candidates and market comparisons. No project shown here
@@ -110,7 +109,7 @@ export default function PublicMarketPage() {
             </p>
             <div className="public-actions">
               <a href="#onboard" className="public-btn public-btn-primary">
-                Join the investor waitlist
+                Request a pilot briefing
               </a>
               <a href="#pipeline" className="public-btn public-btn-outline">
                 Browse current pipeline →
@@ -123,16 +122,16 @@ export default function PublicMarketPage() {
           <aside className="public-hero-aside">
             <div className="public-mini-stat-grid">
               <div className="public-mini-stat">
-                <span className="public-mini-stat-value">506(c)</span>
-                <span className="public-mini-stat-label">Verified accredited investors only</span>
+                <span className="public-mini-stat-value">Research</span>
+                <span className="public-mini-stat-label">No offering attached</span>
               </div>
               <div className="public-mini-stat">
-                <span className="public-mini-stat-value">$10K</span>
-                <span className="public-mini-stat-label">Target minimum investment per offering</span>
+                <span className="public-mini-stat-value">$0</span>
+                <span className="public-mini-stat-label">Funds accepted through this site</span>
               </div>
               <div className="public-mini-stat">
-                <span className="public-mini-stat-value">Monthly</span>
-                <span className="public-mini-stat-label">Distribution eligibility after verified production</span>
+                <span className="public-mini-stat-value">Disabled</span>
+                <span className="public-mini-stat-label">Subscription and payment execution</span>
               </div>
             </div>
           </aside>
@@ -141,13 +140,15 @@ export default function PublicMarketPage() {
         <section id="onboard" className="public-section scroll-mt-24">
           <div className="public-section-header">
             <span className="public-section-label">§ I</span>
-            <h2 className="public-section-title">Begin onboarding before the next offering opens.</h2>
+            <h2 className="public-section-title">Request a pilot briefing.</h2>
           </div>
           <p className="public-section-copy">
-            Preview five future steps: accreditation, identity verification, ownership-record setup, subscription,
-            and funding. Completing this preview does not create an account or reserve an investment.
+            Investor onboarding, subscription, funding, and ownership setup are not available in Release 1. A pilot
+            briefing covers the verification workflow, evidence requirements, and current product boundaries.
           </p>
-          <InvestorOnboardingWizard />
+          <a className="public-btn public-btn-primary mt-5 inline-flex" href="mailto:contact@ecoxchange.net?subject=EcoXchange%20pilot%20briefing">
+            Contact EcoXchange
+          </a>
         </section>
 
         <section id="pipeline" className="public-section public-section-tight scroll-mt-24">

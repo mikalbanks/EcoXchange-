@@ -108,10 +108,10 @@ export function LiveProductionMeter({
   return (
     <section
       className="border border-darkBg/10 bg-white p-5"
-      aria-label="Live production meter"
+      aria-label="Illustrative production gauge"
       data-testid="live-production-meter"
     >
-      <SectionTag>Live Production</SectionTag>
+      <SectionTag>Illustrative Production Gauge</SectionTag>
       <h2 className="font-heading text-xl text-darkBg">{projectName}</h2>
 
       {isNight ? (
@@ -208,7 +208,7 @@ export function LiveProductionMeter({
       <DataSourceAttribution
         sources={[
           { name: "Simulated (solar-position model)", type: "model" },
-          { name: "Real-time via SolarEdge API when project is onboarded", type: "inverter" },
+          { name: "Planned SolarEdge connector (not connected)", type: "inverter" },
         ]}
         isEstimate
       />

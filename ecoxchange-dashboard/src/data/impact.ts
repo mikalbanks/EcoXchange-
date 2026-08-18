@@ -1,14 +1,16 @@
 import { supabase } from "../lib/supabase.js";
 import { computeImpact } from "../utils/impact-calculator.js";
 import { STATE_TO_EGRID, EPA_CONSTANTS } from "../config/epa-constants.js";
-import demoImpactJson from "./demo-impact.json";
+import demoSavannahFlagged from "./demo-savannah-flagged.json";
+import { PVDAQ_9068_PROJECT_ID, toProjectBundle } from "./demo-pvdaq-9068.js";
 import type {
   ImpactMetrics,
   ImpactView,
   MonthlyImpactPoint,
 } from "../types/impact.js";
+import type { ProjectBundle } from "../utils/types.js";
 
-const demoImpact = demoImpactJson as ImpactView;
+const stressBundle = demoSavannahFlagged as ProjectBundle;
 
 interface DbProject {
   id: string;
@@ -59,11 +61,39 @@ function impactInputFromRecords(records: DbRecord[], state_code: string) {
   };
 }
 
+function impactViewFromBundle(bundle: ProjectBundle): ImpactView {
+  const records: DbRecord[] = bundle.verification_records.map((record) => ({
+    status: record.status,
+    period_start: record.period_start,
+    inverter_kwh: record.inverter_kwh,
+  }));
+  const state = deriveStateFromCoords(
+    bundle.project.latitude,
+    bundle.project.longitude,
+  );
+  const metrics = computeImpact(impactInputFromRecords(records, state));
+  const factor = metrics.egrid_factor_used;
+  return {
+    ...metrics,
+    monthly_breakdown: records
+      .filter((record) => record.status === "verified")
+      .map((record) => ({
+        period: record.period_start.slice(0, 7),
+        verified_kwh: record.inverter_kwh ?? 0,
+        co2_kg: (record.inverter_kwh ?? 0) * factor,
+      })),
+  };
+}
+
 // Per-project impact (Spec 08 getProjectImpact, adapted to the app's client).
 export async function getProjectImpact(
   projectId: string,
 ): Promise<ImpactMetrics | null> {
-  if (!supabase) return demoImpact;
+  if (!supabase) {
+    if (projectId === PVDAQ_9068_PROJECT_ID) return impactViewFromBundle(toProjectBundle());
+    if (projectId === stressBundle.project.id) return impactViewFromBundle(stressBundle);
+    return null;
+  }
   const { data: project } = await supabase
     .from("projects")
     .select("latitude, longitude, name")
@@ -81,8 +111,14 @@ export async function getProjectImpact(
 
 // Portfolio-level view consumed by the Impact page: aggregate every active
 // project's verified production + a combined monthly timeline.
-export async function getImpactView(): Promise<ImpactView | null> {
-  if (!supabase) return demoImpact;
+export async function getImpactView(
+  opts: { variant?: "verified" | "flagged" } = {},
+): Promise<ImpactView | null> {
+  if (!supabase) {
+    return impactViewFromBundle(
+      opts.variant === "flagged" ? stressBundle : toProjectBundle(),
+    );
+  }
 
   const { data: projects } = await supabase
     .from("projects")

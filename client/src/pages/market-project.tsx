@@ -137,9 +137,9 @@ export default function MarketProjectPage() {
                   </div>
                   {data.source === "PROJECT" && (
                     <div className="public-mini-stat">
-                      <Link href={`/auth/login?redirect=/investor/deals/${id}`} className="public-btn public-btn-primary w-full">
-                        Open deal room
-                      </Link>
+                      <span className="block border border-border bg-muted/40 px-4 py-3 text-center text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+                        Research view · no deal room
+                      </span>
                     </div>
                   )}
                 </div>

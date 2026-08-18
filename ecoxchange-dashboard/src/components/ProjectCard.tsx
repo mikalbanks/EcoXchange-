@@ -5,7 +5,13 @@ import { VerificationBadge } from "./VerificationBadge.js";
 import { YieldDisclosure } from "../compliance/components/YieldDisclosure.js";
 import { formatMonthLong, formatMwh, formatUsd } from "../utils/formatters.js";
 
-export function ProjectCard({ project }: { project: PortfolioProject }) {
+export function ProjectCard({
+  project,
+  showSimulatedFinance,
+}: {
+  project: PortfolioProject;
+  showSimulatedFinance: boolean;
+}) {
   return (
     <div className="bg-white rounded-xl shadow-sm border border-paleGreen/60 p-4 sm:p-6 flex flex-col gap-4 transition-transform transition-shadow duration-150 hover:-translate-y-0.5 hover:shadow-md">
       <div className="flex flex-wrap items-start justify-between gap-3">
@@ -27,9 +33,9 @@ export function ProjectCard({ project }: { project: PortfolioProject }) {
       {/* Say what the status means, not just what it is. */}
       <p className="text-sm text-textDark">
         {project.latest_verification === "verified"
-          ? "The available source legs are within tolerance. Open the record to review provenance before relying on the status."
+          ? `The available source legs are within tolerance. Open the record to review provenance before relying on the status.${showSimulatedFinance ? " The simulated distribution workflow is eligible." : " No transaction is attached."}`
           : project.latest_verification === "flagged"
-            ? "The available source legs did not reconcile within tolerance. Distribution processing is on hold pending review."
+            ? `The available source legs did not reconcile within tolerance.${showSimulatedFinance ? " The simulated distribution workflow is on hold." : " No transaction is attached."}`
             : "Awaiting one or more production inputs for this period."}
       </p>
 
@@ -44,14 +50,18 @@ export function ProjectCard({ project }: { project: PortfolioProject }) {
         </div>
         <div>
           <div className="text-xs uppercase tracking-wide text-textMuted">
-            Latest Distribution
+            {showSimulatedFinance ? "Simulated Distribution" : "Evidence Scope"}
           </div>
           <div className="font-heading text-xl text-darkBg mt-1">
-            <YieldDisclosure
-              value={formatUsd(project.monthly_yield_usd)}
-              type="cash_distribution"
-              basis="modeled"
-            />
+            {showSimulatedFinance ? (
+              <YieldDisclosure
+                value={formatUsd(project.monthly_yield_usd)}
+                type="cash_distribution"
+                basis="modeled"
+              />
+            ) : (
+              "Production only"
+            )}
           </div>
         </div>
       </div>

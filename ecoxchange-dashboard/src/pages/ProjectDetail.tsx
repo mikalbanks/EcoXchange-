@@ -30,7 +30,11 @@ import { formatKwh, formatMonthLong, formatPct } from "../utils/formatters.js";
 import { VerificationReportTemplate } from "../reports/VerificationReportTemplate.js";
 import { useEngineData } from "../hooks/useEngineData.js";
 import { engineParamsForProject, mergeEngineExpected } from "../utils/engine-params.js";
-import { describeVerificationEvidence } from "../data/index.js";
+import {
+  describeTransactionPolicy,
+  describeVerificationEvidence,
+} from "../data/index.js";
+import { TransactionBoundaryNotice } from "../compliance/components/PilotTransactionGate.js";
 import type { ProjectBundle, VerificationRecord } from "../utils/types.js";
 
 type ProjectTab = "overview" | "production" | "verification" | "documents";
@@ -160,6 +164,8 @@ export function ProjectDetail() {
 
   const { project, verification_records: records, summary } = bundle;
   const latest = records[records.length - 1];
+  const transactionPolicy = describeTransactionPolicy(mode, scenario, project.id);
+  const showSimulatedFinance = transactionPolicy.state === "simulated";
   const evidence = describeVerificationEvidence(project.id, mode);
   const evidencePeriod = records.length > 0
     ? `${formatMonthLong(records[0].period_start)}–${formatMonthLong(latest.period_start)}`
@@ -189,22 +195,22 @@ export function ProjectDetail() {
           </p>
         </div>
         <div className="flex flex-wrap items-center gap-2 self-start">
-          <Link
+          {showSimulatedFinance ? <Link
             to={`/investor/project/${project.id}/yields`}
             className="inline-flex items-center gap-1.5 rounded-md border border-paleGreen/60 bg-white px-3 py-2 text-sm font-medium text-medGreen hover:bg-cream transition-colors duration-150"
           >
             <LineChart className="h-4 w-4" /> Yield History
-          </Link>
-          <Link
+          </Link> : null}
+          {showSimulatedFinance ? <Link
             to={`/investor/project/${project.id}/documents`}
             className="inline-flex items-center gap-1.5 rounded-md border border-paleGreen/60 bg-white px-3 py-2 text-sm font-medium text-medGreen hover:bg-cream transition-colors duration-150"
           >
             <FileText className="h-4 w-4" /> Documents
-          </Link>
+          </Link> : null}
           {/* Spec 18 § 2.8 — on-chain record, linked from the verification
               surface. Hidden when the route is not registered; a visible link to
               an unregistered route is just a 404. */}
-          {CHAIN_VIEW_ENABLED ? (
+          {CHAIN_VIEW_ENABLED && showSimulatedFinance ? (
           <Link
             to={`/investor/project/${project.id}/chain`}
             className="inline-flex items-center gap-1.5 rounded-md border border-paleGreen/60 bg-white px-3 py-2 text-sm font-medium text-medGreen hover:bg-cream transition-colors duration-150"
@@ -278,12 +284,12 @@ export function ProjectDetail() {
 
       {tab === "overview" && (
         <div className="space-y-8">
-          {/* Next-distribution countdown */}
-          <div className="inline-flex items-center gap-2 border border-paleGreen bg-paleGreen/30 px-4 py-2 font-mono text-xs text-darkBg">
+          {/* Transaction timing exists only inside the explicit simulation. */}
+          {showSimulatedFinance ? <div className="inline-flex items-center gap-2 border border-paleGreen bg-paleGreen/30 px-4 py-2 font-mono text-xs text-darkBg">
             <span aria-hidden className="h-2 w-2 rounded-full bg-accentBrt animate-pulse" />
             Next distribution in {daysToDist} day{daysToDist === 1 ? "" : "s"} ·{" "}
             {nextDist.toLocaleDateString("en-US", { month: "short", day: "numeric" })}
-          </div>
+          </div> : null}
 
           {/* Live production gauge (simulated; differentiation spec §2) */}
           <LiveProductionMeter
@@ -318,7 +324,7 @@ export function ProjectDetail() {
                 />
               }
             />
-            <StatCard
+            {showSimulatedFinance ? <StatCard
               label="Est. IRR"
               value={
                 <ProjectionDisclosure context="Modeled from backtest production and placeholder capital assumptions">
@@ -326,7 +332,7 @@ export function ProjectDetail() {
                 </ProjectionDisclosure>
               }
               sublabel="modeled, illustrative"
-            />
+            /> : <StatCard label="Evidence Scope" value="Production only" sublabel="no offering attached" />}
           </div>
 
           {/* System specifications (mono) + location mini-map */}
@@ -339,7 +345,11 @@ export function ProjectDetail() {
                 <SpecRow label="Module Efficiency" value={`${(project.module_efficiency * 100).toFixed(0)}%`} />
                 <SpecRow label="System Losses" value={`${(project.system_losses * 100).toFixed(0)}%`} />
                 <SpecRow label="Commissioned" value={project.commissioning_date} />
-                <SpecRow label="PPA Rate" value={`$${project.ppa_rate_per_kwh.toFixed(3)}/kWh`} />
+                {showSimulatedFinance ? (
+                  <SpecRow label="Illustrative PPA Rate" value={`$${project.ppa_rate_per_kwh.toFixed(3)}/kWh`} />
+                ) : (
+                  <SpecRow label="Transaction Data" value="Not attached" />
+                )}
                 <SpecRow
                   label="Coordinates"
                   value={`${project.latitude.toFixed(3)}, ${project.longitude.toFixed(3)}`}
@@ -361,15 +371,21 @@ export function ProjectDetail() {
         <div className="rounded-xl border border-paleGreen/60 bg-white p-5">
           <SectionTag>Documents</SectionTag>
           <p className="mt-1 text-sm text-textMuted">
-            Offering documents, verification reports, and statements for this
-            project live in the document vault.
+            {showSimulatedFinance
+              ? "Simulated offering documents, verification reports, and statements are available in the fixture-backed vault."
+              : "No offering documents or investor statements are attached to this research dataset."}
           </p>
-          <Link
+          {showSimulatedFinance ? <Link
             to={`/investor/project/${project.id}/documents`}
             className="mt-3 inline-flex min-h-[44px] items-center gap-1.5 font-medium text-medGreen hover:text-darkBg"
           >
             <FileText className="h-4 w-4" /> Open document vault →
-          </Link>
+          </Link> : null}
+          {!showSimulatedFinance ? (
+            <div className="mt-4">
+              <TransactionBoundaryNotice surface="Offering documents" compact policy={transactionPolicy} />
+            </div>
+          ) : null}
         </div>
       )}
 
@@ -443,12 +459,16 @@ export function ProjectDetail() {
         </div>
       )}
 
-      {tab === "production" && (
+      {tab === "production" && showSimulatedFinance && (
         <div>
           <h2 className="font-heading text-xl text-darkBg mb-3">Monthly Distributions</h2>
           <YieldTable projectId={project.id} records={records} />
         </div>
       )}
+
+      {tab === "production" && !showSimulatedFinance ? (
+        <TransactionBoundaryNotice surface="Monthly distributions" compact policy={transactionPolicy} />
+      ) : null}
     </div>
   );
 

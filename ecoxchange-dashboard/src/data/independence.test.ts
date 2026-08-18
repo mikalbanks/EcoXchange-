@@ -26,10 +26,13 @@ import {
 } from "./demo-pvdaq-9068.js";
 import {
   PRIMARY_DEMO_PROJECT,
+  describeDeterminationConsequence,
+  describeTransactionPolicy,
   describeVerificationEvidence,
   loadPortfolio,
   loadProject,
 } from "./index.js";
+import { getImpactView } from "./impact.js";
 
 interface Leg {
   inverter: number;
@@ -185,6 +188,42 @@ describe("the deployed investor demo selects the independent production leg", ()
     expect(portfolio.projects[0]?.id).toBe(PVDAQ_9068_PROJECT_ID);
   });
 
+  it("does not attach Savannah financial fixtures to the measured portfolio", async () => {
+    const portfolio = await loadPortfolio();
+    expect(portfolio.portfolio).toMatchObject({
+      total_invested: 0,
+      monthly_yield_usd: 0,
+      lifetime_yield_usd: 0,
+    });
+    expect(portfolio.projects[0]).toMatchObject({
+      monthly_yield_usd: 0,
+      investor_share_pct: 0,
+    });
+  });
+
+  it("removes offering and revenue assumptions from the public PVDAQ bundle", () => {
+    const bundle = toProjectBundle();
+    expect(bundle.project.offtake_type).toBe("not_attached");
+    expect(bundle.project.ppa_rate_per_kwh).toBe(0);
+    expect(bundle.summary.total_revenue_estimate).toBe(0);
+    expect(bundle.verification_records.every((r) => r.estimated_revenue === 0)).toBe(true);
+  });
+
+  it("derives the default impact view from PVDAQ instead of a standalone fixture", async () => {
+    const bundle = toProjectBundle();
+    const verifiedRecords = bundle.verification_records.filter(
+      (record) => record.status === "verified",
+    );
+    const expectedKwh = verifiedRecords.reduce(
+      (sum, record) => sum + record.inverter_kwh,
+      0,
+    );
+    const impact = await getImpactView();
+
+    expect(impact?.verified_kwh).toBe(expectedKwh);
+    expect(impact?.period_start).toBe(verifiedRecords[0]?.period_start);
+  });
+
   it("does not route investors to a series derived from expected generation", async () => {
     const portfolio = await loadPortfolio();
     const primary = await loadProject(portfolio.projects[0]!.id);
@@ -203,6 +242,8 @@ describe("the deployed investor demo selects the independent production leg", ()
     expect(describeVerificationEvidence(project.id, "demo").badge).toBe(
       "SIMULATED COMPARISON",
     );
+    expect(stressCase.portfolio.total_invested).toBeGreaterThan(0);
+    expect(describeTransactionPolicy("demo", "flagged").state).toBe("simulated");
   });
 });
 
@@ -212,6 +253,11 @@ describe("verification evidence disclosures", () => {
     expect(evidence.badge).toBe("PARTIAL REAL DATA");
     expect(evidence.description).toContain("utility leg is derived");
     expect(evidence.sourceNames.utility).toContain("Derived");
+    expect(evidence.sourceBasis).toEqual({
+      inverter: "measured",
+      utility: "derived",
+      satellite: "modeled",
+    });
   });
 
   it("does not present the Savannah fixture as independent verification", () => {
@@ -224,6 +270,66 @@ describe("verification evidence disclosures", () => {
     const evidence = describeVerificationEvidence("some-live-project", "supabase");
     expect(evidence.badge).toBe("DATABASE RECORD");
     expect(evidence.description).toContain("does not identify");
+    expect(Object.values(evidence.sourceBasis)).toEqual([
+      "unconfirmed",
+      "unconfirmed",
+      "unconfirmed",
+    ]);
+  });
+
+  it("exposes a non-empty name and basis for every source leg", () => {
+    const cases = [
+      describeVerificationEvidence(PVDAQ_9068_PROJECT_ID, "demo"),
+      describeVerificationEvidence("demo-savannah-5mw", "demo"),
+      describeVerificationEvidence("database-project", "supabase"),
+    ];
+
+    for (const evidence of cases) {
+      expect(Object.values(evidence.sourceNames).every((name) => name.length > 0)).toBe(true);
+      expect(Object.values(evidence.sourceBasis).every((basis) => basis.length > 0)).toBe(true);
+    }
+  });
+});
+
+describe("Release 1 transaction boundary", () => {
+  const measured = describeTransactionPolicy("demo", "verified");
+  const stress = describeTransactionPolicy("demo", "flagged");
+
+  it("fails closed for the measured and database-backed paths", () => {
+    expect(measured.state).toBe("disabled");
+    expect(describeTransactionPolicy("supabase", "verified").state).toBe("disabled");
+    expect(describeTransactionPolicy("supabase", "flagged").state).toBe("disabled");
+  });
+
+  it("permits financial fixtures only in the explicit stress scenario", () => {
+    expect(stress.state).toBe("simulated");
+    expect(stress.description).toContain("static fixtures");
+    expect(
+      describeTransactionPolicy("demo", "flagged", PVDAQ_9068_PROJECT_ID).state,
+    ).toBe("disabled");
+    expect(
+      describeTransactionPolicy("demo", "flagged", "demo-savannah-5mw").state,
+    ).toBe("simulated");
+  });
+
+  it("never turns a measured-path determination into a payment consequence", () => {
+    for (const status of ["verified", "flagged", "pending"] as const) {
+      expect(describeDeterminationConsequence(status, measured)).toBe(
+        "No transaction attached",
+      );
+    }
+  });
+
+  it("matches each simulated consequence to its determination", () => {
+    expect(describeDeterminationConsequence("verified", stress)).toBe(
+      "Eligible (simulated)",
+    );
+    expect(describeDeterminationConsequence("flagged", stress)).toBe(
+      "On hold (simulated)",
+    );
+    expect(describeDeterminationConsequence("pending", stress)).toBe(
+      "Pending (simulated)",
+    );
   });
 });
 

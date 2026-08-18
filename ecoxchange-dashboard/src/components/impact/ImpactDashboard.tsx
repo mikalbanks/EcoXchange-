@@ -11,8 +11,10 @@ import { ErrorState } from "../shared/ErrorState.js";
 import { EmptyState } from "../shared/EmptyState.js";
 import { CardSkeleton } from "../shared/LoadingState.js";
 import type { ImpactView } from "../../types/impact.js";
+import { useData } from "../../context/DataContext.js";
 
 export function ImpactDashboard() {
+  const { scenario, mode } = useData();
   const [impact, setImpact] = useState<ImpactView | null>(null);
   const [status, setStatus] = useState<"loading" | "ready" | "error" | "empty">(
     "loading",
@@ -21,16 +23,16 @@ export function ImpactDashboard() {
 
   const load = useCallback(() => {
     setStatus("loading");
-    getImpactView()
+    getImpactView({ variant: scenario })
       .then((res) => {
         if (!res) return setStatus("empty");
         setImpact(res);
         setStatus("ready");
       })
       .catch(() => setStatus("error"));
-  }, []);
+  }, [scenario]);
 
-  useEffect(load, [load]);
+  useEffect(load, [load, scenario]);
 
   if (status === "loading") {
     return (
@@ -57,9 +59,11 @@ export function ImpactDashboard() {
         <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
           <VerifiedBadge />
           <p className="text-sm text-textMuted">
-            Calculated from records whose engine status is VERIFIED. Status alone
-            does not establish independent source provenance; demo-mode impact
-            data is simulated.
+            {mode === "supabase"
+              ? "Calculated from connected records whose engine status is VERIFIED. Equivalencies use an eGRID factor and remain modeled estimates; confirm source provenance on each record."
+              : scenario === "flagged"
+                ? "Calculated from simulated Savannah records whose engine status is VERIFIED. Every production and impact value in this stress case is simulated."
+                : "Calculated from measured PVDAQ inverter periods whose engine status is VERIFIED. Equivalencies use an eGRID factor and remain modeled estimates; the utility leg is derived."}
           </p>
         </div>
       </header>
