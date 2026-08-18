@@ -166,7 +166,7 @@ export function ProjectDetail() {
   const latest = records[records.length - 1];
   const transactionPolicy = describeTransactionPolicy(mode, scenario, project.id);
   const showSimulatedFinance = transactionPolicy.state === "simulated";
-  const evidence = describeVerificationEvidence(project.id, mode);
+  const evidence = describeVerificationEvidence(project.id, mode, latest);
   const evidencePeriod = records.length > 0
     ? `${formatMonthLong(records[0].period_start)}–${formatMonthLong(latest.period_start)}`
     : undefined;

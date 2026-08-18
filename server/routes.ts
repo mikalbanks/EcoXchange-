@@ -37,6 +37,8 @@ import { registerDeveloperReportRoutes } from "./routes/developer-report";
 import { registerDistributionRoutes } from "./routes/distributions";
 import { registerPolymeshRoutes } from "./routes/polymesh";
 import { registerAnalyticsRoutes } from "./routes/analytics";
+import { runtimeConfig } from "./runtime-config";
+import { audit } from "./audit";
 
 const SESSION_SECRET = process.env.SESSION_SECRET || crypto.randomBytes(32).toString('hex');
 const IS_PRODUCTION = process.env.NODE_ENV === "production";
@@ -53,6 +55,14 @@ const authLimiter = rateLimit({
   standardHeaders: true,
   legacyHeaders: false,
   message: { message: "Too many requests, please try again later" },
+});
+
+const backtestRunLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  max: 3,
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: { message: "Too many backtest runs; try again later" },
 });
 
 export async function registerRoutes(
@@ -107,6 +117,10 @@ export async function registerRoutes(
     res.json({
       ok: true,
       uptime: process.uptime(),
+      readiness: {
+        personaConfigured: runtimeConfig.personaConfigured,
+        persistentArtifacts: runtimeConfig.persistentArtifacts,
+      },
       services: {
         pvlib,
         irradiance,
@@ -226,11 +240,10 @@ export async function registerRoutes(
       const PERSONA_TEMPLATE_ID = process.env.PERSONA_TEMPLATE_ID;
 
       if (!PERSONA_API_KEY) {
-        await storage.updateUser(user.id, {
-          personaStatus: "completed",
-          personaVerifiedAt: new Date(),
+        return res.status(503).json({
+          status: "not_configured",
+          message: "Identity verification is not configured. Verification has not been completed.",
         });
-        return res.json({ status: "completed", message: "Identity verified (demo mode)" });
       }
 
       if (!PERSONA_TEMPLATE_ID) {
@@ -261,13 +274,11 @@ export async function registerRoutes(
       });
 
       if (!personaRes.ok) {
-        const errorText = await personaRes.text();
-        console.error("Persona API error (falling back to demo mode):", errorText);
-        await storage.updateUser(user.id, {
-          personaStatus: "completed",
-          personaVerifiedAt: new Date(),
+        console.error("Persona API request failed", { status: personaRes.status });
+        return res.status(502).json({
+          status: "provider_unavailable",
+          message: "Identity verification provider is unavailable. Verification has not been completed.",
         });
-        return res.json({ status: "completed", message: "Identity verified (demo mode)" });
       }
 
       const personaData = await personaRes.json();
@@ -285,18 +296,11 @@ export async function registerRoutes(
 
       res.json({ inquiryId, sessionToken });
     } catch (error: any) {
-      console.error("Persona inquiry error (falling back to demo mode):", error);
-      try {
-        const user = await storage.getUser(req.session.userId);
-        if (user) {
-          await storage.updateUser(user.id, {
-            personaStatus: "completed",
-            personaVerifiedAt: new Date(),
-          });
-          return res.json({ status: "completed", message: "Identity verified (demo mode)" });
-        }
-      } catch {}
-      res.status(500).json({ message: "Failed to create verification inquiry" });
+      console.error("Persona inquiry error", error);
+      res.status(502).json({
+        status: "provider_unavailable",
+        message: "Failed to create verification inquiry. Verification has not been completed.",
+      });
     }
   });
 
@@ -315,28 +319,36 @@ export async function registerRoutes(
     try {
       const PERSONA_WEBHOOK_SECRET = process.env.PERSONA_WEBHOOK_SECRET;
 
-      // [SECURITY RISK] In production, PERSONA_WEBHOOK_SECRET must be set to validate webhook
-      // signatures. Without it, any caller can forge identity verification events.
-      // Demo mode is intentionally permissive — do NOT deploy to production without this secret.
       if (!PERSONA_WEBHOOK_SECRET) {
-        console.warn("[SECURITY RISK] Persona webhook: PERSONA_WEBHOOK_SECRET not set — accepting unverified webhooks. Demo mode only. Set this env var before production.");
+        console.error("Persona webhook rejected: PERSONA_WEBHOOK_SECRET is not configured");
+        return res.status(503).json({ message: "Webhook verification is not configured" });
       }
-      if (PERSONA_WEBHOOK_SECRET) {
-        const signature = req.headers["persona-signature"] || "";
-        const rawBody = JSON.stringify(req.body);
 
-        const expectedSig = crypto
-          .createHmac("sha256", PERSONA_WEBHOOK_SECRET)
-          .update(rawBody)
-          .digest("hex");
+      const signatureHeader = req.headers["persona-signature"];
+      const signature = Array.isArray(signatureHeader) ? signatureHeader[0] : signatureHeader || "";
+      const receivedSig = signature
+        .split(",")
+        .map((part: string) => part.trim())
+        .find((part: string) => part.startsWith("v1="))
+        ?.slice(3) || "";
+      const webhookBody = Buffer.isBuffer(req.rawBody)
+        ? req.rawBody
+        : Buffer.from(JSON.stringify(req.body));
+      const expectedSig = crypto
+        .createHmac("sha256", PERSONA_WEBHOOK_SECRET)
+        .update(webhookBody)
+        .digest("hex");
+      const received = Buffer.from(receivedSig, "hex");
+      const expected = Buffer.from(expectedSig, "hex");
 
-        const sigParts = signature.split(",");
-        const receivedSig = sigParts.find((p: string) => p.startsWith("v1="))?.replace("v1=", "") || "";
-
-        if (receivedSig && receivedSig !== expectedSig) {
-          console.warn("Persona webhook: invalid signature");
-          return res.status(401).json({ message: "Invalid signature" });
-        }
+      if (
+        !receivedSig
+        || received.length !== expected.length
+        || !crypto.timingSafeEqual(received, expected)
+      ) {
+        console.warn("Persona webhook rejected: invalid or missing signature");
+        audit("persona_webhook_rejected", { reason: "invalid_signature" });
+        return res.status(401).json({ message: "Invalid signature" });
       }
 
       const event = req.body;
@@ -377,12 +389,17 @@ export async function registerRoutes(
       }
 
       await storage.updateUser(user.id, updates);
+      audit("persona_status_updated", {
+        userId: user.id,
+        inquiryId,
+        status: updates.personaStatus || "unchanged",
+      });
       console.log(`Persona webhook: updated user ${user.id} status to ${updates.personaStatus || "unchanged"}`);
 
       res.status(200).json({ received: true });
     } catch (error: any) {
       console.error("Persona webhook error:", error);
-      res.status(200).json({ received: true });
+      res.status(500).json({ received: false });
     }
   });
 
@@ -2239,11 +2256,13 @@ export async function registerRoutes(
         ? report.intervals.filter((_, i) => i % 4 === 0)
         : report.intervals;
       res.json({
+        resultId: report.resultId,
         site: report.site,
         statistics: report.statistics,
         intervals,
         satelliteSource: report.satelliteSource,
         meterDataSource: report.meterDataSource,
+        coverage: report.coverage,
         generatedAt: report.generatedAt,
         engineVersion: report.engineVersion,
       });
@@ -2253,10 +2272,31 @@ export async function registerRoutes(
     }
   });
 
-  app.post("/api/public/backtest/run", async (req: any, res) => {
+  app.get("/api/public/backtest/report/:resultId", async (req, res) => {
     try {
-      const { runBacktest, clearBacktestCache, setCachedBacktestReport } = await import("./services/backtest-engine");
-      clearBacktestCache();
+      if (!z.string().uuid().safeParse(req.params.resultId).success) {
+        return res.status(400).json({ message: "Invalid backtest result ID" });
+      }
+      const { getBacktestArtifactRepository } = await import("./services/backtest-artifact-repository");
+      const report = await getBacktestArtifactRepository().get(req.params.resultId);
+      if (!report) return res.status(404).json({ message: "Backtest report not found" });
+      res.json(report);
+    } catch (error: any) {
+      console.error("Backtest artifact lookup error", error);
+      res.status(500).json({ message: "Failed to load backtest report" });
+    }
+  });
+
+  app.post("/api/public/backtest/run", (_req, res) => {
+    res.status(410).json({
+      message: "Public backtest execution is disabled. Read the immutable public report instead.",
+      reportUrl: "/api/public/backtest/report",
+    });
+  });
+
+  app.post("/api/admin/backtest/run", requireRole("ADMIN"), backtestRunLimiter, async (req: any, res) => {
+    try {
+      const { runBacktest, setCachedBacktestReport } = await import("./services/backtest-engine");
 
       const { projectId, meterDataSource } = req.body || {};
       let config;
@@ -2293,13 +2333,23 @@ export async function registerRoutes(
       }
 
       const report = await runBacktest(config);
+      const { getBacktestArtifactRepository } = await import("./services/backtest-artifact-repository");
+      await getBacktestArtifactRepository().save(report);
+      audit("backtest_artifact_created", {
+        resultId: report.resultId,
+        siteId: report.site.siteId,
+        actorId: req.user.id,
+        coveragePct: report.coverage.coveragePct,
+      });
       setCachedBacktestReport(report);
       res.json({
+        resultId: report.resultId,
         site: report.site,
         statistics: report.statistics,
         intervals: report.intervals,
         satelliteSource: report.satelliteSource,
         meterDataSource: report.meterDataSource,
+        coverage: report.coverage,
         generatedAt: report.generatedAt,
         engineVersion: report.engineVersion,
       });

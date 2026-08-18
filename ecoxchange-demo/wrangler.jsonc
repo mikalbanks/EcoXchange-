@@ -2,14 +2,13 @@
   "$schema": "node_modules/wrangler/config-schema.json",
   "name": "ecoxchange-demo",
   "main": "worker/index.ts",
-  "compatibility_date": "2026-05-14",
+  "compatibility_date": "2026-08-18",
   "observability": { "enabled": true },
   "assets": {
     "directory": "./dist",
     "binding": "ASSETS",
     "not_found_handling": "single-page-application"
-  },
-  "routes": [
-    { "pattern": "demo.ecoxchange.net", "custom_domain": true }
-  ]
+  }
+  // Archived compatibility build. It intentionally owns no custom domain.
+  // demo.ecoxchange.net is owned exclusively by ../ecoxchange-dashboard.
 }

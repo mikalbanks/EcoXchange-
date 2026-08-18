@@ -189,10 +189,11 @@ export function LOIDocument({ data }: { data: LOIData }) {
           offer to buy any security.
         </p>
         <p className="mt-2 font-mono text-[8.5px] leading-[1.7] text-textMuted">
-          Powered by EcoXchange Verification Engine {ENGINE_VERSION} — expected generation is
-          modeled with pvlib ModelChain against NASA POWER satellite irradiance and reconciled
-          across three independent sources (inverter, utility meter, satellite) before any
-          distribution is released.
+          Powered by EcoXchange Verification Engine {ENGINE_VERSION}. Expected generation may be
+          modeled with pvlib ModelChain using disclosed weather inputs. Available inverter, meter,
+          and model records are compared when present; each record's source basis, coverage, and
+          dependencies must be reviewed separately. Verification status does not authorize or
+          release a distribution.
         </p>
       </Page>
     </>

@@ -8,6 +8,7 @@ import type {
   ProjectBundle,
   ProjectMeta,
   VerificationRecord,
+  VerificationSourceLeg,
 } from "../utils/types.js";
 import { supabase, liveMode } from "../lib/supabase.js";
 
@@ -30,11 +31,7 @@ export interface VerificationEvidence {
     utility: string;
     satellite: string;
   };
-  sourceBasis: {
-    inverter: "measured" | "simulated" | "unconfirmed";
-    utility: "measured" | "derived" | "simulated" | "unconfirmed";
-    satellite: "modeled" | "simulated" | "unconfirmed";
-  };
+  sourceBasis: Record<"inverter" | "utility" | "satellite", VerificationSourceLeg["basis"]>;
 }
 
 export interface TransactionPolicy {
@@ -49,6 +46,7 @@ export { liveMode };
 export function describeVerificationEvidence(
   id: string,
   mode: "supabase" | "demo",
+  record?: VerificationRecord,
 ): VerificationEvidence {
   if (id === PVDAQ_9068_PROJECT_ID) {
     return {
@@ -86,6 +84,37 @@ export function describeVerificationEvidence(
         inverter: "simulated",
         utility: "simulated",
         satellite: "simulated",
+      },
+    };
+  }
+
+  const legs = record?.source_legs;
+  if (legs?.length) {
+    const bySource = new Map(legs.map((leg) => [leg.source, leg]));
+    const inverter = bySource.get("inverter");
+    const utility = bySource.get("utility_meter");
+    const satellite = bySource.get("satellite");
+    const label = (leg: VerificationSourceLeg | undefined, fallback: string) =>
+      leg
+        ? `${leg.provider} (${leg.basis}; ${leg.coverage_pct.toFixed(1)}% coverage)`
+        : `${fallback} (not supplied)`;
+    const observed = legs.reduce((sum, leg) => sum + leg.observed_intervals, 0);
+    const expected = legs.reduce((sum, leg) => sum + leg.expected_intervals, 0);
+
+    return {
+      badge: "PROVENANCE RECORDED",
+      title: "Per-leg source basis and coverage disclosed",
+      description: `${legs.length} source legs encode provider, lineage, dependencies, and coverage for this determination. Combined observed coverage is ${expected > 0 ? ((observed / expected) * 100).toFixed(1) : "0.0"}%; independence still depends on the disclosed lineage.`,
+      diagramTitle: "Stored Source Comparison",
+      sourceNames: {
+        inverter: label(inverter, "Inverter"),
+        utility: label(utility, "Utility meter"),
+        satellite: label(satellite, "Expected model"),
+      },
+      sourceBasis: {
+        inverter: inverter?.basis ?? "unconfirmed",
+        utility: utility?.basis ?? "unconfirmed",
+        satellite: satellite?.basis ?? "unconfirmed",
       },
     };
   }
@@ -276,6 +305,7 @@ interface DbProject {
 }
 
 interface DbVerificationRecord {
+  id: string;
   project_id: string;
   period_start: string;
   period_end: string;
@@ -294,6 +324,7 @@ interface DbVerificationRecord {
   detect_band_pct?: number | null;
   detect_exceeded?: boolean | null;
   persistence_triggered?: boolean | null;
+  verification_source_legs?: VerificationSourceLeg[];
 }
 
 async function loadPortfolioLive(): Promise<Portfolio> {
@@ -315,7 +346,7 @@ async function loadPortfolioLive(): Promise<Portfolio> {
     const { data: recs, error: rerr } = await supabase!
       .from("verification_records")
       .select(
-        "project_id, period_start, period_end, inverter_kwh, utility_kwh, expected_kwh, inv_vs_expected_pct, inv_vs_utility_pct, util_vs_expected_pct, status, flag_reasons, estimated_revenue, gate_band_pct, detect_band_pct, detect_exceeded, persistence_triggered",
+        "id, project_id, period_start, period_end, inverter_kwh, utility_kwh, expected_kwh, inv_vs_expected_pct, inv_vs_utility_pct, util_vs_expected_pct, status, flag_reasons, estimated_revenue, gate_band_pct, detect_band_pct, detect_exceeded, persistence_triggered",
       )
       .in("project_id", ids)
       .order("period_start", { ascending: true });
@@ -371,7 +402,7 @@ async function loadProjectLive(id: string): Promise<ProjectBundle | null> {
   const { data: recs, error: rerr } = await supabase!
     .from("verification_records")
     .select(
-      "project_id, period_start, period_end, inverter_kwh, utility_kwh, expected_kwh, inv_vs_expected_pct, inv_vs_utility_pct, util_vs_expected_pct, status, flag_reasons, estimated_revenue, gate_band_pct, detect_band_pct, detect_exceeded, persistence_triggered",
+      "id, project_id, period_start, period_end, inverter_kwh, utility_kwh, expected_kwh, inv_vs_expected_pct, inv_vs_utility_pct, util_vs_expected_pct, status, flag_reasons, estimated_revenue, gate_band_pct, detect_band_pct, detect_exceeded, persistence_triggered, verification_source_legs(source, basis, provider, source_record_id, retrieved_at, depends_on_source, lineage, expected_intervals, observed_intervals, coverage_pct)",
     )
     .eq("project_id", id)
     .order("period_start", { ascending: true });
@@ -380,6 +411,7 @@ async function loadProjectLive(id: string): Promise<ProjectBundle | null> {
   const records: VerificationRecord[] = (recs ?? []).map((r) => {
     const rec = r as DbVerificationRecord;
     return {
+      id: rec.id,
       period_start: rec.period_start,
       inverter_kwh: rec.inverter_kwh ?? 0,
       expected_kwh: rec.expected_kwh,
@@ -393,6 +425,7 @@ async function loadProjectLive(id: string): Promise<ProjectBundle | null> {
       // finance out of this investor adapter until an authoritative offering
       // and account source is connected.
       estimated_revenue: 0,
+      source_legs: rec.verification_source_legs ?? [],
     };
   });
 

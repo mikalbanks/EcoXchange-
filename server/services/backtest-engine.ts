@@ -1,4 +1,5 @@
 import axios from "axios";
+import { randomUUID } from "node:crypto";
 
 export type MeterDataSource = "synthetic" | "stored";
 
@@ -45,14 +46,23 @@ export interface BacktestStatistics {
   };
 }
 
-export type SatelliteSource = "SOLCAST_HISTORICAL" | "SOLCAST_ESTIMATED_ACTUALS" | "SYNTHETIC_FALLBACK";
+export type SatelliteSource = "SOLCAST_HISTORICAL" | "SOLCAST_ESTIMATED_ACTUALS" | "DERIVED_FROM_METER" | "SYNTHETIC_FALLBACK";
+
+export interface BacktestCoverage {
+  expectedIntervals: number;
+  observedIntervals: number;
+  missingIntervals: number;
+  coveragePct: number;
+}
 
 export interface BacktestReport {
+  resultId: string;
   site: BacktestSiteConfig;
   statistics: BacktestStatistics;
   intervals: BacktestInterval[];
   satelliteSource: SatelliteSource;
   meterDataSource: MeterDataSource;
+  coverage: BacktestCoverage;
   generatedAt: string;
   engineVersion: string;
 }
@@ -307,7 +317,7 @@ async function fetchSolcastEstimatedActuals(
     const solcastMap = parseSolcastRecords(actuals);
 
     const { matchedCount, coveragePct } = evaluateCoverage(solcastMap, timestamps, config);
-    if (coveragePct < 10) {
+    if (coveragePct < 80) {
       console.log(`   ⚠️ estimated_actuals coverage too low (${coveragePct.toFixed(1)}%), period outside ~7-day window`);
       return null;
     }
@@ -346,7 +356,7 @@ async function fetchSolcastHistoricalSeries(
   const historicResult = await fetchSolcastHistoric(config, SOLCAST_API_KEY);
   if (historicResult) {
     const { matchedCount, coveragePct } = evaluateCoverage(historicResult, timestamps, config);
-    if (coveragePct >= 10) {
+    if (coveragePct >= 80) {
       console.log(`   ✅ Using Solcast historic data: ${matchedCount}/${timestamps.length} intervals (${coveragePct.toFixed(1)}% daylight coverage)`);
       return { data: historicResult, source: "SOLCAST_HISTORICAL" };
     }
@@ -659,14 +669,10 @@ export async function runBacktest(config?: BacktestSiteConfig): Promise<Backtest
   if (solcastSeries) {
     satelliteSource = solcastSeries.source;
     satelliteData = solcastSeries.data;
-    for (const ts of allTimestamps) {
-      if (!satelliteData.has(ts)) {
-        satelliteData.set(ts, 0);
-      }
-    }
     console.log(`   ✅ Using ${solcastSeries.source} as satellite truth (${satelliteData.size} intervals)`);
   } else if (actualMeterSource === "stored") {
     satelliteData = deriveSatelliteFromMeter(meterData, site);
+    satelliteSource = "DERIVED_FROM_METER";
     console.log(`   ✅ Using Solcast irradiance model (derived from SCADA data, ${satelliteData.size} intervals)`);
   } else {
     satelliteData = generateSyntheticSatelliteEstimates(site);
@@ -675,7 +681,10 @@ export async function runBacktest(config?: BacktestSiteConfig): Promise<Backtest
 
   const intervals: BacktestInterval[] = [];
   for (const [timestamp, meterKw] of meterData) {
-    const satelliteKw = satelliteData.get(timestamp) || 0;
+    const satelliteKw = satelliteData.get(timestamp);
+    // Missing provider observations are unknown, not zero production. Score only
+    // intervals where both legs are present and disclose the resulting coverage.
+    if (satelliteKw === undefined) continue;
     const deltaKw = Math.abs(satelliteKw - meterKw);
     const deltaPct = site.capacityKw > 0 ? (deltaKw / site.capacityKw) * 100 : 0;
 
@@ -695,6 +704,16 @@ export async function runBacktest(config?: BacktestSiteConfig): Promise<Backtest
 
   assertUtcPowerAlignment(intervals, site);
   const statistics = calculateStatistics(intervals, site);
+  const expectedIntervals = meterData.size;
+  const observedIntervals = intervals.length;
+  const coverage: BacktestCoverage = {
+    expectedIntervals,
+    observedIntervals,
+    missingIntervals: expectedIntervals - observedIntervals,
+    coveragePct: expectedIntervals > 0
+      ? Number(((observedIntervals / expectedIntervals) * 100).toFixed(2))
+      : 0,
+  };
 
   console.log(`\n╔══════════════════════════════════════════════════╗`);
   console.log(`║     SGT BACKTEST REPORT — ${site.siteId}                  ║`);
@@ -725,22 +744,34 @@ export async function runBacktest(config?: BacktestSiteConfig): Promise<Backtest
   console.log(`╚══════════════════════════════════════════════════╝\n`);
 
   return {
+    resultId: randomUUID(),
     site,
     statistics,
     intervals,
     satelliteSource,
     meterDataSource: actualMeterSource,
+    coverage,
     generatedAt: new Date().toISOString(),
     engineVersion: "v2026.1-backtest",
   };
 }
 
 let cachedReport: BacktestReport | null = null;
+let inFlightReport: Promise<BacktestReport> | null = null;
 
 export async function getCachedBacktestReport(): Promise<BacktestReport> {
-  if (!cachedReport) {
+  if (cachedReport) return cachedReport;
+  if (inFlightReport) return inFlightReport;
+
+  inFlightReport = (async () => {
+    const { getBacktestArtifactRepository } = await import("./backtest-artifact-repository");
+    const repository = getBacktestArtifactRepository();
+    const persisted = await repository.getLatest();
+    if (persisted) return persisted;
+
     const { storage } = await import("../storage");
     const project = await storage.getProject("proj1");
+    let generated: BacktestReport;
     if (project) {
       const storedProduction = await storage.getProductionByProject("proj1");
       if (storedProduction.length > 0) {
@@ -748,7 +779,7 @@ export async function getCachedBacktestReport(): Promise<BacktestReport> {
         const endDates = storedProduction.map(p => p.periodEnd.getTime());
         const startDate = new Date(Math.min(...dates)).toISOString().split("T")[0];
         const endDate = new Date(Math.max(...endDates)).toISOString().split("T")[0];
-        cachedReport = await runBacktest({
+        generated = await runBacktest({
           siteId: project.id,
           siteName: project.name,
           latitude: parseFloat(project.latitude || "32.8476"),
@@ -761,13 +792,21 @@ export async function getCachedBacktestReport(): Promise<BacktestReport> {
           meterDataSource: "stored",
         });
       } else {
-        cachedReport = await runBacktest();
+        generated = await runBacktest();
       }
     } else {
-      cachedReport = await runBacktest();
+      generated = await runBacktest();
     }
+    await repository.save(generated);
+    return generated;
+  })();
+
+  try {
+    cachedReport = await inFlightReport;
+    return cachedReport;
+  } finally {
+    inFlightReport = null;
   }
-  return cachedReport;
 }
 
 export function setCachedBacktestReport(report: BacktestReport): void {
@@ -776,4 +815,5 @@ export function setCachedBacktestReport(report: BacktestReport): void {
 
 export function clearBacktestCache(): void {
   cachedReport = null;
+  inFlightReport = null;
 }
