@@ -101,6 +101,14 @@ function HeaderLayout({ children }: { children: ReactNode }) {
   );
 }
 
+function RouteLoading() {
+  return (
+    <div role="status" aria-live="polite" className="py-12 text-sm text-textMuted">
+      Loading demo…
+    </div>
+  );
+}
+
 // Preserve legacy investor deep links (/project/...) by forwarding them to the
 // new role-prefixed routes.
 function LegacyProjectRedirect() {
@@ -313,7 +321,7 @@ export function App() {
           path="/developer/demo"
           element={
             <HeaderLayout>
-              <Suspense fallback={null}>
+              <Suspense fallback={<RouteLoading />}>
                 <RunDemo />
               </Suspense>
             </HeaderLayout>
@@ -323,7 +331,7 @@ export function App() {
           path="/developer/demo/results"
           element={
             <HeaderLayout>
-              <Suspense fallback={null}>
+              <Suspense fallback={<RouteLoading />}>
                 <DemoBacktestResults />
               </Suspense>
             </HeaderLayout>

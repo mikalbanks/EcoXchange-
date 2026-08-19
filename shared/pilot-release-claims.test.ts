@@ -17,6 +17,11 @@ const publicClaimFiles = [
   "client/src/components/investor-onboarding-wizard.tsx",
   "ecoxchange-dashboard/src/pages/Landing.tsx",
   "ecoxchange-dashboard/src/pages/OnboardingWizard.tsx",
+  "ecoxchange-dashboard/src/pages/developer/BacktestResults.tsx",
+  "ecoxchange-dashboard/src/components/onboarding/DeveloperInfo.tsx",
+  "ecoxchange-dashboard/src/components/onboarding/InverterSetup.tsx",
+  "ecoxchange-dashboard/src/components/onboarding/OfftakeAndRaise.tsx",
+  "ecoxchange-dashboard/src/components/verification/FlagReasonCard.tsx",
   "ecoxchange-dashboard/src/compliance/config/bannerConfig.ts",
   "ecoxchange-dashboard/src/compliance/config/disclaimerConfig.ts",
   "ecoxchange-dashboard/src/components/loi/LOIDocument.tsx",
@@ -39,6 +44,10 @@ const prohibitedClaims = [
   /production-verified yield/i,
   /three independent sources/i,
   /before any distribution is released/i,
+  /before distributions release/i,
+  /follow up within 24 hours/i,
+  /\b2[–-]6 weeks\b/i,
+  /target equity raise/i,
 ] as const;
 
 function read(relativePath: string): string {
@@ -66,6 +75,19 @@ describe("Release 1 public claims", () => {
     expect(read("ecoxchange-dashboard/src/pages/Landing.tsx")).toContain(
       "no project ownership, account, or",
     );
+  });
+
+  it("keeps developer onboarding preview-only and rejects credentials", () => {
+    const wizard = read("ecoxchange-dashboard/src/pages/OnboardingWizard.tsx");
+    const inverter = read(
+      "ecoxchange-dashboard/src/components/onboarding/InverterSetup.tsx",
+    );
+
+    expect(wizard).not.toContain("submitIntake");
+    expect(wizard).not.toContain("CostComparison");
+    expect(wizard).toContain("No information was transmitted or stored remotely");
+    expect(inverter).not.toContain('label="API Key"');
+    expect(inverter).toContain("Do not enter passwords, API keys, or access tokens");
   });
 });
 

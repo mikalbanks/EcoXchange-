@@ -87,7 +87,8 @@ export function FlagReasonCard({ record }: { record: VerificationRecord }) {
 
       <p className="mt-3 text-xs text-textMuted">
         This flag does not stop the verification process — it triggers manual
-        review before distributions are released.
+        review. Any downstream action depends on a separately documented
+        project policy; none is executed in this pilot demo.
       </p>
     </div>
   );

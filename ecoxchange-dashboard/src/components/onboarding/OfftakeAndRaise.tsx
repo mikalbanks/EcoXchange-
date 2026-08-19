@@ -9,7 +9,11 @@ interface Props {
 export function OfftakeAndRaise({ form, update }: Props) {
   return (
     <div className="space-y-4">
-      <h2 className="font-heading text-2xl text-darkBg">Offtake & Capital</h2>
+      <h2 className="font-heading text-2xl text-darkBg">Project Context</h2>
+      <p className="text-textMuted text-sm">
+        These fields help explain the project during a technical pilot-fit
+        review. They do not request financing or quote commercial terms.
+      </p>
       <Select
         label="Offtake Type"
         value={form.offtake_type ?? "community_solar"}
@@ -49,24 +53,6 @@ export function OfftakeAndRaise({ form, update }: Props) {
           value={form.ppa_tenor_years ?? 20}
           onChange={(e) =>
             update({ ppa_tenor_years: parseInt(e.target.value, 10) })
-          }
-        />
-      </div>
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-        <Field
-          label="Target Equity Raise ($)"
-          type="number"
-          value={form.equity_raise_target ?? 0}
-          onChange={(e) =>
-            update({ equity_raise_target: parseFloat(e.target.value) })
-          }
-        />
-        <Field
-          label="Minimum Raise ($)"
-          type="number"
-          value={form.equity_raise_min ?? 0}
-          onChange={(e) =>
-            update({ equity_raise_min: parseFloat(e.target.value) })
           }
         />
       </div>

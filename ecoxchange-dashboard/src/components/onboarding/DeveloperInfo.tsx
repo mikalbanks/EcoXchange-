@@ -11,7 +11,9 @@ export function DeveloperInfo({ form, update }: Props) {
     <div className="space-y-4">
       <h2 className="font-heading text-2xl text-darkBg">Developer Contact</h2>
       <p className="text-textMuted text-sm">
-        We'll send the backtest report to your email and follow up within 24 hours.
+        Preview the technical pilot intake with fictional or non-sensitive
+        details. This public walkthrough does not transmit the information you
+        enter.
       </p>
       <Field
         label="Your Name"

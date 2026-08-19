@@ -1,10 +1,8 @@
-// The "So What" results summary (Spec 1C). One scrollable page that answers
-// the developer's three questions after the demo backtest:
-//   1. Does this platform actually understand my project?  (generation stats)
-//   2. How much will this save me vs. traditional capital?  (cost comparison)
-//   3. What happens next?                                   (LOI CTA)
+// Release 1 developer results: production evidence and methodology only.
+// Commercial terms, transaction execution, and document generation remain
+// outside the public pilot path.
 
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import {
   Bar,
@@ -15,7 +13,7 @@ import {
   XAxis,
   YAxis,
 } from "recharts";
-import { ArrowRight, FileDown, RefreshCcw } from "lucide-react";
+import { RefreshCcw } from "lucide-react";
 import {
   loadBacktestResult,
   type StoredBacktestResult,
@@ -24,19 +22,13 @@ import { StatCard } from "../../components/StatCard.js";
 import { AnimatedNumber } from "../../components/shared/AnimatedNumber.js";
 import { LazyMount } from "../../components/shared/LazyMount.js";
 import { ChartSkeleton } from "../../components/Skeleton.js";
-import { SavingsBarChart } from "../../components/developer/SavingsBarChart.js";
-import { CostComparisonTable } from "../../components/onboarding/CostComparisonTable.js";
 import { DataSourceAttribution } from "../../compliance/components/DataSourceAttribution.js";
-import { Button } from "../../components/ui/Button.js";
 import { Card } from "../../components/ui/Card.js";
 import { SectionTag } from "../../components/ui/SectionTag.js";
-import { SPEC_COST } from "../../utils/cost-comparison.js";
 import { palette } from "../../config/palette.js";
 import { formatMonthShort } from "../../utils/formatters.js";
 import { SAVANNAH_VERIFICATION_HISTORY } from "../../data/demo-verification.js";
 import { DegradationCurve } from "../../components/developer/DegradationCurve.js";
-import { VerificationReportDoc } from "../../reports/VerificationReportDoc.js";
-import { buildVerificationReportModel } from "../../reports/report-utils/report-model.js";
 import { VerificationTimeline } from "../../components/verification/VerificationTimeline.js";
 import { FlagReasonCard } from "../../components/verification/FlagReasonCard.js";
 import { ReconciliationDiagram } from "../../components/ReconciliationDiagram.js";
@@ -46,44 +38,6 @@ function monthShort(month: string): string {
   return formatMonthShort(`${month}-01`);
 }
 
-function TimeToCapitalStrip() {
-  // Proportional bars: 3–9 months (midpoint 26 weeks) vs 2–6 weeks
-  // (midpoint 4) on a shared weeks scale.
-  const scaleWeeks = 39; // 9 months
-  return (
-    <div className="space-y-4" data-testid="time-to-capital">
-      <div>
-        <div className="mb-1 flex items-baseline justify-between">
-          <span className="text-sm text-textDark">Traditional Reg D</span>
-          <span className="font-mono text-sm font-bold text-darkBg">
-            {SPEC_COST.timeToCapital.traditional}
-          </span>
-        </div>
-        <div className="h-3 w-full bg-paleGreen/30">
-          <div
-            className="h-full bg-darkBg/70"
-            style={{ width: `${(26 / scaleWeeks) * 100}%` }}
-          />
-        </div>
-      </div>
-      <div>
-        <div className="mb-1 flex items-baseline justify-between">
-          <span className="text-sm text-textDark">EcoXchange</span>
-          <span className="font-mono text-sm font-bold text-medGreen">
-            {SPEC_COST.timeToCapital.ecoxchange}
-          </span>
-        </div>
-        <div className="h-3 w-full bg-paleGreen/30">
-          <div
-            className="h-full bg-accentBrt"
-            style={{ width: `${(4 / scaleWeeks) * 100}%` }}
-          />
-        </div>
-      </div>
-    </div>
-  );
-}
-
 export function BacktestResults() {
   const navigate = useNavigate();
   const [result] = useState<StoredBacktestResult | null>(() =>
@@ -91,44 +45,6 @@ export function BacktestResults() {
   );
   const [selectedVerification, setSelectedVerification] =
     useState<VerificationRecord | null>(null);
-  const [generatingReport, setGeneratingReport] = useState(false);
-  const [reportProgress, setReportProgress] = useState<[number, number] | null>(
-    null,
-  );
-  const reportRef = useRef<HTMLDivElement>(null);
-
-  // The pitch leave-behind (report PDF spec): pure model from the stored
-  // result; pages mount offscreen only while generating.
-  const reportModel = useMemo(
-    () => (result ? buildVerificationReportModel(result) : null),
-    [result],
-  );
-
-  const downloadReport = async () => {
-    if (!reportModel || generatingReport) return;
-    setGeneratingReport(true);
-    setReportProgress(null);
-    try {
-      // Wait a tick for the offscreen template to mount before capture.
-      await new Promise((r) => setTimeout(r, 0));
-      const { generateVerificationReport } = await import(
-        "../../reports/report-utils/generateVerificationReport.js"
-      );
-      if (reportRef.current) {
-        // Rasterizing four print pages takes several seconds each — report
-        // page-by-page progress so the wait never looks like a hang.
-        await generateVerificationReport(
-          reportRef.current,
-          reportModel.filename,
-          (done, total) => setReportProgress([done, total]),
-        );
-      }
-    } finally {
-      setGeneratingReport(false);
-      setReportProgress(null);
-    }
-  };
-
   useEffect(() => {
     if (!result) navigate("/developer/demo", { replace: true });
   }, [result, navigate]);
@@ -268,26 +184,6 @@ export function BacktestResults() {
         </Card>
       </section>
 
-      {/* ── Q2: How much will this save me? ───────────────────────────── */}
-      <section>
-        <SectionTag>COST COMPARISON</SectionTag>
-        <h2 className="font-heading text-2xl text-darkBg">
-          Traditional Capital vs. EcoXchange
-        </h2>
-        <Card variant="bordered" padding="spacious" className="mt-4">
-          <SavingsBarChart />
-        </Card>
-        <div className="mt-4">
-          <CostComparisonTable />
-        </div>
-        <Card variant="flat" padding="standard" className="mt-4">
-          <h3 className="font-heading text-lg text-darkBg">Time to Capital</h3>
-          <div className="mt-3">
-            <TimeToCapitalStrip />
-          </div>
-        </Card>
-      </section>
-
       {/* ── Degradation intelligence (Spec 6) ─────────────────────────── */}
       <section>
         <SectionTag>DEGRADATION INTELLIGENCE</SectionTag>
@@ -298,7 +194,6 @@ export function BacktestResults() {
           <DegradationCurve
             commissioningDate={result.intake.commissioning_date}
             annualMwhYear1={summary.annual_mwh}
-            ppaRate={result.intake.ppa_rate_per_kwh}
           />
         </Card>
       </section>
@@ -310,10 +205,10 @@ export function BacktestResults() {
           What 12 Months of Operation Look Like
         </h2>
         <p className="mt-1 max-w-2xl text-sm text-textMuted">
-          Once listed, every month is reconciled across inverter, utility
-          meter, and satellite before distributions release. This is the
-          Savannah reference site's last operating year — including the
-          month the engine caught.
+          This simulated reference scenario compares fixture-backed inverter,
+          utility, and satellite series to illustrate the review thresholds.
+          It is not an independent operating record and no distribution or
+          other transaction is attached.
         </p>
         <Card variant="bordered" padding="standard" className="mt-4">
           <VerificationTimeline
@@ -347,65 +242,16 @@ export function BacktestResults() {
       <section>
         <SectionTag>NEXT STEP</SectionTag>
 
-        {/* Lower-commitment action first: take the numbers to your team. */}
-        <Card variant="bordered" padding="standard" className="mb-4">
-          <div className="flex flex-wrap items-center justify-between gap-3">
-            <div>
-              <h3 className="font-heading text-lg text-darkBg">
-                Take this report to your team
-              </h3>
-              <p className="mt-0.5 text-sm text-textMuted">
-                4-page branded PDF with your project's numbers — production
-                profile, verification methodology, and cost comparison.
-              </p>
-            </div>
-            <div className="flex flex-col items-start gap-1.5 sm:items-end">
-              <Button
-                variant="secondary"
-                size="md"
-                loading={generatingReport}
-                onClick={() => void downloadReport()}
-                data-testid="verification-report-download"
-              >
-                <span className="inline-flex items-center gap-1.5">
-                  <FileDown className="h-4 w-4" /> Download Verification Report
-                  (PDF)
-                </span>
-              </Button>
-              {generatingReport ? (
-                <p
-                  className="font-mono text-[11px] text-textMuted"
-                  aria-live="polite"
-                  data-testid="report-progress"
-                >
-                  {reportProgress
-                    ? `Rendering page ${reportProgress[0]} of ${reportProgress[1]}…`
-                    : "Preparing report…"}
-                </p>
-              ) : null}
-            </div>
-          </div>
-        </Card>
-
         <Card variant="dark" padding="spacious">
           <h2 className="font-heading text-2xl text-cream">
-            Sign a non-binding Letter of Intent
+            Continue with a technical pilot-fit review
           </h2>
           <p className="mt-2 max-w-2xl text-sm text-lightGreen">
-            Pre-populated with your project details and this backtest. Download
-            as a branded PDF or send it to your team.
+            Review the modeled production profile, source requirements, and
+            secure data-access plan with the project team. This public demo does
+            not create a financing application, quote, or legal document.
           </p>
           <div className="mt-5 flex flex-wrap gap-3">
-            <Button
-              variant="accent"
-              size="lg"
-              className="min-h-[44px]"
-              onClick={() => navigate("/developer/loi")}
-              data-testid="loi-cta"
-            >
-              Generate Letter of Intent
-              <ArrowRight className="ml-2 inline h-4 w-4" aria-hidden />
-            </Button>
             <Link
               to="/developer/demo"
               className="inline-flex min-h-[44px] items-center gap-2 border border-lightGreen/40 px-6 text-sm uppercase tracking-wider text-lightGreen transition-colors duration-150 hover:text-cream"
@@ -415,24 +261,11 @@ export function BacktestResults() {
             </Link>
           </div>
           <p className="mt-4 text-xs text-lightGreen/80">
-            This LOI is non-binding and costs you nothing. It signals your
-            intent to list this project on EcoXchange when the platform
-            launches.
+            A non-binding LOI may be discussed separately after pilot fit is
+            confirmed and appropriate counsel has reviewed the language.
           </p>
         </Card>
       </section>
-
-      {/* Offscreen US-Letter pages for the PDF pipeline — mounted only
-          while generating (same pattern as DeveloperLOI / Benchmark). */}
-      {generatingReport && reportModel ? (
-        <div
-          ref={reportRef}
-          className="fixed top-0 left-[-2000px] z-[-1]"
-          aria-hidden
-        >
-          <VerificationReportDoc model={reportModel} />
-        </div>
-      ) : null}
     </div>
   );
 }
