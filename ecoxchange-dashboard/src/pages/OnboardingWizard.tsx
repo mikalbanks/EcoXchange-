@@ -1,12 +1,10 @@
 import { useEffect, useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { Link } from "react-router-dom";
 import { DeveloperInfo } from "../components/onboarding/DeveloperInfo.js";
 import { ProjectDetails } from "../components/onboarding/ProjectDetails.js";
 import { InverterSetup } from "../components/onboarding/InverterSetup.js";
 import { OfftakeAndRaise } from "../components/onboarding/OfftakeAndRaise.js";
 import { StepNav } from "../components/onboarding/StepNav.js";
-import { CostComparison } from "../components/developer/CostComparison.js";
-import { submitIntake } from "../data/onboarding.js";
 import {
   DEFAULT_INTAKE,
   type IntakeForm,
@@ -52,8 +50,7 @@ export function OnboardingWizard() {
   const [form, setForm] = useState<IntakeForm>(() => loadFromStorage());
   const [step, setStep] = useState(1);
   const [error, setError] = useState<string | null>(null);
-  const [submitting, setSubmitting] = useState(false);
-  const navigate = useNavigate();
+  const [previewComplete, setPreviewComplete] = useState(false);
 
   useEffect(() => {
     try {
@@ -78,16 +75,8 @@ export function OnboardingWizard() {
       setStep(step + 1);
       return;
     }
-    // Final submit
-    setSubmitting(true);
-    try {
-      const { submission_id } = await submitIntake(form);
-      sessionStorage.removeItem(STORAGE_KEY);
-      navigate(`/onboard/status/${submission_id}`);
-    } catch (e) {
-      setError((e as Error).message);
-      setSubmitting(false);
-    }
+    sessionStorage.removeItem(STORAGE_KEY);
+    setPreviewComplete(true);
   };
 
   const back = () => {
@@ -105,6 +94,40 @@ export function OnboardingWizard() {
         </p>
       </div>
 
+      {previewComplete ? (
+        <div className="rounded-lg border border-paleGreen/60 bg-white p-6">
+          <p className="font-mono text-xs uppercase tracking-wide text-medGreen">
+            Preview complete
+          </p>
+          <h2 className="mt-2 font-heading text-2xl text-darkBg">
+            No information was transmitted or stored remotely.
+          </h2>
+          <p className="mt-2 text-sm text-textMuted">
+            An actual pilot begins with a separate technical fit review and an
+            agreed secure data-access plan. This walkthrough is not a financing
+            application, service quote, or legal agreement.
+          </p>
+          <div className="mt-5 flex flex-wrap gap-3">
+            <Link
+              to="/developer/demo"
+              className="inline-flex min-h-[44px] items-center border border-medGreen px-5 text-sm uppercase tracking-wider text-medGreen"
+            >
+              Run modeled backtest demo
+            </Link>
+            <button
+              type="button"
+              onClick={() => {
+                setForm(DEFAULT_INTAKE);
+                setStep(1);
+                setPreviewComplete(false);
+              }}
+              className="inline-flex min-h-[44px] items-center px-5 text-sm text-textMuted"
+            >
+              Restart preview
+            </button>
+          </div>
+        </div>
+      ) : (
       <div className="bg-white rounded-lg border border-paleGreen/60 p-6">
         {step === 1 ? <DeveloperInfo form={form} update={update} /> : null}
         {step === 2 ? <ProjectDetails form={form} update={update} /> : null}
@@ -120,14 +143,11 @@ export function OnboardingWizard() {
           total={TOTAL_STEPS}
           onBack={step > 1 ? back : undefined}
           onNext={next}
-          nextLabel={step === TOTAL_STEPS ? "Submit & Run →" : "Next →"}
-          submitting={submitting}
+          nextLabel={step === TOTAL_STEPS ? "Finish Preview →" : "Next →"}
+          submitting={false}
         />
       </div>
-
-      {/* Value-prop calculator below the wizard: see the savings before you
-          finish intake (differentiation spec §3). */}
-      <CostComparison />
+      )}
     </div>
   );
 }
