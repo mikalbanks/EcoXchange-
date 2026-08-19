@@ -9,11 +9,12 @@ export function PilotTransactionBoundary({ surface }: { surface: string }) {
       <Header />
       <main className="public-main public-main-narrow">
         <section className="public-hero">
-          <p className="public-eyebrow">Verification-only pilot</p>
+          <p className="public-eyebrow">Controlled non-transactional pilot</p>
           <h1 className="public-title">{surface} is not live.</h1>
           <p className="public-copy">
-            Release 1 demonstrates production verification and source provenance. It does not host an open
-            offering, accept an investment commitment, create an ownership record, or execute a payment.
+            Release 1 demonstrates connected project-intake, ownership-administration, production-evidence, and
+            modeled distribution-control workflows. It does not host an open offering, accept an investment
+            commitment, create legal ownership, or execute a payment.
           </p>
         </section>
         <Card className="border-amber-500/40 bg-amber-500/5">

@@ -14,7 +14,7 @@ export default defineConfig({
       manifest: {
         name: "EcoXchange - Clean Energy Market",
         short_name: "EcoXchange",
-        description: "Digital securities platform for renewable energy investments. Invest in solar, wind, and hydrogen projects.",
+        description: "Project-level digital ownership administration, independent production evidence, and PPA-linked pro-rata distribution controls.",
         theme_color: "#0B0F0C",
         background_color: "#0B0F0C",
         display: "standalone",

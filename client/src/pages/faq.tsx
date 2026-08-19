@@ -9,7 +9,7 @@ import {
 const FAQS = [
   {
     q: "What is available in the current pilot?",
-    a: "A production-verification workflow that compares available project evidence, exposes source provenance, and issues a verified, flagged, or pending engine determination. Release 1 does not include an open offering, investment acceptance, ownership administration, or payment execution.",
+    a: "A connected, non-transactional workflow covering project intake, secure source planning, source-labeled production analysis, digital ownership and cap-table workflow review, and modeled PPA-based pro-rata allocation. Release 1 does not include an open offering, investment acceptance, legal ownership creation, or payment execution.",
   },
   {
     q: "Is an EcoXchange offering open now?",
@@ -25,7 +25,7 @@ const FAQS = [
   },
   {
     q: "Does a determination trigger a distribution?",
-    a: "Not in Release 1. The measured PVDAQ demo has no offering or distribution attached. A separate Savannah stress scenario can illustrate transaction UX, but every financial and payment value there is explicitly simulated.",
+    a: "Not in Release 1. A determination can inform a modeled distribution-control workflow, but the measured PVDAQ demo has no offering or distribution attached. Every financial and payment value in the separate Savannah stress scenario is explicitly simulated.",
   },
   {
     q: "What happens when utility data is unavailable?",
@@ -37,7 +37,7 @@ const FAQS = [
   },
   {
     q: "What legal or investment structure will a future product use?",
-    a: "No structure is offered through this pilot. Any future securities product, eligibility rules, fees, tax treatment, documents, and payment mechanics require project-specific legal and operating approval before publication.",
+    a: "The intended product supports project-level SPV interests with permissioned digital ownership records and pro-rata administration tied to documented PPA economics. No structure is offered through this pilot; every live securities, tax, document, eligibility, and payment detail requires project-specific legal and operating approval.",
   },
   {
     q: "How can a project operator start?",

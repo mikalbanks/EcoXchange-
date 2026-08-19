@@ -17,6 +17,20 @@ export default {
   async fetch(request: Request, env: Env): Promise<Response> {
     const url = new URL(request.url);
 
+    if (url.pathname === "/__deployment") {
+      const manifestUrl = new URL("/deployment.json", url);
+      const response = await env.ASSETS.fetch(new Request(manifestUrl.toString()));
+      const headers = new Headers(response.headers);
+      headers.set("Cache-Control", NEVER_CACHE);
+      headers.set("Content-Type", "application/json; charset=utf-8");
+      headers.set("X-EcoXchange-Deployment-Proof", "cloudflare-workers-builds");
+      return new Response(response.body, {
+        status: response.status,
+        statusText: response.statusText,
+        headers,
+      });
+    }
+
     if (url.pathname.startsWith("/api/")) {
       if (!env.API_ORIGIN || env.API_ORIGIN.includes("REPLACE-ME")) {
         return new Response(

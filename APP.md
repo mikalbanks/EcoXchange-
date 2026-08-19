@@ -1,39 +1,35 @@
 # EcoXchange
 
-**Independent Production Verification for Solar Assets**
+**The Operating Layer for Investable Distributed Energy**
 
 ---
 
 ## Positioning rule — read before writing any user-facing copy
 
-Every surface communicates the business in this order. This is not a style
-preference; it is what the product actually is, and the public site, the demo
-and the investor dashboard are all built to it.
+Every external surface presents three complementary capabilities together:
 
-1. **Verification leads.** EcoXchange independently verifies monthly solar
-   production using inverter telemetry, utility meter data, and
-   satellite-modeled expected generation.
-2. **The determination drives action.** Each project receives a verified,
-   flagged, or pending determination. Investor distributions are gated by that
-   determination.
-3. **Securities are the first application.** EcoXchange administers private
-   placements of interests in individual solar-project entities for verified
-   accredited investors under Reg D 506(c).
-4. **Tokenization is plumbing.** Permissioned digital records may support
-   ownership administration and distribution workflows, but they are not the
-   product and not the investment.
+1. **Digital ownership and capital administration.** Project-level,
+   permissioned ownership and cap-table workflows designed for compliant
+   capital formation.
+2. **Independent production evidence.** Source-labeled inverter, utility, and
+   modeled inputs resolve to a verified, flagged, or pending determination.
+3. **PPA-linked pro-rata administration.** Documented project economics and
+   the determination inform modeled distribution eligibility and allocation.
 
-Do not lead with `digital securities`, `tokens`, `blockchain`, `wallet`,
-`USDC`, or chain telemetry. Do not describe EcoXchange as a
-`regulated platform` unless counsel has approved that exact claim.
+Do not reduce EcoXchange to a verification company. Verification is the
+evidence rail and key differentiator inside the broader operating platform.
+Do not imply that an offering, ownership record, or payment workflow is live
+before the required legal, compliance, custody, payment, and transfer-agent
+systems are connected. Do not describe EcoXchange as a `regulated platform`
+unless counsel has approved that exact claim.
 
 ---
 
 ## What is EcoXchange?
 
-EcoXchange is building a source-aware production-verification workflow for solar projects. The engine compares available inverter telemetry, utility data, and modeled generation, labels each leg as measured, modeled, derived, or simulated, and issues a verified, flagged, or pending engine determination for each project-month.
+EcoXchange is building the operating layer for investable distributed energy: project-level digital ownership and capital administration, independent production evidence, and PPA-linked pro-rata distribution controls in one workflow.
 
-The current public pilot demo is verification-only: it does not host an open offering, accept investments, or execute distributions. After pilot validation and the required legal, compliance, and operating approvals, EcoXchange intends to apply those determinations to project-level capital-formation and distribution workflows.
+The current public pilot is non-transactional. It can cover real project intake, secure source planning, source-labeled production analysis, ownership and cap-table workflow review, and modeled PPA-based allocation. It does not host an open offering, accept funds or investment commitments, create legal ownership, or execute distributions.
 
 ### Planned Financial Product (Not Currently Offered)
 
@@ -69,17 +65,17 @@ Each renewable energy project is held within a dedicated Special Purpose Vehicle
 
 | Phase | Positioning |
 |-------|-------------|
-| **Phase 1** (Current) | Independent production verification, applied to project-level capital formation |
-| **Phase 2** | Verification-gated distribution infrastructure at scale |
-| **Phase 3** | Capital-formation and production-verification platform with secondary liquidity |
+| **Phase 1** (Current) | Non-transactional pilot of connected ownership, evidence, and distribution-control workflows |
+| **Phase 2** | Approved capital administration and verification-gated distribution infrastructure at scale |
+| **Phase 3** | Integrated operating platform with compliant secondary liquidity through authorized partners |
 
 ### Brand Language
 
-**Use:** independent production verification, monthly determination, verified/flagged/pending, distribution gate, three-source reconciliation, project interest, private placement, capital-formation and production-verification platform
+**Use:** operating layer for investable distributed energy, digital ownership administration, project-level capital administration, independent production evidence, monthly determination, verified/flagged/pending, PPA-linked pro-rata distribution controls, three-source reconciliation, project interest
 
 **Avoid:** crypto exchange, DeFi, permissionless, unregulated, democratizing finance, marketplace (until Phase 3)
 
-**Do not lead with:** digital securities, tokens, tokenized, blockchain, wallet, USDC, chain telemetry — these describe administration plumbing, not the product. They may appear in technical surfaces (`/explorer`, ownership-record detail) but never in a hero, a primary heading, or a first-row dashboard metric.
+**Use with context:** tokenization, digital securities, blockchain, wallet, USDC, and chain telemetry may describe permissioned ownership or payment infrastructure, but must never imply that a public offering, custody service, payment rail, or secondary market is currently live.
 
 **Never claim without counsel sign-off:** `regulated platform`.
 
@@ -87,8 +83,9 @@ Each renewable energy project is held within a dedicated Special Purpose Vehicle
 
 | Do not write | Write |
 |---|---|
-| Digital securities for renewable energy | Independent production verification for solar assets |
-| Regulated digital-securities platform | Capital-formation and production-verification platform |
+| Verification company | Operating layer for investable distributed energy |
+| Tokenized solar investment platform | Project-level digital ownership and capital-administration infrastructure |
+| Regulated digital-securities platform | Capital-administration, production-evidence, and distribution-control platform |
 | Token holders | Project-interest holders, or investors |
 | ESN holdings | Project interest / ownership interest |
 | Monthly yield | Latest distribution, or estimated monthly distribution |
