@@ -13,9 +13,11 @@ const publicClaimFiles = [
   "client/src/pages/faq.tsx",
   "client/src/pages/market.tsx",
   "client/src/pages/market-project.tsx",
+  "client/src/components/pilot-transaction-boundary.tsx",
   "client/src/components/developer-submission-wizard.tsx",
   "client/src/components/investor-onboarding-wizard.tsx",
   "ecoxchange-dashboard/src/pages/Landing.tsx",
+  "ecoxchange-dashboard/src/data/index.ts",
   "ecoxchange-dashboard/src/pages/OnboardingWizard.tsx",
   "ecoxchange-dashboard/src/pages/developer/BacktestResults.tsx",
   "ecoxchange-dashboard/src/components/onboarding/DeveloperInfo.tsx",
@@ -70,11 +72,22 @@ describe("Release 1 public claims", () => {
 
   it("states the public pilot boundary in both product surfaces", () => {
     expect(read("client/src/pages/landing.tsx")).toContain(
-      "does not accept investments, execute payments",
+      "without opening an offering, accepting funds, or executing payments",
     );
     expect(read("ecoxchange-dashboard/src/pages/Landing.tsx")).toContain(
       "no project ownership, account, or",
     );
+  });
+
+  it("presents the three connected product rails without verification-only positioning", () => {
+    const website = read("client/src/pages/landing.tsx");
+    const demo = read("ecoxchange-dashboard/src/pages/Landing.tsx");
+
+    expect(website).toContain(
+      "Digital Ownership · Production Evidence · Distribution Controls",
+    );
+    expect(website).toContain("PPA-linked pro-rata distribution controls");
+    expect(`${website}\n${demo}`).not.toMatch(/verification[- ](?:only|led|first)/i);
   });
 
   it("keeps developer onboarding preview-only and rejects credentials", () => {
@@ -102,6 +115,19 @@ describe("Release 1 deployment ownership", () => {
     );
 
     expect(owners).toEqual(["ecoxchange-dashboard/wrangler.jsonc"]);
+  });
+
+  it("publishes a Cloudflare build manifest that can be matched to GitHub main", () => {
+    expect(read("package.json")).toContain(
+      "write-deployment-manifest.mjs dist/public",
+    );
+    expect(read("ecoxchange-dashboard/package.json")).toContain(
+      "write-deployment-manifest.mjs dist",
+    );
+    expect(read("worker/index.ts")).toContain('url.pathname === "/__deployment"');
+    expect(read("ecoxchange-dashboard/worker/index.ts")).toContain(
+      'url.pathname === "/__deployment"',
+    );
   });
 });
 

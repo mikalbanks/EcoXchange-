@@ -3,10 +3,12 @@ import { DeveloperSubmissionWizard } from "@/components/developer-submission-wiz
 import { Card, CardContent } from "@/components/ui/card";
 
 const pilotRows = [
+  { item: "Project operating profile", scope: "Technical, ownership-workflow, and PPA input review", status: "Included" },
   { item: "Production backtest", scope: "12-month model-to-measurement comparison", status: "Pilot evaluation" },
   { item: "Evidence labeling", scope: "Measured, modeled, derived, or simulated per source leg", status: "Included" },
   { item: "Utility data", scope: "Partner-provided data preferred; any proxy is disclosed", status: "Availability-dependent" },
-  { item: "Project intake", scope: "Technical and operating-data collection", status: "Included" },
+  { item: "Digital ownership workflow", scope: "Permissioned cap-table and transfer-control review", status: "Modeled" },
+  { item: "PPA-based allocation", scope: "Pro-rata distribution-control calculation", status: "Modeled" },
   { item: "Securities offering", scope: "No offer, subscription, or capital raise", status: "Not included" },
   { item: "Legal and payment execution", scope: "No LOI, offering document, or distribution execution", status: "Not included" },
 ];
@@ -25,10 +27,10 @@ export default function DevelopPage() {
               <em>solar project.</em>
             </h1>
             <p className="public-copy">
-              EcoXchange is accepting permitted <strong>1–20 MW U.S. solar projects</strong> for a
-              verification-led pilot. Selected partners provide available inverter and utility-source access; we
-              review coverage and produce a source-labeled backtest. Capital-formation services are not part of
-              the current pilot.
+              EcoXchange is accepting permitted <strong>1–20 MW U.S. solar projects</strong> for a connected,
+              non-transactional pilot. Selected partners can review project intake, source connectivity,
+              source-labeled production analysis, digital ownership administration, and modeled PPA-based pro-rata
+              allocation without opening an offering or executing payments.
             </p>
             <div className="public-actions">
               <a href="#submit" className="public-btn public-btn-primary">Start project intake</a>

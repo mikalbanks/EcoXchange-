@@ -10,8 +10,8 @@ import { LATEST_VERIFICATION_PATH } from "../data/index.js";
 // Lightweight role-select entry point. Real auth (Polymath) replaces this after
 // securities counsel; for now it just sets the mock role and routes in.
 //
-// Verification leads: the engine is the product, and the investor and developer
-// views are applications of its determination. The card order says so.
+// The evidence, investor, and developer views demonstrate complementary parts
+// of one project-level operating workflow.
 export function Landing() {
   const navigate = useNavigate();
   const { setRole } = useAuth();
@@ -32,15 +32,15 @@ export function Landing() {
         <span className="font-heading text-3xl text-darkBg">EcoXchange</span>
       </div>
       <p className="relative mt-5 font-mono text-xs uppercase tracking-[0.22em] text-medGreen">
-        Production verification demonstration
+        Project operating workflow demonstration
       </p>
       <h1 className="relative font-heading text-4xl sm:text-5xl text-center mt-3 text-darkBg">
-        Explore production verification in action.
+        Explore the operating layer in action.
       </h1>
       <p className="relative text-textMuted mt-4 mb-10 text-center max-w-xl text-base leading-relaxed">
-        Compare measured inverter production with a weather-adjusted NASA POWER
-        model, inspect the provenance of every input, and follow the resulting
-        determination into investor and developer workflows.
+        Follow a project from source-labeled production evidence into investor,
+        developer, and modeled distribution-control workflows. No offering,
+        ownership, or payment is executed in this public demo.
       </p>
 
       <div className="relative w-full max-w-3xl space-y-4">

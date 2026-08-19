@@ -143,8 +143,9 @@ export default function PublicMarketPage() {
             <h2 className="public-section-title">Request a pilot briefing.</h2>
           </div>
           <p className="public-section-copy">
-            Investor onboarding, subscription, funding, and ownership setup are not available in Release 1. A pilot
-            briefing covers the verification workflow, evidence requirements, and current product boundaries.
+            Investor onboarding, subscription, funding, and legal ownership creation are not available in Release 1.
+            A pilot briefing covers the connected ownership-administration, production-evidence, and modeled
+            distribution-control workflows, along with their current boundaries.
           </p>
           <a className="public-btn public-btn-primary mt-5 inline-flex" href="mailto:contact@ecoxchange.net?subject=EcoXchange%20pilot%20briefing">
             Contact EcoXchange

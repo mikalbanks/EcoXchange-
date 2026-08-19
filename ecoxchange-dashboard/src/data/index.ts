@@ -165,7 +165,7 @@ export function describeTransactionPolicy(
 
   return {
     state: "disabled",
-    badge: "VERIFICATION-ONLY PILOT",
+    badge: "NON-TRANSACTIONAL PILOT",
     title: "No transaction is attached to this dataset",
     description:
       mode === "supabase"

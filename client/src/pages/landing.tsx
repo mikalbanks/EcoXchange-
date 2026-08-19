@@ -18,16 +18,16 @@ const fmtPlants = PLANTS_TESTED.toLocaleString("en-US");
 // the /benchmark page and the exported PDF read. Do not re-type a number here.
 const STATS = [
   {
-    num: "3 evidence roles",
-    label: "Measured · modeled · derived status shown per source",
+    num: "3 connected rails",
+    label: "Digital ownership · production evidence · distribution controls",
   },
   {
-    num: "Monthly determination",
-    label: "Verified · flagged · pending",
+    num: "Project-level record",
+    label: "One operating context from project intake through reporting",
   },
   {
-    num: "Verification-only pilot",
-    label: "No offering or payment execution in the current demo",
+    num: "Non-transactional pilot",
+    label: "Real project workflows without accepting funds or executing payments",
   },
   {
     num: `${fmtPlants} plants tested`,
@@ -39,18 +39,18 @@ const STATS = [
 const PROBLEM_CARDS = [
   {
     num: "01",
-    title: "One source is not independent",
-    body: "Monitoring portals show useful operating data, but they do not independently confirm utility-delivered output.",
+    title: "Ownership records are disconnected",
+    body: "Project interests, investor records, and operating data often live in separate systems with no shared project context.",
   },
   {
     num: "02",
-    title: "Annual reporting arrives too late",
-    body: "Production shortfalls can compound for months before financial reporting reveals them.",
+    title: "Production evidence is incomplete",
+    body: "A single monitoring feed cannot independently establish the performance record that project stakeholders need.",
   },
   {
     num: "03",
-    title: "Physical audits do not scale",
-    body: "On-site sensors and third-party reviews add cost and delay to smaller projects.",
+    title: "Distributions lose their audit trail",
+    body: "PPA economics, production determinations, and pro-rata allocation logic are rarely connected in one reviewable workflow.",
   },
 ] as const;
 
@@ -101,9 +101,12 @@ const BENCHMARK_FIGURES = [
 ] as const;
 
 const PILOT_ROWS = [
+  { label: "Project intake", eco: "Included", other: "Technical, ownership, and PPA inputs reviewed" },
   { label: "Production backtest", eco: "Included", other: "Source coverage reviewed" },
   { label: "Per-source provenance", eco: "Included", other: "Measured · modeled · derived · simulated" },
   { label: "Utility evidence", eco: "Availability-dependent", other: "A proxy is disclosed, never promoted" },
+  { label: "Digital ownership workflow", eco: "Modeled", other: "No legal ownership created" },
+  { label: "PPA-based allocation", eco: "Modeled", other: "No payment execution" },
   { label: "Open securities offering", eco: "Not included", other: "Requires counsel and operating approvals" },
   { label: "Investment acceptance", eco: "Disabled", other: "No funds or commitments accepted" },
   { label: "Distribution execution", eco: "Disabled", other: "Simulation only in the labeled stress scenario" },
@@ -145,23 +148,23 @@ export default function LandingPage() {
       <section>
         <div className="hero">
           <div className="hero-text">
-            <div className="label hero-eyebrow">Source-Aware Solar Production Verification</div>
+            <div className="label hero-eyebrow">Digital Ownership · Production Evidence · Distribution Controls</div>
             <h1 className="hero-headline">
-              Light,
+              The operating layer for
               <br />
-              <em>accounted for.</em>
+              <em>investable distributed energy.</em>
             </h1>
             <p className="hero-sub">
-              EcoXchange compares available inverter telemetry, utility evidence, and satellite-modeled generation
-              to issue a verified, flagged, or pending engine determination. Every source is labeled by basis. The
-              current pilot demo is production-verification only and does not execute investments or distributions.
+              EcoXchange is building one project-level workflow for digital ownership administration, independent
+              production evidence, and PPA-linked pro-rata distribution controls. The current pilot validates these
+              connected workflows without opening an offering, accepting funds, or executing payments.
             </p>
             <div className="hero-actions">
               <Link href="/verification" className="btn btn-primary">
-                See How Verification Works
+                Review the Evidence Rail
               </Link>
               <a href="https://demo.ecoxchange.net/" className="btn btn-outline">
-                Run the Live Demo
+                Explore the Platform Demo
               </a>
               <Link href="/market" className="btn btn-outline">
                 Explore Project Applications →
@@ -196,12 +199,12 @@ export default function LandingPage() {
       <section id="problem" className="problem">
         <div className="section-header">
           <span className="label section-num">§ I</span>
-          <h2 className="section-title">Solar production is reported. It is rarely reconciled.</h2>
+          <h2 className="section-title">Clean-energy ownership, evidence, and distributions remain disconnected.</h2>
         </div>
         <p className="problem-intro">
-          Investors, developers, and asset managers often rely on a single monitoring feed or periodic
-          self-reporting. EcoXchange addresses that trust gap with a repeatable monthly determination and an
-          explicit provenance label for every input.
+          Developers, administrators, and investors need a shared project record that connects who owns an interest,
+          what the asset produced, and how contracted project economics would be allocated. EcoXchange brings those
+          operating rails into one controlled workflow.
         </p>
         <div className="problem-cards">
           {PROBLEM_CARDS.map((card) => (
@@ -244,22 +247,22 @@ export default function LandingPage() {
       <section id="investors" className="investors">
         <div className="section-header">
           <span className="label section-num">§ III</span>
-          <span className="label">First Application · Project-Level Capital Formation</span>
+          <span className="label">Connected Application · Project-Level Capital Administration</span>
           <h2 className="section-title">
-            Verified production, applied to individual solar-project offerings.
+            One operating record from project interest to distribution eligibility.
           </h2>
         </div>
         <div className="investors-grid">
           <div className="investors-body">
             <p>
-              EcoXchange is preparing a verification-led pilot for individual U.S. solar projects. After pilot
-              validation and required legal, compliance, and operating approvals, the planned product may support
-              project-level capital formation tied to an auditable production record.
+              EcoXchange is preparing a non-transactional pilot for individual U.S. solar projects. The pilot can
+              connect technical project intake, source-labeled production analysis, digital ownership and cap-table
+              workflow review, and modeled PPA-based pro-rata allocation in one project context.
             </p>
             <p className="investors-note">
-              This demo does not display an open offering, accept investments, or execute distributions. Any future
-              investment would be governed by counsel-approved offering documents; a permissioned digital record
-              would support ownership administration rather than create a separate investment.
+              This demo does not display an open offering, accept investments, create legal ownership, or execute
+              distributions. Any live financial workflow would require counsel-approved documents and the necessary
+              compliance, custody, payment, and transfer-agent infrastructure.
             </p>
             <Link href="/develop" className="btn btn-primary">
               View Pilot Scope →
@@ -305,21 +308,22 @@ export default function LandingPage() {
         <div className="fee-inner">
           <div className="section-header">
             <span className="label section-num">§ V</span>
-            <h2 className="section-title">Release 1 pilot boundaries.</h2>
+            <h2 className="section-title">Release 1 non-transactional pilot boundaries.</h2>
           </div>
           <div className="fee-grid">
             <div className="fee-body">
               <p>
-                Release 1 is a <strong>verification-led pilot</strong>. It evaluates production evidence and makes
-                source provenance visible; it is not a securities offering or financing commitment.
+                Release 1 is a <strong>connected, non-transactional pilot</strong>. It combines project intake,
+                production evidence, ownership-workflow review, and modeled distribution controls; it is not a
+                securities offering or financing commitment.
               </p>
               <p>
                 Pilot timing, data-access responsibilities, and any commercial terms are confirmed separately in
                 writing after a fit review. The public site does not publish a price quote or time-to-capital promise.
               </p>
               <p>
-                Offering, subscription, ownership, legal-document, and payment execution remain disabled until the
-                necessary authoritative systems, partners, and approvals are in place.
+                Offering, subscription, legal ownership, legal-document, and payment execution remain disabled until
+                the necessary authoritative systems, partners, and approvals are in place.
               </p>
             </div>
             <div>
@@ -339,7 +343,7 @@ export default function LandingPage() {
                 ))}
                 <div className="fee-row fee-total">
                   <span>Pilot objective</span>
-                  <span>Verify the evidence workflow</span>
+                  <span>Validate the connected operating workflow</span>
                   <span className="fee-no">Do not imply a live transaction</span>
                 </div>
               </div>
@@ -354,7 +358,7 @@ export default function LandingPage() {
           <h2 className="access-headline">A short conversation.</h2>
           <div className="access-tracks">
             <div className="access-track">
-              <p>Review the verification workflow and discuss pilot requirements.</p>
+              <p>Review the ownership, evidence, and distribution-control workflow and discuss pilot requirements.</p>
               <Link href={REQUEST_ACCESS.href} className="btn btn-lime">
                 Request Pilot Access
               </Link>
@@ -381,7 +385,7 @@ export default function LandingPage() {
         <div className="map-ticks map-ticks-bottom" aria-hidden="true" />
         <div className="footer-inner">
           <span className="footer-brand">EcoXchange</span>
-          <span className="footer-meta">Verification-Led Pilot · © MMXXVI</span>
+          <span className="footer-meta">Non-Transactional Pilot · © MMXXVI</span>
           <span className="footer-meta">
             Inverter × Utility Evidence × Satellite Model · Source-Labeled
           </span>
