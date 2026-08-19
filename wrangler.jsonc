@@ -8,7 +8,8 @@
   "assets": {
     "directory": "./dist/public",
     "binding": "ASSETS",
-    "not_found_handling": "single-page-application"
+    "not_found_handling": "single-page-application",
+    "run_worker_first": ["/api/*", "/__deployment"]
   },
   "vars": {
     // Render origin for the Express API. The Worker proxies /api/* here.

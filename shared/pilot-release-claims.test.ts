@@ -118,6 +118,9 @@ describe("Release 1 deployment ownership", () => {
   });
 
   it("publishes a Cloudflare build manifest that can be matched to GitHub main", () => {
+    const rootWrangler = read("wrangler.jsonc");
+    const dashboardWrangler = read("ecoxchange-dashboard/wrangler.jsonc");
+
     expect(read("package.json")).toContain(
       "write-deployment-manifest.mjs dist/public",
     );
@@ -128,6 +131,8 @@ describe("Release 1 deployment ownership", () => {
     expect(read("ecoxchange-dashboard/worker/index.ts")).toContain(
       'url.pathname === "/__deployment"',
     );
+    expect(rootWrangler).toContain('"run_worker_first": ["/api/*", "/__deployment"]');
+    expect(dashboardWrangler).toContain('"run_worker_first": ["/__deployment"]');
   });
 });
 
