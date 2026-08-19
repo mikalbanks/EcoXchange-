@@ -148,7 +148,7 @@ export function VerificationDetail() {
             <dd className="text-textDark mt-1 font-mono">
               {record.ghi_kwh_m2 !== undefined
                 ? `${record.ghi_kwh_m2.toFixed(1)} kWh/m²`
-                : "—"}
+                : "Not included in this demo record"}
             </dd>
           </div>
           <div>
