@@ -155,12 +155,13 @@ export function Portfolio() {
           <h1 className="font-heading text-3xl text-darkBg">
             Good to see you, {firstName}.
           </h1>
-          <p className="text-textMuted mt-1">
-            Production evidence with source-level provenance · {data.portfolio.active_projects} active
+          <p className="text-textMuted mt-1 max-w-4xl">
+            EcoXchange connects digital ownership administration, PPA-linked pro-rata distribution controls,
+            and independent production verification · {data.portfolio.active_projects} active
             project{data.portfolio.active_projects === 1 ? "" : "s"}
           </p>
 
-          {/* Production and provenance lead. Financial fixtures only appear in
+          {/* This screen emphasizes project operating evidence. Financial fixtures only appear in
               the explicitly selected simulated Savannah scenario. */}
           <div className="mt-6 grid grid-cols-2 gap-3 sm:gap-4 xl:grid-cols-4">
             <StatCard
@@ -200,7 +201,7 @@ export function Portfolio() {
               }
             />
             <StatCard
-              label={showSimulatedFinance ? "Simulated Project Interest" : "Data Scope"}
+              label={showSimulatedFinance ? "Simulated Project Interest" : "Demo Scope"}
               value={
                 showSimulatedFinance ? (
                   <AnimatedNumber
@@ -209,10 +210,10 @@ export function Portfolio() {
                     startOnView
                   />
                 ) : (
-                  "Production only"
+                  "Evidence view"
                 )
               }
-              sublabel={showSimulatedFinance ? "fixture amount" : "no offering attached"}
+              sublabel={showSimulatedFinance ? "fixture amount" : "transaction data not attached"}
             />
           </div>
         </div>
@@ -229,7 +230,7 @@ export function Portfolio() {
           <p className="mt-2 max-w-4xl text-sm leading-relaxed text-textDark">
             {scenario === "flagged"
               ? "All production inputs in this Savannah stress case are simulated to demonstrate repeated underperformance and the FLAGGED workflow. Account, ownership, distribution, and financial figures are also simulated."
-              : "Inverter production is measured NREL PVDAQ telemetry and expected production is modeled from NASA POWER. The utility leg is derived from the inverter series. No offering, investor position, ownership record, or distribution is attached or displayed."}
+              : "Inverter production is measured NREL PVDAQ telemetry and expected production is modeled from NASA POWER. The utility leg is derived from the inverter series. No offering, investor position, ownership record, or distribution is attached or displayed in this evidence view."}
           </p>
         </section>
       ) : null}
@@ -262,8 +263,8 @@ export function Portfolio() {
 
       {data.projects.length === 0 ? (
           <EmptyState
-          title="No verification projects"
-          message="Connected production-verification projects will appear here."
+          title="No active projects"
+          message="Connected project-administration and production-evidence workflows will appear here."
         />
       ) : (
         <div className="space-y-4">
@@ -297,9 +298,8 @@ export function Portfolio() {
         <TransactionBoundaryNotice surface="Holdings and distributions" compact />
       )}
 
-      {/* Ownership administration (differentiation spec §4). Collapsed, because
-          the digital record is plumbing for the interest described in the
-          offering documents — not the investment, and not the headline.
+      {/* Ownership administration is a core layer of the integrated workflow.
+          The digital record supports the project interest described in the offering documents.
           Recharts stays below-fold either way. */}
       {showSimulatedFinance ? <section className="space-y-3">
         <details className="rounded-xl border border-paleGreen/60 bg-white px-5 py-4">
