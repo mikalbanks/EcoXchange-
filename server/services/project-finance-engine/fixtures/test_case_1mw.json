@@ -33,8 +33,8 @@
     "permanentDebtUsd": 517036.52,
     "debtToCapex": 0.272124,
     "itcNetTransferProceedsUsd": 498180,
-    "dsraRequiredUsd": 29858,
-    "sponsorEquityUsd": 1046305,
+    "dsraRequiredUsd": 29858.46,
+    "sponsorEquityUsd": 1046104.89,
     "bindingConstraint": "DSCR"
   },
   "tolerance": {
