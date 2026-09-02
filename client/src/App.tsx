@@ -64,6 +64,7 @@ import DeveloperProjectDetail from "@/pages/developer/project-detail";
 import DeveloperProjectIntake from "@/pages/developer/project-intake";
 import DeveloperBacktestView from "@/pages/developer/backtest-view";
 import DeveloperProjectDashboard from "@/pages/developer/project-dashboard";
+import ProjectFinanceUnderwriting from "@/pages/developer/project-finance-underwriting";
 
 import PrivacyPolicy from "@/pages/privacy";
 import InvestorDashboard from "@/pages/investor/dashboard";
@@ -108,7 +109,6 @@ function ProtectedRoute({
   }
 
   if (!user) {
-    // Remember where they were headed so sign-in can finish the journey.
     return <Redirect to={loginPathWithReturn(window.location.pathname)} />;
   }
 
@@ -129,145 +129,89 @@ function Router() {
       <Route path="/portfolio/shared/:token" component={SharedPortfolioPage} />
       <Route path="/auth/login" component={LoginPage} />
       <Route path="/auth/signup" component={SignupPage} />
-      <Route path="/yield-simulation">
-        <PilotTransactionBoundary surface="Yield simulation" />
-      </Route>
-
+      <Route path="/yield-simulation"><PilotTransactionBoundary surface="Yield simulation" /></Route>
       <Route path="/performance/:projectId" component={PerformancePage} />
       <Route path="/performance" component={PerformancePage} />
       <Route path="/backtest-report" component={BacktestReportPage} />
-
-      {/* Spec 22 paid-tier deliverables. Public routes: these are documents an
-          owner hands to a warranty adjuster, a lender or an acquirer, and a
-          report that needs a login to the reporting party's system is not
-          obviously independent of that party. */}
-      <Route
-        path="/reports/degradation/:projectId"
-        component={DegradationCertificatePage}
-      />
+      <Route path="/reports/degradation/:projectId" component={DegradationCertificatePage} />
       <Route path="/reports/soiling/:projectId" component={SoilingReportPage} />
-      <Route
-        path="/reports/availability/:projectId"
-        component={AvailabilityReportPage}
-      />
+      <Route path="/reports/availability/:projectId" component={AvailabilityReportPage} />
       <Route path="/privacy" component={PrivacyPolicy} />
       <Route path="/develop" component={DevelopPage} />
       <Route path="/develop/preview" component={DeveloperDashboardPreview} />
       <Route path="/invest/preview" component={InvestorDashboardPreview} />
-      {/* /verification is the canonical path — the nav says "Verification", so
-          the URL should too. /method stays live for existing links. */}
       <Route path="/verification" component={MethodPage} />
       <Route path="/method" component={MethodPage} />
       <Route path="/faq" component={FaqPage} />
       
       <Route path="/developer">
-        <ProtectedRoute allowedRoles={["DEVELOPER"]}>
-          <DeveloperDashboard />
-        </ProtectedRoute>
+        <ProtectedRoute allowedRoles={["DEVELOPER"]}><DeveloperDashboard /></ProtectedRoute>
       </Route>
       <Route path="/developer/projects">
-        <ProtectedRoute allowedRoles={["DEVELOPER"]}>
-          <DeveloperDashboard />
-        </ProtectedRoute>
+        <ProtectedRoute allowedRoles={["DEVELOPER"]}><DeveloperDashboard /></ProtectedRoute>
       </Route>
       <Route path="/developer/projects/new">
-        <ProtectedRoute allowedRoles={["DEVELOPER"]}>
-          <PilotTransactionBoundary surface="Offering creation" />
-        </ProtectedRoute>
+        <ProtectedRoute allowedRoles={["DEVELOPER"]}><PilotTransactionBoundary surface="Offering creation" /></ProtectedRoute>
       </Route>
       <Route path="/developer/onboard">
-        <ProtectedRoute allowedRoles={["DEVELOPER"]}>
-          <DeveloperProjectIntake />
-        </ProtectedRoute>
+        <ProtectedRoute allowedRoles={["DEVELOPER"]}><DeveloperProjectIntake /></ProtectedRoute>
+      </Route>
+      <Route path="/developer/project-finance">
+        <ProtectedRoute allowedRoles={["DEVELOPER", "ADMIN"]}><ProjectFinanceUnderwriting /></ProtectedRoute>
       </Route>
       <Route path="/developer/backtest/:id">
-        <ProtectedRoute allowedRoles={["DEVELOPER"]}>
-          <DeveloperBacktestView />
-        </ProtectedRoute>
+        <ProtectedRoute allowedRoles={["DEVELOPER"]}><DeveloperBacktestView /></ProtectedRoute>
       </Route>
       <Route path="/developer/project/:id">
-        <ProtectedRoute allowedRoles={["DEVELOPER"]}>
-          <DeveloperProjectDashboard />
-        </ProtectedRoute>
+        <ProtectedRoute allowedRoles={["DEVELOPER"]}><DeveloperProjectDashboard /></ProtectedRoute>
       </Route>
       <Route path="/developer/projects/:id">
-        <ProtectedRoute allowedRoles={["DEVELOPER"]}>
-          <DeveloperProjectDetail />
-        </ProtectedRoute>
+        <ProtectedRoute allowedRoles={["DEVELOPER"]}><DeveloperProjectDetail /></ProtectedRoute>
       </Route>
 
       <Route path="/investor">
-        <ProtectedRoute allowedRoles={["INVESTOR"]}>
-          <InvestorDashboard />
-        </ProtectedRoute>
+        <ProtectedRoute allowedRoles={["INVESTOR"]}><InvestorDashboard /></ProtectedRoute>
       </Route>
       <Route path="/investor/deals">
-        <ProtectedRoute allowedRoles={["INVESTOR"]}>
-          <PilotTransactionBoundary surface="Investment marketplace" />
-        </ProtectedRoute>
+        <ProtectedRoute allowedRoles={["INVESTOR"]}><PilotTransactionBoundary surface="Investment marketplace" /></ProtectedRoute>
       </Route>
       <Route path="/investor/deals/:id">
-        <ProtectedRoute allowedRoles={["INVESTOR"]}>
-          <PilotTransactionBoundary surface="Deal room and commitment" />
-        </ProtectedRoute>
+        <ProtectedRoute allowedRoles={["INVESTOR"]}><PilotTransactionBoundary surface="Deal room and commitment" /></ProtectedRoute>
       </Route>
       <Route path="/investor/queue/:id">
-        <ProtectedRoute allowedRoles={["INVESTOR"]}>
-          <InvestorQueueDeal />
-        </ProtectedRoute>
+        <ProtectedRoute allowedRoles={["INVESTOR"]}><InvestorQueueDeal /></ProtectedRoute>
       </Route>
       <Route path="/investor/interests">
-        <ProtectedRoute allowedRoles={["INVESTOR"]}>
-          <PilotTransactionBoundary surface="Investment commitments" />
-        </ProtectedRoute>
+        <ProtectedRoute allowedRoles={["INVESTOR"]}><PilotTransactionBoundary surface="Investment commitments" /></ProtectedRoute>
       </Route>
 
       <Route path="/admin">
-        <ProtectedRoute allowedRoles={["ADMIN"]}>
-          <AdminDashboard />
-        </ProtectedRoute>
+        <ProtectedRoute allowedRoles={["ADMIN"]}><AdminDashboard /></ProtectedRoute>
       </Route>
-      {/* Spec 17 — declared before /admin/projects/:id so the static segment wins. */}
       <Route path="/admin/distributions/:spvId">
-        <ProtectedRoute allowedRoles={["ADMIN"]}>
-          <AdminDistributions />
-        </ProtectedRoute>
+        <ProtectedRoute allowedRoles={["ADMIN"]}><AdminDistributions /></ProtectedRoute>
       </Route>
       <Route path="/admin/distributions">
-        <ProtectedRoute allowedRoles={["ADMIN"]}>
-          <AdminDistributions />
-        </ProtectedRoute>
+        <ProtectedRoute allowedRoles={["ADMIN"]}><AdminDistributions /></ProtectedRoute>
       </Route>
       <Route path="/admin/projects/:id/export">
-        <ProtectedRoute allowedRoles={["ADMIN"]}>
-          <AdminExportPacket />
-        </ProtectedRoute>
+        <ProtectedRoute allowedRoles={["ADMIN"]}><AdminExportPacket /></ProtectedRoute>
       </Route>
       <Route path="/admin/projects/:id/verification">
-        <ProtectedRoute allowedRoles={["ADMIN"]}>
-          <AdminVerificationPage />
-        </ProtectedRoute>
+        <ProtectedRoute allowedRoles={["ADMIN"]}><AdminVerificationPage /></ProtectedRoute>
       </Route>
       <Route path="/admin/projects/:id">
-        <ProtectedRoute allowedRoles={["ADMIN"]}>
-          <AdminProjectReview />
-        </ProtectedRoute>
+        <ProtectedRoute allowedRoles={["ADMIN"]}><AdminProjectReview /></ProtectedRoute>
       </Route>
       <Route path="/admin/projects">
-        <ProtectedRoute allowedRoles={["ADMIN"]}>
-          <AdminProjects />
-        </ProtectedRoute>
+        <ProtectedRoute allowedRoles={["ADMIN"]}><AdminProjects /></ProtectedRoute>
       </Route>
       <Route path="/admin/users">
-        <ProtectedRoute allowedRoles={["ADMIN"]}>
-          <AdminUsers />
-        </ProtectedRoute>
+        <ProtectedRoute allowedRoles={["ADMIN"]}><AdminUsers /></ProtectedRoute>
       </Route>
 
       <Route path="/operations">
-        <ProtectedRoute allowedRoles={["ADMIN", "DEVELOPER"]}>
-          <OperationsPage />
-        </ProtectedRoute>
+        <ProtectedRoute allowedRoles={["ADMIN", "DEVELOPER"]}><OperationsPage /></ProtectedRoute>
       </Route>
 
       <Route component={NotFound} />
