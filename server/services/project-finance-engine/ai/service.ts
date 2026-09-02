@@ -185,6 +185,13 @@ export function validateExplanationAgainstTruth(
         metricKey: ref.metric_key,
       });
     }
+    if (!Object.is(ref.metric_value, truth.metrics[ref.metric_key])) {
+      throw new AIServiceError("AI_OUTPUT_CONTRADICTS_TRUTH", "AI explanation changed a deterministic metric value.", {
+        metricKey: ref.metric_key,
+        supplied: truth.metrics[ref.metric_key],
+        generated: ref.metric_value,
+      });
+    }
   }
   const allowedRecommendations = new Set(truth.recommendationCodes);
   for (const code of explanation.recommendation_codes) {
