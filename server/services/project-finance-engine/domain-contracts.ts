@@ -65,7 +65,7 @@ export type TaxModuleInput = z.infer<typeof taxModuleInputSchema>;
 const nonNegativeFinite = z.number().finite().gte(0);
 const positiveFinite = z.number().finite().gt(0);
 const decimalRate = z.number().finite().gte(0).lte(1);
-const escalationRate = z.number().finite().gt(-1).lt(10);
+const escalationRate = z.number().finite().gt(-1).lte(10);
 const positiveIntegerYears = z.number().int().gte(1).lte(200);
 
 /**
@@ -73,7 +73,8 @@ const positiveIntegerYears = z.number().int().gte(1).lte(200);
  *
  * This intentionally mirrors the already-approved ProjectFinanceInputs contract
  * in core.ts. The schema exists so application/API code can reject malformed or
- * ambiguous payloads before invoking the calculation module.
+ * ambiguous payloads before invoking the calculation module. It does not add
+ * business rules that are absent from the existing approved core behavior.
  */
 export const projectFinanceInputSchema = z.object({
   projectName: z.string().min(1),
@@ -87,7 +88,7 @@ export const projectFinanceInputSchema = z.object({
   annualPpaEscalationRate: escalationRate,
   totalProjectCapexUsd: positiveFinite,
   capexIncludesContingency: z.boolean().optional(),
-  contingencyRate: z.number().finite().gte(0).lt(10).optional(),
+  contingencyRate: z.number().finite().gte(0).lte(10).optional(),
   yearOneOpexUsd: nonNegativeFinite,
   annualOpexEscalationRate: escalationRate,
   itcRate: decimalRate,
@@ -151,28 +152,6 @@ export const projectFinanceInputSchema = z.object({
       code: z.ZodIssueCode.custom,
       path: ["explicitDownsideGenerationMwh"],
       message: "explicitDownsideGenerationMwh must contain exactly projectLifeYears entries",
-    });
-  }
-
-  if (
-    input.dsraReferenceMethod === "CUSTOM" &&
-    input.customDsraReferenceAnnualDebtServiceUsd === undefined
-  ) {
-    ctx.addIssue({
-      code: z.ZodIssueCode.custom,
-      path: ["customDsraReferenceAnnualDebtServiceUsd"],
-      message: "customDsraReferenceAnnualDebtServiceUsd is required when dsraReferenceMethod is CUSTOM",
-    });
-  }
-
-  if (
-    input.capexIncludesContingency === false &&
-    input.contingencyRate === undefined
-  ) {
-    ctx.addIssue({
-      code: z.ZodIssueCode.custom,
-      path: ["contingencyRate"],
-      message: "contingencyRate is required when capexIncludesContingency is false",
     });
   }
 });
