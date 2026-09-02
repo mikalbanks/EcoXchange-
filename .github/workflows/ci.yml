@@ -1,18 +1,7 @@
 name: CI
 
-# Spec 19/20/21 land guardrails that only mean something if they gate:
-#   - the night-energy / time-alignment assertions (verification-engine)
-#   - the independence assertion (ecoxchange-dashboard)
-#   - the spec 21 §7.8 ingestion assertions: interval inference, energy
-#     integration, the night guard, metric resolution, and a frame with no
-#     production leg (verification-engine/tests/test_ingestion.py)
-# This repo had no CI before them. An assertion nobody runs is a comment.
-#
-# Network-dependent suites stay out. The reconciliation engine's `npm test`
-# already excludes backtest-integration.test.ts, `npm run backtest:validate`
-# (live NASA POWER) is not invoked here, and the ingestion tests that read
-# oedi-data-lake are behind RUN_NETWORK_TESTS — a red build must mean a real
-# regression, not that an upstream API was briefly unreachable.
+# Repository-wide regression guardrails. Network-dependent suites stay out so
+# a red build represents a product regression rather than an upstream outage.
 
 on:
   push:
@@ -39,9 +28,6 @@ jobs:
           cache: pip
           cache-dependency-path: verification-engine/requirements.txt
       - run: pip install -r requirements.txt pytest
-      # tests/ mixes two import styles: some modules import `src.verification_engine`
-      # (via their own sys.path insert), test_degradation.py imports
-      # `verification_engine` directly. PYTHONPATH=src satisfies both.
       - name: pytest
         env:
           PYTHONPATH: src
@@ -80,6 +66,20 @@ jobs:
       - run: npm ci
       - run: npm run check
       - run: npm test
+
+  project-finance:
+    name: project-finance (golden, policy, schema, API/AI contracts)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: npm
+          cache-dependency-path: package-lock.json
+      - run: npm ci
+      - name: focused project-finance suite
+        run: npx vitest run server/services/project-finance-engine client/src/pages/developer/project-finance-underwriting.test.tsx
 
   app:
     name: app (root)
