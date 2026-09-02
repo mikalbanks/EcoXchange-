@@ -1,0 +1,90 @@
+{
+  "case_id": "REFERENCE_SOLAR_5MW",
+  "source_inputs": {
+    "capacity_mw_ac": 5,
+    "project_capex": 8000000,
+    "capacity_factor_p50": 0.24,
+    "annual_degradation_rate": 0.005,
+    "ppa_price_year_1_per_mwh": 55,
+    "ppa_escalation_rate": 0.01,
+    "ppa_term_years": 25,
+    "project_life_years": 25,
+    "opex_year_1": 150000,
+    "opex_escalation_rate": 0.025,
+    "itc_rate": 0.30,
+    "itc_eligible_basis_pct": 0.95,
+    "itc_transfer_price": 0.92,
+    "federal_tax_rate": 0.21,
+    "bonus_depreciation_pct": 1.0,
+    "target_dscr": 1.30,
+    "annual_interest_rate": 0.065,
+    "amortization_years": 18,
+    "max_ltc": 0.70,
+    "dsra_months": 6,
+    "downside_generation_multiplier": 0.90
+  },
+  "explicit_fixture_inputs": {
+    "project": { "capacity_mw_ac": 5, "project_life_years": 25, "technology": "SOLAR_PV", "country_code": "US" },
+    "generation": { "capacity_factor_p50": 0.24, "annual_degradation_rate": 0.005, "generation_source_type": "CAPACITY_FACTOR_MODEL" },
+    "revenue": { "ppa_price_year_1_per_mwh": 55, "ppa_escalation_rate": 0.01, "ppa_term_years": 25 },
+    "operating_costs": { "opex_year_1": 150000, "opex_escalation_rate": 0.025 },
+    "tax_credit": { "itc_rate": 0.30, "itc_eligible_basis_pct": 0.95, "itc_transfer_price": 0.92, "itc_transaction_costs": 0, "bonus_depreciation_pct": 1.0, "federal_tax_rate": 0.21, "sponsor_tax_appetite_pct": 1.0 },
+    "financing": { "annual_interest_rate": 0.065, "target_dscr": 1.30, "max_ltc": 0.70, "amortization_years": 18, "debt_maturity_years": 18, "lender_fee_rate": 0.0125 },
+    "reserves": { "dsra_months": 6, "dsra_reference_method": "YEAR_ONE" },
+    "transaction_costs": { "project_capex": 8000000, "closing_costs": 250000, "other_financing_uses": 0, "other_permanent_sources": 0 },
+    "downside": { "downside_type": "ILLUSTRATIVE_MULTIPLIER", "downside_generation_multiplier": 0.90, "generation_source_type": "ILLUSTRATIVE_PERCENT_OF_P50" },
+    "calculation_options": { "tax_module_enabled": true }
+  },
+  "expected_outputs": {
+    "generation_year_1_mwh_exact": 10512,
+    "revenue_year_1_exact": 578160,
+    "opex_year_1_exact": 150000,
+    "cfads_year_1_exact": 428160,
+    "ltc_limit_exact": 5600000,
+    "permanent_debt_source_display": 3364000,
+    "itc_eligible_basis_exact": 7600000,
+    "itc_face_exact": 2280000,
+    "itc_proceeds_exact": 2097600,
+    "dsra_source_display": 164700,
+    "lender_fee_source_display": 42100,
+    "sponsor_equity_source_display": 2995000,
+    "cash_irr_source": 0.024,
+    "full_tax_irr_source": 0.032,
+    "downside_dscr_source_display": 1.10,
+    "debt_pct_total_uses_source": 0.398,
+    "itc_pct_total_uses_source": 0.248,
+    "sponsor_pct_total_uses_source": 0.354,
+    "source_tax_shield_display": 1441000
+  },
+  "source_rounding_precision": {
+    "permanent_debt_source_display": "nearest_1000",
+    "dsra_source_display": "nearest_100",
+    "lender_fee_source_display": "nearest_100",
+    "sponsor_equity_source_display": "nearest_1000",
+    "cash_irr_source": "nearest_10_bps",
+    "full_tax_irr_source": "nearest_10_bps",
+    "downside_dscr_source_display": "nearest_0.01x"
+  },
+  "inferred_inputs": {
+    "closing_costs": { "value": 250000, "provenance": "RECONSTRUCTION_INFERRED", "note": "Lower bound of the source closing-cost range and consistent with displayed sponsor equity." },
+    "lender_fee_rate": { "value": 0.0125, "provenance": "SOURCE_DERIVED", "note": "Derived from displayed lender fee and permanent debt; not a production default." },
+    "itc_transaction_costs": { "value": 0, "provenance": "SOURCE_DERIVED", "note": "Displayed ITC sale cash is consistent with face value multiplied by 0.92 with no additional deduction." },
+    "other_financing_uses": { "value": 0, "provenance": "RECONSTRUCTION_INFERRED" },
+    "other_permanent_sources": { "value": 0, "provenance": "RECONSTRUCTION_INFERRED" },
+    "sponsor_tax_appetite_pct": { "value": 1, "provenance": "SOURCE_DERIVED", "note": "Required to reconstruct the source's full-federal-tax-appetite scenario." }
+  },
+  "provenance": {
+    "project_capex": "SOURCE_EXPLICIT",
+    "capacity_factor_p50": "SOURCE_EXPLICIT",
+    "annual_degradation_rate": "SOURCE_EXPLICIT",
+    "ppa_price_year_1_per_mwh": "SOURCE_EXPLICIT",
+    "target_dscr": "SOURCE_EXPLICIT",
+    "closing_costs": "RECONSTRUCTION_INFERRED",
+    "lender_fee_rate": "SOURCE_DERIVED"
+  },
+  "validation_notes": [
+    "Golden fixture only; none of these assumptions are production policy defaults.",
+    "This replaces the Ticket 02 validation-only $400,000 closing-cost fixture for golden reconstruction only.",
+    "The source's displayed full-tax IRR is a benchmark but may contain tax mechanics beyond SPEC 02's simplified tax module."
+  ]
+}
