@@ -55,8 +55,9 @@ begin
   end if;
 end $$;
 
--- Existing rows are backfilled above; future users must have an organization.
-alter table public.users alter column organization_id set not null;
+-- Existing rows are backfilled. The column remains nullable for legacy account-creation
+-- compatibility until the auth/service layer is updated to assign organizations at signup;
+-- a user without organization_id simply has no project-finance tenant access.
 
 create or replace function project_finance.touch_updated_at()
 returns trigger
@@ -142,4 +143,4 @@ using (id = project_finance.current_organization_id())
 with check (id = project_finance.current_organization_id());
 
 comment on schema project_finance is 'Immutable, tenant-scoped project-finance underwriting records. Finance math remains authoritative in application code.';
-comment on column public.users.organization_id is 'Durable EcoXchange tenant key used by project-finance RLS; replaces org_name as an authorization boundary.';
+comment on column public.users.organization_id is 'Durable EcoXchange tenant key used by project-finance RLS; replaces org_name as an authorization boundary for project-finance records.';
