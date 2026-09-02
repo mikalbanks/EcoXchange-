@@ -149,6 +149,7 @@ export const underwritingExplanationSchema = z.object({
   next_actions: z.array(z.string().max(800)).max(10),
   metric_references: z.array(z.object({
     metric_key: z.string().min(1),
+    metric_value: z.union([z.number(), z.string(), z.boolean(), z.null()]),
     display_text: z.string().max(160),
   }).strict()).max(20).default([]),
   recommendation_codes: z.array(z.string().min(1)).max(20).default([]),
