@@ -14,11 +14,12 @@ const files = [
   "0022_project_finance_underwriting_results.sql",
   "0023_project_finance_audit_rls.sql",
   "0024_project_finance_views_indexes.sql",
+  "0025_project_finance_ai_runs.sql",
 ];
 
 const sql = files.map((f) => fs.readFileSync(path.join(root, f), "utf8")).join("\n");
 
-describe("Spec 04 project-finance schema contract", () => {
+describe("Spec 04-07 project-finance schema contract", () => {
   it("ships the complete incremental migration series", () => {
     for (const file of files) expect(fs.existsSync(path.join(root, file))).toBe(true);
   });
@@ -63,5 +64,12 @@ describe("Spec 04 project-finance schema contract", () => {
     expect(sql).toContain("0.1.0");
     expect(sql).toContain("target_p50_dscr");
     expect(sql).toContain("0.92");
+  });
+
+  it("keeps optional AI prompts/runs separate from deterministic financial history", () => {
+    expect(sql).toContain("project_finance.ai_prompt_registry");
+    expect(sql).toContain("project_finance.ai_runs");
+    expect(sql).toContain("input_hash");
+    expect(sql).toContain("estimated_cost");
   });
 });
