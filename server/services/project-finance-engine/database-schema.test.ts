@@ -13,6 +13,7 @@ const migrationNames = [
   "0022_project_finance_underwriting_results.sql",
   "0023_project_finance_audit_rls.sql",
   "0024_project_finance_views_indexes.sql",
+  "0026_project_finance_access_grants.sql",
 ] as const;
 
 function migration(name: (typeof migrationNames)[number]): string {
@@ -134,6 +135,14 @@ describe("Ticket 08 project-finance database contract", () => {
     expect(allTicket08Sql.match(/enable row level security/gi)?.length ?? 0).toBeGreaterThan(10);
     expect(security).toContain("organization_id = project_finance.current_organization_id()");
     expect(views.match(/security_invoker = true/g)?.length ?? 0).toBeGreaterThanOrEqual(2);
+  });
+
+  it("grants clients only the operations backed by explicit RLS policies", () => {
+    const grants = migration("0026_project_finance_access_grants.sql");
+    expect(grants).toContain("grant select, insert, update on project_finance.projects to authenticated");
+    expect(grants).toContain("grant select on project_finance.calculation_runs to authenticated");
+    expect(grants).not.toMatch(/grant\s+(all|insert|update|delete).*project_finance\.calculation_runs\s+to\s+authenticated/i);
+    expect(grants).toContain("revoke all on tables from authenticated");
   });
 
   it("keeps project-finance documents private", () => {
