@@ -40,7 +40,7 @@ describe("Ticket 07 blocking golden base cases", () => {
   it("reconstructs source capital-stack percentages within displayed precision", () => {
     for (const fixture of fixtures) {
       const result = calculateProjectFinanceCore(structuredClone(fixture.explicit_fixture_inputs));
-      const capital = result.capital_stack.capital_stack;
+      const capital = result.capital_stack.capital_stack_result;
       const expected = fixture.expected_outputs;
       expect(Math.abs(capital.permanent_debt_pct_total_uses - expected.debt_pct_total_uses_source)).toBeLessThanOrEqual(GOLDEN_TOLERANCES.CAPITAL_STACK_PERCENT_ABS);
       expect(Math.abs(capital.itc_proceeds_pct_total_uses - expected.itc_pct_total_uses_source)).toBeLessThanOrEqual(GOLDEN_TOLERANCES.CAPITAL_STACK_PERCENT_ABS);
@@ -68,7 +68,7 @@ describe("Ticket 07 published sensitivity behavior", () => {
     expect(diagnostics.ppa.points.map((point) => point.input_value)).toEqual([40, 45, 50, 55, 60]);
   });
 
-  it("resizes senior debt under 5 MW interest-rate changes while leaving CFADS untouched", () => {
+  it("resizes senior debt under 5 MW interest-rate changes and leaves the base fixture immutable", () => {
     const fixture = fiveMwJson as unknown as GoldenFixtureFile;
     const original = structuredClone(fixture.explicit_fixture_inputs);
     const diagnostics = runGoldenSensitivityDiagnostics(fixture);
@@ -107,7 +107,7 @@ describe("Ticket 07 trace, provenance, and determinism gates", () => {
       "dscr_sized_debt",
       "ltc_debt_limit",
       "permanent_debt",
-      "itc_net_transfer_proceeds",
+      "net_itc_transfer_proceeds",
       "dsra",
       "sponsor_equity",
       "levered_sponsor_cash_irr",
