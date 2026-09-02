@@ -68,37 +68,19 @@ export function matchesSourceRounded(calculated: number, displayedValue: number,
 
 function exact(metric: string, calculated: number, source: number): GoldenMetricComparison {
   const variance = calculated - source;
-  return {
-    metric,
-    source,
-    calculated,
-    variance,
-    status: Math.abs(variance) <= GOLDEN_TOLERANCES.EXACT_SIMPLE_ARITHMETIC_ABS ? "PASS_EXACT" : "FAIL_IMPLEMENTATION",
-  };
+  return { metric, source, calculated, variance, status: Math.abs(variance) <= GOLDEN_TOLERANCES.EXACT_SIMPLE_ARITHMETIC_ABS ? "PASS_EXACT" : "FAIL_IMPLEMENTATION" };
 }
 
 function tolerance(metric: string, calculated: number, source: number, relativeTolerance: number): GoldenMetricComparison {
   const variance = relativeVariance(calculated, source);
-  return {
-    metric,
-    source,
-    calculated,
-    variance,
-    status: Math.abs(variance) <= relativeTolerance ? "PASS_WITHIN_TOLERANCE" : "FAIL_IMPLEMENTATION",
-  };
+  return { metric, source, calculated, variance, status: Math.abs(variance) <= relativeTolerance ? "PASS_WITHIN_TOLERANCE" : "FAIL_IMPLEMENTATION" };
 }
 
 function rounded(metric: string, calculated: number, source: number, precision: "nearest_1000" | "nearest_100" | "nearest_0.01x" | "nearest_10_bps", fallbackAbs?: number): GoldenMetricComparison {
   const withinDisplay = matchesSourceRounded(calculated, source, precision);
   const absVariance = calculated - source;
   const withinFallback = fallbackAbs !== undefined && Math.abs(absVariance) <= fallbackAbs;
-  return {
-    metric,
-    source,
-    calculated,
-    variance: absVariance,
-    status: withinDisplay ? "PASS_WITHIN_SOURCE_ROUNDING" : withinFallback ? "PASS_WITHIN_TOLERANCE" : "FAIL_IMPLEMENTATION",
-  };
+  return { metric, source, calculated, variance: absVariance, status: withinDisplay ? "PASS_WITHIN_SOURCE_ROUNDING" : withinFallback ? "PASS_WITHIN_TOLERANCE" : "FAIL_IMPLEMENTATION" };
 }
 
 export function calculateGoldenCase(fixture: GoldenFixtureFile): GoldenCaseComparison {
@@ -106,8 +88,8 @@ export function calculateGoldenCase(fixture: GoldenFixtureFile): GoldenCaseCompa
   const expected = fixture.expected_outputs;
   const y1 = result.operating.annual_project_cash_flows[0];
   if (!y1) throw new Error(`${fixture.case_id}: missing Year-1 operating row`);
-  const capital = result.capital_stack.capital_stack;
-  const tax = result.capital_stack.tax_credit;
+  const capital = result.capital_stack.capital_stack_result;
+  const tax = result.capital_stack.tax_credit_result;
   const debt = result.debt.financing_summary;
   const downside = result.downside;
   const cashIrr = result.returns.levered_sponsor_cash_irr.irr;
@@ -126,16 +108,16 @@ export function calculateGoldenCase(fixture: GoldenFixtureFile): GoldenCaseCompa
     rounded("dsra", result.capital_stack.dsra, expected.dsra_source_display, "nearest_100", 100),
     rounded("lender_fee", result.capital_stack.lender_fee, expected.lender_fee_source_display, "nearest_100", 100),
     tolerance("sponsor_equity", capital.sponsor_equity, expected.sponsor_equity_source_display, GOLDEN_TOLERANCES.SPONSOR_EQUITY_PCT),
+    tolerance("debt_pct_total_uses", capital.permanent_debt_pct_total_uses, expected.debt_pct_total_uses_source, GOLDEN_TOLERANCES.CAPITAL_STACK_PERCENT_ABS / expected.debt_pct_total_uses_source),
+    tolerance("itc_pct_total_uses", capital.itc_proceeds_pct_total_uses, expected.itc_pct_total_uses_source, GOLDEN_TOLERANCES.CAPITAL_STACK_PERCENT_ABS / expected.itc_pct_total_uses_source),
+    tolerance("sponsor_pct_total_uses", capital.sponsor_equity_pct_total_uses, expected.sponsor_pct_total_uses_source, GOLDEN_TOLERANCES.CAPITAL_STACK_PERCENT_ABS / expected.sponsor_pct_total_uses_source),
   ];
 
   if (cashIrr === null) comparisons.push({ metric: "cash_irr", source: expected.cash_irr_source, calculated: null, variance: null, status: "FAIL_IMPLEMENTATION" });
   else comparisons.push(rounded("cash_irr", cashIrr, expected.cash_irr_source, "nearest_10_bps", GOLDEN_TOLERANCES.IRR_ABS));
 
-  if (downside?.minimum_downside_dscr === null || downside?.minimum_downside_dscr === undefined) {
-    comparisons.push({ metric: "illustrative_downside_dscr", source: expected.downside_dscr_source_display, calculated: null, variance: null, status: "FAIL_IMPLEMENTATION" });
-  } else {
-    comparisons.push(rounded("illustrative_downside_dscr", downside.minimum_downside_dscr, expected.downside_dscr_source_display, "nearest_0.01x", GOLDEN_TOLERANCES.DSCR_DISPLAYED_ABS));
-  }
+  if (downside?.minimum_downside_dscr === null || downside?.minimum_downside_dscr === undefined) comparisons.push({ metric: "illustrative_downside_dscr", source: expected.downside_dscr_source_display, calculated: null, variance: null, status: "FAIL_IMPLEMENTATION" });
+  else comparisons.push(rounded("illustrative_downside_dscr", downside.minimum_downside_dscr, expected.downside_dscr_source_display, "nearest_0.01x", GOLDEN_TOLERANCES.DSCR_DISPLAYED_ABS));
 
   const sourceTaxShield = expected.source_tax_shield_display;
   const calculatedTaxShield = result.returns.immediate_tax_shield;
@@ -145,7 +127,7 @@ export function calculateGoldenCase(fixture: GoldenFixtureFile): GoldenCaseCompa
     calculated: calculatedTaxShield,
     variance: calculatedTaxShield === null ? null : calculatedTaxShield - sourceTaxShield,
     status: "KNOWN_SPEC_DIFFERENCE",
-    note: "SPEC 02 simplified tax module uses ITC-eligible basis less one-half of ITC face. The source shield targets imply project capex less one-half of ITC face and likely include additional annual tax mechanics.",
+    note: "SPEC 02 simplified tax module uses ITC-eligible basis less one-half of ITC face. Source shield targets imply project capex less one-half of ITC face and the source return table also appears to contain additional annual tax mechanics.",
   });
   comparisons.push({
     metric: "source_full_tax_irr",
@@ -153,7 +135,7 @@ export function calculateGoldenCase(fixture: GoldenFixtureFile): GoldenCaseCompa
     calculated: taxIrr,
     variance: taxIrr === null ? null : taxIrr - expected.full_tax_irr_source,
     status: "KNOWN_SPEC_DIFFERENCE",
-    note: "Source full-tax IRR is not a blocking V0 golden because the approved simplified tax module does not reproduce the source's richer tax treatment.",
+    note: "Source full-tax IRR is non-blocking for V0 because the approved simplified tax module does not reproduce the source's richer tax treatment. Cash-only IRR remains a blocking golden metric.",
   });
 
   return { case_id: fixture.case_id, result, comparisons };
