@@ -17,8 +17,8 @@ create table if not exists project_finance.scenarios (
   archived_at timestamptz,
   constraint scenarios_project_org_fk foreign key (project_id, organization_id)
     references project_finance.projects(id, organization_id) on delete restrict,
-  constraint scenarios_parent_fk foreign key (parent_scenario_id)
-    references project_finance.scenarios(id) on delete restrict,
+  constraint scenarios_parent_org_fk foreign key (parent_scenario_id, organization_id)
+    references project_finance.scenarios(id, organization_id) on delete restrict,
   unique (id, organization_id)
 );
 
@@ -31,8 +31,8 @@ create table if not exists project_finance.scenario_assumptions (
   unit text,
   source_type text not null check (source_type in ('USER_ASSERTION','PROJECT_FACT','LENDER_QUOTE','ECOXCHANGE_POLICY','USER_ASSUMPTION','SYSTEM_DERIVED')),
   provenance_type text,
-  source_fact_id uuid references project_finance.project_facts(id) on delete restrict,
-  source_document_id uuid references project_finance.project_documents(id) on delete restrict,
+  source_fact_id uuid,
+  source_document_id uuid,
   policy_id uuid,
   policy_version text,
   created_by varchar references public.users(id) on delete restrict,
@@ -40,6 +40,10 @@ create table if not exists project_finance.scenario_assumptions (
   updated_at timestamptz not null default now(),
   constraint scenario_assumptions_scenario_org_fk foreign key (scenario_id, organization_id)
     references project_finance.scenarios(id, organization_id) on delete restrict,
+  constraint scenario_assumptions_source_fact_fk foreign key (source_fact_id)
+    references project_finance.project_facts(id) on delete restrict,
+  constraint scenario_assumptions_source_document_fk foreign key (source_document_id)
+    references project_finance.project_documents(id) on delete restrict,
   unique (scenario_id, field_key)
 );
 
@@ -67,6 +71,39 @@ create trigger scenarios_touch_updated_at before update on project_finance.scena
 for each row execute function project_finance.touch_updated_at();
 create trigger scenario_assumptions_touch_updated_at before update on project_finance.scenario_assumptions
 for each row execute function project_finance.touch_updated_at();
+
+create or replace function project_finance.validate_scenario_assumption_sources()
+returns trigger
+language plpgsql
+set search_path = project_finance, public
+as $$
+begin
+  if new.source_fact_id is not null and not exists (
+    select 1 from project_finance.project_facts f
+    join project_finance.scenarios s on s.id = new.scenario_id
+    where f.id = new.source_fact_id
+      and f.organization_id = new.organization_id
+      and f.project_id = s.project_id
+  ) then
+    raise exception 'source fact must belong to the same tenant and project as the scenario';
+  end if;
+
+  if new.source_document_id is not null and not exists (
+    select 1 from project_finance.project_documents d
+    join project_finance.scenarios s on s.id = new.scenario_id
+    where d.id = new.source_document_id
+      and d.organization_id = new.organization_id
+      and d.project_id = s.project_id
+  ) then
+    raise exception 'source document must belong to the same tenant and project as the scenario';
+  end if;
+
+  return new;
+end $$;
+
+create trigger scenario_assumption_source_guard
+before insert or update on project_finance.scenario_assumptions
+for each row execute function project_finance.validate_scenario_assumption_sources();
 
 create or replace function project_finance.mark_scenario_stale()
 returns trigger
