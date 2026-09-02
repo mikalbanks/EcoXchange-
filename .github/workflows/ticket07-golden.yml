@@ -1,0 +1,32 @@
+name: Ticket 07 Golden Finance Validation
+
+on:
+  push:
+    branches:
+      - fix/ticket07-golden-ci
+  workflow_dispatch:
+
+jobs:
+  golden-finance:
+    name: Ticket 07 golden finance suite
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: npm
+          cache-dependency-path: package-lock.json
+      - name: Install dependencies
+        run: npm ci
+      - name: Run golden finance validation
+        run: npm run test:finance:golden
+      - name: Run focused project-finance suite
+        run: npx vitest run server/services/project-finance-engine
+      - name: Typecheck
+        run: npm run check
+      - name: Build
+        run: npm run build
