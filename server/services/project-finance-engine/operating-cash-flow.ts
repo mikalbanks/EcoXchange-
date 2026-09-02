@@ -15,6 +15,7 @@ export const HOURS_PER_YEAR = 8_760;
 export const OPERATING_FORMULA_IDS = {
   generationYear1: "GENERATION_YEAR1_V1",
   generationDegradation: "GENERATION_DEGRADATION_V1",
+  generationOverride: "GENERATION_OVERRIDE_V1",
   ppaEscalation: "PPA_ESCALATION_V1",
   revenueContracted: "REVENUE_CONTRACTED_V1",
   opexEscalation: "OPEX_ESCALATION_V1",
@@ -136,7 +137,7 @@ export function calculateOperatingCashFlows(rawInput: ProjectFinanceInput): Oper
     }
 
     const generationFormula = input.generation.annual_generation_override_mwh
-      ? OPERATING_FORMULA_IDS.generationDegradation
+      ? OPERATING_FORMULA_IDS.generationOverride
       : year === 1
         ? OPERATING_FORMULA_IDS.generationYear1
         : OPERATING_FORMULA_IDS.generationDegradation;
