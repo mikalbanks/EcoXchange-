@@ -78,6 +78,8 @@ jobs:
           cache: npm
           cache-dependency-path: package-lock.json
       - run: npm ci
+      - name: Ticket 07 golden reference gate
+        run: npm run test:finance:golden
       - name: focused project-finance suite
         run: npx vitest run server/services/project-finance-engine
 
