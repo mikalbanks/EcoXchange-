@@ -1,5 +1,6 @@
 -- SPEC 07 / 0025: provider-neutral AI run and prompt persistence.
 -- Optional AI remains outside the deterministic finance/underwriting path.
+-- Ticket 08 only aligns the actor FK with the existing public.users identity model.
 
 create table if not exists project_finance.ai_prompt_registry (
   id uuid primary key default gen_random_uuid(),
@@ -36,7 +37,7 @@ create table if not exists project_finance.ai_runs (
   actual_cost_usd numeric(24,10),
   error_code text,
   error_message text,
-  created_by uuid references project_finance.users(id) on delete restrict,
+  created_by varchar references public.users(id) on delete restrict,
   created_at timestamptz not null default now(),
   completed_at timestamptz,
   foreign key (prompt_code,prompt_version)
@@ -54,16 +55,12 @@ create index if not exists pf_ai_runs_underwriting_idx on project_finance.ai_run
 alter table project_finance.ai_prompt_registry enable row level security;
 alter table project_finance.ai_runs enable row level security;
 
--- Prompt definitions are readable by authenticated users but are written only by trusted migration/admin paths.
 create policy ai_prompt_registry_read on project_finance.ai_prompt_registry
 for select to authenticated using (true);
 
 create policy ai_runs_same_org_read on project_finance.ai_runs
 for select to authenticated
 using (organization_id=project_finance.current_organization_id());
-
--- No authenticated insert/update/delete policy is intentionally defined for ai_runs.
--- AI run persistence is server/service-role mediated so client code cannot forge usage/cost history.
 
 insert into project_finance.ai_prompt_registry(prompt_code,prompt_version,operation_type,description,status)
 values
