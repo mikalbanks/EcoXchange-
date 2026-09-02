@@ -25,7 +25,8 @@ create table if not exists project_finance.project_documents (
   constraint project_documents_superseded_by_fk
     foreign key (superseded_by_document_id)
     references project_finance.project_documents(id) on delete restrict,
-  unique (id, organization_id)
+  unique (id, organization_id),
+  unique (id, project_id, organization_id)
 );
 
 create table if not exists project_finance.project_document_fields (
@@ -45,9 +46,9 @@ create table if not exists project_finance.project_document_fields (
   reviewed_by varchar references public.users(id) on delete restrict,
   reviewed_at timestamptz,
   created_at timestamptz not null default now(),
-  constraint project_document_fields_document_org_fk
-    foreign key (document_id, organization_id)
-    references project_finance.project_documents(id, organization_id) on delete restrict,
+  constraint project_document_fields_document_project_org_fk
+    foreign key (document_id, project_id, organization_id)
+    references project_finance.project_documents(id, project_id, organization_id) on delete restrict,
   constraint project_document_fields_project_org_fk
     foreign key (project_id, organization_id)
     references project_finance.projects(id, organization_id) on delete restrict,
@@ -75,9 +76,9 @@ create table if not exists project_finance.project_facts (
   constraint project_facts_project_org_fk
     foreign key (project_id, organization_id)
     references project_finance.projects(id, organization_id) on delete restrict,
-  constraint project_facts_source_document_org_fk
-    foreign key (source_document_id, organization_id)
-    references project_finance.project_documents(id, organization_id) on delete restrict,
+  constraint project_facts_source_document_project_org_fk
+    foreign key (source_document_id, project_id, organization_id)
+    references project_finance.project_documents(id, project_id, organization_id) on delete restrict,
   constraint project_facts_supersedes_fk
     foreign key (supersedes_fact_id)
     references project_finance.project_facts(id) on delete restrict,
