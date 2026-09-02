@@ -1,0 +1,47 @@
+{
+  "inputs": {
+    "projectName": "EcoXchange 20 MW reference case",
+    "capacityMwAc": 20,
+    "p50CapacityFactor": 0.24,
+    "annualDegradationRate": 0.005,
+    "projectLifeYears": 25,
+    "ppaTermYears": 25,
+    "yearOnePpaPricePerMwh": 55,
+    "annualPpaEscalationRate": 0.01,
+    "totalProjectCapexUsd": 29000000,
+    "capexIncludesContingency": true,
+    "yearOneOpexUsd": 480000,
+    "annualOpexEscalationRate": 0.025,
+    "itcRate": 0.30,
+    "itcEligibleBasisPercent": 0.95,
+    "itcTransferPrice": 0.92,
+    "itcTransferTransactionCostsUsd": 0,
+    "debtInterestRate": 0.058,
+    "debtAmortizationYears": 20,
+    "debtMaturityYears": 20,
+    "targetP50Dscr": 1.30,
+    "maximumLtc": 0.70,
+    "upfrontFeePercent": 0.0125,
+    "dsraMonths": 6,
+    "closingCostsUsd": 500000,
+    "otherFinancingUsesUsd": 0,
+    "otherPermanentSourcesUsd": 0,
+    "downsideGenerationMultiplier": 0.90
+  },
+  "expected": {
+    "yearOneCfadsUsd": 1832640,
+    "permanentDebtUsd": 16295989.64,
+    "debtToCapex": 0.561931,
+    "itcNetTransferProceedsUsd": 7603800,
+    "dsraRequiredUsd": 704861.54,
+    "lenderUpfrontFeeUsd": 203699.87,
+    "sponsorEquityUsd": 6508771.77,
+    "bindingConstraint": "DSCR"
+  },
+  "tolerance": {
+    "simplePct": 0.0001,
+    "debtPct": 0.0025,
+    "sponsorEquityPct": 0.0025,
+    "irrAbsolute": 0.001
+  }
+}
