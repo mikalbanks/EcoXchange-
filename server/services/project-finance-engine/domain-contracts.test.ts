@@ -92,24 +92,18 @@ describe("Ticket 02 project-finance domain contracts", () => {
     }).success).toBe(false);
   });
 
-  it("requires explicit values when CUSTOM DSRA or excluded contingency is selected", () => {
+  it("does not add cross-field business requirements that the approved core does not define", () => {
     expect(projectFinanceInputSchema.safeParse({
       ...fiveMw,
       dsraReferenceMethod: "CUSTOM",
       customDsraReferenceAnnualDebtServiceUsd: undefined,
-    }).success).toBe(false);
-
-    expect(projectFinanceInputSchema.safeParse({
-      ...fiveMw,
-      dsraReferenceMethod: "CUSTOM",
-      customDsraReferenceAnnualDebtServiceUsd: 329_400,
     }).success).toBe(true);
 
     expect(projectFinanceInputSchema.safeParse({
       ...fiveMw,
       capexIncludesContingency: false,
       contingencyRate: undefined,
-    }).success).toBe(false);
+    }).success).toBe(true);
   });
 
   it("defines one canonical unit registry for future API/document contracts", () => {
