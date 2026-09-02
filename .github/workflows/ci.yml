@@ -79,7 +79,7 @@ jobs:
           cache-dependency-path: package-lock.json
       - run: npm ci
       - name: focused project-finance suite
-        run: npx vitest run server/services/project-finance-engine client/src/pages/developer/project-finance-underwriting.test.tsx
+        run: npx vitest run server/services/project-finance-engine
 
   app:
     name: app (root)
