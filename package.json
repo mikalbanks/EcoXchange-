@@ -10,6 +10,7 @@
     "check": "tsc",
     "test": "vitest run",
     "test:finance:golden": "vitest run server/services/project-finance-engine/golden/golden-validation.test.ts",
+    "test:finance:db-schema": "vitest run server/services/project-finance-engine/database-schema.test.ts",
     "lint:vocabulary": "tsx scripts/check-rec-vocabulary.ts",
     "test:watch": "vitest",
     "test:queue-analytics": "tsx scripts/test-queue-analytics.ts",
