@@ -19,6 +19,11 @@ set policy_version = p.policy_version
 from project_finance.underwriting_policies p
 where o.policy_id = p.id and o.policy_version is null;
 
+-- Ticket 02/06 permit a downside case whose source classification is unavailable.
+-- Persistence must preserve NULL rather than fabricate lender-grade or illustrative provenance.
+alter table project_finance.downside_results
+  alter column generation_source_type drop not null;
+
 create index if not exists pf_calc_input_engine_success_idx
   on project_finance.calculation_runs(input_hash, calculation_engine_version, created_at desc)
   where status = 'SUCCESS';
