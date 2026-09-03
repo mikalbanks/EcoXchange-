@@ -68,8 +68,24 @@ jobs:
       - run: npm test
 
   project-finance:
-    name: project-finance (golden, policy, schema, API/AI contracts)
+    name: project-finance (isolated DB, golden, Ticket 09, contracts)
     runs-on: ubuntu-latest
+    env:
+      DATABASE_URL: postgresql://postgres:postgres@localhost:5432/ecoxchange_ci
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: ecoxchange_ci
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U postgres -d ecoxchange_ci"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
@@ -78,9 +94,15 @@ jobs:
           cache: npm
           cache-dependency-path: package-lock.json
       - run: npm ci
+      - name: Ticket 08 migration execution gate — clean isolated PostgreSQL
+        run: npm run verify:finance:isolated-db
+      - name: Ticket 08 static database contract gate
+        run: npm run test:finance:db-schema
+      - name: Ticket 09 deterministic underwriting policy engine
+        run: npm run test:finance:ticket09
       - name: Ticket 07 golden reference gate
         run: npm run test:finance:golden
-      - name: focused project-finance suite
+      - name: focused project-finance regression suite
         run: npx vitest run server/services/project-finance-engine
 
   app:
