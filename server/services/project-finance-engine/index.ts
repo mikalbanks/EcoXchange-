@@ -6,3 +6,5 @@ export { calculateDownsideCashSweep, DOWNSIDE_SWEEP_MONEY_TOLERANCE_USD } from "
 export * from "./returns-downside";
 export * from "./underwriting-engine";
 export * from "./scenario-resolver";
+export * from "./calculation-service";
+export * from "./postgres-calculation-repository";
