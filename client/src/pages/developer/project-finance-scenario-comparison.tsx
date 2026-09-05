@@ -18,7 +18,11 @@ export default function ProjectFinanceScenarioComparison(){
   const selectedScenarios=(scenariosQ.data??[]).filter(s=>effectiveSelected.includes(s.id));
   const calcQueries=useQueries({queries:selectedScenarios.map(s=>({queryKey:["pf-calculation",s.latest_calculation_run_id],queryFn:()=>pfApi.getCalculationRun(s.latest_calculation_run_id!),enabled:Boolean(s.latest_calculation_run_id)}))});
   const uwQueries=useQueries({queries:selectedScenarios.map(s=>({queryKey:["pf-underwriting-history",s.id],queryFn:()=>pfApi.listUnderwritingRuns(s.id)}))});
-  const bundles=useMemo(()=>selectedScenarios.map((scenario,index)=>({scenario,summary:summariesQ.data?.find(r=>r.scenario_id===scenario.id),calculation:calcQueries[index]?.data as CalculationRunDetail|undefined,underwriting:(uwQueries[index]?.data?.[0] as UnderwritingRunSummary|undefined)??null})),[selectedScenarios,summariesQ.data,calcQueries,uwQueries]);
+  const bundles=useMemo(()=>selectedScenarios.map((scenario,index)=>{
+    const calculation=calcQueries[index]?.data as CalculationRunDetail|undefined;
+    const underwriting=((uwQueries[index]?.data??[]) as UnderwritingRunSummary[]).find(run=>run.calculation_run_id===calculation?.run.id)??null;
+    return {scenario,summary:summariesQ.data?.find(r=>r.scenario_id===scenario.id),calculation,underwriting};
+  }),[selectedScenarios,summariesQ.data,calcQueries,uwQueries]);
   const toggle=(id:string)=>setSelected(current=>{const base=current.length?current:effectiveSelected;if(base.includes(id))return base.filter(x=>x!==id);if(base.length>=4)return base;return [...base,id]});
   const busy=projectQ.isLoading||scenariosQ.isLoading||summariesQ.isLoading||calcQueries.some(q=>q.isLoading)||uwQueries.some(q=>q.isLoading);
   return <DashboardLayout title="Scenario Comparison" description="Compare immutable calculated scenarios without recalculating them." breadcrumbs={[{label:"Project Finance",href:"/developer/project-finance/projects"},{label:projectQ.data?.name??"Project",href:`/developer/project-finance/projects/${projectId}`},{label:"Compare Scenarios"}]}> 
