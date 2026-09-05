@@ -11,6 +11,7 @@ export const projectCreateSchema = z.object({
   technology: z.string().trim().min(1).max(64),
   country_code: z.string().trim().length(2).default("US"),
   state_code: z.string().trim().max(8).nullable().optional(),
+  capacity_mw_ac: z.number().finite().positive().nullable().optional(),
   development_status: z.enum(["DEVELOPMENT","READY_TO_BUILD","CONSTRUCTION","OPERATING","RETIRED","UNKNOWN"]).nullable().optional(),
   revenue_structure: z.enum(["FULLY_CONTRACTED","PARTIALLY_CONTRACTED","MERCHANT","UNKNOWN"]).nullable().optional(),
 }).strict();
@@ -18,16 +19,19 @@ export const projectCreateSchema = z.object({
 export const projectPatchSchema = z.object({
   name: z.string().trim().min(1).max(200).optional(),
   state_code: z.string().trim().max(8).nullable().optional(),
+  capacity_mw_ac: z.number().finite().positive().nullable().optional(),
   development_status: z.enum(["DEVELOPMENT","READY_TO_BUILD","CONSTRUCTION","OPERATING","RETIRED","UNKNOWN"]).nullable().optional(),
   revenue_structure: z.enum(["FULLY_CONTRACTED","PARTIALLY_CONTRACTED","MERCHANT","UNKNOWN"]).nullable().optional(),
 }).strict().refine(v => Object.keys(v).length > 0, "At least one field is required");
 
+// Client-facing fact writes cannot self-assert VERIFIED. Verification is a trusted review action,
+// not a request-body flag. Internal/document workflows can promote confidence separately later.
 export const projectFactCreateSchema = z.object({
   field_key: z.string().trim().min(1).max(200),
   value: z.unknown(),
   unit: z.string().trim().max(64).nullable().optional(),
   source_type: z.enum(["USER_ASSERTION","EXECUTED_DOCUMENT","SPONSOR_DOCUMENT","INDEPENDENT_ENGINEER_REPORT","LENDER_QUOTE","ECOXCHANGE_ASSUMPTION","SYSTEM_DERIVED","UNKNOWN"]),
-  confidence_status: z.enum(["VERIFIED","REPORTED","UNVERIFIED","DISPUTED","UNKNOWN"]).default("UNKNOWN"),
+  confidence_status: z.enum(["REPORTED","UNVERIFIED","DISPUTED","UNKNOWN"]).default("UNKNOWN"),
   source_document_id: uuidSchema.nullable().optional(),
 }).strict();
 
