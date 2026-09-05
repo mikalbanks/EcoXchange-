@@ -1,5 +1,5 @@
 import type { Express, Request, Response } from "express";
-import { ZodError } from "zod";
+import { z, ZodError } from "zod";
 import { pool } from "../db";
 import {
   INDICATIVE_UNDERWRITING_DISCLAIMER,
@@ -19,12 +19,20 @@ import {
 import { CalculationServiceError, type OrganizationContext, type PersistedCalculationBundle } from "../services/project-finance-engine/calculation-service";
 import { UnderwritingServiceError, type PersistedUnderwritingBundle } from "../services/project-finance-engine/underwriting-service";
 import { ProjectFinanceApiError, ProjectFinanceApiService } from "../services/project-finance-engine/project-finance-api-service";
+import { SensitivityService, SensitivityServiceError, SUPPORTED_SENSITIVITY_VARIABLES } from "../services/project-finance-engine/sensitivity-service";
 
 const API = "/api/v1";
 const defaultService = new ProjectFinanceApiService();
+const defaultSensitivity = new SensitivityService();
+
+const sensitivityBodySchema=z.object({
+  base_calculation_run_id:uuidSchema,
+  variable:z.enum(SUPPORTED_SENSITIVITY_VARIABLES),
+  values:z.array(z.number().finite()).min(1).max(25),
+}).strict();
 
 type Req = Request & { session?: { userId?: string } };
-type ProjectFinanceApiDeps = { service?: ProjectFinanceApiService; resolveContext?: (req: Req) => Promise<OrganizationContext> };
+type ProjectFinanceApiDeps = { service?: ProjectFinanceApiService; sensitivity?: SensitivityService; resolveContext?: (req: Req) => Promise<OrganizationContext> };
 
 async function defaultContext(req: Req): Promise<OrganizationContext> {
   const userId = req.session?.userId;
@@ -37,17 +45,17 @@ async function defaultContext(req: Req): Promise<OrganizationContext> {
 function ok<T>(res: Response, data: T, meta?: Record<string, unknown>, status = 200) { return res.status(status).json(meta ? { data, meta } : { data }); }
 
 const statusByCode: Record<string, number> = {
-  UNAUTHENTICATED:401,UNAUTHORIZED:403,PROJECT_NOT_FOUND:404,PROJECT_FACT_NOT_FOUND:404,SCENARIO_NOT_FOUND:404,POLICY_NOT_FOUND:404,UNDERWRITING_CALCULATION_NOT_FOUND:404,
-  SCENARIO_PROJECT_MISMATCH:409,SCENARIO_ARCHIVED:409,PROJECT_ARCHIVED:409,CALCULATION_STALE:409,CALCULATION_CONTEXT_STALE:409,POLICY_CALCULATION_MISMATCH:409,STALE_POLICY_OVERRIDE:409,UNREGISTERED_POLICY_OVERRIDE:409,IDEMPOTENCY_KEY_CONFLICT:409,
-  CALCULATION_INPUT_INCOMPLETE:422,INVALID_RESOLVED_INPUT:422,OUT_OF_SCOPE_FOR_CALCULATION:422,CALCULATION_NOT_UNDERWRITABLE:422,
-  UNKNOWN_SCENARIO_FIELD:400,INVALID_POLICY_OVERRIDE:400,POLICY_CONFIGURATION_ERROR:409,UNDERWRITING_POLICY_CONFIGURATION_ERROR:409,
-  FINANCE_ENGINE_FAILED:500,CALCULATION_PERSISTENCE_FAILED:500,UNDERWRITING_ENGINE_FAILED:500,UNDERWRITING_PERSISTENCE_FAILED:500,
+  UNAUTHENTICATED:401,UNAUTHORIZED:403,PROJECT_NOT_FOUND:404,PROJECT_FACT_NOT_FOUND:404,SCENARIO_NOT_FOUND:404,POLICY_NOT_FOUND:404,UNDERWRITING_CALCULATION_NOT_FOUND:404,SENSITIVITY_BASE_NOT_FOUND:404,
+  SCENARIO_PROJECT_MISMATCH:409,SCENARIO_ARCHIVED:409,PROJECT_ARCHIVED:409,CALCULATION_STALE:409,CALCULATION_CONTEXT_STALE:409,POLICY_CALCULATION_MISMATCH:409,STALE_POLICY_OVERRIDE:409,UNREGISTERED_POLICY_OVERRIDE:409,IDEMPOTENCY_KEY_CONFLICT:409,SENSITIVITY_BASE_STALE:409,SENSITIVITY_BASE_MISMATCH:409,SENSITIVITY_INVARIANT_FAILED:409,
+  CALCULATION_INPUT_INCOMPLETE:422,INVALID_RESOLVED_INPUT:422,OUT_OF_SCOPE_FOR_CALCULATION:422,CALCULATION_NOT_UNDERWRITABLE:422,SENSITIVITY_NOT_APPLICABLE:422,INVALID_SENSITIVITY_VALUE:422,SENSITIVITY_BASE_NOT_SUCCESSFUL:422,
+  UNKNOWN_SCENARIO_FIELD:400,INVALID_POLICY_OVERRIDE:400,POLICY_CONFIGURATION_ERROR:409,UNDERWRITING_POLICY_CONFIGURATION_ERROR:409,UNSUPPORTED_SENSITIVITY_VARIABLE:400,
+  FINANCE_ENGINE_FAILED:500,CALCULATION_PERSISTENCE_FAILED:500,UNDERWRITING_ENGINE_FAILED:500,UNDERWRITING_PERSISTENCE_FAILED:500,SENSITIVITY_PERSISTENCE_FAILED:500,
 };
 export function projectFinanceHttpStatus(code: string): number { return statusByCode[code] ?? 500; }
 
 function errorResponse(res: Response, error: unknown, extra?: Record<string, unknown>) {
   if (error instanceof ZodError) return res.status(400).json({ error:{ code:"INVALID_REQUEST",message:"Request validation failed.",details:{issues:error.issues} } });
-  if (error instanceof CalculationServiceError || error instanceof UnderwritingServiceError || error instanceof ProjectFinanceApiError) return res.status(projectFinanceHttpStatus(error.code)).json({ error:{code:error.code,message:error.message,details:{...(error.details??{}),...(extra??{})}} });
+  if (error instanceof CalculationServiceError || error instanceof UnderwritingServiceError || error instanceof ProjectFinanceApiError || error instanceof SensitivityServiceError) return res.status(projectFinanceHttpStatus(error.code)).json({ error:{code:error.code,message:error.message,details:{...(error.details??{}),...(extra??{})}} });
   console.error("project-finance-v1",error instanceof Error?{name:error.name,message:error.message}:{message:String(error)});
   return res.status(500).json({error:{code:"INTERNAL_ERROR",message:"Project-finance request could not be completed.",details:extra}});
 }
@@ -58,13 +66,13 @@ function selector(body:any){return{policyId:body.policy_id,policyCode:body.polic
 
 function financialSummary(bundle: PersistedCalculationBundle) {
   const f:any=bundle.financing_result,c:any=bundle.capital_stack_result,t:any=bundle.tax_credit_result,r:any=bundle.return_result,d:any=bundle.downside_result;
-  return {project_capex:c?.project_capex??null,permanent_debt:f?.permanent_debt??null,debt_to_capex:f?.debt_to_capex??null,binding_constraint:f?.binding_constraint??null,sponsor_equity:c?.sponsor_equity??null,net_itc_proceeds:c?.net_itc_proceeds??t?.net_transfer_proceeds??null,minimum_p50_dscr:f?.minimum_dscr??null,minimum_downside_dscr:d?.minimum_downside_dscr??null,levered_sponsor_cash_irr:r?.levered_sponsor_cash_irr??null};
+  return {project_capex:c?.project_capex??null,permanent_debt:f?.permanent_debt??null,debt_to_capex:f?.debt_to_capex??null,binding_constraint:f?.binding_constraint??null,sponsor_equity:c?.sponsor_equity??null,sponsor_equity_pct_total_uses:c?.sponsor_equity_pct_total_uses??null,net_itc_proceeds:c?.net_itc_proceeds??t?.net_transfer_proceeds??null,minimum_p50_dscr:f?.minimum_dscr??null,minimum_downside_dscr:d?.minimum_downside_dscr??null,levered_sponsor_cash_irr:r?.levered_sponsor_cash_irr??null};
 }
 function calculationDto(bundle:PersistedCalculationBundle){return{...bundle,financial_summary:financialSummary(bundle)}}
 function underwritingDto(bundle:PersistedUnderwritingBundle){return{...bundle,assessment_type:"INDICATIVE_UNDERWRITING",disclaimer:INDICATIVE_UNDERWRITING_DISCLAIMER}}
 
 export function registerProjectFinanceV1Routes(app: Express,deps:ProjectFinanceApiDeps={}) {
-  const service=deps.service??defaultService,resolveContext=deps.resolveContext??defaultContext;
+  const service=deps.service??defaultService,sensitivity=deps.sensitivity??defaultSensitivity,resolveContext=deps.resolveContext??defaultContext;
   const handler=(fn:(req:Req,res:Response,context:OrganizationContext)=>Promise<unknown>)=>async(req:Req,res:Response)=>{try{const context=await resolveContext(req);await fn(req,res,context)}catch(e){errorResponse(res,e)}};
 
   app.get(`${API}/projects`,handler(async(_req,res,ctx)=>ok(res,await service.listProjects(ctx))));
@@ -97,6 +105,10 @@ export function registerProjectFinanceV1Routes(app: Express,deps:ProjectFinanceA
       return ok(res,{project_id:scenario.project_id,scenario_id:scenarioId,calculation_run:{id:calculation.run.id,status:calculation.run.status,engine_version:calculation.run.calculation_engine_version,resolver_version:calculation.run.resolver_version,input_hash:calculation.run.input_hash,result_hash:calculation.run.result_hash},underwriting_run:{id:underwriting.run.id,execution_status:underwriting.run.execution_status,overall_status:underwriting.run.overall_status,financial_profile:underwriting.run.financial_profile,financing_readiness:underwriting.run.financing_readiness,policy_version:underwriting.run.underwriting_policy_version,underwriting_engine_version:underwriting.run.underwriting_engine_version},financial_summary:financialSummary(calculation),risks:underwriting.risks,conditions:underwriting.conditions,missing_information:underwriting.missing_information,lender_fit:underwriting.lender_fit,recommendations:underwriting.recommendations,assessment_type:"INDICATIVE_UNDERWRITING",disclaimer:INDICATIVE_UNDERWRITING_DISCLAIMER});
     }catch(e){return errorResponse(res,e,{calculation_run_id:calculation.run.id})}
   }));
+
+  app.post(`${API}/scenarios/:scenarioId/sensitivities`,handler(async(req,res,ctx)=>{const scenarioId=parseId(req.params.scenarioId),body=sensitivityBodySchema.parse(req.body);return ok(res,await sensitivity.run({context:ctx,scenarioId,baseCalculationRunId:body.base_calculation_run_id,variable:body.variable,values:body.values}),undefined,201)}));
+  app.get(`${API}/scenarios/:scenarioId/sensitivity-runs`,handler(async(req,res,ctx)=>ok(res,await sensitivity.list(ctx,parseId(req.params.scenarioId)))));
+  app.get(`${API}/sensitivity-runs/:runId`,handler(async(req,res,ctx)=>ok(res,await sensitivity.get(ctx,parseId(req.params.runId)))));
 
   app.get(`${API}/calculation-runs/:runId`,handler(async(req,res,ctx)=>ok(res,calculationDto(await service.calculations.getCalculationRun(ctx,parseId(req.params.runId))))));
   app.get(`${API}/scenarios/:scenarioId/calculation-runs`,handler(async(req,res,ctx)=>ok(res,await service.listCalculationRuns(ctx,parseId(req.params.scenarioId)))));
