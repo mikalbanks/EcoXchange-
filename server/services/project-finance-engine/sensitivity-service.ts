@@ -1,6 +1,6 @@
 import { createHash } from "node:crypto";
 import { validateProjectFinanceInput, type ProjectFinanceInput } from "./domain-contracts";
-import { CalculationService, hashCalculationResult, type OrganizationContext, type PersistedCalculationBundle } from "./calculation-service";
+import { CalculationService, hashCalculationResult, type OrganizationContext } from "./calculation-service";
 import { PostgresCalculationRepository } from "./postgres-calculation-repository";
 import { calculateProjectFinanceCore, type ProjectFinanceCoreResult, type SensitivityVariable } from "./returns-downside";
 import { canonicalJson, hashFinanceInput } from "./scenario-resolver";
@@ -89,8 +89,14 @@ export class SensitivityService {
     try{return await this.repository.persistAtomic({context:args.context,base,variable:args.variable,points:computed});}
     catch(error){if(error instanceof SensitivityServiceError)throw error;throw new SensitivityServiceError("SENSITIVITY_PERSISTENCE_FAILED","Sensitivity run could not be persisted atomically.",{message:error instanceof Error?error.message:String(error)});}
   }
-  async get(context:OrganizationContext,runId:string){return this.repository.get(context,runId)}
-  async list(context:OrganizationContext,scenarioId:string){return this.repository.list(context,scenarioId)}
+  async get(context:OrganizationContext,runId:string){
+    try{return await this.repository.get(context,runId)}catch(error){if(error instanceof Error&&error.message==="SENSITIVITY_RUN_NOT_FOUND")throw new SensitivityServiceError("SENSITIVITY_BASE_NOT_FOUND","Sensitivity run was not found in the authorized tenant.");throw error;}
+  }
+  async list(context:OrganizationContext,scenarioId:string){
+    const scenario=await this.repository.getScenarioState(context,scenarioId);
+    if(!scenario) throw new SensitivityServiceError("SENSITIVITY_BASE_NOT_FOUND","Scenario was not found in the authorized tenant.");
+    return this.repository.list(context,scenarioId);
+  }
 }
 
 export function sensitivityRequestHash(input:{baseCalculationRunId:string;variable:SensitivityVariable;values:number[]}):string{return createHash("sha256").update(canonicalJson(input)).digest("hex");}
