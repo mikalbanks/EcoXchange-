@@ -8,3 +8,5 @@ export * from "./underwriting-engine";
 export * from "./scenario-resolver";
 export * from "./calculation-service";
 export * from "./postgres-calculation-repository";
+export * from "./underwriting-service";
+export * from "./postgres-underwriting-repository";
