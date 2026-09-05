@@ -34,7 +34,7 @@ export class ProjectFinanceApiService {
   }
 
   async createProject(context: OrganizationContext, body: any) {
-    const result = await this.pool.query(`insert into project_finance.projects(organization_id,name,technology,country_code,state_code,development_status,revenue_structure,created_by) values($1,$2,$3,$4,$5,$6,$7,$8) returning id,name,technology,country_code,state_code,capacity_mw_ac::text,development_status,revenue_structure,created_at,updated_at,archived_at`, [context.organizationId,body.name,body.technology,body.country_code ?? "US",body.state_code ?? null,body.development_status ?? null,body.revenue_structure ?? null,context.actorUserId]);
+    const result = await this.pool.query(`insert into project_finance.projects(organization_id,name,technology,country_code,state_code,capacity_mw_ac,development_status,revenue_structure,created_by) values($1,$2,$3,$4,$5,$6,$7,$8,$9) returning id,name,technology,country_code,state_code,capacity_mw_ac::text,development_status,revenue_structure,created_at,updated_at,archived_at`, [context.organizationId,body.name,body.technology,body.country_code ?? "US",body.state_code ?? null,body.capacity_mw_ac ?? null,body.development_status ?? null,body.revenue_structure ?? null,context.actorUserId]);
     return result.rows[0];
   }
 
@@ -46,7 +46,7 @@ export class ProjectFinanceApiService {
 
   async patchProject(context: OrganizationContext, projectId: string, body: Record<string, unknown>) {
     await this.getProject(context, projectId);
-    const allowed = ["name","state_code","development_status","revenue_structure"];
+    const allowed = ["name","state_code","capacity_mw_ac","development_status","revenue_structure"];
     const entries = Object.entries(body).filter(([key]) => allowed.includes(key));
     const params: unknown[] = [context.organizationId, projectId];
     const setters = entries.map(([key,value]) => { params.push(value); return `${key}=$${params.length}`; });
@@ -157,4 +157,10 @@ export class ProjectFinanceApiService {
   }
 
   async listPolicies(context: OrganizationContext) { return (await this.pool.query(`select id,policy_code,policy_version,status,effective_date,description,source_reference from project_finance.underwriting_policies where organization_id is null or organization_id=$1 order by policy_code,policy_version desc`,[context.organizationId])).rows; }
+  async getPolicy(context: OrganizationContext, policyId: string) {
+    const result=await this.pool.query(`select id,policy_code,policy_version,status,effective_date,description,source_reference from project_finance.underwriting_policies where id=$1 and (organization_id is null or organization_id=$2)`,[policyId,context.organizationId]);
+    if(!result.rowCount) throw new ProjectFinanceApiError("POLICY_NOT_FOUND","Policy was not found.");
+    const values=await this.pool.query(`select field_key,value_json as value,unit,applicability_json as applicability,value_classification from project_finance.underwriting_policy_values where policy_id=$1 order by field_key,id`,[policyId]);
+    return {...result.rows[0],values:values.rows};
+  }
 }
