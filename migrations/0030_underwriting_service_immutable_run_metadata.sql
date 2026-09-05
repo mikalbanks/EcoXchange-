@@ -8,8 +8,12 @@ alter table project_finance.underwriting_runs
   add column if not exists underwriting_input_hash text,
   add column if not exists underwriting_result_hash text,
   add column if not exists idempotency_key text,
-  add column if not exists started_at timestamptz;
+  add column if not exists started_at timestamptz,
+  add column if not exists failure_code text,
+  add column if not exists failure_details_json jsonb;
 
+alter table project_finance.underwriting_rule_results
+  add column if not exists category text;
 alter table project_finance.underwriting_risks
   add column if not exists risk_code text;
 
