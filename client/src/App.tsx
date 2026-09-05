@@ -37,6 +37,8 @@ import ProjectFinanceProject from "@/pages/developer/project-finance-project";
 import ProjectFinanceInputs from "@/pages/developer/project-finance-inputs";
 import ProjectFinanceResultHandoff from "@/pages/developer/project-finance-result-handoff";
 import ProjectFinanceModelPlaceholder from "@/pages/developer/project-finance-model-placeholder";
+import ProjectFinanceScenarioComparison from "@/pages/developer/project-finance-scenario-comparison";
+import ProjectFinanceSensitivityPage from "@/pages/developer/project-finance-sensitivity";
 import PrivacyPolicy from "@/pages/privacy";
 import InvestorDashboard from "@/pages/investor/dashboard";
 import InvestorQueueDeal from "@/pages/investor/queue-deal";
@@ -89,6 +91,8 @@ function Router() {
     <Route path="/developer/project-finance/preview"><PF><ProjectFinanceUnderwriting /></PF></Route>
     <Route path="/developer/project-finance/projects"><PF><ProjectFinanceProjects /></PF></Route>
     <Route path="/developer/project-finance/projects/new"><PF><ProjectFinanceProjectNew /></PF></Route>
+    <Route path="/developer/project-finance/projects/:projectId/scenarios/compare"><PF><ProjectFinanceScenarioComparison /></PF></Route>
+    <Route path="/developer/project-finance/projects/:projectId/scenarios/:scenarioId/sensitivities"><PF><ProjectFinanceSensitivityPage /></PF></Route>
     <Route path="/developer/project-finance/projects/:projectId/scenarios/:scenarioId/results/:underwritingRunId"><PF><ProjectFinanceResultHandoff /></PF></Route>
     <Route path="/developer/project-finance/projects/:projectId/scenarios/:scenarioId/model/:calculationRunId"><PF><ProjectFinanceModelPlaceholder /></PF></Route>
     <Route path="/developer/project-finance/projects/:projectId/scenarios/:scenarioId/inputs"><PF><ProjectFinanceInputs /></PF></Route>
