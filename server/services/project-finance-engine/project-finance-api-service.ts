@@ -21,9 +21,11 @@ const fieldRegistry = new Map(FIELD_DEFINITIONS.map((d) => [d.path, d]));
 export class ProjectFinanceApiService {
   readonly calculations: CalculationService;
   readonly underwriting: UnderwritingService;
+  readonly underwritingRepository: PostgresUnderwritingRepository;
   constructor(private readonly pool: Pool = defaultPool) {
     this.calculations = new CalculationService(new PostgresCalculationRepository(pool));
-    this.underwriting = new UnderwritingService(new PostgresUnderwritingRepository(pool));
+    this.underwritingRepository = new PostgresUnderwritingRepository(pool);
+    this.underwriting = new UnderwritingService(this.underwritingRepository);
   }
 
   async listProjects(context: OrganizationContext) {
@@ -145,7 +147,10 @@ export class ProjectFinanceApiService {
     await this.getScenario(context,scenarioId); return (await this.pool.query(`select id,scenario_id,status,calculation_engine_version,resolver_version,underwriting_policy_version,input_hash,result_hash,created_at,completed_at,failure_code from project_finance.calculation_runs where organization_id=$1 and scenario_id=$2 order by created_at desc`,[context.organizationId,scenarioId])).rows;
   }
 
-  async listUnderwritingRuns(context: OrganizationContext, scenarioId: string) { return this.underwriting.listUnderwritingRuns(context,scenarioId); }
+  async getUnderwritingRun(context: OrganizationContext, runId: string) {
+    const result=await this.underwritingRepository.getUnderwritingRun(context,runId); if(!result) throw new ProjectFinanceApiError("UNDERWRITING_CALCULATION_NOT_FOUND","Underwriting run was not found."); return result;
+  }
+  async listUnderwritingRuns(context: OrganizationContext, scenarioId: string) { await this.getScenario(context,scenarioId); return this.underwritingRepository.listUnderwritingRuns(context,scenarioId); }
 
   async scenarioComparison(context: OrganizationContext, projectId: string) {
     await this.getProject(context,projectId); return (await this.pool.query(`select * from project_finance.scenario_comparison_summary where organization_id=$1 and project_id=$2 order by scenario_name`,[context.organizationId,projectId])).rows;
