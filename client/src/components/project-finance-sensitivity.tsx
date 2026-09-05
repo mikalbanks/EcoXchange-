@@ -1,0 +1,71 @@
+import type { ReactNode } from "react";
+import { Link } from "wouter";
+import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from "recharts";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Checkbox } from "@/components/ui/checkbox";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { AlertTriangle, History, PlayCircle } from "lucide-react";
+import { displaySource, dscr, humanize, money, percentFromDecimal, type CalculationRunDetail, type ScenarioComparisonRow, type ScenarioRecord, type SensitivityPoint, type SensitivityRun, type SensitivityRunSummary, type SensitivityVariable, type UnderwritingRunSummary } from "@/lib/project-finance-api";
+
+export const SENSITIVITY_VARIABLE_LABELS:Record<SensitivityVariable,string>={PPA_PRICE:"PPA Price",INTEREST_RATE:"Interest Rate",PROJECT_CAPEX:"Project Capex",CAPACITY_FACTOR:"P50 Capacity Factor",ITC_RATE:"ITC Rate"};
+export const APPROVED_SENSITIVITY_VARIABLES=Object.keys(SENSITIVITY_VARIABLE_LABELS) as SensitivityVariable[];
+
+export function ScenarioComparisonSelector({scenarios,selected,onToggle}:{scenarios:ScenarioRecord[];selected:string[];onToggle:(id:string)=>void}){
+  return <Card><CardHeader><CardTitle>Select scenarios</CardTitle><CardDescription>Choose 2–4 calculated scenarios. Comparison reads immutable runs and never recalculates.</CardDescription></CardHeader><CardContent className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">{scenarios.map(s=><label key={s.id} className="flex items-start gap-3 rounded-md border p-3"><Checkbox checked={selected.includes(s.id)} onCheckedChange={()=>onToggle(s.id)} disabled={!selected.includes(s.id)&&selected.length>=4}/><span><span className="block font-medium">{s.name}</span><span className="text-xs text-muted-foreground">{humanize(s.scenario_type)} · {humanize(s.status)}</span></span></label>)}</CardContent></Card>;
+}
+
+type CompareBundle={scenario:ScenarioRecord;summary?:ScenarioComparisonRow;calculation?:CalculationRunDetail;underwriting?:UnderwritingRunSummary|null};
+function metricValue(bundle:CompareBundle,key:string):ReactNode{
+  const f=bundle.calculation?.financing_result??{},c=bundle.calculation?.capital_stack_result??{},r=bundle.calculation?.return_result??{},t=bundle.calculation?.tax_credit_result??{};
+  if(key==="permanent_debt")return money(f.permanent_debt,true);if(key==="debt_to_capex")return percentFromDecimal(f.debt_to_capex);if(key==="sponsor_equity")return money(c.sponsor_equity,true);if(key==="sponsor_equity_pct")return percentFromDecimal(c.sponsor_equity_pct_total_uses);if(key==="itc")return money(c.net_itc_proceeds??t.net_transfer_proceeds,true);if(key==="dscr")return dscr(f.minimum_dscr);if(key==="irr")return percentFromDecimal(r.levered_sponsor_cash_irr);if(key==="binding")return humanize(f.binding_constraint);if(key==="overall")return humanize(bundle.underwriting?.overall_status);return "—";
+}
+export function ScenarioComparisonTable({bundles}:{bundles:CompareBundle[]}){
+  const metrics=[['permanent_debt','Permanent Senior Debt'],['debt_to_capex','Debt / Capex'],['sponsor_equity','Sponsor Equity'],['sponsor_equity_pct','Sponsor Equity % of Uses'],['itc','Net ITC Proceeds'],['dscr','Minimum P50 DSCR'],['irr','Cash-Only Sponsor IRR'],['binding','Binding Constraint'],['overall','Overall Underwriting Status']] as const;
+  return <Card><CardHeader><CardTitle>Financial comparison</CardTitle><CardDescription>Side-by-side persisted results. No “winner” is selected because financing objectives differ.</CardDescription></CardHeader><CardContent><div className="overflow-x-auto"><table className="w-full min-w-[720px] text-sm"><caption className="sr-only">Scenario financial comparison</caption><thead><tr className="border-b"><th className="sticky left-0 bg-background p-2 text-left">Metric</th>{bundles.map(b=><th key={b.scenario.id} className="p-2 text-left"><div>{b.scenario.name}</div><div className="font-normal text-xs text-muted-foreground">{b.calculation?.run.completed_at?new Date(b.calculation.run.completed_at).toLocaleDateString():"Not calculated"}</div></th>)}</tr></thead><tbody>{metrics.map(([key,label])=><tr className="border-b" key={key}><th className="sticky left-0 bg-background p-2 text-left font-medium">{label}</th>{bundles.map(b=><td className="p-2 tabular-nums" key={b.scenario.id}>{metricValue(b,key)}</td>)}</tr>)}</tbody></table></div></CardContent></Card>;
+}
+
+const comparedInputs=["revenue.ppa_price_year_1_per_mwh","financing.annual_interest_rate","transaction_costs.project_capex","generation.capacity_factor_p50","tax_credit.itc_rate","financing.target_dscr","financing.max_ltc","financing.amortization_years"];
+function readPath(root:any,path:string){return path.split('.').reduce((v,k)=>v?.[k],root)}
+function formatInput(path:string,value:unknown){if(path.includes('ppa_price'))return `${money(value)}/MWh`;if(path.includes('capex'))return money(value);if(path.includes('interest_rate')||path.includes('capacity_factor')||path.includes('itc_rate')||path.includes('max_ltc'))return percentFromDecimal(value);if(path.includes('dscr'))return dscr(value);if(path.includes('years'))return `${String(value??'—')} years`;return String(value??'—')}
+export function ScenarioAssumptionDiff({bundles}:{bundles:CompareBundle[]}){
+  return <Card><CardHeader><CardTitle>Resolved assumption comparison</CardTitle><CardDescription>Values and provenance come from each immutable calculation snapshot.</CardDescription></CardHeader><CardContent><div className="overflow-x-auto"><table className="w-full min-w-[760px] text-sm"><caption className="sr-only">Scenario resolved assumption comparison</caption><thead><tr className="border-b"><th className="p-2 text-left">Input</th>{bundles.map(b=><th className="p-2 text-left" key={b.scenario.id}>{b.scenario.name}</th>)}</tr></thead><tbody>{comparedInputs.map(path=><tr className="border-b" key={path}><th className="p-2 text-left font-medium">{humanize(path.split('.').at(-1))}</th>{bundles.map(b=>{const snap=b.calculation?.run.input_snapshot_json as any;const value=readPath(snap?.finance_input,path);const prov=snap?.provenance?.[path];return <td className="p-2" key={b.scenario.id}><div className="tabular-nums">{formatInput(path,value)}</div><div className="text-xs text-muted-foreground">{displaySource(prov?.resolution_source)}</div></td>})}</tr>)}</tbody></table></div></CardContent></Card>;
+}
+
+export function RunVersionDisclosure({bundles}:{bundles:CompareBundle[]}){
+  const policies=new Set(bundles.map(b=>b.calculation?.run.underwriting_policy_version).filter(Boolean)); const engines=new Set(bundles.map(b=>b.calculation?.run.calculation_engine_version).filter(Boolean));
+  if(policies.size<=1&&engines.size<=1)return null;
+  return <Alert><AlertTriangle className="h-4 w-4"/><AlertTitle>Comparison version disclosure</AlertTitle><AlertDescription>{policies.size>1?"Selected scenarios were calculated under different policy versions. ":""}{engines.size>1?"Calculation engine versions differ across selected scenarios. ":""}Financial records remain historical, but underwriting comparability may differ.</AlertDescription></Alert>;
+}
+
+export function SensitivityVariableSelector({value,onChange}:{value:SensitivityVariable;onChange:(value:SensitivityVariable)=>void}){return <div className="space-y-2"><Label htmlFor="sensitivity-variable">Sensitivity variable</Label><Select value={value} onValueChange={v=>onChange(v as SensitivityVariable)}><SelectTrigger id="sensitivity-variable"><SelectValue/></SelectTrigger><SelectContent>{APPROVED_SENSITIVITY_VARIABLES.map(v=><SelectItem key={v} value={v}>{SENSITIVITY_VARIABLE_LABELS[v]}</SelectItem>)}</SelectContent></Select></div>}
+
+export function SensitivityPointEditor({variable,values,onChange}:{variable:SensitivityVariable;values:string;onChange:(value:string)=>void}){return <div className="space-y-2"><Label htmlFor="sensitivity-points">Calculated points</Label><Input id="sensitivity-points" value={values} onChange={e=>onChange(e.target.value)} placeholder={variable==="PPA_PRICE"?"40, 45, 50, 55, 60":"Enter comma-separated values"}/><p className="text-xs text-muted-foreground">Enter discrete {variable==="PPA_PRICE"?"USD/MWh":variable==="PROJECT_CAPEX"?"USD":"decimal-domain"} values. Results update only after Run Sensitivity.</p></div>}
+
+export function SensitivityResultChart({run,metric}:{run:SensitivityRun;metric:"permanent_debt"|"sponsor_equity"|"levered_sponsor_cash_irr"|"debt_to_capex"}){
+  const label={permanent_debt:"Permanent Debt",sponsor_equity:"Sponsor Equity",levered_sponsor_cash_irr:"Cash IRR",debt_to_capex:"Debt / Capex"}[metric];
+  return <Card><CardHeader><CardTitle>{SENSITIVITY_VARIABLE_LABELS[run.variable]} → {label}</CardTitle><CardDescription>Each plotted point is a persisted full engine rerun. Connecting lines are visual only.</CardDescription></CardHeader><CardContent><div className="h-72" role="img" aria-label={`${SENSITIVITY_VARIABLE_LABELS[run.variable]} sensitivity chart for ${label}`}><ResponsiveContainer width="100%" height="100%"><LineChart data={run.points}><CartesianGrid strokeDasharray="3 3"/><XAxis dataKey="input_value"/><YAxis/><Tooltip formatter={(v:any)=>metric.includes('irr')||metric==='debt_to_capex'?percentFromDecimal(v):money(v)}/><Line type="linear" dataKey={metric} stroke="currentColor" dot={(props:any)=>{const p=run.points[props.index];return <circle {...props} r={p?.is_base?6:4} aria-label={p?.is_base?"Base Case":"Sensitivity point"}/>}}/></LineChart></ResponsiveContainer></div></CardContent></Card>;
+}
+
+export function SensitivityResultTable({run,projectId}:{run:SensitivityRun;projectId:string}){
+  return <Card><CardHeader><CardTitle>Sensitivity results</CardTitle><CardDescription>Every row references an immutable child Calculation Run.</CardDescription></CardHeader><CardContent><div className="overflow-x-auto"><table className="w-full min-w-[920px] text-sm"><caption className="sr-only">Sensitivity result points</caption><thead><tr className="border-b"><th className="p-2 text-left">Input</th><th>Debt</th><th>Debt / Capex</th><th>Sponsor Equity</th><th>Min DSCR</th><th>Cash IRR</th><th>Binding</th><th>Detailed Model</th></tr></thead><tbody>{run.points.map(p=><tr className="border-b" key={p.child_calculation_run_id}><td className="p-2"><span className="tabular-nums">{p.input_value}</span>{p.is_base?<Badge className="ml-2" variant="secondary">Base Case</Badge>:null}</td><td className="p-2 text-right">{money(p.permanent_debt,true)}</td><td className="p-2 text-right">{percentFromDecimal(p.debt_to_capex)}</td><td className="p-2 text-right">{money(p.sponsor_equity,true)}</td><td className="p-2 text-right">{dscr(p.minimum_dscr)}</td><td className="p-2 text-right">{percentFromDecimal(p.levered_sponsor_cash_irr)}</td><td className="p-2 text-right">{humanize(p.binding_constraint)}</td><td className="p-2"><Button asChild variant="link" size="sm"><Link href={`/developer/project-finance/projects/${projectId}/scenarios/${run.scenario_id}/model/${p.child_calculation_run_id}`}>View Detailed Model</Link></Button></td></tr>)}</tbody></table></div></CardContent></Card>;
+}
+
+export function FinanceabilityMarginPanel({base}:{base:CalculationRunDetail}){
+  const f=base.financing_result as any,c=base.capital_stack_result as any,input=base.run.input_snapshot_json?.finance_input as any,d=base.downside_result as any;
+  const rows=[
+    ["DSCR dimension",dscr(f.minimum_dscr),`Requirement ${dscr(input?.financing?.target_dscr)}`,f.binding_constraint==="DSCR"?"Binding":"Not binding"],
+    ["LTC dimension",percentFromDecimal(f.debt_to_capex),`Limit ${percentFromDecimal(input?.financing?.max_ltc)}`,f.binding_constraint==="LTC"?"Binding":"Not binding"],
+    ["Sponsor equity burden",percentFromDecimal(c.sponsor_equity_pct_total_uses),"Persisted capital-stack share","No aggregate score"],
+    ["Downside repayment",d?dscr(d.minimum_downside_dscr):"Not modeled",d?.full_repayment?"Full repayment":"Not fully repaid",d?.generation_source_type?humanize(d.generation_source_type):"No downside provenance"],
+  ];
+  return <Card><CardHeader><CardTitle>Financeability Margin</CardTitle><CardDescription>Individual dimensions only. EcoXchange does not combine these into a weighted bankability score.</CardDescription></CardHeader><CardContent className="grid gap-3 sm:grid-cols-2">{rows.map(([name,actual,requirement,note])=><div className="rounded-md border p-3" key={name}><div className="font-medium">{name}</div><div className="mt-1 text-lg tabular-nums">{actual}</div><div className="text-xs text-muted-foreground">{requirement}</div><div className="mt-1 text-xs">{note}</div></div>)}</CardContent></Card>;
+}
+
+export function SensitivityHistory({runs,onSelect}:{runs:SensitivityRunSummary[];onSelect:(id:string)=>void}){return <Card><CardHeader><CardTitle className="flex items-center gap-2"><History className="h-4 w-4"/>Sensitivity History</CardTitle><CardDescription>Historical runs remain tied to their original immutable Base Calculation.</CardDescription></CardHeader><CardContent className="space-y-2">{runs.length===0?<p className="text-sm text-muted-foreground">No sensitivity runs yet.</p>:runs.map(r=><button key={r.id} onClick={()=>onSelect(r.id)} className="flex w-full items-center justify-between rounded-md border p-3 text-left"><span><span className="font-medium">{SENSITIVITY_VARIABLE_LABELS[r.variable]}</span><span className="block text-xs text-muted-foreground">{new Date(r.created_at).toLocaleString()} · {r.point_count} points</span></span><Badge variant="outline">{humanize(r.status)}</Badge></button>)}</CardContent></Card>}
+
+export function RunSensitivityButton({disabled,onClick,running}:{disabled:boolean;onClick:()=>void;running:boolean}){return <Button disabled={disabled||running} onClick={onClick}><PlayCircle className="mr-2 h-4 w-4"/>{running?"Running deterministic cases…":"Run Sensitivity"}</Button>}
