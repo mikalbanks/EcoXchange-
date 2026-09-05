@@ -35,6 +35,7 @@ export type AssumptionRecord = { id:string; field_key:string; value:unknown; uni
 export type ResolvedField = { field_key:string; value:unknown; unit?:string; resolution_source:string; source_record_id?:string; source_record_type?:string; source_strength?:string; verification_status?:string; policy_default_used:boolean; policy_value?:unknown; override_used:boolean; override_reason?:string };
 export type ResolvedScenario = { project_id:string; scenario_id:string; finance_input:Record<string,any>|null; resolved_fields:Record<string,ResolvedField>; missing_fields:Array<{field_key:string;required_for:string;reason:string}>; warnings:Array<{code:string;field_key?:string;message:string;blocking:boolean}>; errors:Array<{code:string;field_key?:string;message:string;blocking:boolean}>; calculation_ready:boolean; policy_code:string; policy_version:string; resolver_version:string; input_hash:string|null };
 export type PolicyRecord = { id:string; policy_code:string; policy_version:string; status:string; effective_date?:string|null; description?:string|null };
+export type UnderwritingRunSummary = { id:string; calculation_run_id:string; underwriting_policy_version:string; execution_status:string; overall_status:string|null; financial_profile:string|null; financing_readiness:string|null; created_at?:string; completed_at?:string };
 export type AnalyzeResult = { project_id:string; scenario_id:string; calculation_run:{id:string;status:string;engine_version:string;resolver_version:string;input_hash:string;result_hash:string|null}; underwriting_run:{id:string;execution_status:string;overall_status:string|null;financial_profile:string|null;financing_readiness:string|null;policy_version:string;underwriting_engine_version:string}; financial_summary:Record<string,unknown>; risks:unknown[]; conditions:unknown[]; missing_information:unknown[]; lender_fit:unknown[]; recommendations:unknown[]; assessment_type:string; disclaimer:string };
 
 export const pfApi = {
@@ -53,6 +54,7 @@ export const pfApi = {
   addPolicyOverride: (scenarioId:string, body:unknown) => request<any>("POST", `/api/v1/scenarios/${scenarioId}/policy-overrides`, body),
   resolveScenario: (scenarioId:string, policyId?:string) => request<ResolvedScenario>("GET", `/api/v1/scenarios/${scenarioId}/resolved-input${policyId ? `?policy_id=${encodeURIComponent(policyId)}` : ""}`),
   listPolicies: () => request<PolicyRecord[]>("GET", "/api/v1/underwriting-policies"),
+  listUnderwritingRuns: (scenarioId:string) => request<UnderwritingRunSummary[]>("GET", `/api/v1/scenarios/${scenarioId}/underwriting-runs`),
   analyze: (scenarioId:string, body:unknown, idempotencyKey:string) => request<AnalyzeResult>("POST", `/api/v1/scenarios/${scenarioId}/analyze`, body, { "Idempotency-Key": idempotencyKey }),
 };
 
