@@ -1,5 +1,3 @@
-import { apiRequest } from "@/lib/queryClient";
-
 export type ApiEnvelope<T> = { data: T; meta?: Record<string, unknown> };
 export type ApiErrorBody = { error?: { code?: string; message?: string; details?: Record<string, unknown> } };
 
@@ -66,4 +64,9 @@ export const displaySource = (source?:string) => ({
 
 export const humanize = (value?:string|null) => value ? value.replaceAll("_"," ").toLowerCase().replace(/(^|\s)\w/g, m => m.toUpperCase()) : "Unknown";
 export const percentFromDecimal = (value: unknown) => typeof value === "number" ? `${(value * 100).toLocaleString(undefined,{maximumFractionDigits:2})}%` : "—";
+export const percentToDecimal = (value: string) => { const n=Number(value); if(!Number.isFinite(n)) throw new Error("Enter a valid percentage."); return n/100; };
 export const dscr = (value: unknown) => typeof value === "number" ? `${value.toFixed(2)}x` : "—";
+export const isWithinV0Scope = (project: Pick<ProjectRecord,"technology"|"country_code"|"capacity_mw_ac"|"revenue_structure">) => {
+  const mw=Number(project.capacity_mw_ac); return project.technology==="SOLAR_PV"&&project.country_code==="US"&&Number.isFinite(mw)&&mw>=1&&mw<=20&&project.revenue_structure==="FULLY_CONTRACTED";
+};
+export const canRunAnalyze = (resolved: Pick<ResolvedScenario,"calculation_ready">|undefined, project: Pick<ProjectRecord,"technology"|"country_code"|"capacity_mw_ac"|"revenue_structure">|undefined, pendingSaves:number) => Boolean(resolved?.calculation_ready&&project&&isWithinV0Scope(project)&&pendingSaves===0);
