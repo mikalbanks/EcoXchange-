@@ -10,6 +10,9 @@ alter table project_finance.underwriting_runs
   add column if not exists idempotency_key text,
   add column if not exists started_at timestamptz;
 
+alter table project_finance.underwriting_risks
+  add column if not exists risk_code text;
+
 update project_finance.underwriting_runs
 set execution_status = case
   when status = 'SUCCESS' then 'SUCCESS'
@@ -28,11 +31,12 @@ alter table project_finance.underwriting_runs
 create unique index if not exists pf_underwriting_idempotency_unique
   on project_finance.underwriting_runs(organization_id, idempotency_key)
   where idempotency_key is not null;
-create index if not exists pf_underwriting_calc_idx
-  on project_finance.underwriting_runs(organization_id, calculation_run_id, created_at desc);
 create index if not exists pf_underwriting_hash_idx
   on project_finance.underwriting_runs(underwriting_input_hash, underwriting_engine_version, created_at desc)
   where execution_status = 'SUCCESS';
+create unique index if not exists pf_underwriting_risk_code_unique
+  on project_finance.underwriting_risks(underwriting_run_id, risk_code)
+  where risk_code is not null;
 
 create table if not exists project_finance.underwriting_lender_fit (
   id uuid primary key default gen_random_uuid(),
