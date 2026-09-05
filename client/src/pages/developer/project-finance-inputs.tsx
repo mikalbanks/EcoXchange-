@@ -106,6 +106,7 @@ export default function ProjectFinanceInputs() {
   const [policyId,setPolicyId] = useState<string>();
   const [overrideKey,setOverrideKey] = useState<string|null>(null);
   const [pendingSaves,setPendingSaves] = useState(0);
+  const [dirtyFields,setDirtyFields] = useState<Set<string>>(()=>new Set());
   const [message,setMessage] = useState<{text:string;calculationRunId?:string}|null>(null);
 
   const project = useQuery({ queryKey:["project-finance","project",projectId], queryFn:()=>pfApi.getProject(projectId) });
@@ -141,6 +142,7 @@ export default function ProjectFinanceInputs() {
   };
   const saveFact=(key:string,value:unknown)=>persist(()=>pfApi.addFact(projectId,{field_key:key,value,unit:units[key]??null,source_type:"USER_ASSERTION",confidence_status:"UNVERIFIED"}));
   const saveScenario=(key:string,value:unknown)=>persist(()=>pfApi.putAssumptions(scenarioId,[{field_key:key,value,unit:units[key]??null,source_type:"USER_ASSUMPTION",provenance_type:"USER_ENTERED"}]));
+  const setDirty=(key:string,dirty:boolean)=>setDirtyFields(prev=>{const next=new Set(prev);if(dirty)next.add(key);else next.delete(key);return next});
 
   const analyze = useMutation({
     mutationFn:()=>pfApi.analyze(scenarioId,selectedPolicyId?{policy_id:selectedPolicyId}:{},crypto.randomUUID()),
@@ -159,8 +161,7 @@ export default function ProjectFinanceInputs() {
   const field=(key:string)=>r?.resolved_fields?.[key];
   const value=(key:string)=>field(key)?.value;
   const policy=policies.data?.find(x=>x.id===selectedPolicyId);
-  const outOfScope=!isWithinV0Scope(p);
-  const ready=canRunAnalyze(r,p,pendingSaves)&&!analyze.isPending;
+  const ready=canRunAnalyze(r,p,pendingSaves+dirtyFields.size)&&!analyze.isPending;
   const sectionStatus=(fields:readonly (readonly string[])[])=>{
     if(fields.some(x=>r?.missing_fields.some(m=>m.field_key===x[0])))return "Needs input";
     return fields.some(x=>["POLICY_DEFAULT","POLICY_OVERRIDE","SCENARIO_ASSUMPTION"].includes(field(x[0])?.resolution_source??""))?"Using assumptions":"Complete";
@@ -176,6 +177,7 @@ export default function ProjectFinanceInputs() {
     <div className="space-y-6">
       <ScenarioStatusBanner status={s.status}/>
       <ScopeGuard technology={p.technology} capacity={p.capacity_mw_ac==null?null:Number(p.capacity_mw_ac)} revenueStructure={p.revenue_structure}/>
+      {dirtyFields.size>0?<Alert><AlertTriangle className="h-4 w-4"/><AlertTitle>Unsaved field edit</AlertTitle><AlertDescription>Save or cancel the open field edit before running underwriting so the backend analyzes exactly what you see.</AlertDescription></Alert>:null}
       {resolved.isFetching?<div className="flex items-center gap-2 text-sm text-muted-foreground"><RefreshCcw className="h-4 w-4 animate-spin"/>Checking inputs…</div>:r?.calculation_ready?<Alert><CheckCircle2 className="h-4 w-4"/><AlertTitle>Ready to analyze</AlertTitle><AlertDescription>Finance-critical inputs are complete. Missing readiness facts can still produce conditions or insufficient information.</AlertDescription></Alert>:<Alert><AlertTriangle className="h-4 w-4"/><AlertTitle>{r?.missing_fields.length??0} inputs required before financial analysis</AlertTitle><AlertDescription>EcoXchange does not silently guess missing values.</AlertDescription></Alert>}
       {message?<Alert variant="destructive"><AlertTitle>{message.calculationRunId?"Underwriting incomplete":"Workspace action needs attention"}</AlertTitle><AlertDescription>{message.text}{message.calculationRunId?<div className="mt-2 font-mono text-xs">Calculation run: {message.calculationRunId}</div>:null}</AlertDescription></Alert>:null}
 
@@ -187,13 +189,14 @@ export default function ProjectFinanceInputs() {
             onSaveFact={!controlled.has(key)?v=>saveFact(key,v):undefined}
             onSaveScenario={!controlled.has(key)?v=>saveScenario(key,v):undefined}
             onOverride={controlled.has(key)?()=>setOverrideKey(key):undefined}
+            onDirtyChange={dirty=>setDirty(key,dirty)}
             helper={key==="tax_credit.itc_rate"?"A modeled ITC rate is not confirmation of tax eligibility.":key==="reserves.dsra_months"?"The dollar reserve is calculated by the backend.":undefined}
           />)}</WorkspaceSection>)}
 
           <WorkspaceSection title="Downside" description="Configure the deterministic downside source without relabeling an illustrative case as lender P90." status={r?.missing_fields.some(m=>m.field_key.startsWith("downside."))?"Needs input":"Complete"}>
             <ReadinessField id="downside.downside_type" label="Downside type" value={value("downside.downside_type")} source={field("downside.downside_type")?.resolution_source} options={["NONE","ILLUSTRATIVE_MULTIPLIER","EXPLICIT_GENERATION"]} onSave={v=>saveScenario("downside.downside_type",v)}/>
             <ReadinessField id="downside.generation_source_type" label="Generation source" value={value("downside.generation_source_type")} source={field("downside.generation_source_type")?.resolution_source} options={["NONE","ILLUSTRATIVE_PERCENT_OF_P50","INDEPENDENT_ENGINEER_P90","USER_SUPPLIED_P90"]} onSave={v=>saveScenario("downside.generation_source_type",v)}/>
-            {value("downside.downside_type")==="ILLUSTRATIVE_MULTIPLIER"?<FinanceField id="downside.downside_generation_multiplier" label="Illustrative generation multiplier" unit="Percent of P50" value={value("downside.downside_generation_multiplier")} resolved={field("downside.downside_generation_multiplier")} format="percent" onSaveScenario={v=>saveScenario("downside.downside_generation_multiplier",v)}/>:null}
+            {value("downside.downside_type")==="ILLUSTRATIVE_MULTIPLIER"?<FinanceField id="downside.downside_generation_multiplier" label="Illustrative generation multiplier" unit="Percent of P50" value={value("downside.downside_generation_multiplier")} resolved={field("downside.downside_generation_multiplier")} format="percent" onSaveScenario={v=>saveScenario("downside.downside_generation_multiplier",v)} onDirtyChange={dirty=>setDirty("downside.downside_generation_multiplier",dirty)}/>:null}
           </WorkspaceSection>
           {value("downside.generation_source_type")==="ILLUSTRATIVE_PERCENT_OF_P50"||value("downside.downside_type")==="ILLUSTRATIVE_MULTIPLIER"?<IllustrativeDownsideNotice/>:null}
 
