@@ -6,81 +6,49 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { AlertTriangle, CheckCircle2, FileText, Info, LockKeyhole, ShieldAlert } from "lucide-react";
+import { AlertTriangle, CheckCircle2, Info, LockKeyhole, ShieldAlert } from "lucide-react";
 import { displaySource, dscr, humanize, percentFromDecimal, type ResolvedField } from "@/lib/project-finance-api";
 
 export function SourceBadge({ field }: { field?: ResolvedField }) {
   const label = displaySource(field?.resolution_source);
   return <Badge variant={field?.override_used ? "default" : field?.verification_status === "VERIFIED" ? "secondary" : "outline"} aria-label={`Source: ${label}`}>{label}</Badge>;
 }
-
 export function SourceDetail({ field }: { field?: ResolvedField }) {
   if (!field) return null;
-  return <div className="rounded-md border bg-muted/30 p-3 text-xs text-muted-foreground" role="note">
-    <div><span className="font-medium text-foreground">Source:</span> {displaySource(field.resolution_source)}</div>
-    {field.verification_status ? <div><span className="font-medium text-foreground">Verification:</span> {humanize(field.verification_status)}</div> : null}
-    {field.override_used ? <div><span className="font-medium text-foreground">Override reason:</span> {field.override_reason || "Recorded override"}</div> : null}
-    {field.policy_default_used || field.policy_value !== undefined ? <div><span className="font-medium text-foreground">Policy value:</span> {String(field.policy_value ?? field.value)}</div> : null}
-  </div>;
+  return <div className="rounded-md border bg-muted/30 p-3 text-xs text-muted-foreground" role="note"><div><span className="font-medium text-foreground">Source:</span> {displaySource(field.resolution_source)}</div>{field.verification_status ? <div><span className="font-medium text-foreground">Verification:</span> {humanize(field.verification_status)}</div> : null}{field.override_used ? <div><span className="font-medium text-foreground">Override reason:</span> {field.override_reason || "Recorded override"}</div> : null}{field.policy_default_used || field.policy_value !== undefined ? <div><span className="font-medium text-foreground">Policy value:</span> {String(field.policy_value ?? field.value)}</div> : null}</div>;
 }
-
 export function ScenarioStatusBanner({ status }: { status?: string }) {
   if (status === "STALE") return <Alert><AlertTriangle className="h-4 w-4"/><AlertTitle>Scenario inputs changed</AlertTitle><AlertDescription>Existing results remain historical. Review the current inputs and run a new analysis when ready.</AlertDescription></Alert>;
   if (status === "CALCULATED") return <Alert><CheckCircle2 className="h-4 w-4"/><AlertTitle>Scenario previously analyzed</AlertTitle><AlertDescription>Saved historical analysis remains unchanged unless you deliberately run the current scenario again.</AlertDescription></Alert>;
   return null;
 }
-
 export function ScopeGuard({ technology, capacity, revenueStructure }: { technology?:string; capacity?:number|null; revenueStructure?:string|null }) {
-  const reasons:string[]=[];
-  if (technology && technology !== "SOLAR_PV") reasons.push("technology is not Solar PV");
-  if (capacity != null && (capacity < 1 || capacity > 20)) reasons.push("capacity is outside 1–20 MW AC");
-  if (revenueStructure && revenueStructure !== "FULLY_CONTRACTED") reasons.push("revenue is not fully contracted");
+  const reasons:string[]=[]; if (technology && technology !== "SOLAR_PV") reasons.push("technology is not Solar PV"); if (capacity != null && (capacity < 1 || capacity > 20)) reasons.push("capacity is outside 1–20 MW AC"); if (revenueStructure && revenueStructure !== "FULLY_CONTRACTED") reasons.push("revenue is not fully contracted");
   if (!reasons.length) return null;
   return <Alert><ShieldAlert className="h-4 w-4"/><AlertTitle>Outside current model scope</AlertTitle><AlertDescription>This version supports U.S. fully contracted solar projects from 1–20 MW AC. Current issue: {reasons.join("; ")}.</AlertDescription></Alert>;
 }
-
 export function MissingInputsPanel({ financeMissing, readinessMissing, onJump }: { financeMissing:string[]; readinessMissing:string[]; onJump?:(key:string)=>void }) {
-  return <Card>
-    <CardHeader><CardTitle>What still needs attention</CardTitle><CardDescription>Calculation inputs and lender-readiness information are tracked separately.</CardDescription></CardHeader>
-    <CardContent className="space-y-4">
-      <div><div className="mb-2 text-sm font-semibold">Required to calculate</div>{financeMissing.length ? <div className="flex flex-wrap gap-2">{financeMissing.map(k=><Button key={k} variant="outline" size="sm" onClick={()=>onJump?.(k)}>{humanize(k.split(".").pop())}</Button>)}</div> : <p className="text-sm text-muted-foreground">No finance-critical fields are missing.</p>}</div>
-      <div><div className="mb-2 text-sm font-semibold">Needed for stronger underwriting</div>{readinessMissing.length ? <div className="flex flex-wrap gap-2">{readinessMissing.map(k=><Button key={k} variant="ghost" size="sm" onClick={()=>onJump?.(k)}>{humanize(k.replace("underwriting.",""))}</Button>)}</div> : <p className="text-sm text-muted-foreground">All tracked readiness fields have values.</p>}</div>
-    </CardContent>
-  </Card>;
+  return <Card><CardHeader><CardTitle>What still needs attention</CardTitle><CardDescription>Calculation inputs and lender-readiness information are tracked separately.</CardDescription></CardHeader><CardContent className="space-y-4"><div><div className="mb-2 text-sm font-semibold">Required to calculate</div>{financeMissing.length ? <div className="flex flex-wrap gap-2">{financeMissing.map(k=><Button key={k} variant="outline" size="sm" onClick={()=>onJump?.(k)}>{humanize(k.split(".").pop())}</Button>)}</div> : <p className="text-sm text-muted-foreground">No finance-critical fields are missing.</p>}</div><div><div className="mb-2 text-sm font-semibold">Needed for stronger underwriting</div>{readinessMissing.length ? <div className="flex flex-wrap gap-2">{readinessMissing.map(k=><Button key={k} variant="ghost" size="sm" onClick={()=>onJump?.(k)}>{humanize(k.replace("underwriting.",""))}</Button>)}</div> : <p className="text-sm text-muted-foreground">All tracked readiness fields have values.</p>}</div></CardContent></Card>;
 }
 
-export function FinanceField({ id, label, value, unit, resolved, helper, policyControlled, format, onSaveScenario, onSaveFact, onOverride }: {
+export function FinanceField({ id, label, value, unit, resolved, helper, policyControlled, format, onSaveScenario, onSaveFact, onOverride, onDirtyChange }: {
   id:string; label:string; value:unknown; unit?:string; resolved?:ResolvedField; helper?:string; policyControlled?:boolean;
-  format?:"percent"|"dscr"|"money"|"number"; onSaveScenario?:(value:unknown)=>Promise<void>; onSaveFact?:(value:unknown)=>Promise<void>; onOverride?:()=>void;
+  format?:"percent"|"dscr"|"money"|"number"; onSaveScenario?:(value:unknown)=>Promise<void>; onSaveFact?:(value:unknown)=>Promise<void>; onOverride?:()=>void; onDirtyChange?:(dirty:boolean)=>void;
 }) {
   const [editing,setEditing]=useState<"fact"|"scenario"|null>(null); const [draft,setDraft]=useState(""); const [saving,setSaving]=useState(false); const [showSource,setShowSource]=useState(false);
   const display = format === "percent" ? percentFromDecimal(value) : format === "dscr" ? dscr(value) : format === "money" && typeof value === "number" ? new Intl.NumberFormat("en-US",{style:"currency",currency:"USD",maximumFractionDigits:0}).format(value) : value == null ? "Missing" : String(value);
-  const start=(mode:"fact"|"scenario")=>{setEditing(mode);setDraft(typeof value === "number" ? String(format === "percent" ? value*100 : value) : value == null ? "" : String(value));};
-  const save=async()=>{if(!editing)return;setSaving(true);try{let next:unknown=draft; if(format!==undefined && draft.trim()!==""){const n=Number(draft); if(!Number.isFinite(n)) throw new Error("Enter a valid number."); next=format==="percent"?n/100:n;} if(editing==="fact") await onSaveFact?.(next); else await onSaveScenario?.(next); setEditing(null);} finally{setSaving(false)}};
-  return <div id={id} className="rounded-lg border p-4 scroll-mt-24">
-    <div className="flex items-start justify-between gap-3"><div><Label htmlFor={`${id}-input`} className="text-sm font-medium">{label}</Label>{unit?<div className="text-xs text-muted-foreground">{unit}</div>:null}</div><button type="button" onClick={()=>setShowSource(v=>!v)} aria-expanded={showSource}><SourceBadge field={resolved}/></button></div>
-    {editing ? <div className="mt-3 flex gap-2"><Input id={`${id}-input`} value={draft} onChange={e=>setDraft(e.target.value)} aria-label={label}/><Button size="sm" onClick={save} disabled={saving}>{saving?"Saving…":"Save"}</Button><Button size="sm" variant="ghost" onClick={()=>setEditing(null)}>Cancel</Button></div> : <div className="mt-2 text-lg font-semibold">{display}</div>}
-    {resolved?.override_used && resolved.policy_value !== undefined ? <div className="mt-1 text-xs text-muted-foreground">Policy default: {String(resolved.policy_value)} · {resolved.override_reason}</div> : null}
-    {helper?<p className="mt-2 text-xs text-muted-foreground">{helper}</p>:null}
-    {!editing ? <div className="mt-3 flex flex-wrap gap-2">{policyControlled ? <Button size="sm" variant="outline" onClick={onOverride}><LockKeyhole className="mr-1 h-3.5 w-3.5"/>Override policy value</Button> : <>{onSaveFact?<Button size="sm" variant="outline" onClick={()=>start("fact")}>Edit project fact</Button>:null}{onSaveScenario?<Button size="sm" variant="ghost" onClick={()=>start("scenario")}>Use different value in scenario</Button>:null}</>}</div> : null}
-    {showSource?<div className="mt-3"><SourceDetail field={resolved}/></div>:null}
-  </div>;
+  const start=(mode:"fact"|"scenario")=>{setEditing(mode);onDirtyChange?.(true);setDraft(typeof value === "number" ? String(format === "percent" ? value*100 : value) : value == null ? "" : String(value));};
+  const close=()=>{setEditing(null);onDirtyChange?.(false)};
+  const save=async()=>{if(!editing)return;setSaving(true);try{let next:unknown=draft;if(format!==undefined&&draft.trim()!==""){const n=Number(draft);if(!Number.isFinite(n))throw new Error("Enter a valid number.");next=format==="percent"?n/100:n;}if(editing==="fact")await onSaveFact?.(next);else await onSaveScenario?.(next);close();}finally{setSaving(false)}};
+  return <div id={id} className="rounded-lg border p-4 scroll-mt-24"><div className="flex items-start justify-between gap-3"><div><Label htmlFor={`${id}-input`} className="text-sm font-medium">{label}</Label>{unit?<div className="text-xs text-muted-foreground">{unit}</div>:null}</div><button type="button" onClick={()=>setShowSource(v=>!v)} aria-expanded={showSource}><SourceBadge field={resolved}/></button></div>{editing ? <div className="mt-3 flex gap-2"><Input id={`${id}-input`} value={draft} onChange={e=>setDraft(e.target.value)} aria-label={label}/><Button size="sm" onClick={save} disabled={saving}>{saving?"Saving…":"Save"}</Button><Button size="sm" variant="ghost" onClick={close}>Cancel</Button></div> : <div className="mt-2 text-lg font-semibold">{display}</div>}{resolved?.override_used && resolved.policy_value !== undefined ? <div className="mt-1 text-xs text-muted-foreground">Policy default: {String(resolved.policy_value)} · {resolved.override_reason}</div> : null}{helper?<p className="mt-2 text-xs text-muted-foreground">{helper}</p>:null}{!editing ? <div className="mt-3 flex flex-wrap gap-2">{policyControlled ? <Button size="sm" variant="outline" onClick={onOverride}><LockKeyhole className="mr-1 h-3.5 w-3.5"/>Override policy value</Button> : <>{onSaveFact?<Button size="sm" variant="outline" onClick={()=>start("fact")}>Edit project fact</Button>:null}{onSaveScenario?<Button size="sm" variant="ghost" onClick={()=>start("scenario")}>Use different value in scenario</Button>:null}</>}</div> : null}{showSource?<div className="mt-3"><SourceDetail field={resolved}/></div>:null}</div>;
 }
 
 export function ReadinessField({ id, label, value, options, source, onSave }: { id:string; label:string; value:unknown; options:string[]; source?:string; onSave:(value:string)=>Promise<void> }) {
-  const [saving,setSaving]=useState(false);
-  return <div id={id} className="rounded-lg border p-4 scroll-mt-24"><div className="flex items-center justify-between gap-3"><Label htmlFor={`${id}-select`}>{label}</Label><Badge variant="outline" aria-label={`Source: ${source ? humanize(source) : "Not provided"}`}>{source ? humanize(source) : "Not provided"}</Badge></div><select id={`${id}-select`} className="mt-3 h-10 w-full rounded-md border bg-background px-3 text-sm" value={typeof value==="string"?value:"UNKNOWN"} disabled={saving} onChange={async e=>{setSaving(true);try{await onSave(e.target.value)}finally{setSaving(false)}}}>{options.map(o=><option key={o} value={o}>{humanize(o)}</option>)}</select></div>;
+  const [saving,setSaving]=useState(false); return <div id={id} className="rounded-lg border p-4 scroll-mt-24"><div className="flex items-center justify-between gap-3"><Label htmlFor={`${id}-select`}>{label}</Label><Badge variant="outline" aria-label={`Source: ${source ? humanize(source) : "Not provided"}`}>{source ? humanize(source) : "Not provided"}</Badge></div><select id={`${id}-select`} className="mt-3 h-10 w-full rounded-md border bg-background px-3 text-sm" value={typeof value==="string"?value:"UNKNOWN"} disabled={saving} onChange={async e=>{setSaving(true);try{await onSave(e.target.value)}finally{setSaving(false)}}}>{options.map(o=><option key={o} value={o}>{humanize(o)}</option>)}</select></div>;
 }
-
 export function PolicyOverrideDialog({ open, onOpenChange, label, originalValue, policyVersion, format, onSubmit }: { open:boolean; onOpenChange:(v:boolean)=>void; label:string; originalValue:unknown; policyVersion:string; format?:"percent"|"dscr"; onSubmit:(value:number,reason:string)=>Promise<void> }) {
-  const [value,setValue]=useState(""); const [reason,setReason]=useState(""); const [saving,setSaving]=useState(false); const first=useRef<HTMLInputElement>(null);
-  useEffect(()=>{if(open)setTimeout(()=>first.current?.focus(),0)},[open]);
-  const shown = format==="percent" && typeof originalValue==="number" ? percentFromDecimal(originalValue) : format==="dscr" ? dscr(originalValue) : String(originalValue ?? "—");
+  const [value,setValue]=useState(""); const [reason,setReason]=useState(""); const [saving,setSaving]=useState(false); const first=useRef<HTMLInputElement>(null); useEffect(()=>{if(open)setTimeout(()=>first.current?.focus(),0)},[open]); const shown = format==="percent" && typeof originalValue==="number" ? percentFromDecimal(originalValue) : format==="dscr" ? dscr(originalValue) : String(originalValue ?? "—");
   return <Dialog open={open} onOpenChange={onOpenChange}><DialogContent><DialogHeader><DialogTitle>Override policy value</DialogTitle><DialogDescription>This changes the underwriting assumption for this scenario only. It does not change EcoXchange’s underlying policy.</DialogDescription></DialogHeader><div className="space-y-4"><div className="rounded-md border p-3 text-sm"><span className="text-muted-foreground">{label} policy default:</span> <strong>{shown}</strong><div className="text-xs text-muted-foreground">Policy {policyVersion}</div></div><div><Label htmlFor="override-value">New value {format==="percent"?"(%)":""}</Label><Input ref={first} id="override-value" inputMode="decimal" value={value} onChange={e=>setValue(e.target.value)}/></div><div><Label htmlFor="override-reason">Reason</Label><Input id="override-reason" value={reason} onChange={e=>setReason(e.target.value)} placeholder="Example: lender term sheet"/></div></div><DialogFooter><Button variant="outline" onClick={()=>onOpenChange(false)}>Cancel</Button><Button disabled={!value.trim()||!reason.trim()||saving} onClick={async()=>{const n=Number(value);if(!Number.isFinite(n))return;setSaving(true);try{await onSubmit(format==="percent"?n/100:n,reason);setValue("");setReason("");onOpenChange(false)}finally{setSaving(false)}}}>{saving?"Saving…":"Save override"}</Button></DialogFooter></DialogContent></Dialog>;
 }
-
-export function WorkspaceSection({ title, description, status, children }: { title:string; description:string; status:string; children:React.ReactNode }) {
-  return <Card><CardHeader><div className="flex items-start justify-between gap-3"><div><CardTitle>{title}</CardTitle><CardDescription className="mt-1">{description}</CardDescription></div><Badge variant="outline">{status}</Badge></div></CardHeader><CardContent className="grid gap-4 md:grid-cols-2">{children}</CardContent></Card>;
-}
-
+export function WorkspaceSection({ title, description, status, children }: { title:string; description:string; status:string; children:React.ReactNode }) { return <Card><CardHeader><div className="flex items-start justify-between gap-3"><div><CardTitle>{title}</CardTitle><CardDescription className="mt-1">{description}</CardDescription></div><Badge variant="outline">{status}</Badge></div></CardHeader><CardContent className="grid gap-4 md:grid-cols-2">{children}</CardContent></Card>; }
 export function IllustrativeDownsideNotice() { return <Alert><Info className="h-4 w-4"/><AlertTitle>Illustrative downside only — not an independent-engineer P90</AlertTitle><AlertDescription>A percentage-of-P50 case is a modeling stress. Lender-grade P90 evidence requires an independent engineering basis.</AlertDescription></Alert>; }
