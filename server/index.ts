@@ -1,6 +1,7 @@
 import express, { type Request, Response, NextFunction } from "express";
 import { registerRoutes } from "./routes";
 import { registerProjectFinanceApi } from "./routes/project-finance";
+import { registerProjectFinanceV1Routes } from "./routes/project-finance-v1";
 import { serveStatic } from "./static";
 import { createServer } from "http";
 import { startSchedulers } from "./jobs/scheduler";
@@ -63,10 +64,8 @@ app.use((req, res, next) => {
 (async () => {
   await registerRoutes(httpServer, app);
 
-  // Spec 05/06: mount only the non-persistent project-finance API surface while
-  // the Spec 04 database migrations remain under staging validation. The session
-  // middleware is installed by registerRoutes above, so this second-layer auth
-  // check reuses the existing authenticated user context.
+  // Legacy non-persistent preview remains available during the transition. Ticket 13
+  // mounts the authoritative persistence-backed /api/v1 project-finance contract beside it.
   registerProjectFinanceApi(app, (req: any, res, next) => {
     if (!req.session?.userId) return res.status(401).json({
       error: {
@@ -77,6 +76,7 @@ app.use((req, res, next) => {
     });
     next();
   });
+  registerProjectFinanceV1Routes(app);
 
   startSchedulers();
 
