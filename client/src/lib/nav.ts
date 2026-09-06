@@ -21,6 +21,7 @@ export const PUBLIC_NAV_LINKS: readonly PublicNavLink[] = [
   { href: "/", label: "Home", testId: "link-home" },
   { href: "/market", label: "Projects", testId: "link-projects" },
   { href: "/develop", label: "Developers", testId: "link-developers" },
+  { href: "/bankability", label: "Bankability", testId: "link-bankability" },
   { href: "/verification", label: "Evidence", testId: "link-verification" },
   {
     href: "https://demo.ecoxchange.net/benchmark",

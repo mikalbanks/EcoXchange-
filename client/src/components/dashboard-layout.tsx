@@ -18,7 +18,6 @@ import {
 import {
   LayoutDashboard,
   FolderKanban,
-  FileSearch,
   Users,
   LogOut,
   Shield,
@@ -34,6 +33,7 @@ import {
 const developerNavItems = [
   { title: "Overview", url: "/developer", icon: LayoutDashboard },
   { title: "Projects", url: "/developer/projects", icon: FolderKanban },
+  { title: "Bankability & Sponsor Equity", url: "/developer/finance", icon: Banknote },
   { title: "Performance", url: "/performance", icon: BarChart3 },
   { title: "Operations", url: "/operations", icon: Activity },
 ];

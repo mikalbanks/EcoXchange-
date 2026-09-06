@@ -1,5 +1,5 @@
 import { useNavigate } from "react-router-dom";
-import { BellRing, Play } from "lucide-react";
+import { Banknote, BellRing, Play } from "lucide-react";
 import { useAuth } from "../../context/AuthContext.js";
 import type { Role } from "../../context/AuthContext.js";
 import { useDemo } from "../../context/DemoContext.js";
@@ -43,30 +43,15 @@ export function DemoController() {
     <div className="min-h-screen bg-cream px-4 py-10">
       <div className="max-w-2xl mx-auto space-y-8 animate-fade-in">
         <div>
-          <h1 className="font-heading text-3xl text-darkBg">
-            EcoXchange Presenter Controls
-          </h1>
-          <p className="text-textMuted mt-1">
-            Presentation controls for live demos.
-          </p>
+          <h1 className="font-heading text-3xl text-darkBg">EcoXchange Presenter Controls</h1>
+          <p className="text-textMuted mt-1">Presentation controls for live demos.</p>
         </div>
 
         <section className="bg-white rounded-xl border border-paleGreen/60 p-6 space-y-3">
           <h2 className="font-heading text-lg text-darkBg">Current role</h2>
           <div className="inline-flex rounded-md border border-paleGreen/60 p-0.5">
             {(["investor", "developer"] as Role[]).map((r) => (
-              <button
-                key={r}
-                type="button"
-                onClick={() => setRole(r)}
-                className={`rounded px-4 py-1.5 text-sm font-medium capitalize transition-colors duration-150 ${
-                  role === r
-                    ? "bg-medGreen text-white"
-                    : "text-textMuted hover:text-darkBg"
-                }`}
-              >
-                {r}
-              </button>
+              <button key={r} type="button" onClick={() => setRole(r)} className={`rounded px-4 py-1.5 text-sm font-medium capitalize transition-colors duration-150 ${role === r ? "bg-medGreen text-white" : "text-textMuted hover:text-darkBg"}`}>{r}</button>
             ))}
           </div>
         </section>
@@ -75,26 +60,9 @@ export function DemoController() {
           <h2 className="font-heading text-lg text-darkBg">Demo scenarios</h2>
           <div className="space-y-2">
             {SCENARIOS.map((s) => (
-              <label
-                key={s.value}
-                className="flex items-start gap-3 rounded-lg border border-paleGreen/50 p-3 cursor-pointer hover:bg-cream transition-colors duration-150"
-              >
-                <input
-                  type="radio"
-                  name="scenario"
-                  className="mt-1 accent-medGreen"
-                  checked={scenario === s.value}
-                  onChange={() => {
-                    setScenario(s.value);
-                    setRole(s.role);
-                  }}
-                />
-                <span>
-                  <span className="block text-textDark font-medium">
-                    {s.label}
-                  </span>
-                  <span className="block text-sm text-textMuted">{s.hint}</span>
-                </span>
+              <label key={s.value} className="flex items-start gap-3 rounded-lg border border-paleGreen/50 p-3 cursor-pointer hover:bg-cream transition-colors duration-150">
+                <input type="radio" name="scenario" className="mt-1 accent-medGreen" checked={scenario === s.value} onChange={() => { setScenario(s.value); setRole(s.role); }} />
+                <span><span className="block text-textDark font-medium">{s.label}</span><span className="block text-sm text-textMuted">{s.hint}</span></span>
               </label>
             ))}
           </div>
@@ -104,55 +72,20 @@ export function DemoController() {
           <h2 className="font-heading text-lg text-darkBg">Audience preset</h2>
           <div className="flex flex-wrap gap-2">
             {AUDIENCES.map((a) => (
-              <button
-                key={a.value}
-                type="button"
-                onClick={() => setAudience(a.value)}
-                className={`rounded-full px-4 py-1.5 text-sm font-medium border transition-colors duration-150 ${
-                  audience === a.value
-                    ? "bg-darkBg text-white border-darkBg"
-                    : "bg-white text-textMuted border-paleGreen/60 hover:text-darkBg"
-                }`}
-              >
-                {a.label}
-              </button>
+              <button key={a.value} type="button" onClick={() => setAudience(a.value)} className={`rounded-full px-4 py-1.5 text-sm font-medium border transition-colors duration-150 ${audience === a.value ? "bg-darkBg text-white border-darkBg" : "bg-white text-textMuted border-paleGreen/60 hover:text-darkBg"}`}>{a.label}</button>
             ))}
           </div>
         </section>
 
+        <section className="rounded-xl border border-medGreen/40 bg-paleGreen/20 p-6">
+          <div className="flex items-start gap-3"><Banknote className="mt-0.5 h-5 w-5 text-medGreen" /><div><h2 className="font-heading text-lg text-darkBg">Bankability & Sponsor Equity</h2><p className="mt-1 text-sm text-textMuted">Run the 5 MW benchmark through the real project-finance calculation service, then change PPA, capex, rate, DSCR, LTC, or ITC assumptions.</p></div></div>
+          <button type="button" onClick={() => navigate("/bankability")} className="mt-4 inline-flex items-center gap-2 rounded-md bg-medGreen px-5 py-2.5 text-sm font-medium text-white transition-colors duration-150 hover:bg-darkBg"><Banknote className="h-4 w-4" />See a 5 MW Financing Example</button>
+        </section>
+
         <div className="flex flex-wrap items-center gap-3">
-          <button
-            type="button"
-            onClick={launch}
-            className="inline-flex items-center gap-2 rounded-md bg-medGreen px-6 py-3 text-white font-medium transition-colors duration-150 hover:bg-darkBg"
-          >
-            <Play className="h-5 w-5" /> Launch Demo
-          </button>
-          <button
-            type="button"
-            onClick={() => {
-              enterDemo();
-              setRole("developer");
-              navigate("/developer/demo");
-            }}
-            className="inline-flex items-center gap-2 rounded-md border border-medGreen px-6 py-3 text-medGreen font-medium transition-colors duration-150 hover:bg-paleGreen/40"
-          >
-            <Play className="h-5 w-5" /> Developer Backtest Demo
-          </button>
-          <button
-            type="button"
-            onClick={() => {
-              enterDemo();
-              setRole("investor");
-              setScenario("flagged");
-              // AppLayout reads-and-clears this param and fires the
-              // distribution notification banner.
-              navigate("/investor?simulate_distribution=1");
-            }}
-            className="inline-flex items-center gap-2 rounded-md border border-medGreen px-6 py-3 text-medGreen font-medium transition-colors duration-150 hover:bg-paleGreen/40"
-          >
-            <BellRing className="h-5 w-5" /> Open Simulated Distribution
-          </button>
+          <button type="button" onClick={launch} className="inline-flex items-center gap-2 rounded-md bg-medGreen px-6 py-3 text-white font-medium transition-colors duration-150 hover:bg-darkBg"><Play className="h-5 w-5" /> Launch Demo</button>
+          <button type="button" onClick={() => { enterDemo(); setRole("developer"); navigate("/developer/demo"); }} className="inline-flex items-center gap-2 rounded-md border border-medGreen px-6 py-3 text-medGreen font-medium transition-colors duration-150 hover:bg-paleGreen/40"><Play className="h-5 w-5" /> Developer Backtest Demo</button>
+          <button type="button" onClick={() => { enterDemo(); setRole("investor"); setScenario("flagged"); navigate("/investor?simulate_distribution=1"); }} className="inline-flex items-center gap-2 rounded-md border border-medGreen px-6 py-3 text-medGreen font-medium transition-colors duration-150 hover:bg-paleGreen/40"><BellRing className="h-5 w-5" /> Open Simulated Distribution</button>
         </div>
       </div>
     </div>
