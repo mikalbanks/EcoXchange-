@@ -8,7 +8,10 @@
     "directory": "./dist",
     "binding": "ASSETS",
     "not_found_handling": "single-page-application",
-    "run_worker_first": ["/__deployment"]
+    "run_worker_first": ["/api/*", "/__deployment"]
+  },
+  "vars": {
+    "API_ORIGIN": "https://ecoxchange-y6ah.onrender.com"
   },
   "routes": [
     { "pattern": "demo.ecoxchange.net", "custom_domain": true }
