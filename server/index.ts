@@ -1,5 +1,6 @@
 import express, { type Request, Response, NextFunction } from "express";
 import { registerRoutes } from "./routes";
+import { registerProjectFinanceRoutes } from "./routes/project-finance";
 import { serveStatic } from "./static";
 import { createServer } from "http";
 import { startSchedulers } from "./jobs/scheduler";
@@ -61,6 +62,7 @@ app.use((req, res, next) => {
 
 (async () => {
   await registerRoutes(httpServer, app);
+  registerProjectFinanceRoutes(app);
   startSchedulers();
 
   app.use((err: any, _req: Request, res: Response, next: NextFunction) => {
