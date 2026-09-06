@@ -64,6 +64,8 @@ import DeveloperProjectDetail from "@/pages/developer/project-detail";
 import DeveloperProjectIntake from "@/pages/developer/project-intake";
 import DeveloperBacktestView from "@/pages/developer/backtest-view";
 import DeveloperProjectDashboard from "@/pages/developer/project-dashboard";
+import BankabilityWorkspace from "@/pages/developer/bankability";
+import PublicBankabilityPage from "@/pages/bankability";
 
 import PrivacyPolicy from "@/pages/privacy";
 import InvestorDashboard from "@/pages/investor/dashboard";
@@ -108,7 +110,6 @@ function ProtectedRoute({
   }
 
   if (!user) {
-    // Remember where they were headed so sign-in can finish the journey.
     return <Redirect to={loginPathWithReturn(window.location.pathname)} />;
   }
 
@@ -123,6 +124,7 @@ function Router() {
   return (
     <Switch>
       <Route path="/" component={LandingPage} />
+      <Route path="/bankability" component={PublicBankabilityPage} />
       <Route path="/market" component={PublicMarketPage} />
       <Route path="/market/:id" component={PublicMarketProjectPage} />
       <Route path="/portfolio" component={PortfolioPage} />
@@ -137,25 +139,13 @@ function Router() {
       <Route path="/performance" component={PerformancePage} />
       <Route path="/backtest-report" component={BacktestReportPage} />
 
-      {/* Spec 22 paid-tier deliverables. Public routes: these are documents an
-          owner hands to a warranty adjuster, a lender or an acquirer, and a
-          report that needs a login to the reporting party's system is not
-          obviously independent of that party. */}
-      <Route
-        path="/reports/degradation/:projectId"
-        component={DegradationCertificatePage}
-      />
+      <Route path="/reports/degradation/:projectId" component={DegradationCertificatePage} />
       <Route path="/reports/soiling/:projectId" component={SoilingReportPage} />
-      <Route
-        path="/reports/availability/:projectId"
-        component={AvailabilityReportPage}
-      />
+      <Route path="/reports/availability/:projectId" component={AvailabilityReportPage} />
       <Route path="/privacy" component={PrivacyPolicy} />
       <Route path="/develop" component={DevelopPage} />
       <Route path="/develop/preview" component={DeveloperDashboardPreview} />
       <Route path="/invest/preview" component={InvestorDashboardPreview} />
-      {/* /verification is the canonical path — the nav says "Verification", so
-          the URL should too. /method stays live for existing links. */}
       <Route path="/verification" component={MethodPage} />
       <Route path="/method" component={MethodPage} />
       <Route path="/faq" component={FaqPage} />
@@ -168,6 +158,11 @@ function Router() {
       <Route path="/developer/projects">
         <ProtectedRoute allowedRoles={["DEVELOPER"]}>
           <DeveloperDashboard />
+        </ProtectedRoute>
+      </Route>
+      <Route path="/developer/finance">
+        <ProtectedRoute allowedRoles={["DEVELOPER"]}>
+          <BankabilityWorkspace />
         </ProtectedRoute>
       </Route>
       <Route path="/developer/projects/new">
@@ -188,6 +183,11 @@ function Router() {
       <Route path="/developer/project/:id">
         <ProtectedRoute allowedRoles={["DEVELOPER"]}>
           <DeveloperProjectDashboard />
+        </ProtectedRoute>
+      </Route>
+      <Route path="/developer/projects/:id/finance">
+        <ProtectedRoute allowedRoles={["DEVELOPER"]}>
+          <BankabilityWorkspace />
         </ProtectedRoute>
       </Route>
       <Route path="/developer/projects/:id">
@@ -227,7 +227,6 @@ function Router() {
           <AdminDashboard />
         </ProtectedRoute>
       </Route>
-      {/* Spec 17 — declared before /admin/projects/:id so the static segment wins. */}
       <Route path="/admin/distributions/:spvId">
         <ProtectedRoute allowedRoles={["ADMIN"]}>
           <AdminDistributions />
