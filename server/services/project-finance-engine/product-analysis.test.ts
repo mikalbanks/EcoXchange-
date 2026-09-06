@@ -88,18 +88,25 @@ describe("Bankability & Sponsor Equity product analysis", () => {
 
   it("reduces debt when DSCR rises and switches the binding constraint when LTC is lower", () => {
     const base = fiveMwFixture.inputs as ProjectFinanceInputs;
+    const baseResult = analyze(base);
     const highDscr = analyze({ ...base, targetP50Dscr: 1.50 });
     const ltcBound = analyze({ ...base, maximumLtc: 0.20 });
-    expect(highDscr.finance.financingSummary.permanentDebtUsd).toBeLessThan((analyze(base)).finance.financingSummary.permanentDebtUsd);
+    expect(highDscr.finance.financingSummary.permanentDebtUsd).toBeLessThan(baseResult.finance.financingSummary.permanentDebtUsd);
     expect(ltcBound.finance.financingSummary.bindingConstraint).toBe("LTC");
   });
 
+  it("moves a sufficiently weak project below the base financial classification", () => {
+    const base = fiveMwFixture.inputs as ProjectFinanceInputs;
+    const baseResult = analyze(base);
+    const weak = analyze({ ...base, yearOnePpaPricePerMwh: 5 });
+    expect(baseResult.assessment.financialBankability).toBe("ACCEPTABLE");
+    expect(weak.finance.yearOneCfadsUsd).toBeLessThan(0);
+    expect(weak.finance.financingSummary.permanentDebtUsd).toBe(0);
+    expect(weak.assessment.financialBankability).toBe("UNFINANCEABLE_UNDER_POLICY");
+  });
+
   it("returns insufficient information instead of fabricating credit readiness", () => {
-    const facts: UnderwritingFacts = {
-      ...completeFacts,
-      offtakerCreditStatus: "UNKNOWN",
-      interconnectionStatus: "UNKNOWN",
-    };
+    const facts: UnderwritingFacts = { ...completeFacts, offtakerCreditStatus: "UNKNOWN", interconnectionStatus: "UNKNOWN" };
     const result = analyze(fiveMwFixture.inputs as ProjectFinanceInputs, facts);
     expect(result.assessment.status).toBe("INSUFFICIENT_INFORMATION");
     expect(result.assessment.missingInputs.length).toBeGreaterThan(0);
