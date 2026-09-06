@@ -3,13 +3,13 @@ import { DeveloperSubmissionWizard } from "@/components/developer-submission-wiz
 import { Card, CardContent } from "@/components/ui/card";
 
 const pilotRows = [
-  { item: "Bankability & Sponsor Equity Analysis", scope: "Indicative debt capacity, tax-credit proceeds, sponsor-equity requirement, and financing constraints", status: "Included" },
-  { item: "Project operating profile", scope: "Technical, ownership-workflow, and PPA input review", status: "Included" },
+  { item: "Project / SPE operating record", scope: "Technical, ownership-workflow, and PPA input review", status: "Included" },
+  { item: "Digital ownership workflow", scope: "Permissioned cap-table and transfer-control review", status: "Modeled" },
+  { item: "PPA-based allocation", scope: "Pro-rata distribution-control calculation", status: "Modeled" },
   { item: "Production backtest", scope: "12-month model-to-measurement comparison", status: "Pilot evaluation" },
   { item: "Evidence labeling", scope: "Measured, modeled, derived, or simulated per source leg", status: "Included" },
   { item: "Utility data", scope: "Partner-provided data preferred; any proxy is disclosed", status: "Availability-dependent" },
-  { item: "Digital ownership workflow", scope: "Permissioned cap-table and transfer-control review", status: "Modeled" },
-  { item: "PPA-based allocation", scope: "Pro-rata distribution-control calculation", status: "Modeled" },
+  { item: "Bankability & Sponsor Equity Analysis", scope: "Indicative debt capacity, tax-credit proceeds, sponsor-equity requirement, and financing constraints", status: "Included" },
   { item: "Securities offering", scope: "No offer, subscription, or capital raise", status: "Not included" },
   { item: "Legal and payment execution", scope: "No offering document or distribution execution", status: "Not included" },
 ];
@@ -23,39 +23,39 @@ export default function DevelopPage() {
           <div>
             <p className="public-eyebrow">For renewable-project developers</p>
             <h1 className="public-title">
-              Understand your project&apos;s
+              Put the project&apos;s financial and operating record
               <br />
-              <em>financing requirement.</em>
+              <em>in one infrastructure layer.</em>
             </h1>
             <p className="public-copy">
-              EcoXchange analyzes project economics using lender-style project-finance assumptions to estimate
-              indicative permanent debt capacity, tax-credit proceeds, sponsor-equity requirements, and financing
-              constraints. The same project record can support production evidence, ownership administration, and
-              modeled distribution controls.
+              EcoXchange connects project/SPE administration, digital ownership and cap-table workflows, PPA economics,
+              production evidence, investor reporting, and modeled distribution controls. Project finance intelligence
+              sits upstream as decision support, helping sponsors estimate indicative permanent debt capacity,
+              tax-credit proceeds, sponsor-equity requirements, and financing constraints before selecting an execution path.
             </p>
             <div className="public-actions">
-              <a href="/bankability" className="public-btn public-btn-primary">Explore Bankability Analysis</a>
-              <a href="https://demo.ecoxchange.net/bankability" className="public-btn public-btn-outline">See a 5 MW Financing Example →</a>
-              <a href="#submit" className="public-btn public-btn-outline">Start project intake</a>
+              <a href="#submit" className="public-btn public-btn-primary">Start project intake</a>
+              <a href="/bankability" className="public-btn public-btn-outline">Explore Financeability Analysis</a>
+              <a href="https://demo.ecoxchange.net" className="public-btn public-btn-outline">View Platform Demo →</a>
             </div>
             <p className="mt-4 text-sm text-muted-foreground">
-              Results are indicative analyses and do not constitute a financing commitment, lender approval, tax opinion,
-              legal advice, or securities offering.
+              Financeability results are indicative analyses and do not constitute a financing commitment, lender approval,
+              tax opinion, legal advice, or securities offering.
             </p>
           </div>
           <aside className="public-hero-aside">
             <div className="public-mini-stat-grid">
               <div className="public-mini-stat">
-                <span className="public-mini-stat-value">1–20 MW</span>
-                <span className="public-mini-stat-label">Current solar analysis scope</span>
+                <span className="public-mini-stat-value">Project / SPE</span>
+                <span className="public-mini-stat-label">One durable operating record</span>
               </div>
               <div className="public-mini-stat">
-                <span className="public-mini-stat-value">CFADS</span>
-                <span className="public-mini-stat-label">Cash-flow-based debt capacity</span>
+                <span className="public-mini-stat-value">Ownership + PPA</span>
+                <span className="public-mini-stat-label">Investor administration tied to asset economics</span>
               </div>
               <div className="public-mini-stat">
-                <span className="public-mini-stat-value">DSCR + LTC</span>
-                <span className="public-mini-stat-label">Binding debt constraint made visible</span>
+                <span className="public-mini-stat-value">Financeability</span>
+                <span className="public-mini-stat-label">Upstream decision support for debt and sponsor equity</span>
               </div>
             </div>
           </aside>

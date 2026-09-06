@@ -1,5 +1,5 @@
 import { useNavigate } from "react-router-dom";
-import { LineChart, Hammer, ShieldCheck } from "lucide-react";
+import { Banknote, LineChart, Hammer, ShieldCheck } from "lucide-react";
 import { useAuth } from "../context/AuthContext.js";
 import { useDemo } from "../context/DemoContext.js";
 import { DemoModeBanner } from "../compliance/components/DemoModeBanner.js";
@@ -10,8 +10,9 @@ import { LATEST_VERIFICATION_PATH } from "../data/index.js";
 // Lightweight role-select entry point. Real auth (Polymath) replaces this after
 // securities counsel; for now it just sets the mock role and routes in.
 //
-// The evidence, investor, and developer views demonstrate complementary parts
-// of one project-level operating workflow.
+// The demo presents EcoXchange as renewable-energy investment infrastructure:
+// digital asset administration and independent production verification are the
+// co-equal core pillars, with project finance intelligence upstream as decision support.
 export function Landing() {
   const navigate = useNavigate();
   const { setRole } = useAuth();
@@ -32,50 +33,67 @@ export function Landing() {
         <span className="font-heading text-3xl text-darkBg">EcoXchange</span>
       </div>
       <p className="relative mt-5 font-mono text-xs uppercase tracking-[0.22em] text-medGreen">
-        Project operating workflow demonstration
+        Renewable-energy investment infrastructure demonstration
       </p>
       <h1 className="relative font-heading text-4xl sm:text-5xl text-center mt-3 text-darkBg">
-        Explore the operating layer in action.
+        Follow one project across finance, ownership, evidence, and reporting.
       </h1>
-      <p className="relative text-textMuted mt-4 mb-10 text-center max-w-xl text-base leading-relaxed">
-        Follow a project from source-labeled production evidence into investor,
-        developer, and modeled distribution-control workflows. No offering,
-        ownership, or payment is executed in this public demo.
+      <p className="relative text-textMuted mt-4 mb-10 text-center max-w-2xl text-base leading-relaxed">
+        EcoXchange connects project/SPE administration, digital ownership workflows,
+        PPA-linked investor economics, independent production verification, reporting,
+        and upstream financeability analysis. No offering, legal ownership, or payment
+        is executed in this public demo.
       </p>
 
       <div className="relative w-full max-w-3xl space-y-4">
-        {/* Primary: the engine itself. Full width and the accent border, so it
-            reads as the entry path rather than one of three peers. */}
-        <button
-          type="button"
-          onClick={() => go("investor", LATEST_VERIFICATION_PATH)}
-          className="w-full bg-white hover:bg-paleGreen/30 rounded-md border-2 border-medGreen p-6 text-left transition-colors duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-medGreen focus-visible:ring-offset-2"
-        >
-          <ShieldCheck className="h-8 w-8 text-accentBrt" />
-          <h2 className="font-heading text-2xl mt-3 text-darkBg">Verification Engine</h2>
-          <p className="text-base text-textMuted mt-1">
-            Inspect measured PVDAQ production against a pvlib expectation. The
-            utility proxy is labeled as derived, not presented as a meter reading.
-          </p>
-          <span className="mt-3 inline-block font-mono text-xs uppercase tracking-wide text-accentBrt">
-            Run verification demo →
-          </span>
-        </button>
-
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <button
             type="button"
             onClick={() => go("investor", "/investor")}
+            className="bg-white hover:bg-paleGreen/30 rounded-md border-2 border-medGreen p-6 text-left transition-colors duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-medGreen focus-visible:ring-offset-2"
+          >
+            <LineChart className="h-8 w-8 text-accentBrt" />
+            <p className="mt-3 font-mono text-[10px] uppercase tracking-wide text-medGreen">Core pillar</p>
+            <h2 className="font-heading text-2xl mt-1 text-darkBg">Digital Asset Administration</h2>
+            <p className="text-base text-textMuted mt-1">
+              Explore project-level investor records, reporting, and modeled distribution-control workflows tied to the underlying asset context.
+            </p>
+            <span className="mt-3 inline-block font-mono text-xs uppercase tracking-wide text-accentBrt">
+              View administration workflow →
+            </span>
+          </button>
+
+          <button
+            type="button"
+            onClick={() => go("investor", LATEST_VERIFICATION_PATH)}
+            className="bg-white hover:bg-paleGreen/30 rounded-md border-2 border-medGreen p-6 text-left transition-colors duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-medGreen focus-visible:ring-offset-2"
+          >
+            <ShieldCheck className="h-8 w-8 text-accentBrt" />
+            <p className="mt-3 font-mono text-[10px] uppercase tracking-wide text-medGreen">Core pillar</p>
+            <h2 className="font-heading text-2xl mt-1 text-darkBg">Production Verification</h2>
+            <p className="text-base text-textMuted mt-1">
+              Inspect measured PVDAQ production against a pvlib expectation. The utility proxy is labeled as derived, not presented as a meter reading.
+            </p>
+            <span className="mt-3 inline-block font-mono text-xs uppercase tracking-wide text-accentBrt">
+              Run verification demo →
+            </span>
+          </button>
+        </div>
+
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <button
+            type="button"
+            onClick={() => navigate("/bankability")}
             className="bg-white hover:bg-paleGreen/30 rounded-md border border-paleGreen p-6 text-left transition-colors duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-medGreen focus-visible:ring-offset-2"
           >
-            <LineChart className="h-7 w-7 text-accentBrt" />
-            <h2 className="font-heading text-xl mt-3 text-darkBg">Investor Application</h2>
+            <Banknote className="h-7 w-7 text-accentBrt" />
+            <p className="mt-3 font-mono text-[10px] uppercase tracking-wide text-medGreen">Supporting capability</p>
+            <h2 className="font-heading text-xl mt-1 text-darkBg">Project Finance Intelligence</h2>
             <p className="text-base text-textMuted mt-1">
-              See how source-comparison status informs project reporting while
-              transaction workflows remain disabled for the research dataset.
+              See how project economics translate into indicative debt capacity, tax-credit proceeds, sponsor equity, and financing constraints.
             </p>
             <span className="mt-3 inline-block font-mono text-xs uppercase tracking-wide text-medGreen">
-              View investor experience →
+              View 5 MW financeability example →
             </span>
           </button>
 
@@ -85,10 +103,10 @@ export function Landing() {
             className="bg-white hover:bg-paleGreen/30 rounded-md border border-paleGreen p-6 text-left transition-colors duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-medGreen focus-visible:ring-offset-2"
           >
             <Hammer className="h-7 w-7 text-accentBrt" />
-            <h2 className="font-heading text-xl mt-3 text-darkBg">Developer Application</h2>
+            <p className="mt-3 font-mono text-[10px] uppercase tracking-wide text-medGreen">Project intake</p>
+            <h2 className="font-heading text-xl mt-1 text-darkBg">Developer Application</h2>
             <p className="text-base text-textMuted mt-1">
-              Submit a project profile and preview the production-backtest
-              workflow.
+              Submit a project profile and preview how the project record enters EcoXchange&apos;s operating workflow.
             </p>
             <span className="mt-3 inline-block font-mono text-xs uppercase tracking-wide text-medGreen">
               View developer experience →
@@ -96,8 +114,6 @@ export function Landing() {
           </button>
         </div>
 
-        {/* Presentation controls are a pitch tool, not a way to explore the
-            product — demoted from a peer card to a link. */}
         <button
           type="button"
           onClick={() => {
@@ -111,16 +127,13 @@ export function Landing() {
       </div>
 
       <p className="relative mt-10 max-w-xl text-center text-sm text-textMuted">
-        The primary scenario uses measured public PVDAQ production with modeled
+        The primary production scenario uses measured public PVDAQ production with modeled
         and derived comparison inputs. It has no project ownership, account, or
         financial data attached. The separate Savannah stress scenario is fully
         simulated and explicitly labeled. No actual offering or investment is displayed.
       </p>
       </div>
 
-      {/* Light band so the disclaimer footer keeps its cream-palette styling.
-          The full legal text stays in the DOM and the accessibility tree —
-          <details> collapses it, it does not remove it. */}
       <div className="bg-cream px-4 sm:px-6 py-6">
         <details className="mx-auto max-w-4xl">
           <summary className="cursor-pointer font-mono text-xs uppercase tracking-wide text-medGreen">

@@ -61,7 +61,7 @@ export function Header() {
             {liveMode ? "Live" : "Pilot Demo"}
           </span>
           <span className="hidden sm:inline text-sm sm:text-base text-paleGreen">
-            Investor Dashboard
+            Investment Infrastructure Demo
           </span>
         </div>
       </div>
