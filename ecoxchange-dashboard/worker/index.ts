@@ -1,13 +1,14 @@
 /**
  * EcoXchange investor dashboard — Cloudflare Worker entry.
  *
- * Pure static asset serving. The SPA fallback is handled by the assets binding
- * (not_found_handling: "single-page-application"). Hashed Vite assets get
- * immutable cache headers; the HTML shell is short-cache.
+ * Serves the static demo SPA and proxies /api/* to the same Express origin used
+ * by the primary site. This keeps the Bankability & Sponsor Equity demo on the
+ * real calculation service rather than a canned browser-side model.
  */
 
 interface Env {
   ASSETS: { fetch: (req: Request) => Promise<Response> };
+  API_ORIGIN: string;
 }
 
 const HASHED_PATH = /\/assets\/.+-[A-Za-z0-9_-]{8,}\.(js|css|woff2?|svg|png|webp|avif)$/;
@@ -27,6 +28,21 @@ export default {
         status: manifestResponse.status,
         statusText: manifestResponse.statusText,
         headers: manifestHeaders,
+      });
+    }
+
+    if (url.pathname.startsWith("/api/")) {
+      if (!env.API_ORIGIN || env.API_ORIGIN.includes("REPLACE-ME")) {
+        return new Response("API_ORIGIN is not configured for the demo worker.", { status: 500 });
+      }
+      const upstream = new URL(env.API_ORIGIN);
+      upstream.pathname = url.pathname;
+      upstream.search = url.search;
+      return fetch(upstream.toString(), {
+        method: request.method,
+        headers: request.headers,
+        body: request.body,
+        redirect: "manual",
       });
     }
 
