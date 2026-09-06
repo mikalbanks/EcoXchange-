@@ -44,9 +44,11 @@ describe("Bankability P0 customer-facing product guards", () => {
     expect(workspace).toContain("This is not lender eligibility");
   });
 
-  it("makes bankability discoverable in public positioning", () => {
-    expect(landing).toContain("Understand how much permanent debt your project may support — and how much sponsor equity remains.");
-    expect(landing).toContain("Explore Bankability Analysis");
+  it("keeps financeability discoverable without making it the company identity", () => {
+    expect(landing).toContain("Renewable-energy");
+    expect(landing).toContain("investment infrastructure");
+    expect(landing).toContain("Project finance intelligence sits upstream as decision support");
+    expect(landing).toContain("Explore Financeability Analysis");
     expect(developers).toContain("Bankability & Sponsor Equity Analysis");
   });
 
