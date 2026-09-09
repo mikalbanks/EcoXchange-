@@ -50,8 +50,7 @@ export default function DevelopPage() {
             </h1>
             <p className="public-copy">{PUBLIC_POSITIONING}</p>
             <p className="public-copy">
-              The developer workflow starts with project facts and finance-readiness analysis — not a securities raise.
-              EcoXchange estimates indicative debt capacity, sponsor equity, tax-credit value, and financing constraints so the sponsor can decide what needs to happen next.
+              The developer workflow starts with project facts and finance-readiness analysis. EcoXchange estimates indicative debt capacity, sponsor equity, tax-credit value, and financing constraints so the sponsor can decide what needs to happen next.
             </p>
             <div className="public-actions">
               <a href="#submit" className="public-btn public-btn-primary">Submit / Analyze a Project</a>
