@@ -10,6 +10,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import {
   Sheet,
+  SheetClose,
   SheetContent,
   SheetTrigger,
 } from "@/components/ui/sheet";
@@ -38,6 +39,7 @@ function isPublicRoute(pathname: string) {
     pathname.startsWith("/portfolio/") ||
     pathname === "/develop" ||
     pathname === "/develop/preview" ||
+    pathname === "/bankability" ||
     pathname === "/invest/preview" ||
     pathname === "/method" ||
     pathname === "/verification" ||
@@ -64,7 +66,7 @@ export function Header() {
         <div className="public-header-inner">
           <Link href="/" className="public-brand" data-testid="link-brand-home">
             <span className="public-brand-name">EcoXchange</span>
-            <span className="public-brand-tag">Clean Energy Market</span>
+            <span className="public-brand-tag">Renewable Project Capital Infrastructure</span>
           </Link>
 
           <nav className="public-nav" aria-label="Primary navigation">
@@ -149,40 +151,61 @@ export function Header() {
                   <span className="sr-only">Open menu</span>
                 </Button>
               </SheetTrigger>
-              <SheetContent side="right" className="w-72 border-border bg-background">
-                <nav className="public-mobile-nav" aria-label="Mobile navigation">
+              <SheetContent
+                side="right"
+                className="border-l border-[#d4e0d6] bg-white p-0 text-[#0d1a0f]"
+                style={{ width: "min(22rem, 88vw)", maxWidth: "88vw", zIndex: 60 }}
+              >
+                <div className="border-b border-[#d4e0d6] px-6 pb-5 pt-12">
+                  <p className="font-semibold italic tracking-wide text-[#004d1a]">EcoXchange</p>
+                  <p className="mt-1 font-mono text-[10px] uppercase tracking-[0.2em] text-[#5a6b5c]">
+                    Renewable Project Capital Infrastructure
+                  </p>
+                </div>
+                <nav className="flex flex-col gap-1 px-6 py-6" aria-label="Mobile navigation">
                   {PUBLIC_NAV_LINKS.map((link) =>
                     link.external ? (
-                      <a
-                        key={link.href}
-                        href={link.href}
-                        className="public-mobile-link"
-                        data-testid={`mobile-${link.testId}`}
-                      >
-                        {link.label}
-                      </a>
+                      <SheetClose asChild key={link.href}>
+                        <a
+                          href={link.href}
+                          className="border-b border-[#d4e0d6] py-4 text-sm font-semibold uppercase tracking-[0.12em] text-[#2d3d30]"
+                          data-testid={`mobile-${link.testId}`}
+                        >
+                          {link.label}
+                        </a>
+                      </SheetClose>
                     ) : (
-                      <Link
-                        key={link.href}
-                        href={link.href}
-                        className={cn("public-mobile-link", isActiveNav(pathname, link.href) && "is-active")}
-                        data-testid={`mobile-${link.testId}`}
-                      >
-                        {link.label}
-                      </Link>
+                      <SheetClose asChild key={link.href}>
+                        <Link
+                          href={link.href}
+                          className={cn(
+                            "border-b border-[#d4e0d6] py-4 text-sm font-semibold uppercase tracking-[0.12em] text-[#2d3d30]",
+                            isActiveNav(pathname, link.href) && "text-[#004d1a]",
+                          )}
+                          data-testid={`mobile-${link.testId}`}
+                        >
+                          {link.label}
+                        </Link>
+                      </SheetClose>
                     ),
                   )}
-                  <Link href={REQUEST_ACCESS.href} className="public-btn public-btn-primary" data-testid="button-mobile-request-access">
-                    {REQUEST_ACCESS.label}
-                  </Link>
+                  <SheetClose asChild>
+                    <Link href={REQUEST_ACCESS.href} className="mt-5 inline-flex min-h-12 items-center justify-center bg-[#004d1a] px-5 text-sm font-bold uppercase tracking-[0.12em] text-white" data-testid="button-mobile-request-access">
+                      {REQUEST_ACCESS.label}
+                    </Link>
+                  </SheetClose>
                   {user ? (
-                    <Link href={userDashboardPath(user.role)} className="public-btn public-btn-outline" data-testid="button-mobile-dashboard">
-                      Dashboard
-                    </Link>
+                    <SheetClose asChild>
+                      <Link href={userDashboardPath(user.role)} className="mt-2 inline-flex min-h-12 items-center justify-center border-2 border-[#004d1a] px-5 text-sm font-bold uppercase tracking-[0.12em] text-[#004d1a]" data-testid="button-mobile-dashboard">
+                        Dashboard
+                      </Link>
+                    </SheetClose>
                   ) : (
-                    <Link href="/auth/login" className="public-mobile-link" data-testid="link-mobile-login">
-                      Log in
-                    </Link>
+                    <SheetClose asChild>
+                      <Link href="/auth/login" className="py-4 text-sm font-semibold uppercase tracking-[0.12em] text-[#2d3d30]" data-testid="link-mobile-login">
+                        Log in
+                      </Link>
+                    </SheetClose>
                   )}
                 </nav>
               </SheetContent>
