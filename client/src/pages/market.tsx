@@ -8,17 +8,10 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { EmptyState } from "@/components/empty-state";
-import { Search, MapPin, Zap, ArrowRight, ExternalLink, BarChart3 } from "lucide-react";
-import { ConfidenceBadge } from "@/components/marketplace/confidence-badge";
+import { Search, MapPin, Zap, Leaf, FileCheck2, Handshake, BarChart3 } from "lucide-react";
 import { ProjectImage } from "@/components/marketplace/project-image";
 import { isTargetCapacity } from "@shared/benchmark";
-
-interface FinancialField<T> {
-  value: T;
-  confidence: "KNOWN" | "ESTIMATED" | "MARKET_PROXY";
-  source: string;
-  asOf: string;
-}
+import { BUYER_PATHWAY, PUBLIC_POSITIONING } from "@/lib/public-positioning";
 
 interface MarketplaceListing {
   id: string;
@@ -29,20 +22,10 @@ interface MarketplaceListing {
   technology: string | null;
   stage: string | null;
   capacityMW: number;
-  ppaPriceUsdPerKwh: FinancialField<number>;
-  annualGrossRevenueUsd: FinancialField<number>;
-  irrProxyPct: FinancialField<number>;
-  cashYieldOnEquityPct: FinancialField<number>;
-  unleveredCashYieldPct: FinancialField<number>;
-  capacityFactorPct: FinancialField<number>;
-  investorEquityUsd: FinancialField<number>;
-  dscrX: FinancialField<number>;
   arrayType: string | null;
   image: { url: string | null; alt: string | null; credit: string | null; license: string | null };
   isOperating: boolean;
   contractTermRemainingYears: number | null;
-  externalLinks: { label: string; url: string; source: string }[];
-  detailHref: string;
 }
 
 interface MarketplaceListResponse {
@@ -64,7 +47,6 @@ function timeAgo(iso: string | null): string {
 
 export default function PublicMarketPage() {
   const [search, setSearch] = useState("");
-  const [sourceFilter, setSourceFilter] = useState<"" | "PROJECT" | "QUEUE">("");
   const [targetOnly, setTargetOnly] = useState(true);
 
   const { data, isLoading } = useQuery<MarketplaceListResponse>({
@@ -74,17 +56,16 @@ export default function PublicMarketPage() {
   const filtered = useMemo(() => {
     const listings = data?.listings ?? [];
     const q = search.trim().toLowerCase();
-    return listings.filter((l) => {
-      if (targetOnly && !isTargetCapacity(l.capacityMW * 1000)) return false;
-      if (sourceFilter && l.source !== sourceFilter) return false;
+    return listings.filter((listing) => {
+      if (targetOnly && !isTargetCapacity(listing.capacityMW * 1000)) return false;
       if (!q) return true;
-      return [l.name, l.county, l.state, l.technology, l.stage]
+      return [listing.name, listing.county, listing.state, listing.technology, listing.stage]
         .filter(Boolean)
         .join(" ")
         .toLowerCase()
         .includes(q);
     });
-  }, [data, search, sourceFilter, targetOnly]);
+  }, [data, search, targetOnly]);
 
   return (
     <div className="public-page">
@@ -92,73 +73,84 @@ export default function PublicMarketPage() {
       <main className="public-main">
         <section className="public-hero public-hero-split">
           <div>
-            <p className="public-eyebrow">Qualified renewable project pipeline</p>
+            <p className="public-eyebrow">For clean-energy buyers</p>
             <h1 className="public-title">
-              Project-linked renewable supply,
+              Source qualified renewable projects.
               <br />
-              <em>organized for buyers and capital partners.</em>
+              <em>Build long-term clean-energy commitments around real project supply.</em>
             </h1>
+            <p className="public-copy">{PUBLIC_POSITIONING}</p>
             <p className="public-copy">
-              EcoXchange organizes source-labeled renewable-project information for clean-energy buyers,
-              capital partners, and strategic partners. Current listings are illustrative research unless explicitly
-              qualified otherwise; this page does not represent a live securities offering or guaranteed energy supply.
+              Buyer engagement is organized around project fit, not an investment marketplace. EcoXchange can help buyers evaluate qualified project supply, explore long-term clean-energy structures where project rights are available, and receive source-labeled production reporting as projects operate.
             </p>
             <div className="public-actions">
-              <a href="#pipeline" className="public-btn public-btn-primary">Explore Project Supply</a>
+              <a href="#buyer-path" className="public-btn public-btn-primary">Explore Buyer Pathway</a>
               <a href="mailto:contact@ecoxchange.net?subject=EcoXchange%20clean-energy%20buyer%20inquiry" className="public-btn public-btn-outline">Source Clean Energy →</a>
-              <Link href="/develop" className="public-btn public-btn-outline">Submit a Project →</Link>
             </div>
           </div>
+
           <aside className="public-hero-aside">
             <div className="public-mini-stat-grid">
               <div className="public-mini-stat">
-                <span className="public-mini-stat-value">Buyers</span>
-                <span className="public-mini-stat-label">Data centers, utilities, and large electricity users</span>
+                <span className="public-mini-stat-value">Qualified supply</span>
+                <span className="public-mini-stat-label">Project location, technology, MW, stage, and contractual context</span>
               </div>
               <div className="public-mini-stat">
-                <span className="public-mini-stat-value">Capital</span>
-                <span className="public-mini-stat-label">Structured project information and sponsor-equity need</span>
+                <span className="public-mini-stat-value">Long-term structures</span>
+                <span className="public-mini-stat-label">PPAs, REC/EAC forwards, utility programs, or other structures where rights are available</span>
               </div>
               <div className="public-mini-stat">
-                <span className="public-mini-stat-value">Project-linked</span>
-                <span className="public-mini-stat-label">PPA, REC/EAC forward, utility, or other long-term structures where available</span>
+                <span className="public-mini-stat-value">Verified reporting</span>
+                <span className="public-mini-stat-label">Source-labeled production evidence and ongoing project reporting</span>
               </div>
             </div>
           </aside>
         </section>
 
-        <section id="capital" className="public-section scroll-mt-24">
+        <section id="buyer-path" className="public-section scroll-mt-24">
           <div className="public-section-header">
             <span className="public-section-label">§ I</span>
-            <h2 className="public-section-title">Two ways to engage the pipeline.</h2>
+            <h2 className="public-section-title">Clean-Energy Buyers → Project Supply → Long-Term Commitment → Verified Reporting</h2>
           </div>
           <div className="public-card-grid">
             <div className="public-card">
-              <p className="public-card-kicker">For clean-energy buyers</p>
-              <h3 className="public-card-title">Find project-linked renewable supply.</h3>
-              <p className="public-card-copy">
-                Engage around location, technology, MW, development stage, contracted revenue, and environmental-attribute availability. EcoXchange never assumes attributes are available if they are already committed to a state, utility, program, offtaker, or buyer.
-              </p>
+              <Search className="h-5 w-5 text-primary" />
+              <h3 className="public-card-title">{BUYER_PATHWAY[0]}</h3>
+              <p className="public-card-copy">Screen projects by geography, technology, MW, development stage, utility / market context, and project readiness.</p>
             </div>
             <div className="public-card">
-              <p className="public-card-kicker">For capital partners</p>
-              <h3 className="public-card-title">Review structured renewable-project opportunities.</h3>
-              <p className="public-card-copy">
-                Use standardized project and finance-readiness information to understand project status, modeled debt capacity, sponsor-equity need, and diligence context before any financing process begins.
-              </p>
+              <Handshake className="h-5 w-5 text-primary" />
+              <h3 className="public-card-title">{BUYER_PATHWAY[1]}</h3>
+              <p className="public-card-copy">Structure depends on buyer requirements, project rights, existing commitments, market rules, and diligence.</p>
             </div>
+            <div className="public-card">
+              <FileCheck2 className="h-5 w-5 text-primary" />
+              <h3 className="public-card-title">{BUYER_PATHWAY[2]}</h3>
+              <p className="public-card-copy">Production evidence and project reporting remain source-labeled so operating performance can be reviewed with clear provenance.</p>
+            </div>
+          </div>
+        </section>
+
+        <section className="public-section">
+          <div className="public-section-header">
+            <span className="public-section-label">§ II</span>
+            <h2 className="public-section-title">Environmental attributes must be actually available.</h2>
+          </div>
+          <div className="public-callout">
+            <Leaf className="mb-4 h-6 w-6 text-primary" />
+            <p className="public-section-copy mb-0">
+              EcoXchange will not present a REC, EAC, or other project-linked environmental attribute as available if it is already committed to a state program, utility, offtaker, buyer, or other contractual counterparty. Buyer-facing structures are subject to project-specific rights, registry context, contracts, and diligence.
+            </p>
           </div>
         </section>
 
         <section id="pipeline" className="public-section public-section-tight scroll-mt-24">
           <div className="public-section-header">
-            <span className="public-section-label">§ II</span>
-            <h2 className="public-section-title">Illustrative renewable project pipeline.</h2>
+            <span className="public-section-label">§ III</span>
+            <h2 className="public-section-title">Illustrative project research pipeline.</h2>
           </div>
           <p className="public-section-copy mb-5">
-            Future qualification filters will center on state, utility / ISO / RTO, technology, MW, development stage,
-            contracted revenue, REC / EAC availability, and sponsor-equity need. The current dataset does not fabricate
-            live buyer matches or attribute availability.
+            This is not an investment marketplace and does not represent guaranteed project availability. The current public dataset is illustrative research unless a project is explicitly qualified for buyer engagement.
           </p>
 
           <Card className="public-toolbar-card mb-6">
@@ -166,48 +158,33 @@ export default function PublicMarketPage() {
               <div className="flex items-center gap-3 flex-1 min-w-[220px]">
                 <Search className="h-4 w-4 text-muted-foreground" />
                 <Input
-                  placeholder="Search by project, county, state, technology, stage..."
+                  placeholder="Search project, county, state, technology, stage..."
                   value={search}
-                  onChange={(e) => setSearch(e.target.value)}
+                  onChange={(event) => setSearch(event.target.value)}
                   data-testid="input-market-search"
                 />
               </div>
-              <div className="flex items-center gap-2 text-sm flex-wrap">
-                {(["", "PROJECT", "QUEUE"] as const).map((src) => (
-                  <Button
-                    key={src || "ALL"}
-                    size="sm"
-                    variant={sourceFilter === src ? "default" : "outline"}
-                    onClick={() => setSourceFilter(src)}
-                    data-testid={`filter-source-${src || "ALL"}`}
-                  >
-                    {src === "" ? "All" : src === "PROJECT" ? "Curated" : "Queue"}
-                  </Button>
-                ))}
-                <Button
-                  size="sm"
-                  variant={targetOnly ? "default" : "outline"}
-                  onClick={() => setTargetOnly((value) => !value)}
-                  aria-pressed={targetOnly}
-                  data-testid="filter-target-capacity"
-                >
-                  {targetOnly ? "1–20 MW target only" : "All projects + comparisons"}
-                </Button>
-              </div>
+              <Button
+                size="sm"
+                variant={targetOnly ? "default" : "outline"}
+                onClick={() => setTargetOnly((value) => !value)}
+                aria-pressed={targetOnly}
+                data-testid="filter-target-capacity"
+              >
+                {targetOnly ? "1–20 MW target only" : "All projects + comparisons"}
+              </Button>
             </CardContent>
           </Card>
 
           <div className="mb-5 flex items-center justify-between gap-4">
-            <p className="font-mono text-[0.65rem] uppercase tracking-[0.28em] text-muted-foreground">
-              Illustrative research pipeline · availability subject to qualification
-            </p>
+            <p className="font-mono text-[0.65rem] uppercase tracking-[0.28em] text-muted-foreground">Buyer-oriented project research · qualification required</p>
             <Badge variant="outline" data-testid="badge-refreshed">{timeAgo(data?.refreshedAt ?? null)}</Badge>
           </div>
 
           {isLoading ? (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-              {[...Array(6)].map((_, i) => (
-                <Card key={i}><CardContent className="pt-6"><Skeleton className="h-40 w-full" /></CardContent></Card>
+              {[...Array(6)].map((_, index) => (
+                <Card key={index}><CardContent className="pt-6"><Skeleton className="h-40 w-full" /></CardContent></Card>
               ))}
             </div>
           ) : !filtered.length ? (
@@ -215,103 +192,67 @@ export default function PublicMarketPage() {
               <CardContent>
                 <EmptyState
                   icon={BarChart3}
-                  title="No qualified project records match these filters yet"
-                  description="Change the search or filters. EcoXchange does not fabricate project availability to fill an empty state."
+                  title="No project records match these filters yet"
+                  description="Change the search or filters. EcoXchange does not fabricate project supply to fill an empty state."
                 />
               </CardContent>
             </Card>
           ) : (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-              {filtered.map((l) => (
-                <Card key={l.id} className="public-listing-card overflow-hidden" data-testid={`card-listing-${l.id}`}>
+              {filtered.map((listing) => (
+                <Card key={listing.id} className="public-listing-card overflow-hidden" data-testid={`card-listing-${listing.id}`}>
                   <ProjectImage
                     project={{
-                      id: l.id,
-                      name: l.name,
-                      state: l.state,
-                      county: l.county,
-                      capacityMW: l.capacityMW,
-                      arrayType: l.arrayType,
-                      imageUrl: l.image?.url ?? null,
-                      imageAlt: l.image?.alt ?? null,
-                      imageCredit: l.image?.credit ?? null,
-                      imageLicense: l.image?.license ?? null,
+                      id: listing.id,
+                      name: listing.name,
+                      state: listing.state,
+                      county: listing.county,
+                      capacityMW: listing.capacityMW,
+                      arrayType: listing.arrayType,
+                      imageUrl: listing.image?.url ?? null,
+                      imageAlt: listing.image?.alt ?? null,
+                      imageCredit: listing.image?.credit ?? null,
+                      imageLicense: listing.image?.license ?? null,
                     }}
                   />
                   <CardHeader className="pb-2">
                     <div className="flex items-start justify-between gap-2">
-                      <CardTitle className="text-base leading-tight">{l.name}</CardTitle>
-                      <div className="flex shrink-0 flex-col items-end gap-1">
-                        <Badge variant="outline">Illustrative</Badge>
-                        <Badge variant={l.isOperating ? "default" : l.source === "QUEUE" ? "secondary" : "outline"}>
-                          {l.isOperating ? "Operating" : l.source === "QUEUE" ? "Queue" : "Pre-COD"}
-                        </Badge>
-                      </div>
+                      <CardTitle className="text-base leading-tight">{listing.name}</CardTitle>
+                      <Badge variant="outline">Illustrative</Badge>
                     </div>
                   </CardHeader>
                   <CardContent className="space-y-3">
                     <div className="flex flex-wrap items-center gap-2 text-sm text-muted-foreground">
-                      <span className="flex items-center gap-1"><MapPin className="h-3.5 w-3.5" />{l.county ?? "—"}, {l.state}</span>
-                      <span className="flex items-center gap-1"><Zap className="h-3.5 w-3.5" />{l.capacityMW.toFixed(1)} MW</span>
+                      <span className="flex items-center gap-1"><MapPin className="h-3.5 w-3.5" />{listing.county ?? "—"}, {listing.state}</span>
+                      <span className="flex items-center gap-1"><Zap className="h-3.5 w-3.5" />{listing.capacityMW.toFixed(1)} MW</span>
                     </div>
                     <div className="flex flex-wrap gap-2">
-                      {l.technology && <Badge variant="outline">{l.technology.replace(/_/g, " ")}</Badge>}
-                      {l.stage && <Badge variant="secondary">{l.stage.replace(/_/g, " ")}</Badge>}
-                      {!isTargetCapacity(l.capacityMW * 1000) && (
-                        <Badge variant="outline" className="border-dashed text-muted-foreground">Comparison · outside 1–20 MW target</Badge>
-                      )}
+                      {listing.technology && <Badge variant="outline">{listing.technology.replace(/_/g, " ")}</Badge>}
+                      {listing.stage && <Badge variant="secondary">{listing.stage.replace(/_/g, " ")}</Badge>}
+                      <Badge variant={listing.isOperating ? "default" : "outline"}>{listing.isOperating ? "Operating" : "Pre-COD / development"}</Badge>
                     </div>
-                    <div className="space-y-1.5 text-sm rounded-md border bg-muted/30 p-3">
-                      <div className="flex items-center justify-between gap-3">
-                        <span className="text-muted-foreground">Contract price</span>
-                        <div className="flex items-center gap-2">
-                          <span className="font-mono">${l.ppaPriceUsdPerKwh.value.toFixed(4)}/kWh</span>
-                          <ConfidenceBadge confidence={l.ppaPriceUsdPerKwh.confidence} source={l.ppaPriceUsdPerKwh.source} />
-                        </div>
-                      </div>
-                      <div className="flex items-center justify-between gap-3">
-                        <span className="text-muted-foreground">Annual revenue</span>
-                        <span className="font-mono">${l.annualGrossRevenueUsd.value.toLocaleString("en-US", { maximumFractionDigits: 0 })}</span>
-                      </div>
-                      <div className="flex items-center justify-between gap-3">
-                        <span className="text-muted-foreground">Capacity factor</span>
-                        <span className="font-mono">{l.capacityFactorPct.value.toFixed(1)}%</span>
-                      </div>
-                      <div className="flex items-center justify-between gap-3">
-                        <span className="text-muted-foreground">Modeled DSCR</span>
-                        <span className="font-mono">{l.dscrX.value > 0 ? `${l.dscrX.value.toFixed(2)}x` : "Unlevered"}</span>
-                      </div>
-                      <div className="flex items-center justify-between gap-3">
-                        <span className="text-muted-foreground">Modeled equity requirement</span>
-                        <span className="font-mono">${l.investorEquityUsd.value.toLocaleString("en-US", { maximumFractionDigits: 0 })}</span>
-                      </div>
-                    </div>
-                    {l.externalLinks.length > 0 && (
-                      <div className="flex flex-wrap gap-2 pt-1 border-t">
-                        {l.externalLinks.map((link, i) => (
-                          <a key={i} href={link.url} target="_blank" rel="noopener noreferrer nofollow" className="text-xs text-primary inline-flex items-center gap-1 hover:underline">
-                            <ExternalLink className="h-3 w-3" />{link.label}
-                          </a>
-                        ))}
-                      </div>
-                    )}
-                    <div className="flex items-center justify-between gap-2 pt-1">
-                      <Link href={l.detailHref}>
-                        <Button size="sm" className="gap-1" data-testid={`button-view-listing-${l.id}`}>
-                          View project record <ArrowRight className="h-3.5 w-3.5" />
-                        </Button>
-                      </Link>
-                    </div>
+                    <p className="text-sm leading-6 text-muted-foreground">
+                      Buyer suitability, contracted rights, environmental-attribute availability, and long-term commitment structure require project-specific qualification.
+                    </p>
                   </CardContent>
                 </Card>
               ))}
             </div>
           )}
+        </section>
 
-          <p className="mt-6 text-xs text-muted-foreground">
-            Financial fields are indicative and source-labeled. They are not lender commitments, investment returns,
-            securities solicitations, tax opinions, or guarantees that project-linked RECs/EACs remain available.
+        <section id="capital" className="public-section scroll-mt-24">
+          <div className="public-section-header">
+            <span className="public-section-label">§ IV</span>
+            <h2 className="public-section-title">For capital partners.</h2>
+          </div>
+          <p className="public-section-copy">
+            Capital partners can engage separately around qualified projects with standardized finance-readiness outputs, sponsor-equity requirements, project status, and diligence context. The buyer pathway and capital-partner pathway share the same underlying project record but are not presented as an investor marketplace.
           </p>
+          <div className="public-actions">
+            <a href="mailto:contact@ecoxchange.net?subject=EcoXchange%20capital%20partner%20inquiry" className="public-btn public-btn-primary">Discuss Capital Partnership</a>
+            <Link href="/develop" className="public-btn public-btn-outline">View Developer Workflow →</Link>
+          </div>
         </section>
       </main>
     </div>
