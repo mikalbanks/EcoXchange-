@@ -2,6 +2,7 @@ import { ArrowRight, Banknote, Calculator, FileCheck2, Landmark } from "lucide-r
 import { Link } from "wouter";
 import { Header } from "@/components/header";
 import { Card, CardContent } from "@/components/ui/card";
+import { PUBLIC_POSITIONING } from "@/lib/public-positioning";
 
 const steps = [
   ["Project economics", "Capacity, capex, contracted revenue, operating cost and project life."],
@@ -25,14 +26,10 @@ export default function PublicBankabilityPage() {
               <br />
               <em>and how much sponsor equity remains.</em>
             </h1>
+            <p className="public-copy">{PUBLIC_POSITIONING}</p>
             <p className="public-copy">
-              EcoXchange estimates indicative permanent debt capacity, sponsor-equity requirements,
+              Project Finance Readiness estimates indicative permanent debt capacity, sponsor-equity requirements,
               tax-credit value, and capital-stack scenarios using project cash flow and financing constraints.
-            </p>
-            <p className="public-copy">
-              The goal is decision support: identify the binding constraint, compare realistic scenarios,
-              and determine whether the next action is additional project work, a capital partner,
-              a clean-energy buyer, or another financing path.
             </p>
             <div className="public-actions">
               <a href="https://demo.ecoxchange.net/bankability" className="public-btn public-btn-primary">
@@ -101,7 +98,7 @@ export default function PublicBankabilityPage() {
             <div>
               <Banknote className="mb-4 h-8 w-8 text-primary" />
               <p className="public-section-copy">
-                The developer workflow connects project facts to finance-readiness outputs and then to the appropriate capital or clean-energy-buyer path.
+                The developer workflow connects project facts to finance-readiness outputs and then to the appropriate project work, capital-partner, or clean-energy-buyer path.
               </p>
             </div>
             <div className="grid gap-3 sm:grid-cols-2">
@@ -119,8 +116,7 @@ export default function PublicBankabilityPage() {
         <section className="public-section">
           <div className="public-callout">
             <strong className="text-foreground">Indicative decision support only.</strong>{" "}
-            EcoXchange is not a lender or underwriter and does not approve loans, make lender commitments,
-            provide tax or legal opinions, or guarantee financing.
+            EcoXchange is not a lender and does not approve loans, make lender commitments, provide tax or legal opinions, or guarantee financing.
           </div>
         </section>
       </main>
