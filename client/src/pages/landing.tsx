@@ -1,5 +1,6 @@
 import { Link } from "wouter";
 import { PUBLIC_NAV_LINKS, REQUEST_ACCESS } from "@/lib/nav";
+import { BUYER_PATHWAY, PUBLIC_POSITIONING } from "@/lib/public-positioning";
 import "./landing.css";
 
 const PRODUCTS = [
@@ -17,9 +18,9 @@ const PRODUCTS = [
   },
   {
     title: "Clean-Energy Buyer Matching",
-    body: "Connect projects with data centers, utilities, and other large electricity users seeking project-linked clean-energy supply or environmental attributes.",
+    body: "Connect qualified projects with data centers, utilities, and other large electricity users seeking project-linked clean-energy supply or environmental attributes where rights are available.",
     href: "/market",
-    cta: "Explore project supply →",
+    cta: "Explore buyer pathway →",
   },
 ] as const;
 
@@ -32,14 +33,14 @@ const AUDIENCES = [
   },
   {
     label: "For Clean-Energy Buyers",
-    question: "Where can we access project-linked renewable supply that can support additional generation?",
-    body: "Review a qualified renewable-project pipeline and engage around potential PPAs, REC/EAC forwards, utility structures, or other long-term commitments where attributes are available.",
+    question: "Where can we access qualified project-linked renewable supply?",
+    body: "Source qualified projects, explore long-term clean-energy commitments where project rights are available, and receive source-labeled production reporting.",
     href: "/market",
   },
   {
     label: "For Capital Partners",
-    question: "Where can we find structured renewable-project opportunities with standardized project and financial information?",
-    body: "EcoXchange organizes project data, financeability outputs, sponsor-equity needs, and diligence context before appropriately structured capital engagement.",
+    question: "Where can we find qualified projects with standardized finance-readiness information?",
+    body: "EcoXchange organizes project data, financeability outputs, sponsor-equity needs, and diligence context before capital engagement.",
     href: "/market#capital",
   },
 ] as const;
@@ -84,12 +85,7 @@ export default function LandingPage() {
           <div className="hero-text">
             <div className="label hero-eyebrow">Project Finance Readiness · Capital Origination · Clean-Energy Buyer Matching</div>
             <h1 className="hero-headline">Renewable-project<br /><em>capital infrastructure.</em></h1>
-            <p className="hero-sub">
-              <strong>Understand what your project can finance, close the remaining capital gap, and connect new renewable generation with long-term clean-energy demand.</strong>
-            </p>
-            <p className="hero-sub">
-              EcoXchange provides project-finance decision support and coordination infrastructure. We are not a lender or underwriter, and any regulated securities solicitation or placement is handled through appropriately registered partners where required.
-            </p>
+            <p className="hero-sub"><strong>{PUBLIC_POSITIONING}</strong></p>
             <div className="hero-actions">
               <Link href="/develop#submit" className="btn btn-primary">Submit / Analyze a Project</Link>
               <Link href="/market" className="btn btn-outline">Source Clean Energy</Link>
@@ -144,9 +140,29 @@ export default function LandingPage() {
         </div>
       </section>
 
+      <section className="method">
+        <div className="method-inner">
+          <div className="section-header">
+            <span className="label section-num">§ IV</span>
+            <h2 className="section-title">Clean-energy buyer pathway.</h2>
+          </div>
+          <div className="problem-cards">
+            {BUYER_PATHWAY.map((step, index) => (
+              <div key={step} className="problem-card">
+                <div className="label problem-card-num">0{index + 1}</div>
+                <h3>{step}</h3>
+              </div>
+            ))}
+          </div>
+          <div className="hero-actions">
+            <Link href="/market" className="btn btn-primary">Explore Clean-Energy Buyer Pathway</Link>
+          </div>
+        </div>
+      </section>
+
       <section className="benchmark-module">
         <div className="section-header">
-          <span className="label section-num">§ IV</span>
+          <span className="label section-num">§ V</span>
           <h2 className="section-title">Infrastructure that supports the project from financing through operations.</h2>
         </div>
         <p className="method-intro">
@@ -164,7 +180,7 @@ export default function LandingPage() {
 
       <section id="access" className="access">
         <div className="access-inner">
-          <div className="label">Developers · Energy Buyers · Capital Partners</div>
+          <div className="label">Developers · Clean-Energy Buyers · Capital Partners</div>
           <h2 className="access-headline">Start with a real project or a real clean-energy need.</h2>
           <div className="access-tracks">
             <div className="access-track">
@@ -172,8 +188,8 @@ export default function LandingPage() {
               <Link href="/develop#submit" className="btn btn-lime">Submit a Project</Link>
             </div>
             <div className="access-track">
-              <p>Energy buyers can engage around qualified project-linked renewable supply and available environmental attributes.</p>
-              <Link href="/market" className="btn btn-outline" style={{ color: "#fff", borderColor: "rgba(255,255,255,.4)" }}>Explore Project Supply →</Link>
+              <p>Clean-energy buyers can source qualified project supply and explore long-term commitments where project rights are available.</p>
+              <Link href="/market" className="btn btn-outline" style={{ color: "#fff", borderColor: "rgba(255,255,255,.4)" }}>Explore Buyer Pathway →</Link>
             </div>
           </div>
           <p className="access-legal">
