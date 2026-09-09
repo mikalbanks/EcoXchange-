@@ -1,5 +1,5 @@
 import { useNavigate } from "react-router-dom";
-import { Banknote, SlidersHorizontal, ShieldCheck, Database, FileChartColumn, Hammer } from "lucide-react";
+import { Banknote, SlidersHorizontal, ShieldCheck, Database, FileText, Hammer } from "lucide-react";
 import { useAuth } from "../context/AuthContext.js";
 import { useDemo } from "../context/DemoContext.js";
 import { DemoModeBanner } from "../compliance/components/DemoModeBanner.js";
@@ -96,7 +96,7 @@ export function Landing() {
                 <p className="text-sm text-textMuted">Source-labeled production evidence.</p>
               </button>
               <button type="button" onClick={() => go("investor", "/investor/impact")} className="bg-white rounded-md border border-paleGreen p-4 text-left hover:bg-paleGreen/20">
-                <FileChartColumn className="h-5 w-5 text-accentBrt" />
+                <FileText className="h-5 w-5 text-accentBrt" />
                 <p className="font-heading text-lg mt-2">Reporting</p>
                 <p className="text-sm text-textMuted">Operating and project-level reporting.</p>
               </button>
