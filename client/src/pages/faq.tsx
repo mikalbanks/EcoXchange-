@@ -25,8 +25,8 @@ const FAQS = [
     a: "Core inputs include project size, capex, generation assumptions, contracted revenue terms, operating costs, tax-credit assumptions, debt terms, reserves, transaction costs, development status, and relevant project contracts. Missing or estimated inputs should remain explicitly labeled.",
   },
   {
-    q: "Is EcoXchange a lender, underwriter, or broker?",
-    a: "No. EcoXchange is renewable-project capital infrastructure and provides project-finance decision support, project qualification, and coordination. We do not approve loans, guarantee financing, or present ourselves as a securities underwriter. If a transaction requires regulated securities activity, that activity must be handled through appropriately registered partners where required.",
+    q: "Is EcoXchange a lender or broker?",
+    a: "No. EcoXchange is renewable-project capital infrastructure and provides project-finance decision support, project qualification, and coordination. We do not approve loans, guarantee financing, or act as a broker-dealer. If a transaction requires regulated securities activity, that activity must be handled through appropriately registered partners where required.",
   },
   {
     q: "What happens after a project is analyzed?",
