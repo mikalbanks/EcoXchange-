@@ -147,8 +147,11 @@ export default function LandingPage() {
       <section className="benchmark-module">
         <div className="section-header">
           <span className="label section-num">§ IV</span>
-          <h2 className="section-title">Supporting platform capabilities stay beneath the customer outcome.</h2>
+          <h2 className="section-title">Infrastructure that supports the project from financing through operations.</h2>
         </div>
+        <p className="method-intro">
+          EcoXchange keeps the project record connected across ownership, production evidence, reporting, distributions, and environmental attributes as the project advances.
+        </p>
         <div className="benchmark-figures">
           {PLATFORM.map((capability) => (
             <div key={capability} className="benchmark-figure">
