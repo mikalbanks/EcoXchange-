@@ -1,14 +1,39 @@
 import { Header } from "@/components/header";
 import { DeveloperSubmissionWizard } from "@/components/developer-submission-wizard";
 import { Card, CardContent } from "@/components/ui/card";
+import { PUBLIC_POSITIONING } from "@/lib/public-positioning";
 
 const workflow = [
-  { item: "1. See what the project can finance", scope: "Debt capacity, DSCR, contracted cash flow, tax-credit value", status: "Decision support" },
-  { item: "2. Identify the sponsor-equity gap", scope: "Remaining sponsor cash requirement after available permanent sources", status: "Decision support" },
-  { item: "3. Evaluate capital options", scope: "Compare capital-stack scenarios and financing constraints", status: "Structured analysis" },
-  { item: "4. Pursue capital or buyer matching", scope: "Coordinate appropriate capital partners or long-term clean-energy buyers", status: "Qualification required" },
-  { item: "5. Operate the project record", scope: "Project/SPE administration, reporting, verification, ownership and distribution infrastructure", status: "Platform support" },
-];
+  {
+    title: "1. Model project financeability",
+    body: "Estimate indicative debt capacity using project cash flow, DSCR constraints, debt terms, and the applicable LTC ceiling.",
+  },
+  {
+    title: "2. Identify the capital gap",
+    body: "Show modeled tax-credit value and other permanent sources separately, then calculate the remaining sponsor-equity requirement.",
+  },
+  {
+    title: "3. Understand the binding constraint",
+    body: "See whether debt service coverage, leverage, project data, development readiness, contracted revenue, or another project fact is limiting the modeled case.",
+  },
+  {
+    title: "4. Compare realistic scenarios",
+    body: "Evaluate how project assumptions, financing terms, tax-credit monetization, and capital-stack choices change debt capacity and sponsor equity.",
+  },
+  {
+    title: "5. Determine the next financing action",
+    body: "A qualified project can move toward further project work, an appropriate capital partner, a clean-energy buyer, or another financing path based on the actual remaining need.",
+  },
+] as const;
+
+const outputs = [
+  ["Indicative debt capacity", "DSCR-sized debt compared with the applicable LTC ceiling."],
+  ["Sponsor-equity requirement", "The remaining modeled sponsor cash requirement after permanent sources."],
+  ["Tax-credit value", "Modeled credit value and transfer proceeds kept distinct from permanent debt."],
+  ["Capital-stack scenarios", "Comparable financing cases without changing the underlying project facts."],
+  ["Binding constraint", "A clear explanation of what is limiting the modeled financing case."],
+  ["Next action", "Project work, capital-partner coordination, clean-energy buyer engagement, or another path."],
+] as const;
 
 export default function DevelopPage() {
   return (
@@ -19,39 +44,37 @@ export default function DevelopPage() {
           <div>
             <p className="public-eyebrow">For renewable-project developers</p>
             <h1 className="public-title">
-              See what the project can finance.
+              Understand what the project can finance.
               <br />
-              <em>Then close what remains.</em>
+              <em>Know the capital gap before you pursue capital.</em>
             </h1>
+            <p className="public-copy">{PUBLIC_POSITIONING}</p>
             <p className="public-copy">
-              EcoXchange helps developers estimate indicative debt capacity, sponsor-equity requirements,
-              tax-credit value, and capital-stack scenarios. Qualified projects can then move into a structured
-              capital-origination or clean-energy-buyer workflow based on the actual remaining need.
+              The developer workflow starts with project facts and finance-readiness analysis. EcoXchange estimates indicative debt capacity, sponsor equity, tax-credit value, and financing constraints so the sponsor can decide what needs to happen next.
             </p>
             <div className="public-actions">
               <a href="#submit" className="public-btn public-btn-primary">Submit / Analyze a Project</a>
-              <a href="/bankability" className="public-btn public-btn-outline">Open Finance Readiness</a>
-              <a href="https://demo.ecoxchange.net/bankability" className="public-btn public-btn-outline">View Project Finance Demo →</a>
+              <a href="/bankability" className="public-btn public-btn-outline">Explore Project Finance Readiness</a>
+              <a href="https://demo.ecoxchange.net/bankability" className="public-btn public-btn-outline">Open Finance Demo →</a>
             </div>
             <p className="mt-4 text-sm text-muted-foreground">
-              EcoXchange provides decision support and coordination infrastructure; it is not a lender or underwriter,
-              does not guarantee financing, and does not itself act as a placement agent. Any regulated securities
-              solicitation or placement is handled through appropriately registered partners where required.
+              EcoXchange is not a lender and does not approve loans or guarantee financing. When a transaction requires regulated securities activity, that activity must be handled through appropriately registered partners where required.
             </p>
           </div>
+
           <aside className="public-hero-aside">
             <div className="public-mini-stat-grid">
               <div className="public-mini-stat">
                 <span className="public-mini-stat-value">Debt capacity</span>
-                <span className="public-mini-stat-label">Size debt from project cash flow and coverage constraints</span>
+                <span className="public-mini-stat-label">What project cash flow may support</span>
               </div>
               <div className="public-mini-stat">
-                <span className="public-mini-stat-value">Sponsor equity</span>
-                <span className="public-mini-stat-label">Define the remaining capital requirement</span>
+                <span className="public-mini-stat-value">Capital gap</span>
+                <span className="public-mini-stat-label">What remains after modeled permanent sources</span>
               </div>
               <div className="public-mini-stat">
                 <span className="public-mini-stat-value">Next action</span>
-                <span className="public-mini-stat-label">Capital partner, clean-energy buyer, or further project work</span>
+                <span className="public-mini-stat-label">Project work, capital partner, clean-energy buyer, or another path</span>
               </div>
             </div>
           </aside>
@@ -60,21 +83,34 @@ export default function DevelopPage() {
         <section className="public-section">
           <div className="public-section-header">
             <span className="public-section-label">§ I</span>
-            <h2 className="public-section-title">Developer financing workflow.</h2>
+            <h2 className="public-section-title">Project Finance Readiness → Capital Gap → Next Action</h2>
+          </div>
+          <div className="public-card-grid">
+            {workflow.map((step) => (
+              <div key={step.title} className="public-card">
+                <h3 className="public-card-title">{step.title}</h3>
+                <p className="public-card-copy">{step.body}</p>
+              </div>
+            ))}
+          </div>
+        </section>
+
+        <section className="public-section">
+          <div className="public-section-header">
+            <span className="public-section-label">§ II</span>
+            <h2 className="public-section-title">What the analysis produces.</h2>
           </div>
           <Card className="public-table-card border-border">
             <CardContent className="p-0 overflow-x-auto">
-              <div className="min-w-[720px]">
-                <div className="public-table-head grid grid-cols-3 border-b border-border px-5 py-3">
-                  <p className="font-mono text-[0.6rem] uppercase tracking-wider">Step</p>
-                  <p className="font-mono text-[0.6rem] uppercase tracking-wider">What EcoXchange does</p>
-                  <p className="font-mono text-[0.6rem] uppercase tracking-wider">Role</p>
+              <div className="min-w-[680px]">
+                <div className="public-table-head grid grid-cols-2 border-b border-border px-5 py-3">
+                  <p className="font-mono text-[0.6rem] uppercase tracking-wider">Output</p>
+                  <p className="font-mono text-[0.6rem] uppercase tracking-wider">Purpose</p>
                 </div>
-                {workflow.map((row, i) => (
-                  <div key={row.item} className={`grid grid-cols-3 px-5 py-3 ${i < workflow.length - 1 ? "border-b border-border/60" : ""}`}>
-                    <p className="text-sm font-semibold">{row.item}</p>
-                    <p className="text-sm text-muted-foreground">{row.scope}</p>
-                    <p className="text-sm font-semibold text-primary">{row.status}</p>
+                {outputs.map(([label, body], index) => (
+                  <div key={label} className={`grid grid-cols-2 px-5 py-4 ${index < outputs.length - 1 ? "border-b border-border/60" : ""}`}>
+                    <p className="text-sm font-semibold text-primary">{label}</p>
+                    <p className="text-sm text-muted-foreground">{body}</p>
                   </div>
                 ))}
               </div>
@@ -84,12 +120,11 @@ export default function DevelopPage() {
 
         <section id="submit" className="public-section scroll-mt-24">
           <div className="public-section-header">
-            <span className="public-section-label">§ II</span>
-            <h2 className="public-section-title">Project intake.</h2>
+            <span className="public-section-label">§ III</span>
+            <h2 className="public-section-title">Submit the project facts.</h2>
           </div>
           <p className="public-section-copy mb-5">
-            Start with the actual project. The intake is used to build the finance-readiness view and determine what
-            additional diligence is required before capital or buyer coordination makes sense.
+            Start with project size, capex, generation, contracted revenue, operating costs, tax-credit assumptions, financing assumptions, reserves, and transaction costs. Missing or estimated inputs should remain labeled so the result is useful as decision support rather than presented as a commitment.
           </p>
           <DeveloperSubmissionWizard />
         </section>
