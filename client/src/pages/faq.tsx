@@ -6,42 +6,34 @@ import {
   AccordionTrigger,
 } from "@/components/ui/accordion";
 
-const FAQS = [
+const FAQ_GROUPS = [
   {
-    q: "What is available in the current pilot?",
-    a: "A connected, non-transactional workflow covering project intake, secure source planning, source-labeled production analysis, digital ownership and cap-table workflow review, and modeled PPA-based pro-rata allocation. Release 1 does not include an open offering, investment acceptance, legal ownership creation, or payment execution.",
+    label: "Developers",
+    items: [
+      { q: "What projects does EcoXchange work with?", a: "The current finance-readiness product is designed around U.S. renewable projects, with the deepest current modeling support for contracted solar projects in the 1–20 MW range. Other technologies and structures require project-specific review." },
+      { q: "Does EcoXchange lend money or underwrite projects?", a: "No. EcoXchange provides project-finance decision support and coordination infrastructure. We estimate indicative financeability and help organize next steps; we do not make lender commitments, guarantee financing, or act as the project's underwriter." },
+      { q: "How is sponsor equity estimated?", a: "The finance-readiness model compares modeled project uses with permanent sources such as DSCR-constrained debt and eligible tax-credit proceeds. The remaining requirement is shown as indicative sponsor equity. Actual closing equity depends on lender terms, tax treatment, project costs, reserves, timing, and diligence." },
+      { q: "What information is required?", a: "Core inputs include project size, capex, generation assumptions, contracted revenue, operating costs, tax-credit assumptions, debt terms, reserves, and transaction costs. EcoXchange labels assumptions and missing information rather than treating estimates as known facts." },
+      { q: "What happens after a project is analyzed?", a: "The next step depends on the binding constraint. A project may need better project data, different capital-stack assumptions, a capital partner, a clean-energy buyer, or further development work before financing is practical." },
+    ],
   },
   {
-    q: "Is an EcoXchange offering open now?",
-    a: "No. The public product is a pilot and demonstration environment. It does not accept funds or investment commitments and does not create a legal agreement.",
+    label: "Clean-Energy Buyers",
+    items: [
+      { q: "What types of renewable projects can EcoXchange source?", a: "EcoXchange is building a qualified project pipeline focused on new renewable generation. Project availability is not fabricated: technology, location, size, stage, contractual status, and buyer fit are confirmed project by project." },
+      { q: "Can EcoXchange source local or project-linked RECs/EACs?", a: "Potentially, when the underlying environmental attributes are actually available. EcoXchange will not represent RECs/EACs as available if they are already committed to a state program, utility, offtaker, buyer, or other contractual counterparty." },
+      { q: "How is double counting prevented?", a: "The project record must identify existing contractual claims, program obligations, registry status, and attribute ownership before a buyer-facing structure is presented. Environmental-attribute tracking is an infrastructure capability, not a claim that every project has uncommitted attributes." },
+      { q: "Can projects support PPAs, REC forwards, or utility structures?", a: "Potential structures can include PPAs, project-linked REC/EAC forwards, utility programs, and other long-term clean-energy commitments. The structure depends on project rights, buyer requirements, market rules, and applicable contracts." },
+    ],
   },
   {
-    q: "What sources does the engine compare?",
-    a: "The target design uses inverter telemetry, utility-originated evidence, and modeled expected generation. Each leg is labeled measured, modeled, derived, simulated, or unconfirmed. Availability and independence are evaluated per project and period.",
-  },
-  {
-    q: "Does VERIFIED mean every source was independently measured?",
-    a: "No. VERIFIED means the values available to the engine reconciled within the configured tolerance. The provenance panel must still be reviewed. A derived, simulated, or unconfirmed leg is not promoted to an independent measurement.",
-  },
-  {
-    q: "Does a determination trigger a distribution?",
-    a: "Not in Release 1. A determination can inform a modeled distribution-control workflow, but the measured PVDAQ demo has no offering or distribution attached. Every financial and payment value in the separate Savannah stress scenario is explicitly simulated.",
-  },
-  {
-    q: "What happens when utility data is unavailable?",
-    a: "The record remains pending or uses a clearly disclosed derived proxy for comparison, depending on the demonstration. A proxy is never labeled as a utility measurement and does not establish three-source independence.",
-  },
-  {
-    q: "Are pilot pricing and turnaround times published?",
-    a: "No. Data access, timing, responsibilities, and any commercial terms are confirmed separately in writing after a project-fit review. The public site is not a quote or financing commitment.",
-  },
-  {
-    q: "What legal or investment structure will a future product use?",
-    a: "The intended product supports project-level SPV interests with permissioned digital ownership records and pro-rata administration tied to documented PPA economics. No structure is offered through this pilot; every live securities, tax, document, eligibility, and payment detail requires project-specific legal and operating approval.",
-  },
-  {
-    q: "How can a project operator start?",
-    a: "Submit a permitted 1–20 MW U.S. solar project for a pilot-fit review. Do not send API keys through the preview form; source access and security requirements are agreed separately.",
+    label: "Capital Partners",
+    items: [
+      { q: "How are projects screened?", a: "EcoXchange reviews project facts, contracted revenue, development status, financeability assumptions, and source provenance. The platform can highlight constraints and missing diligence but does not replace lender, investor, legal, tax, or technical diligence." },
+      { q: "What financial information is available?", a: "Finance-readiness outputs can include modeled debt capacity, DSCR, tax-credit value, sponsor-equity requirement, capital-stack scenarios, sensitivities, and the financial constraint that binds the modeled case." },
+      { q: "What role does EcoXchange play in a financing?", a: "EcoXchange structures project information, identifies the remaining capital requirement, coordinates appropriate financing options, and supports the workflow between project sponsors and capital partners. It does not guarantee a transaction." },
+      { q: "When are registered securities partners involved?", a: "When a financing activity requires a registered broker-dealer, capital acquisition broker, or other appropriately registered securities intermediary, that regulated activity must be handled through the appropriate partner rather than represented as an unregistered EcoXchange placement service." },
+    ],
   },
 ];
 
@@ -52,37 +44,34 @@ export default function FaqPage() {
       <main className="public-main public-main-narrow">
         <section className="public-hero">
           <p className="public-eyebrow">Frequently asked</p>
-          <h1 className="public-title">
-            Questions worth
-            <br />
-            <em>answering.</em>
-          </h1>
+          <h1 className="public-title">Questions by customer group.</h1>
           <p className="public-copy">
-            What an investor or developer typically asks before — or after — a first conversation.
+            EcoXchange serves renewable-project developers, clean-energy buyers, and capital partners through one project-capital workflow.
           </p>
         </section>
 
-        <section className="public-section">
-          <div className="public-faq-panel">
-            <Accordion type="single" collapsible>
-              {FAQS.map((item, i) => (
-                <AccordionItem key={item.q} value={`item-${i}`} className="border-border">
-                  <AccordionTrigger className="text-left font-serif text-lg">
-                    {item.q}
-                  </AccordionTrigger>
-                  <AccordionContent className="text-sm text-muted-foreground leading-relaxed">
-                    {item.a}
-                  </AccordionContent>
-                </AccordionItem>
-              ))}
-            </Accordion>
-          </div>
+        {FAQ_GROUPS.map((group, groupIndex) => (
+          <section key={group.label} className="public-section">
+            <div className="public-section-header">
+              <span className="public-section-label">§ {groupIndex + 1}</span>
+              <h2 className="public-section-title">{group.label}</h2>
+            </div>
+            <div className="public-faq-panel">
+              <Accordion type="single" collapsible>
+                {group.items.map((item, i) => (
+                  <AccordionItem key={item.q} value={`${group.label}-${i}`} className="border-border">
+                    <AccordionTrigger className="text-left font-serif text-lg">{item.q}</AccordionTrigger>
+                    <AccordionContent className="text-sm text-muted-foreground leading-relaxed">{item.a}</AccordionContent>
+                  </AccordionItem>
+                ))}
+              </Accordion>
+            </div>
+          </section>
+        ))}
 
-          <p className="mt-10 font-mono text-[0.6rem] text-muted-foreground/70">
-            Pilot information only. No offering is currently open, and no investment, payment, or legal agreement
-            is created through this site.
-          </p>
-        </section>
+        <p className="mb-12 font-mono text-[0.6rem] text-muted-foreground/70">
+          Informational and decision-support platform. No lender commitment, guaranteed financing, live securities offering, or guaranteed environmental-attribute availability is created through this site.
+        </p>
       </main>
     </div>
   );

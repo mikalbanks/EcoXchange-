@@ -45,9 +45,6 @@ interface MarketplaceListing {
   detailHref: string;
 }
 
-/** The cash yield an offering has to clear to be worth a sophisticated investor's time. */
-const HURDLE_PCT = 9;
-
 interface MarketplaceListResponse {
   listings: MarketplaceListing[];
   refreshedAt: string | null;
@@ -68,7 +65,6 @@ function timeAgo(iso: string | null): string {
 export default function PublicMarketPage() {
   const [search, setSearch] = useState("");
   const [sourceFilter, setSourceFilter] = useState<"" | "PROJECT" | "QUEUE">("");
-  const [hurdleOnly, setHurdleOnly] = useState(false);
   const [targetOnly, setTargetOnly] = useState(true);
 
   const { data, isLoading } = useQuery<MarketplaceListResponse>({
@@ -81,7 +77,6 @@ export default function PublicMarketPage() {
     return listings.filter((l) => {
       if (targetOnly && !isTargetCapacity(l.capacityMW * 1000)) return false;
       if (sourceFilter && l.source !== sourceFilter) return false;
-      if (hurdleOnly && l.cashYieldOnEquityPct.value < HURDLE_PCT) return false;
       if (!q) return true;
       return [l.name, l.county, l.state, l.technology, l.stage]
         .filter(Boolean)
@@ -89,7 +84,7 @@ export default function PublicMarketPage() {
         .toLowerCase()
         .includes(q);
     });
-  }, [data, search, sourceFilter, hurdleOnly, targetOnly]);
+  }, [data, search, sourceFilter, targetOnly]);
 
   return (
     <div className="public-page">
@@ -97,79 +92,87 @@ export default function PublicMarketPage() {
       <main className="public-main">
         <section className="public-hero public-hero-split">
           <div>
-            <p className="public-eyebrow">Illustrative project research</p>
+            <p className="public-eyebrow">Qualified renewable project pipeline</p>
             <h1 className="public-title">
-              Review source-labeled projects,
+              Project-linked renewable supply,
               <br />
-              <em>without implying an offering.</em>
+              <em>organized for buyers and capital partners.</em>
             </h1>
             <p className="public-copy">
-              Explore an illustrative pipeline of project candidates and market comparisons. No project shown here
-              is currently open for investment; known, estimated, and market-proxy figures are labeled separately.
+              EcoXchange organizes source-labeled renewable-project information for clean-energy buyers,
+              capital partners, and strategic partners. Current listings are illustrative research unless explicitly
+              qualified otherwise; this page does not represent a live securities offering or guaranteed energy supply.
             </p>
             <div className="public-actions">
-              <a href="#onboard" className="public-btn public-btn-primary">
-                Request a pilot briefing
-              </a>
-              <a href="#pipeline" className="public-btn public-btn-outline">
-                Browse current pipeline →
-              </a>
-              <Link href="/portfolio" className="public-btn public-btn-outline">
-                Build a portfolio →
-              </Link>
+              <a href="#pipeline" className="public-btn public-btn-primary">Explore Project Supply</a>
+              <a href="mailto:contact@ecoxchange.net?subject=EcoXchange%20clean-energy%20buyer%20inquiry" className="public-btn public-btn-outline">Source Clean Energy →</a>
+              <Link href="/develop" className="public-btn public-btn-outline">Submit a Project →</Link>
             </div>
           </div>
           <aside className="public-hero-aside">
             <div className="public-mini-stat-grid">
               <div className="public-mini-stat">
-                <span className="public-mini-stat-value">Research</span>
-                <span className="public-mini-stat-label">No offering attached</span>
+                <span className="public-mini-stat-value">Buyers</span>
+                <span className="public-mini-stat-label">Data centers, utilities, and large electricity users</span>
               </div>
               <div className="public-mini-stat">
-                <span className="public-mini-stat-value">$0</span>
-                <span className="public-mini-stat-label">Funds accepted through this site</span>
+                <span className="public-mini-stat-value">Capital</span>
+                <span className="public-mini-stat-label">Structured project information and sponsor-equity need</span>
               </div>
               <div className="public-mini-stat">
-                <span className="public-mini-stat-value">Disabled</span>
-                <span className="public-mini-stat-label">Subscription and payment execution</span>
+                <span className="public-mini-stat-value">Project-linked</span>
+                <span className="public-mini-stat-label">PPA, REC/EAC forward, utility, or other long-term structures where available</span>
               </div>
             </div>
           </aside>
         </section>
 
-        <section id="onboard" className="public-section scroll-mt-24">
+        <section id="capital" className="public-section scroll-mt-24">
           <div className="public-section-header">
             <span className="public-section-label">§ I</span>
-            <h2 className="public-section-title">Request a pilot briefing.</h2>
+            <h2 className="public-section-title">Two ways to engage the pipeline.</h2>
           </div>
-          <p className="public-section-copy">
-            Investor onboarding, subscription, funding, and legal ownership creation are not available in Release 1.
-            A pilot briefing covers the connected ownership-administration, production-evidence, and modeled
-            distribution-control workflows, along with their current boundaries.
-          </p>
-          <a className="public-btn public-btn-primary mt-5 inline-flex" href="mailto:contact@ecoxchange.net?subject=EcoXchange%20pilot%20briefing">
-            Contact EcoXchange
-          </a>
+          <div className="public-card-grid">
+            <div className="public-card">
+              <p className="public-card-kicker">For clean-energy buyers</p>
+              <h3 className="public-card-title">Find project-linked renewable supply.</h3>
+              <p className="public-card-copy">
+                Engage around location, technology, MW, development stage, contracted revenue, and environmental-attribute availability. EcoXchange never assumes attributes are available if they are already committed to a state, utility, program, offtaker, or buyer.
+              </p>
+            </div>
+            <div className="public-card">
+              <p className="public-card-kicker">For capital partners</p>
+              <h3 className="public-card-title">Review structured renewable-project opportunities.</h3>
+              <p className="public-card-copy">
+                Use standardized project and finance-readiness information to understand project status, modeled debt capacity, sponsor-equity need, and diligence context before any financing process begins.
+              </p>
+            </div>
+          </div>
         </section>
 
         <section id="pipeline" className="public-section public-section-tight scroll-mt-24">
           <div className="public-section-header">
             <span className="public-section-label">§ II</span>
-            <h2 className="public-section-title">Illustrative target pipeline.</h2>
+            <h2 className="public-section-title">Illustrative renewable project pipeline.</h2>
           </div>
+          <p className="public-section-copy mb-5">
+            Future qualification filters will center on state, utility / ISO / RTO, technology, MW, development stage,
+            contracted revenue, REC / EAC availability, and sponsor-equity need. The current dataset does not fabricate
+            live buyer matches or attribute availability.
+          </p>
 
           <Card className="public-toolbar-card mb-6">
             <CardContent className="p-4 flex flex-wrap items-center gap-3">
               <div className="flex items-center gap-3 flex-1 min-w-[220px]">
                 <Search className="h-4 w-4 text-muted-foreground" />
                 <Input
-                  placeholder="Search by project, county, state, stage..."
+                  placeholder="Search by project, county, state, technology, stage..."
                   value={search}
                   onChange={(e) => setSearch(e.target.value)}
                   data-testid="input-market-search"
                 />
               </div>
-              <div className="flex items-center gap-2 text-sm">
+              <div className="flex items-center gap-2 text-sm flex-wrap">
                 {(["", "PROJECT", "QUEUE"] as const).map((src) => (
                   <Button
                     key={src || "ALL"}
@@ -181,14 +184,6 @@ export default function PublicMarketPage() {
                     {src === "" ? "All" : src === "PROJECT" ? "Curated" : "Queue"}
                   </Button>
                 ))}
-                <Button
-                  size="sm"
-                  variant={hurdleOnly ? "default" : "outline"}
-                  onClick={() => setHurdleOnly((v) => !v)}
-                  data-testid="filter-hurdle"
-                >
-                  {HURDLE_PCT}%+ yield
-                </Button>
                 <Button
                   size="sm"
                   variant={targetOnly ? "default" : "outline"}
@@ -204,21 +199,15 @@ export default function PublicMarketPage() {
 
           <div className="mb-5 flex items-center justify-between gap-4">
             <p className="font-mono text-[0.65rem] uppercase tracking-[0.28em] text-muted-foreground">
-              Illustrative pipeline · not open for investment
+              Illustrative research pipeline · availability subject to qualification
             </p>
-            <Badge variant="outline" data-testid="badge-refreshed">
-              {timeAgo(data?.refreshedAt ?? null)}
-            </Badge>
+            <Badge variant="outline" data-testid="badge-refreshed">{timeAgo(data?.refreshedAt ?? null)}</Badge>
           </div>
 
           {isLoading ? (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
               {[...Array(6)].map((_, i) => (
-                <Card key={i}>
-                  <CardContent className="pt-6">
-                    <Skeleton className="h-40 w-full" />
-                  </CardContent>
-                </Card>
+                <Card key={i}><CardContent className="pt-6"><Skeleton className="h-40 w-full" /></CardContent></Card>
               ))}
             </div>
           ) : !filtered.length ? (
@@ -226,8 +215,8 @@ export default function PublicMarketPage() {
               <CardContent>
                 <EmptyState
                   icon={BarChart3}
-                  title="No listings found"
-                  description="Try a different query or filter."
+                  title="No qualified project records match these filters yet"
+                  description="Change the search or filters. EcoXchange does not fabricate project availability to fill an empty state."
                 />
               </CardContent>
             </Card>
@@ -268,100 +257,40 @@ export default function PublicMarketPage() {
                     <div className="flex flex-wrap gap-2">
                       {l.technology && <Badge variant="outline">{l.technology.replace(/_/g, " ")}</Badge>}
                       {l.stage && <Badge variant="secondary">{l.stage.replace(/_/g, " ")}</Badge>}
-                      {/* EcoXchange originates in the 1–20 MW band. Anything
-                          outside it is shown for comparison, not as a target
-                          project — say so on the card rather than leaving the
-                          reader to infer it from the capacity figure. */}
                       {!isTargetCapacity(l.capacityMW * 1000) && (
-                        <Badge
-                          variant="outline"
-                          className="border-dashed text-muted-foreground"
-                          data-testid={`out-of-scope-${l.id}`}
-                        >
-                          Comparison · outside 1–20 MW target
-                        </Badge>
+                        <Badge variant="outline" className="border-dashed text-muted-foreground">Comparison · outside 1–20 MW target</Badge>
                       )}
                     </div>
-                    <div className="rounded-md border bg-muted/40 px-3 py-2">
-                      <div className="flex items-baseline justify-between gap-2">
-                        <span className="text-xs text-muted-foreground">Cash yield on equity</span>
-                        <ConfidenceBadge
-                          confidence={l.cashYieldOnEquityPct.confidence}
-                          source={l.cashYieldOnEquityPct.source}
-                        />
-                      </div>
-                      <div className="flex items-baseline gap-2">
-                        <span
-                          className={`font-mono text-2xl font-semibold ${
-                            l.cashYieldOnEquityPct.value >= HURDLE_PCT ? "" : "text-muted-foreground"
-                          }`}
-                          data-testid={`yield-${l.id}`}
-                        >
-                          {l.cashYieldOnEquityPct.value.toFixed(1)}%
-                        </span>
-                        <span className="text-xs text-muted-foreground">
-                          {l.unleveredCashYieldPct.value.toFixed(1)}% unlevered
-                        </span>
-                      </div>
-                      {!l.isOperating && (
-                        <p className="mt-1 text-[11px] text-amber-600 dark:text-amber-500">
-                          Pre-COD — modeled at commercial operation, not distributing today.
-                        </p>
-                      )}
-                    </div>
-                    <div className="space-y-1.5 text-sm">
+                    <div className="space-y-1.5 text-sm rounded-md border bg-muted/30 p-3">
                       <div className="flex items-center justify-between gap-3">
                         <span className="text-muted-foreground">Contract price</span>
                         <div className="flex items-center gap-2">
                           <span className="font-mono">${l.ppaPriceUsdPerKwh.value.toFixed(4)}/kWh</span>
-                          <ConfidenceBadge
-                            confidence={l.ppaPriceUsdPerKwh.confidence}
-                            source={l.ppaPriceUsdPerKwh.source}
-                          />
+                          <ConfidenceBadge confidence={l.ppaPriceUsdPerKwh.confidence} source={l.ppaPriceUsdPerKwh.source} />
                         </div>
                       </div>
                       <div className="flex items-center justify-between gap-3">
                         <span className="text-muted-foreground">Annual revenue</span>
-                        <div className="flex items-center gap-2">
-                          <span className="font-mono">
-                            ${l.annualGrossRevenueUsd.value.toLocaleString("en-US", { maximumFractionDigits: 0 })}
-                          </span>
-                          <ConfidenceBadge
-                            confidence={l.annualGrossRevenueUsd.confidence}
-                            source={l.annualGrossRevenueUsd.source}
-                          />
-                        </div>
-                      </div>
-                      <div className="flex items-center justify-between gap-3">
-                        <span className="text-muted-foreground">Investor equity</span>
-                        <span className="font-mono">
-                          ${l.investorEquityUsd.value.toLocaleString("en-US", { maximumFractionDigits: 0 })}
-                        </span>
+                        <span className="font-mono">${l.annualGrossRevenueUsd.value.toLocaleString("en-US", { maximumFractionDigits: 0 })}</span>
                       </div>
                       <div className="flex items-center justify-between gap-3">
                         <span className="text-muted-foreground">Capacity factor</span>
                         <span className="font-mono">{l.capacityFactorPct.value.toFixed(1)}%</span>
                       </div>
                       <div className="flex items-center justify-between gap-3">
-                        <span className="text-muted-foreground">DSCR</span>
-                        <span className="font-mono">
-                          {l.dscrX.value > 0 ? `${l.dscrX.value.toFixed(2)}x` : "Unlevered"}
-                        </span>
+                        <span className="text-muted-foreground">Modeled DSCR</span>
+                        <span className="font-mono">{l.dscrX.value > 0 ? `${l.dscrX.value.toFixed(2)}x` : "Unlevered"}</span>
+                      </div>
+                      <div className="flex items-center justify-between gap-3">
+                        <span className="text-muted-foreground">Modeled equity requirement</span>
+                        <span className="font-mono">${l.investorEquityUsd.value.toLocaleString("en-US", { maximumFractionDigits: 0 })}</span>
                       </div>
                     </div>
                     {l.externalLinks.length > 0 && (
                       <div className="flex flex-wrap gap-2 pt-1 border-t">
                         {l.externalLinks.map((link, i) => (
-                          <a
-                            key={i}
-                            href={link.url}
-                            target="_blank"
-                            rel="noopener noreferrer nofollow"
-                            className="text-xs text-primary inline-flex items-center gap-1 hover:underline"
-                            data-testid={`link-external-${l.id}-${i}`}
-                          >
-                            <ExternalLink className="h-3 w-3" />
-                            {link.label}
+                          <a key={i} href={link.url} target="_blank" rel="noopener noreferrer nofollow" className="text-xs text-primary inline-flex items-center gap-1 hover:underline">
+                            <ExternalLink className="h-3 w-3" />{link.label}
                           </a>
                         ))}
                       </div>
@@ -369,7 +298,7 @@ export default function PublicMarketPage() {
                     <div className="flex items-center justify-between gap-2 pt-1">
                       <Link href={l.detailHref}>
                         <Button size="sm" className="gap-1" data-testid={`button-view-listing-${l.id}`}>
-                          View diligence <ArrowRight className="h-3.5 w-3.5" />
+                          View project record <ArrowRight className="h-3.5 w-3.5" />
                         </Button>
                       </Link>
                     </div>
@@ -380,12 +309,8 @@ export default function PublicMarketPage() {
           )}
 
           <p className="mt-6 text-xs text-muted-foreground">
-            <strong>Cash yield on equity</strong> is distributable cash after operating expense,
-            reserves, senior debt service and the platform fee, divided by the equity an investor
-            funds. <strong>Unlevered</strong> is cash available for debt service over total project
-            cost. Neither is an IRR: both ignore time value, contract escalation and residual value.
-            Figures for pre-COD assets are modeled at commercial operation. Illustrative underwriting
-            for evaluation only — not an offer to sell securities.
+            Financial fields are indicative and source-labeled. They are not lender commitments, investment returns,
+            securities solicitations, tax opinions, or guarantees that project-linked RECs/EACs remain available.
           </p>
         </section>
       </main>
