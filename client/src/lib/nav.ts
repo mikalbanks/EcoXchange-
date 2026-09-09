@@ -7,10 +7,10 @@ export interface PublicNavLink {
 
 export const PUBLIC_NAV_LINKS: readonly PublicNavLink[] = [
   { href: "/develop", label: "For Developers", testId: "link-developers" },
-  { href: "/market", label: "For Energy Buyers", testId: "link-energy-buyers" },
-  { href: "/market#capital", label: "For Capital Partners", testId: "link-capital-partners" },
+  { href: "/market", label: "Clean-Energy Buyers", testId: "link-energy-buyers" },
+  { href: "/market#capital", label: "Capital Partners", testId: "link-capital-partners" },
   { href: "/verification", label: "Platform", testId: "link-platform" },
-  { href: "/faq", label: "About", testId: "link-about" },
+  { href: "/faq", label: "FAQ", testId: "link-faq" },
 ] as const;
 
 export const REQUEST_ACCESS = {
