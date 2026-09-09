@@ -1,6 +1,6 @@
 import { Header } from "@/components/header";
 import { Card, CardContent } from "@/components/ui/card";
-import { Banknote, Database, Handshake, Building2, ShieldCheck, FileChartColumn, Leaf, ArrowRight, CheckCircle2 } from "lucide-react";
+import { Banknote, Database, Handshake, Building2, ShieldCheck, FileText, Leaf, ArrowRight, CheckCircle2 } from "lucide-react";
 
 const steps = [
   { icon: Banknote, title: "Finance modeling", detail: "Estimate debt capacity, sponsor-equity requirement, tax-credit value, and binding financial constraints." },
@@ -8,7 +8,7 @@ const steps = [
   { icon: Handshake, title: "Capital / buyer matching", detail: "Coordinate appropriate capital partners or long-term clean-energy buyers once the project and remaining need are clear." },
   { icon: Building2, title: "Project / SPE administration", detail: "Maintain the operating context for project ownership, cap-table workflows, and project-level records." },
   { icon: ShieldCheck, title: "Production verification", detail: "Compare available measured and modeled production evidence, with source provenance disclosed." },
-  { icon: FileChartColumn, title: "Reporting and distributions", detail: "Support project cash-flow reporting and distribution infrastructure after the relevant legal and operating approvals exist." },
+  { icon: FileText, title: "Reporting and distributions", detail: "Support project cash-flow reporting and distribution infrastructure after the relevant legal and operating approvals exist." },
   { icon: Leaf, title: "Environmental-attribute tracking", detail: "Track project-linked REC/EAC context without implying attributes are available when already committed elsewhere." },
 ] as const;
 
