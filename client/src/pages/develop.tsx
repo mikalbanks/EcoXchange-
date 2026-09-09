@@ -2,16 +2,12 @@ import { Header } from "@/components/header";
 import { DeveloperSubmissionWizard } from "@/components/developer-submission-wizard";
 import { Card, CardContent } from "@/components/ui/card";
 
-const pilotRows = [
-  { item: "Project / SPE operating record", scope: "Technical, ownership-workflow, and PPA input review", status: "Included" },
-  { item: "Digital ownership workflow", scope: "Permissioned cap-table and transfer-control review", status: "Modeled" },
-  { item: "PPA-based allocation", scope: "Pro-rata distribution-control calculation", status: "Modeled" },
-  { item: "Production backtest", scope: "12-month model-to-measurement comparison", status: "Pilot evaluation" },
-  { item: "Evidence labeling", scope: "Measured, modeled, derived, or simulated per source leg", status: "Included" },
-  { item: "Utility data", scope: "Partner-provided data preferred; any proxy is disclosed", status: "Availability-dependent" },
-  { item: "Bankability & Sponsor Equity Analysis", scope: "Indicative debt capacity, tax-credit proceeds, sponsor-equity requirement, and financing constraints", status: "Included" },
-  { item: "Securities offering", scope: "No offer, subscription, or capital raise", status: "Not included" },
-  { item: "Legal and payment execution", scope: "No offering document or distribution execution", status: "Not included" },
+const workflow = [
+  { item: "1. See what the project can finance", scope: "Debt capacity, DSCR, contracted cash flow, tax-credit value", status: "Decision support" },
+  { item: "2. Identify the sponsor-equity gap", scope: "Remaining sponsor cash requirement after available permanent sources", status: "Decision support" },
+  { item: "3. Evaluate capital options", scope: "Compare capital-stack scenarios and financing constraints", status: "Structured analysis" },
+  { item: "4. Pursue capital or buyer matching", scope: "Coordinate appropriate capital partners or long-term clean-energy buyers", status: "Qualification required" },
+  { item: "5. Operate the project record", scope: "Project/SPE administration, reporting, verification, ownership and distribution infrastructure", status: "Platform support" },
 ];
 
 export default function DevelopPage() {
@@ -23,68 +19,60 @@ export default function DevelopPage() {
           <div>
             <p className="public-eyebrow">For renewable-project developers</p>
             <h1 className="public-title">
-              Put the project&apos;s financial and operating record
+              See what the project can finance.
               <br />
-              <em>in one infrastructure layer.</em>
+              <em>Then close what remains.</em>
             </h1>
             <p className="public-copy">
-              EcoXchange connects project/SPE administration, digital ownership and cap-table workflows, PPA economics,
-              production evidence, investor reporting, and modeled distribution controls. Project finance intelligence
-              sits upstream as decision support, helping sponsors estimate indicative permanent debt capacity,
-              tax-credit proceeds, sponsor-equity requirements, and financing constraints before selecting an execution path.
+              EcoXchange helps developers estimate indicative debt capacity, sponsor-equity requirements,
+              tax-credit value, and capital-stack scenarios. Qualified projects can then move into a structured
+              capital-origination or clean-energy-buyer workflow based on the actual remaining need.
             </p>
             <div className="public-actions">
-              <a href="#submit" className="public-btn public-btn-primary">Start project intake</a>
-              <a href="/bankability" className="public-btn public-btn-outline">Explore Financeability Analysis</a>
-              <a href="https://demo.ecoxchange.net" className="public-btn public-btn-outline">View Platform Demo →</a>
+              <a href="#submit" className="public-btn public-btn-primary">Submit / Analyze a Project</a>
+              <a href="/bankability" className="public-btn public-btn-outline">Open Finance Readiness</a>
+              <a href="https://demo.ecoxchange.net/bankability" className="public-btn public-btn-outline">View Project Finance Demo →</a>
             </div>
             <p className="mt-4 text-sm text-muted-foreground">
-              Financeability results are indicative analyses and do not constitute a financing commitment, lender approval,
-              tax opinion, legal advice, or securities offering.
+              EcoXchange provides decision support and coordination infrastructure; it is not a lender or underwriter,
+              does not guarantee financing, and does not itself act as a placement agent. Any regulated securities
+              solicitation or placement is handled through appropriately registered partners where required.
             </p>
           </div>
           <aside className="public-hero-aside">
             <div className="public-mini-stat-grid">
               <div className="public-mini-stat">
-                <span className="public-mini-stat-value">Project / SPE</span>
-                <span className="public-mini-stat-label">One durable operating record</span>
+                <span className="public-mini-stat-value">Debt capacity</span>
+                <span className="public-mini-stat-label">Size debt from project cash flow and coverage constraints</span>
               </div>
               <div className="public-mini-stat">
-                <span className="public-mini-stat-value">Ownership + PPA</span>
-                <span className="public-mini-stat-label">Investor administration tied to asset economics</span>
+                <span className="public-mini-stat-value">Sponsor equity</span>
+                <span className="public-mini-stat-label">Define the remaining capital requirement</span>
               </div>
               <div className="public-mini-stat">
-                <span className="public-mini-stat-value">Financeability</span>
-                <span className="public-mini-stat-label">Upstream decision support for debt and sponsor equity</span>
+                <span className="public-mini-stat-value">Next action</span>
+                <span className="public-mini-stat-label">Capital partner, clean-energy buyer, or further project work</span>
               </div>
             </div>
           </aside>
         </section>
 
-        <section id="submit" className="public-section scroll-mt-24">
+        <section className="public-section">
           <div className="public-section-header">
             <span className="public-section-label">§ I</span>
-            <h2 className="public-section-title">Project intake.</h2>
-          </div>
-          <DeveloperSubmissionWizard />
-        </section>
-
-        <section id="cost" className="public-section scroll-mt-24">
-          <div className="public-section-header">
-            <span className="public-section-label">§ II</span>
-            <h2 className="public-section-title">What the Release 1 pilot includes.</h2>
+            <h2 className="public-section-title">Developer financing workflow.</h2>
           </div>
           <Card className="public-table-card border-border">
             <CardContent className="p-0 overflow-x-auto">
               <div className="min-w-[720px]">
                 <div className="public-table-head grid grid-cols-3 border-b border-border px-5 py-3">
-                  <p className="font-mono text-[0.6rem] uppercase tracking-wider">Scope item</p>
-                  <p className="font-mono text-[0.6rem] uppercase tracking-wider">Release 1 scope</p>
-                  <p className="font-mono text-[0.6rem] uppercase tracking-wider">Status</p>
+                  <p className="font-mono text-[0.6rem] uppercase tracking-wider">Step</p>
+                  <p className="font-mono text-[0.6rem] uppercase tracking-wider">What EcoXchange does</p>
+                  <p className="font-mono text-[0.6rem] uppercase tracking-wider">Role</p>
                 </div>
-                {pilotRows.map((row, i) => (
-                  <div key={row.item} className={`grid grid-cols-3 px-5 py-3 ${i < pilotRows.length - 1 ? "border-b border-border/60" : ""}`}>
-                    <p className="text-sm text-muted-foreground">{row.item}</p>
+                {workflow.map((row, i) => (
+                  <div key={row.item} className={`grid grid-cols-3 px-5 py-3 ${i < workflow.length - 1 ? "border-b border-border/60" : ""}`}>
+                    <p className="text-sm font-semibold">{row.item}</p>
                     <p className="text-sm text-muted-foreground">{row.scope}</p>
                     <p className="text-sm font-semibold text-primary">{row.status}</p>
                   </div>
@@ -92,10 +80,18 @@ export default function DevelopPage() {
               </div>
             </CardContent>
           </Card>
-          <p className="mt-4 font-mono text-[0.6rem] text-muted-foreground/70">
-            Pilot participation, data access, timing, and any commercial terms are confirmed separately in writing.
-            This page is not a financing commitment, lender approval, securities offering, or quote.
+        </section>
+
+        <section id="submit" className="public-section scroll-mt-24">
+          <div className="public-section-header">
+            <span className="public-section-label">§ II</span>
+            <h2 className="public-section-title">Project intake.</h2>
+          </div>
+          <p className="public-section-copy mb-5">
+            Start with the actual project. The intake is used to build the finance-readiness view and determine what
+            additional diligence is required before capital or buyer coordination makes sense.
           </p>
+          <DeveloperSubmissionWizard />
         </section>
       </main>
     </div>
