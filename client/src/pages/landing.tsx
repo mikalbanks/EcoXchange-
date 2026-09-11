@@ -1,6 +1,6 @@
 import { Link } from "wouter";
 import { PUBLIC_NAV_LINKS, REQUEST_ACCESS } from "@/lib/nav";
-import { BUYER_PATHWAY, PUBLIC_POSITIONING } from "@/lib/public-positioning";
+import { BUYER_PATHWAY, CAPITAL_FORMATION_PATHWAY, PUBLIC_POSITIONING } from "@/lib/public-positioning";
 import "./landing.css";
 
 const PRODUCTS = [
@@ -11,16 +11,22 @@ const PRODUCTS = [
     cta: "Analyze financeability →",
   },
   {
-    title: "Sponsor-Equity & Capital Origination",
-    body: "Turn qualified renewable projects into structured financing opportunities, define the remaining capital requirement, and coordinate appropriate capital options.",
+    title: "Capital Formation",
+    body: "Turn a quantified sponsor capital gap into a financing process by routing qualified projects toward appropriate capital partners and structures.",
     href: "/develop",
     cta: "Submit a project →",
   },
   {
-    title: "Clean-Energy Buyer Matching",
+    title: "Clean-Energy Buyer Commitments",
     body: "Connect qualified projects with data centers, utilities, and other large electricity users seeking project-linked clean-energy supply or environmental attributes where rights are available.",
     href: "/market",
     cta: "Explore buyer pathway →",
+  },
+  {
+    title: "Post-Close Infrastructure",
+    body: "Keep financing and buyer commitments supported with production verification, REC / environmental-attribute reporting, capital-partner reporting, and distribution calculations.",
+    href: "/verification",
+    cta: "See ongoing infrastructure →",
   },
 ] as const;
 
@@ -47,12 +53,11 @@ const AUDIENCES = [
 
 const PLATFORM = [
   "Project / SPE administration",
-  "Ownership and cap-table infrastructure",
   "Production verification",
-  "Cash-flow and investor reporting",
-  "Distribution infrastructure",
-  "Environmental-attribute tracking",
-  "Tokenization / Polymath infrastructure",
+  "REC / environmental-attribute reporting",
+  "Capital-partner reporting",
+  "Cash-flow and distribution calculations",
+  "Ongoing project performance records",
 ] as const;
 
 export default function LandingPage() {
@@ -83,7 +88,7 @@ export default function LandingPage() {
       <section>
         <div className="hero">
           <div className="hero-text">
-            <div className="label hero-eyebrow">Project Finance Readiness · Capital Origination · Clean-Energy Buyer Matching</div>
+            <div className="label hero-eyebrow">Financeability · Capital Formation · Clean-Energy Buyers · Post-Close Infrastructure</div>
             <h1 className="hero-headline">Renewable-project<br /><em>capital infrastructure.</em></h1>
             <p className="hero-sub"><strong>{PUBLIC_POSITIONING}</strong></p>
             <div className="hero-actions">
@@ -97,7 +102,7 @@ export default function LandingPage() {
       <section id="products" className="problem">
         <div className="section-header">
           <span className="label section-num">§ I</span>
-          <h2 className="section-title">Three products. One project-capital workflow.</h2>
+          <h2 className="section-title">Four layers. One capital-formation system.</h2>
         </div>
         <div className="problem-cards">
           {PRODUCTS.map((product, index) => (
@@ -115,11 +120,19 @@ export default function LandingPage() {
         <div className="method-inner">
           <div className="section-header">
             <span className="label section-num">§ II</span>
-            <h2 className="section-title">Project → Financeability → Capital Gap → Capital / Clean-Energy Buyer → Project Infrastructure</h2>
+            <h2 className="section-title">The EcoXchange capital-formation workflow.</h2>
           </div>
           <p className="method-intro">
-            Start with project economics. Determine what contracted cash flow can support. Identify the sponsor-equity or capital gap. Then pursue the appropriate capital path, buyer commitment, or both, while keeping the underlying project record organized.
+            Start with project economics. Determine what contracted cash flow can support. Quantify the sponsor capital gap. Route that gap toward the best-fit capital or clean-energy buyer pathway. Close the transaction, then keep the project supported with verification, reporting, and distribution infrastructure.
           </p>
+          <div className="problem-cards">
+            {CAPITAL_FORMATION_PATHWAY.map((step, index) => (
+              <div key={step} className="problem-card">
+                <div className="label problem-card-num">0{index + 1}</div>
+                <h3>{step}</h3>
+              </div>
+            ))}
+          </div>
         </div>
       </section>
 
@@ -163,10 +176,10 @@ export default function LandingPage() {
       <section className="benchmark-module">
         <div className="section-header">
           <span className="label section-num">§ V</span>
-          <h2 className="section-title">Infrastructure that supports the project from financing through operations.</h2>
+          <h2 className="section-title">Infrastructure that stays attached after capital closes.</h2>
         </div>
         <p className="method-intro">
-          EcoXchange keeps the project record connected across ownership, production evidence, reporting, distributions, and environmental attributes as the project advances.
+          EcoXchange keeps the project record connected across production evidence, environmental attributes, capital-partner reporting, and distribution calculations so financing and buyer commitments can be supported through operations.
         </p>
         <div className="benchmark-figures">
           {PLATFORM.map((capability) => (
@@ -203,7 +216,7 @@ export default function LandingPage() {
         <div className="footer-inner">
           <span className="footer-brand">EcoXchange</span>
           <span className="footer-meta">Renewable-Project Capital Infrastructure · © MMXXVI</span>
-          <span className="footer-meta">Financeability × Capital × Clean-Energy Demand</span>
+          <span className="footer-meta">Financeability × Capital × Clean-Energy Demand × Ongoing Infrastructure</span>
         </div>
       </footer>
     </div>
