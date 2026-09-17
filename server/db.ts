@@ -3,6 +3,21 @@ import pg from "pg";
 import { drizzle } from "drizzle-orm/node-postgres";
 import * as schema from "@shared/schema";
 
+let loggedDatabaseTarget = false;
+
+function describeDatabaseTarget(): string {
+  const raw = process.env.DATABASE_URL;
+  if (!raw) return "not-configured";
+  try {
+    const url = new URL(raw);
+    const username = decodeURIComponent(url.username || "");
+    const projectRef = username.includes(".") ? username.split(".").pop() : undefined;
+    return projectRef ? `${url.hostname} (project ${projectRef})` : url.hostname;
+  } catch {
+    return "configured-unparseable-url";
+  }
+}
+
 // node-postgres maps a connection-string `sslmode=require` to *verifying* TLS,
 // which rejects Supabase's pooler certificate ("self-signed certificate in
 // certificate chain") and wins over a Pool `ssl` option. So strip `sslmode`
@@ -53,6 +68,10 @@ export async function probeDatabase(timeoutMs = 3000): Promise<boolean> {
     ]);
     try {
       await client.query("select 1");
+      if (!loggedDatabaseTarget) {
+        console.log(`[db] connected to ${describeDatabaseTarget()}`);
+        loggedDatabaseTarget = true;
+      }
       return true;
     } finally {
       client.release();
