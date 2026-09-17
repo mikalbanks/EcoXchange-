@@ -50,13 +50,16 @@ export default function DevelopPage() {
             </h1>
             <p className="public-copy">{PUBLIC_POSITIONING}</p>
             <p className="public-copy">
-              The developer workflow starts with project facts and finance-readiness analysis. EcoXchange estimates indicative debt capacity, sponsor equity, tax-credit value, and financing constraints so the sponsor can decide what needs to happen next.
+              Start with one real project. EcoXchange estimates indicative debt capacity, sponsor equity, tax-credit value, and financing constraints, then helps qualified sponsors identify the remaining capital gap and the capital-provider paths that may fit it.
             </p>
             <div className="public-actions">
-              <a href="#submit" className="public-btn public-btn-primary">Submit / Analyze a Project</a>
+              <a href="#submit" className="public-btn public-btn-primary">Send Us One Project</a>
               <a href="/bankability" className="public-btn public-btn-outline">Explore Project Finance Readiness</a>
               <a href="https://demo.ecoxchange.net/bankability" className="public-btn public-btn-outline">Open Finance Demo →</a>
             </div>
+            <p className="mt-3 text-sm text-muted-foreground">
+              Best fit today: contracted or awarded renewable projects, generally 1–20 MW, with a real financing question or unresolved sponsor-capital need. Partial or anonymized project economics are acceptable for an initial review.
+            </p>
             <p className="mt-4 text-sm text-muted-foreground">
               EcoXchange is not a lender and does not approve loans or guarantee financing. When a transaction requires regulated securities activity, that activity must be handled through appropriately registered partners where required.
             </p>
@@ -121,10 +124,13 @@ export default function DevelopPage() {
         <section id="submit" className="public-section scroll-mt-24">
           <div className="public-section-header">
             <span className="public-section-label">§ III</span>
-            <h2 className="public-section-title">Submit the project facts.</h2>
+            <h2 className="public-section-title">Send us one project.</h2>
           </div>
+          <p className="public-section-copy mb-2">
+            Choose one contracted or awarded project where the capital stack is not fully resolved. Start with the project size, total cost, revenue economics, expected production, senior-debt case, tax-credit assumptions, sponsor capital already committed, and the amount you believe is still missing.
+          </p>
           <p className="public-section-copy mb-5">
-            Start with project size, capex, generation, contracted revenue, operating costs, tax-credit assumptions, financing assumptions, reserves, and transaction costs. Missing or estimated inputs should remain labeled so the result is useful as decision support rather than presented as a commitment.
+            You do not need a perfect data room to start. Partial or anonymized information is acceptable for the initial financeability and capital-gap review. Missing or estimated inputs will remain clearly labeled.
           </p>
           <DeveloperSubmissionWizard />
         </section>
