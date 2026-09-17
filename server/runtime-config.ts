@@ -13,7 +13,6 @@ const parsed = schema.parse(process.env);
 const errors: string[] = [];
 if (parsed.NODE_ENV === "production") {
   if (!parsed.SESSION_SECRET) errors.push("SESSION_SECRET (minimum 32 characters)");
-  if (!parsed.DATABASE_URL) errors.push("DATABASE_URL");
 }
 if (Boolean(parsed.PERSONA_API_KEY) !== Boolean(parsed.PERSONA_TEMPLATE_ID)) {
   errors.push("PERSONA_API_KEY and PERSONA_TEMPLATE_ID must be configured together");
