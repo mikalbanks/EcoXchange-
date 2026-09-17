@@ -13,8 +13,8 @@ const PRODUCTS = [
   {
     title: "Capital Formation",
     body: "Turn a quantified sponsor capital gap into a financing process by routing qualified projects toward appropriate capital partners and structures.",
-    href: "/develop",
-    cta: "Submit a project →",
+    href: "/develop#submit",
+    cta: "Send us one project →",
   },
   {
     title: "Clean-Energy Buyer Commitments",
@@ -34,8 +34,8 @@ const AUDIENCES = [
   {
     label: "For Developers",
     question: "What can this project finance, and how do I close what remains?",
-    body: "Use project finance readiness to understand debt capacity, sponsor equity, tax-credit value, and the next capital action.",
-    href: "/develop",
+    body: "Send one contracted or awarded project. EcoXchange helps quantify debt capacity, sponsor equity, tax-credit value, the remaining capital gap, and the next financing action.",
+    href: "/develop#submit",
   },
   {
     label: "For Clean-Energy Buyers",
@@ -92,9 +92,12 @@ export default function LandingPage() {
             <h1 className="hero-headline">Renewable-project<br /><em>capital infrastructure.</em></h1>
             <p className="hero-sub"><strong>{PUBLIC_POSITIONING}</strong></p>
             <div className="hero-actions">
-              <Link href="/develop#submit" className="btn btn-primary">Submit / Analyze a Project</Link>
+              <Link href="/develop#submit" className="btn btn-primary">Send Us One Project</Link>
               <Link href="/market" className="btn btn-outline">Source Clean Energy</Link>
             </div>
+            <p className="method-intro" style={{ marginTop: "1rem" }}>
+              Best fit today: contracted or awarded renewable projects, generally 1–20 MW, with a real financing question or unresolved sponsor-capital need.
+            </p>
           </div>
         </div>
       </section>
@@ -123,7 +126,7 @@ export default function LandingPage() {
             <h2 className="section-title">The EcoXchange capital-formation workflow.</h2>
           </div>
           <p className="method-intro">
-            Start with project economics. Determine what contracted cash flow can support. Quantify the sponsor capital gap. Route that gap toward the best-fit capital or clean-energy buyer pathway. Close the transaction, then keep the project supported with verification, reporting, and distribution infrastructure.
+            Start with one real project. Determine what contracted cash flow can support. Quantify the sponsor capital gap. Route that gap toward the best-fit capital or clean-energy buyer pathway. Close the transaction, then keep the project supported with verification, reporting, and distribution infrastructure.
           </p>
           <div className="problem-cards">
             {CAPITAL_FORMATION_PATHWAY.map((step, index) => (
@@ -194,11 +197,11 @@ export default function LandingPage() {
       <section id="access" className="access">
         <div className="access-inner">
           <div className="label">Developers · Clean-Energy Buyers · Capital Partners</div>
-          <h2 className="access-headline">Start with a real project or a real clean-energy need.</h2>
+          <h2 className="access-headline">Start with one real project or one real clean-energy need.</h2>
           <div className="access-tracks">
             <div className="access-track">
-              <p>Developers can submit a project for financeability analysis and capital-gap review.</p>
-              <Link href="/develop#submit" className="btn btn-lime">Submit a Project</Link>
+              <p>Developers can send one contracted or awarded project for financeability analysis, capital-gap review, and—where appropriate—capital-provider matching.</p>
+              <Link href="/develop#submit" className="btn btn-lime">Send Us One Project</Link>
             </div>
             <div className="access-track">
               <p>Clean-energy buyers can source qualified project supply and explore long-term commitments where project rights are available.</p>
