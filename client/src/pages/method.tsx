@@ -1,39 +1,16 @@
 import { Header } from "@/components/header";
 import { Card, CardContent } from "@/components/ui/card";
-import { Banknote, Database, Handshake, Building2, ShieldCheck, FileText, Leaf, ArrowRight, CheckCircle2 } from "lucide-react";
+import { BatteryCharging, Building2, CircleDollarSign, Database, Gauge, Network, RadioTower } from "lucide-react";
 import { PUBLIC_POSITIONING } from "@/lib/public-positioning";
 
 const steps = [
-  { icon: Banknote, title: "Project finance readiness", detail: "Estimate debt capacity, sponsor-equity requirement, tax-credit value, and binding financing constraints." },
-  { icon: Database, title: "Project data and qualification", detail: "Organize development status, contracts, operating assumptions, project rights, and source provenance into one project record." },
-  { icon: Handshake, title: "Capital and buyer coordination", detail: "Connect qualified projects with appropriate capital partners or long-term clean-energy buyers based on the actual remaining need." },
-  { icon: Building2, title: "Project / SPE administration", detail: "Maintain the operating context for project-level records, ownership workflows, and ongoing administration." },
-  { icon: ShieldCheck, title: "Production evidence", detail: "Compare available measured and modeled production information with source provenance disclosed." },
-  { icon: FileText, title: "Ongoing reporting", detail: "Provide project-level reporting that can support developers, capital partners, clean-energy buyers, and other authorized stakeholders." },
-  { icon: Leaf, title: "Environmental-attribute tracking", detail: "Track project-linked REC/EAC context without implying attributes are available when already committed elsewhere." },
-] as const;
-
-const verificationFlow = [
-  { day: "Source review", text: "Confirm what production data is actually available and document the origin of each source." },
-  { day: "Comparison", text: "Compare available measured production with modeled expected generation using the project’s configured assumptions." },
-  { day: "Provenance", text: "Label each source leg as measured, modeled, derived, simulated, or unconfirmed rather than presenting unlike sources as equivalent." },
-  { day: "Determination", text: "Issue a VERIFIED, FLAGGED, or PENDING engine status with the applicable reasons and limitations." },
-  { day: "Reporting", text: "Carry the result into ongoing project reporting for authorized project stakeholders." },
-];
-
-const audiences = [
-  {
-    title: "Clean-energy buyers",
-    body: "Use production evidence and project reporting to understand how a matched renewable project is performing after a long-term clean-energy commitment is in place.",
-  },
-  {
-    title: "Capital partners",
-    body: "Use source-labeled operating evidence alongside project finance and diligence information to monitor the asset with clearer provenance.",
-  },
-  {
-    title: "Developers and project operators",
-    body: "Keep project data, production evidence, finance-readiness outputs, and ongoing reporting connected rather than scattered across separate systems.",
-  },
+  { icon: Building2, title: "Identify", detail: "Map the data-center load, utility service, DERs, and operating constraints." },
+  { icon: CircleDollarSign, title: "Finance", detail: "Assess the capital needed to deploy storage, generation, or other distributed resources where required." },
+  { icon: Database, title: "Connect", detail: "Integrate operating data and define the telemetry needed to measure real capacity." },
+  { icon: Gauge, title: "Verify", detail: "Measure availability, production, response, duration, and performance with source provenance." },
+  { icon: Network, title: "Aggregate", detail: "Combine qualified flexible load and DER capacity into a usable portfolio." },
+  { icon: RadioTower, title: "Orchestrate", detail: "Build toward coordinated dispatch through the applicable utility or market-partner pathway." },
+  { icon: BatteryCharging, title: "Settle", detail: "Maintain the evidence and allocation records required for program, market, asset-owner, and capital-partner settlement." },
 ] as const;
 
 export default function MethodPage() {
@@ -43,22 +20,23 @@ export default function MethodPage() {
       <main className="public-main">
         <section className="public-hero public-hero-split">
           <div>
-            <p className="public-eyebrow">Platform · Evidence Infrastructure</p>
+            <p className="public-eyebrow">How EcoXchange works</p>
             <h1 className="public-title">
-              Finance the project.
+              Turn fragmented power resources into
               <br />
-              <em>Then keep the evidence connected.</em>
+              <em>measurable capacity.</em>
             </h1>
             <p className="public-copy">{PUBLIC_POSITIONING}</p>
             <p className="public-copy">
-              Production verification is part of the evidence layer that supports clean-energy buyers, capital partners, developers, and ongoing project reporting. It strengthens the project record after qualification without becoming the company’s primary identity.
+              The operating model joins three systems that are usually separate: data-center load, distributed-energy
+              assets, and the financial / regulatory infrastructure needed to deploy and measure them.
             </p>
           </div>
           <aside className="public-hero-aside">
             <div className="public-mini-stat-grid">
-              <div className="public-mini-stat"><span className="public-mini-stat-value">Financeability</span><span className="public-mini-stat-label">Debt capacity, sponsor equity, tax-credit value</span></div>
-              <div className="public-mini-stat"><span className="public-mini-stat-value">Qualification</span><span className="public-mini-stat-label">Project facts, contracts, development status, rights</span></div>
-              <div className="public-mini-stat"><span className="public-mini-stat-value">Evidence</span><span className="public-mini-stat-label">Production provenance and ongoing reporting</span></div>
+              <div className="public-mini-stat"><span className="public-mini-stat-value">Load</span><span className="public-mini-stat-label">Critical and flexible MW</span></div>
+              <div className="public-mini-stat"><span className="public-mini-stat-value">Assets</span><span className="public-mini-stat-label">Storage, generation, and DERs</span></div>
+              <div className="public-mini-stat"><span className="public-mini-stat-value">Evidence</span><span className="public-mini-stat-label">Telemetry, availability, and performance</span></div>
             </div>
           </aside>
         </section>
@@ -66,7 +44,7 @@ export default function MethodPage() {
         <section className="public-section">
           <div className="public-section-header">
             <span className="public-section-label">§ I</span>
-            <h2 className="public-section-title">One project record from financeability through operations.</h2>
+            <h2 className="public-section-title">Identify → Finance → Connect → Verify → Aggregate → Orchestrate → Settle</h2>
           </div>
           <div className="public-card-grid">
             {steps.map((item, index) => {
@@ -88,44 +66,32 @@ export default function MethodPage() {
         <section className="public-section">
           <div className="public-section-header">
             <span className="public-section-label">§ II</span>
-            <h2 className="public-section-title">Who the evidence layer supports.</h2>
+            <h2 className="public-section-title">The first product is readiness, not premature dispatch.</h2>
           </div>
-          <div className="public-card-grid">
-            {audiences.map((audience) => (
-              <div key={audience.title} className="public-card">
-                <h3 className="public-card-title">{audience.title}</h3>
-                <p className="public-card-copy">{audience.body}</p>
-              </div>
-            ))}
-          </div>
+          <Card className="border-border">
+            <CardContent className="p-6 md:p-8">
+              <p className="public-section-copy mb-0">
+                EcoXchange begins by quantifying flexible MW, tariff constraints, DER options, telemetry requirements,
+                and the likely utility / market pathway. Direct orchestration follows only after the customer,
+                resources, partner roles, and regulatory permissions are real.
+              </p>
+            </CardContent>
+          </Card>
         </section>
 
         <section className="public-section">
           <div className="public-section-header">
             <span className="public-section-label">§ III</span>
-            <h2 className="public-section-title">Production verification as reporting infrastructure.</h2>
+            <h2 className="public-section-title">Regulatory perimeter.</h2>
           </div>
-          <Card className="border-border">
-            <CardContent className="p-6 md:p-8">
-              <div className="space-y-5">
-                {verificationFlow.map((step) => (
-                  <div key={`${step.day}-${step.text}`} className="flex items-start gap-4">
-                    <CheckCircle2 className="mt-0.5 h-5 w-5 flex-shrink-0 text-primary" />
-                    <div>
-                      <p className="font-mono text-[0.6rem] uppercase tracking-wider text-primary">{step.day}</p>
-                      <p className="mt-1 text-sm">{step.text}</p>
-                    </div>
-                  </div>
-                ))}
-              </div>
-              <div className="mt-8 flex items-center gap-2 border border-primary/30 bg-primary/5 p-4">
-                <ArrowRight className="h-4 w-4 text-primary" />
-                <p className="text-sm">
-                  Production evidence can support ongoing reporting, but it does not itself establish REC/EAC ownership, create a financing commitment, or authorize a payment.
-                </p>
-              </div>
-            </CardContent>
-          </Card>
+          <div className="public-callout">
+            <p className="public-section-copy mb-0">
+              EcoXchange is not presenting itself as a utility, retail electricity supplier, broker-dealer,
+              RTO/ISO market participant, or wholesale seller merely because it provides software, financeability,
+              telemetry, or orchestration infrastructure. The required role depends on the jurisdiction and may be
+              performed through qualified partners until direct participation is warranted.
+            </p>
+          </div>
         </section>
       </main>
     </div>
