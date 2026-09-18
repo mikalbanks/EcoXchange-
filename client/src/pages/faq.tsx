@@ -9,48 +9,44 @@ import { PUBLIC_POSITIONING } from "@/lib/public-positioning";
 
 const FAQS = [
   {
-    q: "How does EcoXchange estimate debt capacity?",
-    a: "EcoXchange models project cash flow available for debt service, applies the selected DSCR requirement, compares DSCR-sized debt with the applicable LTC ceiling, and identifies the binding financing constraint. The result is indicative decision support, not a lender commitment.",
+    q: "What is EcoXchange building?",
+    a: "EcoXchange is building distributed power infrastructure for data centers. The long-term goal is a data-center-focused virtual power plant that can aggregate flexible load and distributed energy resources into measurable, verifiable, and eventually dispatchable capacity.",
   },
   {
-    q: "How is sponsor equity estimated?",
-    a: "The model compares total project uses with modeled permanent sources such as senior debt and eligible tax-credit proceeds. The remaining requirement is shown as indicative sponsor equity. Actual closing equity can change with lender terms, project costs, reserves, tax treatment, timing, and diligence.",
+    q: "Is EcoXchange already a virtual power plant?",
+    a: "Not yet. The current wedge is Power Flexibility Readiness: quantify flexible MW, DER options, tariff and interconnection constraints, telemetry requirements, and the practical market pathway for a real site. Orchestration comes after the capacity and operating permissions are proven.",
   },
   {
-    q: "What projects are eligible?",
-    a: "The deepest current finance-readiness support is for U.S. contracted renewable projects, with a V0 focus on solar PV projects in the 1–20 MW range. Other technologies, sizes, merchant exposure, or unusual capital structures require project-specific review.",
+    q: "Who is the best fit today?",
+    a: "The strongest fit is a power-constrained AI/HPC, colocation, or data-center development site where grid timing, contracted MW, or infrastructure constraints are affecting deployment or growth and where flexible compute, storage, onsite generation, or other DERs may be relevant.",
   },
   {
-    q: "What project data is required?",
-    a: "Core inputs include project size, capex, generation assumptions, contracted revenue terms, operating costs, tax-credit assumptions, debt terms, reserves, transaction costs, development status, and relevant project contracts. Missing or estimated inputs should remain explicitly labeled.",
+    q: "What inputs are needed for a Power Flexibility Readiness review?",
+    a: "Typical inputs include planned and contracted MW, utility and tariff, energization schedule, interval load where available, critical versus flexible workloads, existing or planned batteries or generation, backup-power architecture, interconnection status, and operating constraints.",
   },
   {
-    q: "Is EcoXchange a lender or broker?",
-    a: "No. EcoXchange is renewable-project capital infrastructure and provides project-finance decision support, project qualification, and coordination. We do not approve loans, guarantee financing, or act as a broker-dealer. If a transaction requires regulated securities activity, that activity must be handled through appropriately registered partners where required.",
+    q: "What does EcoXchange return?",
+    a: "The review is designed to produce an indicative flexible-MW range, critical operating boundaries, DER options, tariff and contracted-capacity implications, key interconnection or market constraints, telemetry requirements, and a recommended next technical or partner action.",
   },
   {
-    q: "What happens after a project is analyzed?",
-    a: "The next step depends on the project’s binding constraint and remaining capital gap. A project may need additional development work, revised financing assumptions, a capital partner, a long-term clean-energy buyer, or another execution path.",
+    q: "Can flexible load eliminate a data center's utility charges?",
+    a: "Not necessarily. Many large-load tariffs include minimum-billing or contracted-capacity obligations. EcoXchange separates energy savings from capacity obligations and only models value that the applicable tariff and contract can actually change.",
   },
   {
-    q: "What can EcoXchange offer clean-energy buyers?",
-    a: "EcoXchange can organize qualified renewable-project supply around buyer requirements such as geography, technology, MW, development stage, contracted revenue, and environmental-attribute availability. Potential structures can include PPAs, project-linked REC/EAC forwards, utility programs, or other long-term clean-energy commitments where project rights are actually available.",
+    q: "Does EcoXchange sell electricity?",
+    a: "The current public product does not require EcoXchange to be a retail electricity supplier or wholesale seller. Where market participation, demand response, scheduling, or wholesale sales require a regulated role, EcoXchange can work through qualified utilities or market partners while evaluating whether direct authorization is commercially justified.",
   },
   {
-    q: "Can EcoXchange guarantee a buyer commitment?",
-    a: "No. Buyer interest and transaction structure depend on project fit, buyer procurement requirements, project rights, market rules, diligence, and negotiation. EcoXchange can coordinate the pathway but does not guarantee a commitment.",
+    q: "How do renewable projects, batteries, and generation fit?",
+    a: "They are potential supply-side resources. EcoXchange can assess their financeability, interconnection context, telemetry, availability, and fit with a specific data-center power need or future aggregated fleet.",
   },
   {
-    q: "How are RECs or other environmental attributes verified?",
-    a: "EcoXchange tracks project-linked environmental-attribute context, including existing contractual claims, program obligations, registry information, and available production evidence. We do not represent RECs/EACs as available when they are already committed to a state program, utility, offtaker, buyer, or other counterparty.",
+    q: "What happens to EcoXchange's project-finance technology?",
+    a: "It remains an enabling layer. The financeability engine can help determine what a storage, generation, or renewable-energy asset can support, how much capital is required, and whether it can be deployed as part of the distributed-power network.",
   },
   {
-    q: "What role does production verification play?",
-    a: "Production verification is evidence infrastructure. It compares available measured and modeled production information with disclosed source provenance so clean-energy buyers, capital partners, and project stakeholders can receive clearer ongoing reporting. It does not itself create financing or prove environmental-attribute ownership.",
-  },
-  {
-    q: "How do capital partners use EcoXchange?",
-    a: "Capital partners can review standardized project facts, finance-readiness outputs, modeled debt capacity, sponsor-equity need, development status, and diligence context before deciding whether to engage. EcoXchange helps organize and coordinate the project information; each capital partner performs its own underwriting and diligence.",
+    q: "What role does verification play?",
+    a: "Verification turns claimed capacity into evidence. EcoXchange is building toward source-labeled records for availability, production, response time, duration, and operating performance so data-center customers, asset owners, market partners, and capital providers can rely on the same operating facts.",
   },
 ];
 
@@ -61,7 +57,7 @@ export default function FaqPage() {
       <main className="public-main public-main-narrow">
         <section className="public-hero">
           <p className="public-eyebrow">Frequently asked questions</p>
-          <h1 className="public-title">Project finance, capital gaps, buyers, and evidence.</h1>
+          <h1 className="public-title">Data-center power flexibility, DERs, and the path to VPP orchestration.</h1>
           <p className="public-copy">{PUBLIC_POSITIONING}</p>
         </section>
 
@@ -79,7 +75,8 @@ export default function FaqPage() {
         </section>
 
         <p className="mb-12 font-mono text-[0.6rem] text-muted-foreground/70">
-          Informational and decision-support platform. No lender commitment, guaranteed financing, guaranteed buyer commitment, or guaranteed environmental-attribute availability is created through this site.
+          Informational and decision-support platform. No guarantee of interconnection, energization, dispatch,
+          wholesale-market participation, utility savings, or financing is created through this site.
         </p>
       </main>
     </div>
