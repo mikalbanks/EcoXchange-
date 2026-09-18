@@ -1,63 +1,63 @@
 import { Link } from "wouter";
 import { PUBLIC_NAV_LINKS, REQUEST_ACCESS } from "@/lib/nav";
-import { BUYER_PATHWAY, CAPITAL_FORMATION_PATHWAY, PUBLIC_POSITIONING } from "@/lib/public-positioning";
+import { POWER_FLEXIBILITY_PATHWAY, PUBLIC_POSITIONING } from "@/lib/public-positioning";
 import "./landing.css";
 
 const PRODUCTS = [
   {
-    title: "Project Finance Readiness",
-    body: "Estimate debt capacity, sponsor-equity requirements, tax-credit value, and capital-stack scenarios before choosing a financing path.",
-    href: "/bankability",
-    cta: "Analyze financeability →",
+    title: "Power Flexibility Readiness",
+    body: "Quantify flexible MW, critical-load boundaries, contracted-capacity exposure, tariff constraints, and the practical options for storage, onsite generation, or other distributed resources.",
+    href: "/market#readiness",
+    cta: "Assess a site →",
   },
   {
-    title: "Capital Formation",
-    body: "Turn a quantified sponsor capital gap into a financing process by routing qualified projects toward appropriate capital partners and structures.",
-    href: "/develop#submit",
-    cta: "Send us one project →",
+    title: "DER & Onsite Power Planning",
+    body: "Evaluate which storage, generation, or distributed-energy assets could support a site's power needs and what capital may be required to deploy them.",
+    href: "/develop",
+    cta: "Explore the asset pathway →",
   },
   {
-    title: "Clean-Energy Buyer Commitments",
-    body: "Connect qualified projects with data centers, utilities, and other large electricity users seeking project-linked clean-energy supply or environmental attributes where rights are available.",
-    href: "/market",
-    cta: "Explore buyer pathway →",
-  },
-  {
-    title: "Post-Close Infrastructure",
-    body: "Keep financing and buyer commitments supported with production verification, REC / environmental-attribute reporting, capital-partner reporting, and distribution calculations.",
+    title: "Telemetry & Performance Verification",
+    body: "Connect operating data and maintain source-labeled evidence for availability, production, response performance, and ongoing reporting.",
     href: "/verification",
-    cta: "See ongoing infrastructure →",
+    cta: "See the evidence layer →",
+  },
+  {
+    title: "VPP Orchestration",
+    body: "EcoXchange is building toward aggregation and coordinated orchestration of flexible load and distributed energy resources as measurable, dispatchable capacity.",
+    href: "/verification",
+    cta: "See the operating model →",
   },
 ] as const;
 
 const AUDIENCES = [
   {
-    label: "For Developers",
-    question: "What can this project finance, and how do I close what remains?",
-    body: "Send one contracted or awarded project. EcoXchange helps quantify debt capacity, sponsor equity, tax-credit value, the remaining capital gap, and the next financing action.",
-    href: "/develop#submit",
-  },
-  {
-    label: "For Clean-Energy Buyers",
-    question: "Where can we access qualified project-linked renewable supply?",
-    body: "Source qualified projects, explore long-term clean-energy commitments where project rights are available, and receive source-labeled production reporting.",
+    label: "Data Centers",
+    question: "How much usable capacity can this site unlock beyond a simple utility-service view?",
+    body: "Model flexible load, tariff obligations, storage and onsite generation, interconnection constraints, and the market pathways that could support additional capacity.",
     href: "/market",
   },
   {
-    label: "For Capital Partners",
-    question: "Where can we find qualified projects with standardized finance-readiness information?",
-    body: "EcoXchange organizes project data, financeability outputs, sponsor-equity needs, and diligence context before capital engagement.",
-    href: "/market#capital",
+    label: "DER & Project Partners",
+    question: "Where can our energy asset create real value around data-center demand?",
+    body: "Bring qualified storage, generation, and renewable-energy assets into a financeability, telemetry, and performance-verification workflow.",
+    href: "/develop",
+  },
+  {
+    label: "Market & Capital Partners",
+    question: "Which capacity is real, financeable, measurable, and eligible for participation?",
+    body: "EcoXchange organizes the technical, financial, and operating evidence needed before regulated market participation or capital deployment.",
+    href: "/verification",
   },
 ] as const;
 
 const PLATFORM = [
-  "Project / SPE administration",
-  "Production verification",
-  "REC / environmental-attribute reporting",
-  "Capital-partner reporting",
-  "Cash-flow and distribution calculations",
-  "Ongoing project performance records",
+  "Flexible-MW assessment",
+  "Tariff and contracted-capacity modeling",
+  "DER financeability",
+  "Telemetry integration",
+  "Availability and performance verification",
+  "Aggregation and settlement infrastructure",
 ] as const;
 
 export default function LandingPage() {
@@ -68,7 +68,7 @@ export default function LandingPage() {
         <div className="header-inner">
           <div className="brand">
             <span className="brand-name">EcoXchange</span>
-            <span className="brand-tag">Renewable Project Capital Infrastructure</span>
+            <span className="brand-tag">Distributed Power Infrastructure for Data Centers</span>
           </div>
           <nav>
             {PUBLIC_NAV_LINKS.map((link) =>
@@ -88,15 +88,15 @@ export default function LandingPage() {
       <section>
         <div className="hero">
           <div className="hero-text">
-            <div className="label hero-eyebrow">Financeability · Capital Formation · Clean-Energy Buyers · Post-Close Infrastructure</div>
-            <h1 className="hero-headline">Renewable-project<br /><em>capital infrastructure.</em></h1>
+            <div className="label hero-eyebrow">Flexible Load · Storage · Distributed Generation · Verification · VPP Orchestration</div>
+            <h1 className="hero-headline">Distributed power infrastructure<br /><em>for data centers.</em></h1>
             <p className="hero-sub"><strong>{PUBLIC_POSITIONING}</strong></p>
             <div className="hero-actions">
-              <Link href="/develop#submit" className="btn btn-primary">Send Us One Project</Link>
-              <Link href="/market" className="btn btn-outline">Source Clean Energy</Link>
+              <Link href="/market#readiness" className="btn btn-primary">Assess a Data-Center Site</Link>
+              <a href="mailto:contact@ecoxchange.net?subject=EcoXchange%20data-center%20power%20strategy" className="btn btn-outline">Discuss Power Strategy</a>
             </div>
             <p className="method-intro" style={{ marginTop: "1rem" }}>
-              Best fit today: contracted or awarded renewable projects, generally 1–20 MW, with a real financing question or unresolved sponsor-capital need.
+              Best fit today: power-constrained AI/HPC, colocation, and data-center development sites where every additional MW and month-to-energization matters.
             </p>
           </div>
         </div>
@@ -105,7 +105,7 @@ export default function LandingPage() {
       <section id="products" className="problem">
         <div className="section-header">
           <span className="label section-num">§ I</span>
-          <h2 className="section-title">Four layers. One capital-formation system.</h2>
+          <h2 className="section-title">Start with the power constraint. Build toward orchestration.</h2>
         </div>
         <div className="problem-cards">
           {PRODUCTS.map((product, index) => (
@@ -123,13 +123,13 @@ export default function LandingPage() {
         <div className="method-inner">
           <div className="section-header">
             <span className="label section-num">§ II</span>
-            <h2 className="section-title">The EcoXchange capital-formation workflow.</h2>
+            <h2 className="section-title">The EcoXchange power-flexibility workflow.</h2>
           </div>
           <p className="method-intro">
-            Start with one real project. Determine what contracted cash flow can support. Quantify the sponsor capital gap. Route that gap toward the best-fit capital or clean-energy buyer pathway. Close the transaction, then keep the project supported with verification, reporting, and distribution infrastructure.
+            Start with one real site. Map utility service and contracted capacity, separate critical from flexible load, evaluate distributed-resource options, model the tariff and market pathway, then connect telemetry and verify performance. As the fleet grows, aggregate and orchestrate capacity.
           </p>
           <div className="problem-cards">
-            {CAPITAL_FORMATION_PATHWAY.map((step, index) => (
+            {POWER_FLEXIBILITY_PATHWAY.map((step, index) => (
               <div key={step} className="problem-card">
                 <div className="label problem-card-num">0{index + 1}</div>
                 <h3>{step}</h3>
@@ -142,7 +142,7 @@ export default function LandingPage() {
       <section className="investors">
         <div className="section-header">
           <span className="label section-num">§ III</span>
-          <h2 className="section-title">Built around the three parties required to move projects forward.</h2>
+          <h2 className="section-title">Built around load, energy assets, and the partners that connect them.</h2>
         </div>
         <div className="problem-cards">
           {AUDIENCES.map((audience) => (
@@ -156,33 +156,13 @@ export default function LandingPage() {
         </div>
       </section>
 
-      <section className="method">
-        <div className="method-inner">
-          <div className="section-header">
-            <span className="label section-num">§ IV</span>
-            <h2 className="section-title">Clean-energy buyer pathway.</h2>
-          </div>
-          <div className="problem-cards">
-            {BUYER_PATHWAY.map((step, index) => (
-              <div key={step} className="problem-card">
-                <div className="label problem-card-num">0{index + 1}</div>
-                <h3>{step}</h3>
-              </div>
-            ))}
-          </div>
-          <div className="hero-actions">
-            <Link href="/market" className="btn btn-primary">Explore Clean-Energy Buyer Pathway</Link>
-          </div>
-        </div>
-      </section>
-
       <section className="benchmark-module">
         <div className="section-header">
-          <span className="label section-num">§ V</span>
-          <h2 className="section-title">Infrastructure that stays attached after capital closes.</h2>
+          <span className="label section-num">§ IV</span>
+          <h2 className="section-title">What EcoXchange needs to know before capacity is real.</h2>
         </div>
         <p className="method-intro">
-          EcoXchange keeps the project record connected across production evidence, environmental attributes, capital-partner reporting, and distribution calculations so financing and buyer commitments can be supported through operations.
+          A megawatt is only useful if its location, operating limits, response time, duration, dispatch rights, telemetry, tariff treatment, and settlement pathway are understood. EcoXchange is building the evidence layer around those facts.
         </p>
         <div className="benchmark-figures">
           {PLATFORM.map((capability) => (
@@ -196,20 +176,20 @@ export default function LandingPage() {
 
       <section id="access" className="access">
         <div className="access-inner">
-          <div className="label">Developers · Clean-Energy Buyers · Capital Partners</div>
-          <h2 className="access-headline">Start with one real project or one real clean-energy need.</h2>
+          <div className="label">Data Centers · DER Partners · Market Partners</div>
+          <h2 className="access-headline">Start with one real power constraint.</h2>
           <div className="access-tracks">
             <div className="access-track">
-              <p>Developers can send one contracted or awarded project for financeability analysis, capital-gap review, and—where appropriate—capital-provider matching.</p>
-              <Link href="/develop#submit" className="btn btn-lime">Send Us One Project</Link>
+              <p>Data-center operators and developers can share one site for a Power Flexibility Readiness review: planned MW, utility context, load profile, critical-load boundaries, and existing or planned onsite resources.</p>
+              <Link href="/market#readiness" className="btn btn-lime">Assess a Site</Link>
             </div>
             <div className="access-track">
-              <p>Clean-energy buyers can source qualified project supply and explore long-term commitments where project rights are available.</p>
-              <Link href="/market" className="btn btn-outline" style={{ color: "#fff", borderColor: "rgba(255,255,255,.4)" }}>Explore Buyer Pathway →</Link>
+              <p>Energy-asset partners can bring storage, generation, or renewable projects that may support data-center power needs and need financeability, telemetry, or performance infrastructure.</p>
+              <Link href="/develop" className="btn btn-outline" style={{ color: "#fff", borderColor: "rgba(255,255,255,.4)" }}>Explore DER Pathway →</Link>
             </div>
           </div>
           <p className="access-legal">
-            EcoXchange does not guarantee financing or energy procurement. Project availability, environmental attributes, tax treatment, and transaction structure are project-specific and subject to diligence, contractual rights, and applicable law.
+            EcoXchange is not a utility and does not guarantee interconnection, energization, wholesale-market access, or savings. Utility tariffs, RTO/ISO rules, state law, interconnection requirements, and site-specific operating constraints govern execution.
           </p>
         </div>
       </section>
@@ -218,8 +198,8 @@ export default function LandingPage() {
         <div className="map-ticks map-ticks-bottom" aria-hidden="true" />
         <div className="footer-inner">
           <span className="footer-brand">EcoXchange</span>
-          <span className="footer-meta">Renewable-Project Capital Infrastructure · © MMXXVI</span>
-          <span className="footer-meta">Financeability × Capital × Clean-Energy Demand × Ongoing Infrastructure</span>
+          <span className="footer-meta">Distributed Power Infrastructure for Data Centers · © MMXXVI</span>
+          <span className="footer-meta">Identify × Finance × Connect × Verify × Aggregate × Orchestrate × Settle</span>
         </div>
       </footer>
     </div>
