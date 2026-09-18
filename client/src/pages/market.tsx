@@ -1,257 +1,142 @@
-import { useMemo, useState } from "react";
-import { useQuery } from "@tanstack/react-query";
-import { Link } from "wouter";
 import { Header } from "@/components/header";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
-import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
-import { Skeleton } from "@/components/ui/skeleton";
-import { EmptyState } from "@/components/empty-state";
-import { Search, MapPin, Zap, Leaf, FileCheck2, Handshake, BarChart3 } from "lucide-react";
-import { ProjectImage } from "@/components/marketplace/project-image";
-import { isTargetCapacity } from "@shared/benchmark";
-import { BUYER_PATHWAY, PUBLIC_POSITIONING } from "@/lib/public-positioning";
+import { Card, CardContent } from "@/components/ui/card";
+import { BatteryCharging, Building2, Gauge, Network, RadioTower, Zap } from "lucide-react";
+import { POWER_FLEXIBILITY_PATHWAY, PUBLIC_POSITIONING } from "@/lib/public-positioning";
 
-interface MarketplaceListing {
-  id: string;
-  source: "PROJECT" | "QUEUE";
-  name: string;
-  state: string;
-  county: string | null;
-  technology: string | null;
-  stage: string | null;
-  capacityMW: number;
-  arrayType: string | null;
-  image: { url: string | null; alt: string | null; credit: string | null; license: string | null };
-  isOperating: boolean;
-  contractTermRemainingYears: number | null;
-}
+const readinessInputs = [
+  ["Planned and contracted MW", "Utility service, ramp schedule, contracted capacity, and known energization limits."],
+  ["Load flexibility", "Critical versus movable or interruptible workloads, response speed, duration, and operational constraints."],
+  ["Onsite resources", "Existing or planned batteries, backup generation, microgrids, renewables, or other distributed resources."],
+  ["Tariff and market context", "Utility tariff, minimum-billing obligations, demand-response options, and relevant RTO/ISO pathway."],
+] as const;
 
-interface MarketplaceListResponse {
-  listings: MarketplaceListing[];
-  refreshedAt: string | null;
-  total: number;
-}
-
-function timeAgo(iso: string | null): string {
-  if (!iso) return "Refreshing…";
-  const diff = Date.now() - new Date(iso).getTime();
-  const mins = Math.floor(diff / 60000);
-  if (mins < 1) return "Just now";
-  if (mins < 60) return `Updated ${mins} min ago`;
-  const hrs = Math.floor(mins / 60);
-  if (hrs < 24) return `Updated ${hrs}h ago`;
-  return `Updated ${Math.floor(hrs / 24)}d ago`;
-}
+const outputs = [
+  "Potential flexible MW and firm operating boundaries",
+  "Storage / generation / DER options that may support the site",
+  "Tariff and contracted-capacity implications",
+  "Interconnection and market-participation constraints to validate",
+  "Telemetry and verification requirements",
+  "Recommended next technical, utility, or partner action",
+] as const;
 
 export default function PublicMarketPage() {
-  const [search, setSearch] = useState("");
-  const [targetOnly, setTargetOnly] = useState(true);
-
-  const { data, isLoading } = useQuery<MarketplaceListResponse>({
-    queryKey: ["/api/public/market/projects"],
-  });
-
-  const filtered = useMemo(() => {
-    const listings = data?.listings ?? [];
-    const q = search.trim().toLowerCase();
-    return listings.filter((listing) => {
-      if (targetOnly && !isTargetCapacity(listing.capacityMW * 1000)) return false;
-      if (!q) return true;
-      return [listing.name, listing.county, listing.state, listing.technology, listing.stage]
-        .filter(Boolean)
-        .join(" ")
-        .toLowerCase()
-        .includes(q);
-    });
-  }, [data, search, targetOnly]);
-
   return (
     <div className="public-page">
       <Header />
       <main className="public-main">
         <section className="public-hero public-hero-split">
           <div>
-            <p className="public-eyebrow">For clean-energy buyers</p>
+            <p className="public-eyebrow">For data-center operators and developers</p>
             <h1 className="public-title">
-              Source qualified renewable projects.
+              Understand how much power flexibility
               <br />
-              <em>Build long-term clean-energy commitments around real project supply.</em>
+              <em>your site can actually use.</em>
             </h1>
             <p className="public-copy">{PUBLIC_POSITIONING}</p>
             <p className="public-copy">
-              Buyer engagement is organized around project fit, not an investment marketplace. EcoXchange can help buyers evaluate qualified project supply, explore long-term clean-energy structures where project rights are available, and receive source-labeled production reporting as projects operate.
+              EcoXchange starts with one real site and separates utility service, contracted-capacity obligations,
+              critical load, flexible compute, storage, onsite generation, and market constraints. The first goal is
+              not to claim a VPP exists. It is to establish what capacity is technically, economically, and legally
+              usable before orchestration.
             </p>
             <div className="public-actions">
-              <a href="#buyer-path" className="public-btn public-btn-primary">Explore Buyer Pathway</a>
-              <a href="mailto:contact@ecoxchange.net?subject=EcoXchange%20clean-energy%20buyer%20inquiry" className="public-btn public-btn-outline">Source Clean Energy →</a>
+              <a href="#readiness" className="public-btn public-btn-primary">Start a Power Flexibility Review</a>
+              <a href="mailto:contact@ecoxchange.net?subject=EcoXchange%20Power%20Flexibility%20Readiness" className="public-btn public-btn-outline">
+                Discuss a Site →
+              </a>
             </div>
+            <p className="mt-4 text-sm text-muted-foreground">
+              Best fit: AI/HPC, colocation, and data-center development sites where grid timing, contracted MW, or
+              power infrastructure is limiting deployment or growth.
+            </p>
           </div>
 
           <aside className="public-hero-aside">
             <div className="public-mini-stat-grid">
               <div className="public-mini-stat">
-                <span className="public-mini-stat-value">Qualified supply</span>
-                <span className="public-mini-stat-label">Project location, technology, MW, stage, and contractual context</span>
+                <span className="public-mini-stat-value">Flexible MW</span>
+                <span className="public-mini-stat-label">What load may be shifted or curtailed within real operating constraints</span>
               </div>
               <div className="public-mini-stat">
-                <span className="public-mini-stat-value">Long-term structures</span>
-                <span className="public-mini-stat-label">PPAs, REC/EAC forwards, utility programs, or other structures where rights are available</span>
+                <span className="public-mini-stat-value">DER capacity</span>
+                <span className="public-mini-stat-label">Storage, onsite generation, and other distributed resources</span>
               </div>
               <div className="public-mini-stat">
-                <span className="public-mini-stat-value">Verified reporting</span>
-                <span className="public-mini-stat-label">Source-labeled production evidence and ongoing project reporting</span>
+                <span className="public-mini-stat-value">Market pathway</span>
+                <span className="public-mini-stat-label">Utility, tariff, RTO/ISO, and partner requirements that govern execution</span>
               </div>
             </div>
           </aside>
         </section>
 
-        <section id="buyer-path" className="public-section scroll-mt-24">
+        <section id="readiness" className="public-section scroll-mt-24">
           <div className="public-section-header">
             <span className="public-section-label">§ I</span>
-            <h2 className="public-section-title">Clean-Energy Buyers → Project Supply → Long-Term Commitment → Verified Reporting</h2>
+            <h2 className="public-section-title">Power Flexibility Readiness.</h2>
           </div>
+          <p className="public-section-copy mb-5">
+            The initial engagement is a structured site review. It is designed to answer one question:
+            <strong> what controllable capacity is actually available, what would it take to make more available, and what constraints govern its value?</strong>
+          </p>
           <div className="public-card-grid">
-            <div className="public-card">
-              <Search className="h-5 w-5 text-primary" />
-              <h3 className="public-card-title">{BUYER_PATHWAY[0]}</h3>
-              <p className="public-card-copy">Screen projects by geography, technology, MW, development stage, utility / market context, and project readiness.</p>
-            </div>
-            <div className="public-card">
-              <Handshake className="h-5 w-5 text-primary" />
-              <h3 className="public-card-title">{BUYER_PATHWAY[1]}</h3>
-              <p className="public-card-copy">Structure depends on buyer requirements, project rights, existing commitments, market rules, and diligence.</p>
-            </div>
-            <div className="public-card">
-              <FileCheck2 className="h-5 w-5 text-primary" />
-              <h3 className="public-card-title">{BUYER_PATHWAY[2]}</h3>
-              <p className="public-card-copy">Production evidence and project reporting remain source-labeled so operating performance can be reviewed with clear provenance.</p>
-            </div>
+            {readinessInputs.map(([title, body], index) => {
+              const icons = [Building2, Gauge, BatteryCharging, Network];
+              const Icon = icons[index];
+              return (
+                <div key={title} className="public-card">
+                  <Icon className="h-5 w-5 text-primary" />
+                  <h3 className="public-card-title">{title}</h3>
+                  <p className="public-card-copy">{body}</p>
+                </div>
+              );
+            })}
           </div>
         </section>
 
         <section className="public-section">
           <div className="public-section-header">
             <span className="public-section-label">§ II</span>
-            <h2 className="public-section-title">Environmental attributes must be actually available.</h2>
+            <h2 className="public-section-title">What the review produces.</h2>
           </div>
-          <div className="public-callout">
-            <Leaf className="mb-4 h-6 w-6 text-primary" />
-            <p className="public-section-copy mb-0">
-              EcoXchange will not present a REC, EAC, or other project-linked environmental attribute as available if it is already committed to a state program, utility, offtaker, buyer, or other contractual counterparty. Buyer-facing structures are subject to project-specific rights, registry context, contracts, and diligence.
-            </p>
-          </div>
-        </section>
-
-        <section id="pipeline" className="public-section public-section-tight scroll-mt-24">
-          <div className="public-section-header">
-            <span className="public-section-label">§ III</span>
-            <h2 className="public-section-title">Illustrative project research pipeline.</h2>
-          </div>
-          <p className="public-section-copy mb-5">
-            This is not an investment marketplace and does not represent guaranteed project availability. The current public dataset is illustrative research unless a project is explicitly qualified for buyer engagement.
-          </p>
-
-          <Card className="public-toolbar-card mb-6">
-            <CardContent className="p-4 flex flex-wrap items-center gap-3">
-              <div className="flex items-center gap-3 flex-1 min-w-[220px]">
-                <Search className="h-4 w-4 text-muted-foreground" />
-                <Input
-                  placeholder="Search project, county, state, technology, stage..."
-                  value={search}
-                  onChange={(event) => setSearch(event.target.value)}
-                  data-testid="input-market-search"
-                />
+          <Card className="border-border">
+            <CardContent className="p-6 md:p-8">
+              <div className="space-y-4">
+                {outputs.map((output, index) => (
+                  <div key={output} className="flex items-start gap-3">
+                    <span className="font-mono text-xs text-primary">0{index + 1}</span>
+                    <p className="text-sm">{output}</p>
+                  </div>
+                ))}
               </div>
-              <Button
-                size="sm"
-                variant={targetOnly ? "default" : "outline"}
-                onClick={() => setTargetOnly((value) => !value)}
-                aria-pressed={targetOnly}
-                data-testid="filter-target-capacity"
-              >
-                {targetOnly ? "1–20 MW target only" : "All projects + comparisons"}
-              </Button>
             </CardContent>
           </Card>
-
-          <div className="mb-5 flex items-center justify-between gap-4">
-            <p className="font-mono text-[0.65rem] uppercase tracking-[0.28em] text-muted-foreground">Buyer-oriented project research · qualification required</p>
-            <Badge variant="outline" data-testid="badge-refreshed">{timeAgo(data?.refreshedAt ?? null)}</Badge>
-          </div>
-
-          {isLoading ? (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-              {[...Array(6)].map((_, index) => (
-                <Card key={index}><CardContent className="pt-6"><Skeleton className="h-40 w-full" /></CardContent></Card>
-              ))}
-            </div>
-          ) : !filtered.length ? (
-            <Card>
-              <CardContent>
-                <EmptyState
-                  icon={BarChart3}
-                  title="No project records match these filters yet"
-                  description="Change the search or filters. EcoXchange does not fabricate project supply to fill an empty state."
-                />
-              </CardContent>
-            </Card>
-          ) : (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-              {filtered.map((listing) => (
-                <Card key={listing.id} className="public-listing-card overflow-hidden" data-testid={`card-listing-${listing.id}`}>
-                  <ProjectImage
-                    project={{
-                      id: listing.id,
-                      name: listing.name,
-                      state: listing.state,
-                      county: listing.county,
-                      capacityMW: listing.capacityMW,
-                      arrayType: listing.arrayType,
-                      imageUrl: listing.image?.url ?? null,
-                      imageAlt: listing.image?.alt ?? null,
-                      imageCredit: listing.image?.credit ?? null,
-                      imageLicense: listing.image?.license ?? null,
-                    }}
-                  />
-                  <CardHeader className="pb-2">
-                    <div className="flex items-start justify-between gap-2">
-                      <CardTitle className="text-base leading-tight">{listing.name}</CardTitle>
-                      <Badge variant="outline">Illustrative</Badge>
-                    </div>
-                  </CardHeader>
-                  <CardContent className="space-y-3">
-                    <div className="flex flex-wrap items-center gap-2 text-sm text-muted-foreground">
-                      <span className="flex items-center gap-1"><MapPin className="h-3.5 w-3.5" />{listing.county ?? "—"}, {listing.state}</span>
-                      <span className="flex items-center gap-1"><Zap className="h-3.5 w-3.5" />{listing.capacityMW.toFixed(1)} MW</span>
-                    </div>
-                    <div className="flex flex-wrap gap-2">
-                      {listing.technology && <Badge variant="outline">{listing.technology.replace(/_/g, " ")}</Badge>}
-                      {listing.stage && <Badge variant="secondary">{listing.stage.replace(/_/g, " ")}</Badge>}
-                      <Badge variant={listing.isOperating ? "default" : "outline"}>{listing.isOperating ? "Operating" : "Pre-COD / development"}</Badge>
-                    </div>
-                    <p className="text-sm leading-6 text-muted-foreground">
-                      Buyer suitability, contracted rights, environmental-attribute availability, and long-term commitment structure require project-specific qualification.
-                    </p>
-                  </CardContent>
-                </Card>
-              ))}
-            </div>
-          )}
         </section>
 
-        <section id="capital" className="public-section scroll-mt-24">
+        <section className="public-section">
           <div className="public-section-header">
-            <span className="public-section-label">§ IV</span>
-            <h2 className="public-section-title">For capital partners.</h2>
+            <span className="public-section-label">§ III</span>
+            <h2 className="public-section-title">From one site to a virtual power plant.</h2>
           </div>
-          <p className="public-section-copy">
-            Capital partners can engage separately around qualified projects with standardized finance-readiness outputs, sponsor-equity requirements, project status, and diligence context. The buyer pathway and capital-partner pathway share the same underlying project record but are not presented as an investor marketplace.
-          </p>
-          <div className="public-actions">
-            <a href="mailto:contact@ecoxchange.net?subject=EcoXchange%20capital%20partner%20inquiry" className="public-btn public-btn-primary">Discuss Capital Partnership</a>
-            <Link href="/develop" className="public-btn public-btn-outline">View Developer Workflow →</Link>
+          <div className="public-card-grid">
+            {POWER_FLEXIBILITY_PATHWAY.map((step, index) => {
+              const icons = [Building2, Zap, BatteryCharging, Network, RadioTower, Gauge];
+              const Icon = icons[index] ?? Zap;
+              return (
+                <div key={step} className="public-card">
+                  <Icon className="h-5 w-5 text-primary" />
+                  <p className="public-card-kicker">0{index + 1}</p>
+                  <h3 className="public-card-title">{step}</h3>
+                </div>
+              );
+            })}
+          </div>
+          <div className="public-callout mt-6">
+            <p className="public-section-copy mb-0">
+              EcoXchange is building toward VPP orchestration. Current public positioning does not imply that
+              EcoXchange is already a utility, RTO/ISO market participant, demand-response provider, or wholesale
+              power seller. Those roles are jurisdiction-specific and may be performed through qualified partners
+              until direct participation is commercially justified.
+            </p>
           </div>
         </section>
       </main>
