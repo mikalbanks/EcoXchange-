@@ -3,6 +3,7 @@ import { ArrowRight, Check, CheckCircle, ShieldCheck } from "./icons";
 import { ButtonLink, trackEvent } from "./ui";
 
 const initialForm = { firstName: "", lastName: "", email: "", company: "", title: "", location: "", projectStage: "", plannedMw: "", energization: "", utilityStatus: "", resources: "", constraint: "" };
+const turnstileSiteKey = import.meta.env.VITE_TURNSTILE_SITE_KEY || "0x4AAAAAAB8KnRYXW3_8kHfO";
 const contactRequired = { firstName: "Enter your first name.", lastName: "Enter your last name.", email: "Enter your work email.", company: "Enter your company." };
 const siteRequired = { location: "Enter the site location.", projectStage: "Select the project stage.", constraint: "Describe the primary power constraint." };
 function validate(form, step) {
@@ -18,7 +19,7 @@ function Field({ name, label, form, update, errors, required, type = "text", ful
 }
 function HumanVerification({ onToken, resetKey }) {
   const container = useRef(null);
-  const sitekey = import.meta.env.VITE_TURNSTILE_SITE_KEY;
+  const sitekey = turnstileSiteKey;
   useEffect(() => {
     if (!sitekey) return;
     let widget, active = true;
@@ -35,6 +36,7 @@ function HumanVerification({ onToken, resetKey }) {
 export function AssessmentPage() {
   const [step, setStep] = useState(1), [form, setForm] = useState(initialForm), [errors, setErrors] = useState({});
   const [status, setStatus] = useState("idle"), [error, setError] = useState(""), [token, setToken] = useState("");
+  const [meetingUrl, setMeetingUrl] = useState("");
   const [verificationReset, setVerificationReset] = useState(0);
   const heading = useRef(null), sending = useRef(false);
   const lastFocusState = useRef("1:false");
@@ -53,7 +55,7 @@ export function AssessmentPage() {
   const submit = async event => {
     event.preventDefault(); if (sending.current) return;
     const issues = validate(form, 2); if (Object.keys(issues).length) return showErrors(issues);
-    if (import.meta.env.VITE_TURNSTILE_SITE_KEY && !token) { setError("Complete the verification before submitting."); return; }
+    if (!token) { setError("Complete the verification before submitting."); return; }
     sending.current = true; setStatus("loading"); setError("");
     const controller = new AbortController(), timeout = setTimeout(() => controller.abort(), 20000);
     try {
@@ -65,6 +67,7 @@ export function AssessmentPage() {
         if (response.status === 403) throw new Error("Verification could not be completed. Please verify again and retry.");
         throw new Error("Your assessment could not be sent. Your details are still here. Please try again or contact contact@ecoxchange.net.");
       }
+      setMeetingUrl(typeof result.meetingUrl === "string" && result.meetingUrl.startsWith("https://") ? result.meetingUrl : "/contact");
       setStatus("success"); trackEvent("assessment_completed", { projectStage: form.projectStage });
     } catch (err) {
       setError(err.name === "AbortError" ? "The request timed out. Your details are still here; please try again." : err instanceof TypeError ? "We could not connect. Check your connection and try again. Your details are still here." : err.message);
@@ -72,7 +75,7 @@ export function AssessmentPage() {
     } finally { clearTimeout(timeout); sending.current = false; }
   };
   const common = { form, update, errors };
-  if (succeeded) return <section className="success-section container"><div className="success-panel"><CheckCircle weight="duotone" aria-hidden="true" /><p className="eyebrow">Assessment received</p><h1 tabIndex={-1} ref={heading}>A clear starting point.</h1><p>Thank you, {form.firstName}. Your site details have been received for review.</p><ButtonLink href={import.meta.env.VITE_HUBSPOT_MEETING_URL || "/contact"} onClick={() => trackEvent("scheduling_click")}>{import.meta.env.VITE_HUBSPOT_MEETING_URL ? "Schedule a conversation" : "Contact EcoXchange"}</ButtonLink><a className="text-link" href="/">Return home<ArrowRight aria-hidden="true" /></a></div></section>;
+  if (succeeded) return <section className="success-section container"><div className="success-panel"><CheckCircle weight="duotone" aria-hidden="true" /><p className="eyebrow">Assessment received</p><h1 tabIndex={-1} ref={heading}>A clear starting point.</h1><p>Thank you, {form.firstName}. Your site details have been received for review.</p><ButtonLink href={meetingUrl || "/contact"} onClick={() => trackEvent("scheduling_click")}>{meetingUrl.startsWith("https://") ? "Schedule a conversation" : "Contact EcoXchange"}</ButtonLink><a className="text-link" href="/">Return home<ArrowRight aria-hidden="true" /></a></div></section>;
   return <section className="assessment-section"><div className="container assessment-grid"><div className="assessment-intro"><p className="eyebrow">Power flexibility assessment</p><h1>Start with one real site.</h1><p className="lead">Share your operating context. Build a clearer picture of the constraints, resources, and next steps.</p><ol className="assessment-progress" aria-label="Assessment steps"><li className={step === 1 ? "current" : "complete"} aria-current={step === 1 ? "step" : undefined}><span>{step === 2 ? <Check aria-hidden="true" /> : "1"}</span><div><strong>Your details</strong><small>Who we should connect with</small></div></li><li className={step === 2 ? "current" : ""} aria-current={step === 2 ? "step" : undefined}><span>2</span><div><strong>Site context</strong><small>What is shaping your power needs</small></div></li></ol><div className="assessment-help"><ShieldCheck aria-hidden="true" /><p>A starting point for a conversation. No commitment to financing, interconnection, or market participation.</p></div></div><div className="assessment-form-wrap"><div className="form-heading"><p className="eyebrow">Step {step} of 2</p><h2 tabIndex={-1} ref={heading}>{step === 1 ? "Tell us about yourself." : "Tell us about your site."}</h2><p>{step === 1 ? "Use your business contact details." : "Share what you know. Optional details can come later."} Fields marked * are required.</p></div><form noValidate onSubmit={step === 1 ? next : submit} aria-busy={status === "loading"}><fieldset disabled={status === "loading"}><legend className="sr-only">{step === 1 ? "Contact details" : "Site details"}</legend><div className="form-grid">{step === 1 ? <>
       <Field {...common} name="firstName" label="First name" autoComplete="given-name" maxLength={80} required />
       <Field {...common} name="lastName" label="Last name" autoComplete="family-name" maxLength={80} required />
