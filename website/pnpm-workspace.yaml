@@ -1,0 +1,7 @@
+minimumReleaseAgeExclude:
+  - '@cloudflare/workers-types@5.20260925.2'
+  - framer-motion@13.4.4
+  - motion-dom@13.4.4
+  - motion@13.4.4
+  - wrangler@4.140.0
+
