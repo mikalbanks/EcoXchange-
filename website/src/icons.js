@@ -12,4 +12,5 @@ export { ShieldCheck } from "@phosphor-icons/react/dist/csr/ShieldCheck";
 export { X } from "@phosphor-icons/react/dist/csr/X";
 export { Plus } from "@phosphor-icons/react/dist/csr/Plus";
 export { Minus } from "@phosphor-icons/react/dist/csr/Minus";
+export { UsersThree } from "@phosphor-icons/react/dist/csr/UsersThree";
 

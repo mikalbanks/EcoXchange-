@@ -1,6 +1,13 @@
 # EcoXchange design QA
 
-final result: passed
+final result: blocked for the DER-first redesign; publication explicitly approved by the site owner on 2026-09-26
+
+## DER-first release status — 2026-09-26
+
+- Source visual truth: `design-reference-der-power-v2.png`, the selected light, product-led direction.
+- The merged GitHub-branch implementation builds and passes all four Sites packaging tests.
+- The browser security policy blocked the final local preview capture, so a current desktop/mobile screenshot comparison and interactive visual QA were not completed.
+- The site owner explicitly chose **Publish now** after this limitation was disclosed. Post-deployment visual review remains required; the historical QA below applies to the earlier dark version only.
 
 ## Comparison target
 

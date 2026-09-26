@@ -10,6 +10,8 @@ Build app UI in `src/`. Keep `.openai/hosting.json`, `worker/index.js`, `scripts
 
 ## EcoXchange visual source of truth
 
+The current website positioning and design source of truth is `POSITIONING.md` and `design-reference-der-power-v2.png`. Their DER-first, light Geist direction supersedes the older dark Operating Field notes below. Keep the newer assessment fields and `/pilot` route in this deployed branch.
+
 - Selected concept: `design-reference.webp`, the unified Operating Field direction generated on 2026-09-25.
 - Use the dark Operating Layer visual system everywhere: blackened evergreen, mineral white, signal green, bold sans-serif display type, and restrained technical mono labels.
 - Use cinematic infrastructure photography for the homepage, Data Centers, and case-study storytelling.
