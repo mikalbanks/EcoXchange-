@@ -4,8 +4,6 @@ interface Env {
   ASSETS: Fetcher;
   TURNSTILE_SECRET?: string;
   HUBSPOT_ACCESS_TOKEN?: string;
-  HUBSPOT_PIPELINE_ID?: string;
-  HUBSPOT_DEAL_STAGE_ID?: string;
   HUBSPOT_MEETING_URL?: string;
 }
 
@@ -74,14 +72,33 @@ async function verifyTurnstile(token: string, request: Request, env: Env) {
       idempotency_key: crypto.randomUUID(),
     }),
   });
-  const result = await response.json<{ success?: boolean; action?: string }>();
-  return result.success === true && (!result.action || result.action === "site_assessment");
+  if (!response.ok) throw new Error(`Turnstile verification unavailable: ${response.status}`);
+  const result = await response.json<{ success?: boolean; action?: string; hostname?: string }>();
+  return result.success === true && result.action === "site_assessment" &&
+    ["www.ecoxchange.net", "ecoxchange.net"].includes(result.hostname || "");
 }
 
-async function upsertHubSpotContact(assessment: Assessment, env: Env) {
+function assessmentSummary(assessment: Assessment) {
+  return [
+    "EcoXchange Power Flexibility Assessment",
+    `Site location: ${assessment.location}`,
+    `Project stage: ${assessment.projectStage}`,
+    `Planned MW: ${assessment.plannedMw || "Not provided"}`,
+    `Energization target: ${assessment.energization || "Not provided"}`,
+    `Utility status: ${assessment.utilityStatus || "Not provided"}`,
+    `Onsite resources: ${assessment.resources || "Not provided"}`,
+    `Primary constraint: ${assessment.constraint}`,
+  ].join("\n");
+}
+
+function hubspotHeaders(env: Env) {
+  return { ...JSON_HEADERS, authorization: `Bearer ${env.HUBSPOT_ACCESS_TOKEN}` };
+}
+
+async function upsertHubSpotContact(assessment: Assessment, env: Env): Promise<string> {
   const response = await fetch("https://api.hubapi.com/crm/v3/objects/contacts/batch/upsert", {
     method: "POST",
-    headers: { ...JSON_HEADERS, authorization: `Bearer ${env.HUBSPOT_ACCESS_TOKEN}` },
+    headers: hubspotHeaders(env),
     body: JSON.stringify({
       inputs: [{
         id: assessment.email,
@@ -92,37 +109,51 @@ async function upsertHubSpotContact(assessment: Assessment, env: Env) {
           lastname: assessment.lastName,
           company: assessment.company,
           jobtitle: assessment.title,
-          city: assessment.location,
+          message: assessmentSummary(assessment),
         },
       }],
     }),
   });
   if (!response.ok) throw new Error(`HubSpot contact upsert failed: ${response.status}`);
+  const result = await response.json<{ results?: Array<{ id?: string }>; numErrors?: number }>();
+  const id = result.results?.[0]?.id;
+  if (!id || result.numErrors) throw new Error("HubSpot contact upsert did not complete");
+  return id;
 }
 
-async function createHubSpotDeal(assessment: Assessment, env: Env) {
-  if (!env.HUBSPOT_PIPELINE_ID || !env.HUBSPOT_DEAL_STAGE_ID) return;
-  const response = await fetch("https://api.hubapi.com/crm/v3/objects/deals", {
+async function findOrCreateHubSpotCompany(name: string, env: Env): Promise<string> {
+  const search = await fetch("https://api.hubapi.com/crm/v3/objects/companies/search", {
     method: "POST",
-    headers: { ...JSON_HEADERS, authorization: `Bearer ${env.HUBSPOT_ACCESS_TOKEN}` },
+    headers: hubspotHeaders(env),
     body: JSON.stringify({
-      properties: {
-        dealname: `${assessment.company} — ${assessment.location} flexibility assessment`,
-        pipeline: env.HUBSPOT_PIPELINE_ID,
-        dealstage: env.HUBSPOT_DEAL_STAGE_ID,
-        description: [
-          `Project stage: ${assessment.projectStage}`,
-          `Planned MW: ${assessment.plannedMw || "Not provided"}`,
-          `Energization target: ${assessment.energization || "Not provided"}`,
-          `Utility status: ${assessment.utilityStatus || "Not provided"}`,
-          `Onsite resources: ${assessment.resources || "Not provided"}`,
-          `Primary constraint: ${assessment.constraint}`,
-          `Contact: ${assessment.firstName} ${assessment.lastName} <${assessment.email}>`,
-        ].join("\n"),
-      },
+      filterGroups: [{ filters: [{ propertyName: "name", operator: "EQ", value: name }] }],
+      properties: ["name"],
+      limit: 3,
     }),
   });
-  if (!response.ok) throw new Error(`HubSpot deal creation failed: ${response.status}`);
+  if (!search.ok) throw new Error(`HubSpot company search failed: ${search.status}`);
+  const matches = await search.json<{ results?: Array<{ id: string; properties?: { name?: string } }> }>();
+  const exact = (matches.results || []).filter(item => item.properties?.name?.toLowerCase() === name.toLowerCase());
+  if (exact.length > 1) throw new Error("HubSpot company match is ambiguous");
+  if (exact.length === 1) return exact[0].id;
+
+  const response = await fetch("https://api.hubapi.com/crm/v3/objects/companies", {
+    method: "POST",
+    headers: hubspotHeaders(env),
+    body: JSON.stringify({ properties: { name } }),
+  });
+  if (!response.ok) throw new Error(`HubSpot company create failed: ${response.status}`);
+  const company = await response.json<{ id?: string }>();
+  if (!company.id) throw new Error("HubSpot company create did not complete");
+  return company.id;
+}
+
+async function associateContactCompany(contactId: string, companyId: string, env: Env) {
+  const response = await fetch(`https://api.hubapi.com/crm/v4/objects/contacts/${encodeURIComponent(contactId)}/associations/default/companies/${encodeURIComponent(companyId)}`, {
+    method: "PUT",
+    headers: hubspotHeaders(env),
+  });
+  if (!response.ok) throw new Error(`HubSpot association failed: ${response.status}`);
 }
 
 async function handleAssessment(request: Request, env: Env) {
@@ -136,9 +167,10 @@ async function handleAssessment(request: Request, env: Env) {
   }
   if (!env.TURNSTILE_SECRET || !env.HUBSPOT_ACCESS_TOKEN) return json({ error: "Online assessment is not configured" }, 503);
   if (!(await verifyTurnstile(assessment.turnstileToken, request, env))) return json({ error: "Human verification failed" }, 403);
-  await upsertHubSpotContact(assessment, env);
-  await createHubSpotDeal(assessment, env);
-  console.log(JSON.stringify({ event: "assessment_completed", company: assessment.company, projectStage: assessment.projectStage, timestamp: new Date().toISOString() }));
+  const contactId = await upsertHubSpotContact(assessment, env);
+  const companyId = await findOrCreateHubSpotCompany(assessment.company, env);
+  await associateContactCompany(contactId, companyId, env);
+  console.log(JSON.stringify({ event: "assessment_completed", timestamp: new Date().toISOString() }));
   return json({ ok: true, meetingUrl: env.HUBSPOT_MEETING_URL || "/contact" });
 }
 
