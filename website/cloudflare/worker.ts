@@ -134,8 +134,8 @@ async function handleAssessment(request: Request, env: Env) {
   if (!assessment.firstName || !assessment.lastName || !validEmail || !assessment.company || !assessment.location || !assessment.projectStage || !assessment.constraint) {
     return json({ error: "Missing or invalid required fields" }, 400);
   }
+  if (!env.TURNSTILE_SECRET || !env.HUBSPOT_ACCESS_TOKEN) return json({ error: "Online assessment is not configured" }, 503);
   if (!(await verifyTurnstile(assessment.turnstileToken, request, env))) return json({ error: "Human verification failed" }, 403);
-  if (!env.HUBSPOT_ACCESS_TOKEN) return json({ error: "CRM is not configured" }, 503);
   await upsertHubSpotContact(assessment, env);
   await createHubSpotDeal(assessment, env);
   console.log(JSON.stringify({ event: "assessment_completed", company: assessment.company, projectStage: assessment.projectStage, timestamp: new Date().toISOString() }));
