@@ -14,9 +14,10 @@ const LEGACY_REDIRECTS: Record<string, string> = {
   "/bankability": "/financeability",
   "/method": "/platform",
   "/invest": "/financeability",
+  "/power-flexibility": "/data-centers",
 };
 
-const PUBLIC_ROUTES = new Set(["/", "/data-centers", "/partners", "/platform", "/financeability", "/case-studies", "/insights", "/about", "/faq", "/assessment", "/contact", "/privacy", "/terms", "/accessibility"]);
+const PUBLIC_ROUTES = new Set(["/", "/data-centers", "/partners", "/platform", "/financeability", "/pilot", "/case-studies", "/insights", "/about", "/faq", "/assessment", "/contact", "/privacy", "/terms", "/accessibility"]);
 
 type Assessment = {
   firstName: string;
@@ -27,8 +28,13 @@ type Assessment = {
   location: string;
   projectStage: string;
   plannedMw: string;
+  securedMw: string;
   energization: string;
+  powerArrival: string;
   utilityStatus: string;
+  gapHours: string;
+  reliability: string;
+  flexibleLoad: string;
   resources: string;
   constraint: string;
   turnstileToken: string;
@@ -52,8 +58,13 @@ function normalizeAssessment(body: Record<string, unknown>): Assessment {
     location: clean(body.location, 180),
     projectStage: clean(body.projectStage, 80),
     plannedMw: clean(body.plannedMw, 30),
+    securedMw: clean(body.securedMw, 30),
     energization: clean(body.energization, 20),
+    powerArrival: clean(body.powerArrival, 20),
     utilityStatus: clean(body.utilityStatus, 120),
+    gapHours: clean(body.gapHours, 30),
+    reliability: clean(body.reliability, 120),
+    flexibleLoad: clean(body.flexibleLoad, 1500),
     resources: clean(body.resources, 1500),
     constraint: clean(body.constraint, 1500),
     turnstileToken: clean(body.turnstileToken, 2048),
@@ -80,12 +91,17 @@ async function verifyTurnstile(token: string, request: Request, env: Env) {
 
 function assessmentSummary(assessment: Assessment) {
   return [
-    "EcoXchange Power Flexibility Assessment",
+    "EcoXchange Power-Gap Assessment",
     `Site location: ${assessment.location}`,
     `Project stage: ${assessment.projectStage}`,
-    `Planned MW: ${assessment.plannedMw || "Not provided"}`,
-    `Energization target: ${assessment.energization || "Not provided"}`,
-    `Utility status: ${assessment.utilityStatus || "Not provided"}`,
+    `Required firm load at first ramp: ${assessment.plannedMw || "Not provided"} MW`,
+    `Firm utility MW available by ramp: ${assessment.securedMw || "Not provided"}`,
+    `First ramp / occupancy: ${assessment.energization || "Not provided"}`,
+    `Next firm power delivery: ${assessment.powerArrival || "Not provided"}`,
+    `Utility / service status: ${assessment.utilityStatus || "Not provided"}`,
+    `Bridge requirement hours/day: ${assessment.gapHours || "Not provided"}`,
+    `Reliability requirement: ${assessment.reliability || "Not provided"}`,
+    `Flexible / shiftable load: ${assessment.flexibleLoad || "Not provided"}`,
     `Onsite resources: ${assessment.resources || "Not provided"}`,
     `Primary constraint: ${assessment.constraint}`,
   ].join("\n");

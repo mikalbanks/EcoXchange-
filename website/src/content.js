@@ -1,34 +1,87 @@
 export const pageMeta = {
-  "/": ["EcoXchange — Make every usable megawatt visible", "Power-flexibility readiness and distributed-energy infrastructure for data centers."],
-  "/data-centers": ["Data Centers — EcoXchange", "Understand the flexible power, onsite resources, and operating constraints at a data-center site."],
-  "/partners": ["DER & Project Partners — EcoXchange", "Bring distributed-energy assets into a measurable data-center power network."],
-  "/platform": ["Platform — EcoXchange", "From site readiness through telemetry, verification, aggregation, and future orchestration."],
-  "/financeability": ["Project Finance Readiness — EcoXchange", "Make capital requirements and financing constraints visible before deployment."],
-  "/case-studies": ["Field Notes — EcoXchange", "Illustrative operating patterns for data-center power flexibility."],
-  "/insights": ["Insights — EcoXchange", "Clear thinking on data-center power, distributed resources, telemetry, and verification."],
-  "/about": ["About — EcoXchange", "Building the operating layer that makes flexible power measurable."],
-  "/faq": ["FAQ — EcoXchange", "Answers about power-flexibility readiness, distributed resources, and VPP orchestration."],
-  "/assessment": ["Power Flexibility Assessment — EcoXchange", "Start with one real site and establish what usable capacity exists."],
-  "/contact": ["Contact — EcoXchange", "Discuss a data-center power constraint or distributed-energy asset."],
+  "/": ["EcoXchange — Distributed Power Infrastructure for Data Centers", "Identify the real MW/time power gap, match dependable distributed energy, and build toward orchestrated virtual capacity."],
+  "/data-centers": ["Data-Center Power Gaps — EcoXchange", "Quantify required firm MW, effective firm supply, ramp dates, and the resulting bridge requirement."],
+  "/partners": ["DER Partners — EcoXchange", "Bring dependable, contractable generation, storage, flexible load, and distributed renewables to real data-center power gaps."],
+  "/platform": ["Platform — EcoXchange", "From power-gap discovery and technical audit through DER matching, pilot, and commercial orchestration."],
+  "/financeability": ["DER Deployment & Financing — EcoXchange", "Coordinate financing when capital is required to get screened distributed-energy capacity into service."],
+  "/pilot": ["90-Day DER Pilot — EcoXchange", "Validate telemetry, control logic, operating fit, and expansion economics on a baseline 2 MW scope."],
+  "/case-studies": ["Field Patterns — EcoXchange", "Illustrative data-center power-gap patterns and the readiness work they require."],
+  "/insights": ["Insights — EcoXchange", "Clear thinking on data-center power gaps, distributed resources, telemetry, and orchestration."],
+  "/about": ["About — EcoXchange", "EcoXchange is building distributed power infrastructure for data centers."],
+  "/faq": ["FAQ — EcoXchange", "Answers about power gaps, dependable DER capacity, pilots, financing, and market participation."],
+  "/assessment": ["Power-Gap Assessment — EcoXchange", "Share the MW, timing, utility, and site constraints that define a real data-center power gap."],
+  "/contact": ["Contact — EcoXchange", "Discuss a data-center power gap, distributed-energy asset, or deployment partnership."],
 };
 
 export const legacyRoutes = {
   "/market": "/platform", "/develop": "/partners", "/verification": "/platform",
   "/method": "/platform", "/bankability": "/financeability", "/invest": "/financeability",
+  "/power-flexibility": "/data-centers",
 };
 
 export const pageContent = {
-  "/data-centers": { eyebrow: "For data-center operators and developers", title: "Know how much power flexibility your site can use.", summary: "EcoXchange separates utility service, contracted obligations, critical load, flexible compute, onsite resources, and market constraints—before expansion plans depend on capacity that is not real.", image: "/assets/ecoxchange-campus-aerial.webp", action: ["Start a site assessment", "/assessment"], stats: [["Flexible MW", "Bounded by workload and operating requirements"], ["DER capacity", "Storage and generation matched to site need"], ["Market pathway", "Utility, tariff, and partner rules made visible"]], sections: [["Start with the constraint", "A structured review maps planned and contracted MW, energization limits, critical-load boundaries, workload flexibility, onsite resources, and tariff context."], ["Return an operating picture", "The output identifies potential flexible capacity, firm boundaries, distributed-resource options, telemetry requirements, and the next utility or technical action."], ["Build from one site", "As verified resources grow, the same evidence model can support aggregation and coordinated operation through qualified partners."]] },
-  "/partners": { eyebrow: "For DER, storage, generation, and project partners", title: "Bring energy assets into a data-center power network.", summary: "Evaluate whether a distributed resource can support a real data-center need, what it takes to deploy, and what operating evidence will be required.", image: "/assets/ecoxchange-switchgear-hero.webp", action: ["Discuss an energy asset", "/contact"], stats: [["Finance", "Surface capital needs and constraints"], ["Connect", "Define the telemetry that proves capacity"], ["Match", "Align asset characteristics to site demand"]], sections: [["Identify the asset", "Start with storage, generation, renewable energy, or another distributed resource tied to a credible site need."], ["Assess financeability", "Model project economics, indicative debt capacity, sponsor-equity requirements, and the capital needed to bring the resource online."], ["Verify the operating fit", "Confirm MW, duration, response characteristics, interconnection context, and the measurements required for performance verification."]] },
-  "/platform": { eyebrow: "How EcoXchange works", title: "Turn fragmented power resources into measurable capacity.", summary: "The operating model joins data-center load, distributed-energy assets, and the evidence required to deploy, measure, and eventually coordinate them.", image: "/assets/ecoxchange-switchgear-hero.webp", action: ["Explore the workflow", "#workflow"], stats: [["Load", "Critical and flexible MW"], ["Assets", "Storage, generation, and DERs"], ["Evidence", "Telemetry, availability, and performance"]], sections: [["Identify", "Map the load, utility service, distributed resources, and operating constraints."], ["Finance", "Assess the capital required to deploy storage, generation, or other resources where needed."], ["Connect & verify", "Integrate operating data and measure availability, response, duration, and performance with source provenance."], ["Aggregate & orchestrate", "Combine qualified capacity and build toward coordinated dispatch through the applicable utility or market-partner pathway."]] },
-  "/financeability": { eyebrow: "Project finance readiness", title: "Make the capital requirement visible before deployment.", summary: "Estimate indicative debt capacity, sponsor-equity requirements, tax-credit value, and the financing constraints that shape a distributed-energy project.", image: "/assets/ecoxchange-campus-aerial.webp", action: ["Discuss a project", "/contact"], stats: [["Cash flow", "Debt sized to project economics"], ["Capital gap", "Sponsor equity shown after permanent sources"], ["Scenarios", "Assumptions and constraints compared clearly"]], sections: [["Debt sized to cash flow", "Compare DSCR-sized debt with the applicable loan-to-cost ceiling rather than relying on a generic leverage percentage."], ["Sponsor equity made explicit", "Keep permanent debt and modeled tax-credit proceeds separate before calculating remaining sponsor capital."], ["Explainable analysis", "Preserve the scenario, assumptions, binding constraints, calculation version, and next financing action for review."]] },
+  "/data-centers": {
+    eyebrow: "For data-center operators and developers",
+    title: "Find the MW/time gap before it blocks your ramp.",
+    summary: "EcoXchange compares the firm load you need at each ramp milestone with the power that will actually be available by that same date, then evaluates distributed-energy options that can bridge or reduce the shortfall.",
+    image: "/assets/ecoxchange-campus-aerial.webp",
+    action: ["Assess your power gap", "/assessment"],
+    stats: [["Required firm load", "MW needed at the customer ramp milestone"], ["Effective firm supply", "Capacity physically available by that same date"], ["Bridge requirement", "The remaining MW/time shortfall to solve"]],
+    sections: [["Define the ramp", "Map required MW by phase, first occupancy, later expansion milestones, critical load, flexible load, and the reliability standard."], ["Count only firm supply", "Separate physically available utility and onsite capacity from requested, queued, studied, or announced MW."], ["Convert MW into a duty profile", "Define when the shortfall begins, how long it lasts, hours per day, response time, redundancy, recharge or fuel needs, and the exit date."], ["Engineer the bridge", "Match the duty profile with dependable generation, storage, flexible demand, and distributed renewables without double-counting capacity."]]
+  },
+  "/partners": {
+    eyebrow: "For DER, generation, storage, controls, and project partners",
+    title: "Bring dependable capacity to real data-center power gaps.",
+    summary: "EcoXchange builds demand around verified enterprise MW/time constraints and needs large, controllable, contractable resources that can be integrated into credible customer solutions.",
+    image: "/assets/ecoxchange-switchgear-hero.webp",
+    action: ["Discuss a DER resource", "/contact"],
+    stats: [["Effective firm MW", "What the resource can actually deliver in the constrained interval"], ["Contractable capacity", "Clear commercial and dispatch rights"], ["Integrable resource", "Telemetry, controls, interconnection, and operating fit"]],
+    sections: [["Anchor resource first", "For material gaps, prioritize one or a small number of large, controllable resources before mass-origination of smaller DERs."], ["Prove the operating fit", "Show usable MW and MWh, response time, fuel or recharge needs, derates, maintenance exposure, and redundancy."], ["Define rights and interfaces", "Make ownership, dispatch authority, export limits, interconnection, telemetry, cybersecurity, and market-access responsibilities explicit."], ["Coordinate deployment", "Bring integration and financing partners into the workflow when they are required to get qualified capacity into service."]]
+  },
+  "/platform": {
+    eyebrow: "The EcoXchange operating model",
+    title: "From power gap to orchestrated distributed capacity.",
+    summary: "The platform turns a grid-constrained data-center load into a screened DER portfolio, then preserves the telemetry and evidence needed to operate, verify, expand, and eventually orchestrate that capacity.",
+    image: "/assets/ecoxchange-switchgear-hero.webp",
+    action: ["Start a power-gap assessment", "/assessment"],
+    stats: [["MW/time gap", "Required load minus effective firm supply"], ["DER stack", "Generation, storage, flexible demand, and distributed renewables"], ["Evidence layer", "Telemetry, availability, response, duration, and verified value"]],
+    sections: [["Power-Gap Discovery", "Identify serious data-center projects through utility territories, large-load and interconnection signals, public records, and direct operator intelligence."], ["Technical / Energy Audit", "Confirm required MW, secured utility MW, power-arrival date, ramp date, gap duration, load shape, reliability, site constraints, and economics."], ["Demand-to-Supply Matching", "Engineer a physically credible DER stack using effective firm capacity rather than nameplate capacity."], ["DER Partner and Financing Assembly", "Assign technology, integration, market-access, and capital partners to the proposed stack where required."], ["90-Day DER Pilot", "Validate telemetry, control logic, operating fit, verified value, and the expansion case on a bounded scope."], ["Commercial DER Orchestration", "Expand into larger MW fleets, optimize dispatch and flexible load, measure verified value, and build toward portfolio-level VPP orchestration through appropriate partners."]]
+  },
+  "/financeability": {
+    eyebrow: "DER deployment and capital coordination",
+    title: "Use capital to get qualified capacity into service.",
+    summary: "Financing is an enabling layer in the deployment workflow. EcoXchange can coordinate capital options when a screened DER solution needs equipment, project, infrastructure, strategic, or customer-funded capital to become deployable.",
+    image: "/assets/ecoxchange-campus-aerial.webp",
+    action: ["Discuss a deployment", "/contact"],
+    stats: [["Physical need first", "Capital follows a defined MW/time requirement"], ["Lawful structure", "Financing roles stay separate from regulated activities"], ["Deployment evidence", "Technical scope, economics, and operating assumptions remain reviewable"]],
+    sections: [["Start with the power solution", "Define the customer requirement and technically screened resource stack before turning financing into the product story."], ["Identify the capital requirement", "Separate customer-funded equipment, project capital, infrastructure ownership, strategic capital, and other lawful structures."], ["Coordinate the right partners", "Bring capital providers into the transaction when financing is required to get assets installed and operating."], ["Preserve role boundaries", "EcoXchange does not represent itself as a lender, broker-dealer, securities underwriter, investment adviser, or regulated market operator without the required authorization or partner."]]
+  },
+  "/pilot": {
+    eyebrow: "90-day DER pilot",
+    title: "Prove the operating model on 2 MW before scaling the fleet.",
+    summary: "The standard paid pilot validates telemetry and data access, establishes a baseline, tests power-gap and optimization logic, integrates relevant DER and controls, measures operating value, and defines the expansion case.",
+    image: "/assets/ecoxchange-campus-aerial.webp",
+    action: ["Start the assessment", "/assessment"],
+    stats: [["90 days", "Standard pilot term"], ["2 MW", "Baseline controlled capacity"], ["$35,000", "Current standard pilot fee"]],
+    sections: [["Days 0–30 — Baseline and data readiness", "Normalize load, utility, tariff, DER, telemetry, control, ownership, and operating-boundary data into one baseline and pilot control plan."], ["Days 31–60 — Optimization and controlled testing", "Run the selected strategy in live-control, shadow, simulation, or partner-dispatched mode based on permissions and readiness."], ["Days 61–90 — Verification and rollout", "Reconcile measured versus modeled performance, identify constraints and value, and produce the commercial operating design."], ["Conversion gate", "Expand when the baseline is accepted, the strategy is operationally feasible, economics justify deployment, at least 10 MW is addressable, required partners are available, and the rollout plan is agreed."]]
+  },
 };
 
 export const insightItems = [
-  { type: "Field note", title: "Why a megawatt is not a megawatt", excerpt: "Location, response time, duration, dispatch rights, tariff treatment, and evidence determine whether capacity is useful." },
-  { type: "Perspective", title: "Readiness before orchestration", excerpt: "The first product is a defensible operating picture—not a premature claim that a virtual power plant already exists." },
-  { type: "Technical brief", title: "The evidence layer for flexible power", excerpt: "Availability, production, response, and duration become more valuable when their sources remain traceable." },
+  { type: "Field note", title: "A megawatt is not a power gap", excerpt: "A campus announcement, queue position, or requested utility allocation becomes actionable only after required load and physically available firm MW are compared on the same date." },
+  { type: "Technical brief", title: "Why MW without MWh is incomplete", excerpt: "Storage sizing starts with power, duration, recharge, state-of-charge reserve, efficiency, and the actual duty cycle—not nameplate MW alone." },
+  { type: "Operating note", title: "Anchor resources before mass aggregation", excerpt: "Large, controllable, nearby, contractable resources can carry the backbone of a bridge while smaller DERs fill remaining gaps." },
+  { type: "Perspective", title: "Readiness before orchestration", excerpt: "Telemetry, rights, interconnection, utility rules, and verified performance come before credible portfolio dispatch." },
 ];
 
-export const faqs = [["What is EcoXchange building?", "Distributed power infrastructure that helps data centers quantify flexible load, evaluate onsite resources, connect operating data, and verify usable capacity."], ["Is EcoXchange already a virtual power plant?", "No. EcoXchange is building toward aggregation and orchestration. The current starting point is site readiness, evidence, and a qualified operating pathway."], ["Who is the best fit today?", "AI/HPC, colocation, and data-center development sites where grid timing, contracted MW, or power infrastructure limits deployment or growth."], ["What inputs are needed for an assessment?", "Planned MW, utility context, load profile, critical-load boundaries, target energization date, and existing or planned onsite resources."], ["Does EcoXchange sell electricity?", "Not through this website. The applicable utility, retail, wholesale, and market roles depend on jurisdiction and may be performed through qualified partners."], ["What role does verification play?", "Verification keeps availability, production, response, duration, and performance tied to source-labeled operating evidence."]];
-
+export const faqs = [
+  ["What is a data-center power gap?", "It is the MW/time difference between the firm load a site needs at a specific ramp milestone and the effective firm supply physically available by that same date. The gap is incomplete until duration, response, reliability, recharge or fuel, and exit timing are defined."],
+  ["What inputs are needed for an assessment?", "Start with required MW, firm utility MW actually secured, power-arrival timing, ramp or occupancy timing, utility status, known load flexibility, onsite resources, reliability requirements, and the primary constraint. Unknowns can be identified during the audit."],
+  ["What resources can bridge or reduce a gap?", "Depending on the duty profile, the stack can include dispatchable generation or fuel cells, battery storage, flexible demand, distributed solar or wind with appropriate firming, and other contractable DER. EcoXchange does not treat intermittent nameplate MW as firm capacity by default."],
+  ["Is every megawatt of DER counted as firm capacity?", "No. Effective firm MW depends on the actual constrained interval, usable MWh, fuel or recharge, availability, derates, maintenance, redundancy, dispatch rights, and operating restrictions."],
+  ["What is the 90-day DER pilot?", "The standard pilot is a paid, bounded operating engagement designed to validate telemetry, establish a baseline, test control or optimization logic, measure value, and determine whether the same architecture can scale into a larger commercial fleet."],
+  ["Does EcoXchange finance DER deployments?", "EcoXchange can coordinate financing when capital is required to get a screened DER solution into service. Capital formation is an enabling layer, not the primary customer proposition, and EcoXchange does not claim regulated financing roles it does not hold."],
+  ["Does EcoXchange directly participate in wholesale power markets?", "Not by default. Demand response, grid-service registration, bidding, dispatch, and settlement can require an authorized QSE, scheduling coordinator, CSP, aggregator, utility, or other qualified market-access partner depending on jurisdiction."],
+  ["Does EcoXchange guarantee power, savings, interconnection, or market revenue?", "No. The platform is decision support and operating infrastructure. Power availability, savings, interconnection, equipment performance, financing, and market revenue depend on customer, utility, technical, contractual, and regulatory conditions."],
+  ["Is EcoXchange already a virtual power plant?", "EcoXchange is building toward portfolio-level orchestration. The current sequence is power-gap discovery, technical audit, DER matching, partner and financing assembly, pilot, commercial orchestration, and then VPP or grid-service expansion where legally and operationally eligible."],
+];
