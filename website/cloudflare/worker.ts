@@ -94,7 +94,7 @@ function assessmentSummary(assessment: Assessment) {
     "EcoXchange Power-Gap Assessment",
     `Site location: ${assessment.location}`,
     `Project stage: ${assessment.projectStage}`,
-    `Required firm load at first ramp: ${assessment.plannedMw || "Not provided"} MW`,
+    `Required firm load at first ramp: ${assessment.plannedMw ? assessment.plannedMw + " MW" : "Not provided"}`,
     `Firm utility MW available by ramp: ${assessment.securedMw || "Not provided"}`,
     `First ramp / occupancy: ${assessment.energization || "Not provided"}`,
     `Next firm power delivery: ${assessment.powerArrival || "Not provided"}`,
