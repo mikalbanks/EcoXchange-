@@ -1,19 +1,9 @@
-export interface PublicNavLink {
-  href: string;
-  label: string;
-  testId: string;
-  external?: boolean;
-}
-
+export interface PublicNavLink { href: string; label: string; testId: string; external?: boolean; }
 export const PUBLIC_NAV_LINKS: readonly PublicNavLink[] = [
-  { href: "/market", label: "For Data Centers", testId: "link-data-centers" },
-  { href: "/develop", label: "DER & Project Partners", testId: "link-der-partners" },
-  { href: "/verification", label: "How It Works", testId: "link-platform" },
+  { href: "/#solution", label: "Solution", testId: "link-solution" },
+  { href: "/#how-it-works", label: "How It Works", testId: "link-how-it-works" },
+  { href: "/#partners", label: "Partners", testId: "link-partners" },
+  { href: "/der-network", label: "DER Network", testId: "link-der-network" },
   { href: "/faq", label: "FAQ", testId: "link-faq" },
 ] as const;
-
-export const REQUEST_ACCESS = {
-  href: "/market#readiness",
-  label: "Assess a Site →",
-  testId: "link-assess-site",
-} as const;
+export const REQUEST_ACCESS = { href: "mailto:contact@ecoxchange.net?subject=Data-center%20power%20gap", label: "Discuss a Power Gap →", testId: "link-discuss-power-gap" } as const;
