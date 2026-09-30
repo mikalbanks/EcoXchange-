@@ -20,7 +20,7 @@ export default function LandingPage() {
   return <div className="landing-page">
     <header><div className="map-ticks map-ticks-top" aria-hidden="true" /><div className="header-inner">
       <Link href="/" className="brand"><span className="brand-name">EcoXchange</span><span className="brand-tag">Distributed power for data centers</span></Link>
-      <nav>{PUBLIC_NAV_LINKS.map(link => <Link key={link.href} href={link.href} data-testid={link.testId}>{link.label}</Link>)}<a href={REQUEST_ACCESS.href} className="nav-cta" data-testid={REQUEST_ACCESS.testId}>{REQUEST_ACCESS.label}</a></nav>
+      <nav>{PUBLIC_NAV_LINKS.map(link => <Link key={link.href} href={link.href} data-testid={link.testId}>{link.label}</Link>)}<Link href={REQUEST_ACCESS.href} className="nav-cta" data-testid={REQUEST_ACCESS.testId}>{REQUEST_ACCESS.label}</Link></nav>
     </div></header>
 
     <main>
@@ -29,7 +29,7 @@ export default function LandingPage() {
           <div className="label hero-eyebrow">Power-constrained data centers · Distributed generation · Storage · Controls</div>
           <h1 className="hero-headline">Make constrained sites<br/><em>power-ready.</em></h1>
           <p className="hero-sub"><strong>{PUBLIC_POSITIONING}</strong></p>
-          <div className="hero-actions"><a href={REQUEST_ACCESS.href} className="btn btn-primary">Discuss a Power Gap</a><Link href="/der-network" className="btn btn-outline">Join the DER Network</Link></div>
+          <div className="hero-actions"><Link href={REQUEST_ACCESS.href} className="btn btn-primary">Start a Power Gap Assessment</Link><Link href="/der-network" className="btn btn-outline">Join the DER Network</Link></div>
         </div>
         <div className="diagram-frame">
           <div className="label diagram-label">The power-gap equation</div>
@@ -61,7 +61,7 @@ export default function LandingPage() {
         <div className="problem-cards">{PARTNERS.map(([title,body])=><div className="problem-card" key={title}><div className="label">{title}</div><h3>{body}</h3>{title==="DER owners"&&<Link href="/der-network" className="btn btn-outline">Join early access →</Link>}</div>)}</div>
       </section>
 
-      <section className="access"><div className="access-inner"><div className="label">Data-center operators · developers · power partners</div><h2 className="access-headline">Start with one real MW/time constraint.</h2><p>Share the site, required firm MW, target energization or ramp date, and the capacity already expected to be available. We will determine the missing fact before proposing a solution.</p><a href={REQUEST_ACCESS.href} className="btn btn-lime">Discuss a Power Gap</a><p className="access-legal">EcoXchange is not a utility and does not guarantee interconnection, energization, market access, savings, or DER program eligibility. Site-specific engineering, utility requirements, tariffs, permits, market rules, and contracts govern execution.</p></div></section>
+      <section className="access"><div className="access-inner"><div className="label">Data-center operators · developers · power partners</div><h2 className="access-headline">Start with one real MW/time constraint.</h2><p>Share the site, required firm MW, target energization or ramp date, and the capacity already expected to be available. We will determine the missing fact before proposing a solution.</p><Link href={REQUEST_ACCESS.href} className="btn btn-lime">Have a Power Gap?</Link><p className="access-legal">EcoXchange is not a utility and does not guarantee interconnection, energization, market access, savings, or DER program eligibility. Site-specific engineering, utility requirements, tariffs, permits, market rules, and contracts govern execution.</p></div></section>
     </main>
     <footer><div className="footer-inner"><span className="footer-brand">EcoXchange</span><span className="footer-meta">Distributed power for data centers · © MMXXVI</span><Link href="/privacy" className="footer-meta">Privacy</Link></div></footer>
   </div>;

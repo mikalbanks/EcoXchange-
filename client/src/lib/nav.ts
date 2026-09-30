@@ -6,4 +6,4 @@ export const PUBLIC_NAV_LINKS: readonly PublicNavLink[] = [
   { href: "/der-network", label: "DER Network", testId: "link-der-network" },
   { href: "/faq", label: "FAQ", testId: "link-faq" },
 ] as const;
-export const REQUEST_ACCESS = { href: "mailto:contact@ecoxchange.net?subject=Data-center%20power%20gap", label: "Discuss a Power Gap →", testId: "link-discuss-power-gap" } as const;
+export const REQUEST_ACCESS = { href: "/power-gap", label: "Have a Power Gap? →", testId: "link-discuss-power-gap" } as const;
