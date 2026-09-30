@@ -33,8 +33,8 @@ export const powerGapIntakes = pgTable(
     isoRto: text("iso_rto"),
     requiredFirmMw: decimal("required_firm_mw", { precision: 12, scale: 3 }).notNull(),
     firmSupplyMw: decimal("firm_supply_mw", { precision: 12, scale: 3 }),
-    targetPowerDate: text("target_power_date").notNull(),
-    permanentPowerDate: text("permanent_power_date"),
+    targetPowerTiming: text("target_power_timing").notNull(),
+    permanentPowerTiming: text("permanent_power_timing"),
     constraintType: text("constraint_type").notNull(),
     bridgeDuration: text("bridge_duration"),
     existingResources: jsonb("existing_resources").$type<string[]>().notNull().default(sql`'[]'::jsonb`),
@@ -51,9 +51,9 @@ export const powerGapIntakes = pgTable(
   }),
 );
 
-const optionalDate = z.preprocess(
+const optionalTiming = z.preprocess(
   (value) => (value === "" || value === null || value === undefined ? undefined : value),
-  z.string().regex(/^\d{4}-\d{2}-\d{2}$/, "Use YYYY-MM-DD").optional(),
+  z.string().trim().min(2).max(80).optional(),
 );
 
 const optionalMw = z.preprocess(
@@ -72,8 +72,8 @@ export const powerGapIntakeRequestSchema = z.object({
   isoRto: z.string().trim().max(80).optional().default(""),
   requiredFirmMw: z.coerce.number().positive().max(10_000),
   firmSupplyMw: optionalMw,
-  targetPowerDate: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, "Use YYYY-MM-DD"),
-  permanentPowerDate: optionalDate,
+  targetPowerTiming: z.string().trim().min(2).max(80),
+  permanentPowerTiming: optionalTiming,
   constraintType: z.enum([
     PowerGapConstraintType.CAPACITY_SHORTFALL,
     PowerGapConstraintType.TIMING_MISMATCH,

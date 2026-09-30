@@ -27,7 +27,7 @@ export default function PowerGapPage() {
     const form = event.currentTarget;
     const data = new FormData(form);
     const firmSupplyRaw = String(data.get("firmSupplyMw") || "").trim();
-    const permanentPowerDate = String(data.get("permanentPowerDate") || "").trim();
+    const permanentPowerTiming = String(data.get("permanentPowerTiming") || "").trim();
 
     try {
       const response = await apiRequest("POST", "/api/public/power-gap-intakes", {
@@ -41,8 +41,8 @@ export default function PowerGapPage() {
         isoRto: String(data.get("isoRto") || ""),
         requiredFirmMw: Number(data.get("requiredFirmMw")),
         firmSupplyMw: firmSupplyRaw ? Number(firmSupplyRaw) : undefined,
-        targetPowerDate: String(data.get("targetPowerDate") || ""),
-        permanentPowerDate: permanentPowerDate || undefined,
+        targetPowerTiming: String(data.get("targetPowerTiming") || ""),
+        permanentPowerTiming: permanentPowerTiming || undefined,
         constraintType: String(data.get("constraintType") || ""),
         bridgeDuration: String(data.get("bridgeDuration") || ""),
         existingResources: data.getAll("existingResources").map(String),
@@ -140,8 +140,8 @@ export default function PowerGapPage() {
               </label>
               <label>Required firm load (MW)<input type="number" name="requiredFirmMw" min="0.1" max="10000" step="0.1" required /></label>
               <label>Firm / usable supply by that date (MW)<input type="number" name="firmSupplyMw" min="0" max="10000" step="0.1" placeholder="Leave blank if unknown" /></label>
-              <label>Target power / ramp date<input type="date" name="targetPowerDate" required /></label>
-              <label>Expected full permanent-power date<input type="date" name="permanentPowerDate" /></label>
+              <label>Target power / ramp timing<input name="targetPowerTiming" placeholder="e.g. Oct 2028, Q4 2028, or commissioning phase 1" required /></label>
+              <label>Expected full permanent-power timing<input name="permanentPowerTiming" placeholder="e.g. H1 2029 or unknown" /></label>
 
               <div className="form-section-label span-2">Constraint and duty</div>
               <label>What best describes the issue?

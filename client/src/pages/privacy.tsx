@@ -18,7 +18,7 @@ export default function PrivacyPolicy() {
             <Shield className="h-8 w-8 text-primary" />
             <h1 className="text-3xl font-bold" data-testid="text-page-title">Privacy Policy</h1>
           </div>
-          <p className="text-muted-foreground" data-testid="text-effective-date">Effective Date: March 6, 2026</p>
+          <p className="text-muted-foreground" data-testid="text-effective-date">Effective Date: September 29, 2026</p>
         </div>
 
         <div className="space-y-6">
@@ -51,7 +51,7 @@ export default function PrivacyPolicy() {
                 <li><span className="text-foreground">Accredited Investor Verification:</span> Financial statements, tax returns, income documentation, net worth information, or professional certifications as required under SEC Regulation D 506(c).</li>
                 <li><span className="text-foreground">Investment Information:</span> Investment commitments, preferences, transaction history, and related financial data.</li>
                 <li><span className="text-foreground">Issuer Information:</span> Project details, corporate documents, financial models, power purchase agreements, and other materials submitted through the issuer portal.</li>
-                <li><span className="text-foreground">Communications:</span> Messages, inquiries, and correspondence sent through the Platform.</li>
+                <li><span className="text-foreground">Business and Power-Gap Inquiries:</span> Contact name, work email, company, role, site or project name, site location, electric utility or market, required and available power information, target timing, existing onsite or flexible resources, reliability requirements, and other details you choose to submit when asking EcoXchange to evaluate a data-center power constraint.</li>\n                <li><span className="text-foreground">Communications:</span> Messages, inquiries, and correspondence sent through the Platform.</li>
               </ul>
 
               <p className="font-semibold text-foreground">B. Information Collected Automatically</p>
@@ -82,7 +82,7 @@ export default function PrivacyPolicy() {
                 <li>Process investment commitments and manage security token issuance.</li>
                 <li>Comply with AML, KYC, and other regulatory obligations under the Securities Act of 1933, the Securities Exchange Act of 1934, and applicable state laws.</li>
                 <li>Calculate and distribute yield payments to investors based on energy production data.</li>
-                <li>Communicate with you regarding your account, investments, distributions, and platform updates.</li>
+                <li>Communicate with you regarding your account, investments, distributions, platform updates, business inquiries, and requested power-gap assessments.</li>\n                <li>Evaluate data-center power timing, capacity, reliability, flexibility, and potential distributed-power solution pathways when you submit a power-gap inquiry.</li>
                 <li>Detect, prevent, and respond to fraud, unauthorized access, or other security incidents.</li>
                 <li>Improve the Platform through analytics and user feedback.</li>
                 <li>Maintain records as required by securities regulations and our broker-dealer obligations.</li>
@@ -102,7 +102,7 @@ export default function PrivacyPolicy() {
                 <li><span className="text-foreground">Broker-Dealer Partners:</span> Registered broker-dealers involved in the offering and sale of securities on the Platform.</li>
                 <li><span className="text-foreground">Transfer Agents:</span> For maintaining security ownership records and processing transfers.</li>
                 <li><span className="text-foreground">Qualified Custodians:</span> For the safekeeping of digital securities and related assets.</li>
-                <li><span className="text-foreground">Service Providers:</span> Hosting, analytics, email, and other operational service providers who process data on our behalf under contractual obligations.</li>
+                <li><span className="text-foreground">Service Providers:</span> Hosting, analytics, email, and other operational service providers who process data on our behalf under contractual obligations.</li>\n                <li><span className="text-foreground">Power and Project Delivery Partners:</span> Engineering, equipment, EPC, utility/market-access, financing, or other project counterparties when reasonably necessary to evaluate or deliver a requested power solution, subject to applicable confidentiality and contractual restrictions.</li>
                 <li><span className="text-foreground">Legal and Compliance:</span> When required by law, subpoena, court order, or to protect the rights, safety, or property of EcoXchange, our users, or others.</li>
                 <li><span className="text-foreground">Business Transfers:</span> In connection with a merger, acquisition, reorganization, or sale of assets, your information may be transferred as part of that transaction.</li>
               </ul>

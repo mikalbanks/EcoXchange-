@@ -12,8 +12,8 @@ const validIntake = {
   isoRto: "PJM",
   requiredFirmMw: 120,
   firmSupplyMw: 80,
-  targetPowerDate: "2028-10-01",
-  permanentPowerDate: "2029-06-01",
+  targetPowerTiming: "Q4 2028",
+  permanentPowerTiming: "H1 2029",
   constraintType: "TIMING_MISMATCH",
   bridgeDuration: "MULTI_MONTH",
   existingResources: ["BESS / battery storage"],
@@ -24,7 +24,7 @@ const validIntake = {
 };
 
 describe("powerGapIntakeRequestSchema", () => {
-  it("accepts a complete power-gap intake", () => {
+  it("accepts a complete power-gap intake with milestone timing", () => {
     const result = powerGapIntakeRequestSchema.safeParse(validIntake);
     expect(result.success).toBe(true);
   });
@@ -36,6 +36,14 @@ describe("powerGapIntakeRequestSchema", () => {
     });
     expect(result.success).toBe(true);
     if (result.success) expect(result.data.firmSupplyMw).toBeUndefined();
+  });
+
+  it("accepts an exact target date when one is known", () => {
+    const result = powerGapIntakeRequestSchema.safeParse({
+      ...validIntake,
+      targetPowerTiming: "2028-10-01",
+    });
+    expect(result.success).toBe(true);
   });
 
   it("rejects non-positive required MW", () => {
@@ -54,10 +62,10 @@ describe("powerGapIntakeRequestSchema", () => {
     expect(result.success).toBe(false);
   });
 
-  it("rejects malformed target dates", () => {
+  it("rejects a missing target timing", () => {
     const result = powerGapIntakeRequestSchema.safeParse({
       ...validIntake,
-      targetPowerDate: "Q4 2028",
+      targetPowerTiming: "",
     });
     expect(result.success).toBe(false);
   });
