@@ -6,6 +6,7 @@ import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import LandingPage from "@/pages/landing";
 import DerNetworkPage from "@/pages/der-network";
+import PowerGapPage from "@/pages/power-gap";
 import PrivacyPolicy from "@/pages/privacy";
 import FaqPage from "@/pages/faq";
 import NotFound from "@/pages/not-found";
@@ -28,6 +29,7 @@ class ErrorBoundary extends Component<{ children: ReactNode }, { hasError: boole
 function Router() {
   return <Switch>
     <Route path="/" component={LandingPage} />
+    <Route path="/power-gap" component={PowerGapPage} />
     <Route path="/der-network" component={DerNetworkPage} />
     <Route path="/faq" component={FaqPage} />
     <Route path="/privacy" component={PrivacyPolicy} />

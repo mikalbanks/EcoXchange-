@@ -14,7 +14,7 @@ dbUrl.searchParams.delete("sslmode");
 
 export default defineConfig({
   out: "./migrations",
-  schema: "./shared/schema.ts",
+  schema: ["./shared/schema.ts", "./shared/power-gap-intake.ts"],
   dialect: "postgresql",
   dbCredentials: {
     url: dbUrl.toString(),
@@ -22,7 +22,7 @@ export default defineConfig({
   },
   // tablesFilter is the set of tables drizzle believes it owns, and
   // `drizzle-kit push --force` runs in Render's buildCommand. An entry here that
-  // exists in the database but not in shared/schema.ts is a table drizzle will
+  // exists in the database but not in a configured schema is a table drizzle will
   // offer to drop, unprompted.
   //
   // `projects` was removed for exactly that reason: the reconciliation engine
@@ -32,6 +32,7 @@ export default defineConfig({
   // two. See docs/database-consolidation.md.
   tablesFilter: [
     "users",
+    "power_gap_intakes",
     "dev_projects",
     "capital_stacks",
     "readiness_scores",
