@@ -26,7 +26,7 @@ export function registerPowerGapIntakeRoutes(app: Express): void {
       });
     }
 
-    const { website, ...input } = parsed.data;
+    const { website, origin, ...input } = parsed.data;
 
     // Honeypot: return a normal-looking success without writing bot submissions.
     if (website.trim()) {
@@ -61,12 +61,13 @@ export function registerPowerGapIntakeRoutes(app: Express): void {
           reliabilityNotes: input.reliabilityNotes || null,
           notes: input.notes || null,
           consent: true,
-          source: "website_power_gap",
+          source: origin === "SITE_SCOUT" ? "website_site_scout" : "website_power_gap",
           status: "NEW",
         })
         .returning({ id: powerGapIntakes.id });
 
       audit("power_gap_intake_created", {
+        source: origin === "SITE_SCOUT" ? "website_site_scout" : "website_power_gap",
         submissionId: submission.id,
         company: input.company,
         siteName: input.siteName,
