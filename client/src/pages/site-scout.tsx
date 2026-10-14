@@ -1,4 +1,4 @@
-import { type FormEvent, useState } from "react";
+import { type FormEvent, useEffect, useState } from "react";
 import { Link } from "wouter";
 import { apiRequest } from "@/lib/queryClient";
 import { PUBLIC_NAV_LINKS, REQUEST_ACCESS } from "@/lib/nav";
@@ -23,6 +23,10 @@ export default function SiteScoutPage() {
   const [submissionId, setSubmissionId] = useState("");
   const [error, setError] = useState("");
 
+  useEffect(() => {
+    if (screened) document.getElementById("site-scout-results")?.scrollIntoView({ behavior: "smooth", block: "start" });
+  }, [screened]);
+
   const parsedSupply = supplyMw.trim() === "" ? null : Number(supplyMw);
   const result = screened ? screenSite({
     requiredMw: Number(requiredMw),
@@ -38,7 +42,6 @@ export default function SiteScoutPage() {
     setScreened(true);
     setSubmissionId("");
     setError("");
-    document.getElementById("site-scout-results")?.scrollIntoView({ behavior: "smooth", block: "start" });
   };
 
   const submitLead = async (event: FormEvent<HTMLFormElement>) => {
@@ -129,7 +132,7 @@ export default function SiteScoutPage() {
             <label>Site stage
               <select value={siteStatus} onChange={(e) => setSiteStatus(e.target.value)}>
                 <option value="EXPLORING">Evaluating potential locations</option>
-                <option value="CONTROLLED">Site identified / controlled</option>
+                <option value="CONTROLLED">Site control secured</option>
               </select>
             </label>
             <label>Required facility power (MW) <span className="scout-hint">Total facility draw, not just IT MW</span>
