@@ -3,6 +3,7 @@ export const PUBLIC_NAV_LINKS: readonly PublicNavLink[] = [
   { href: "/#solution", label: "Solution", testId: "link-solution" },
   { href: "/#how-it-works", label: "How It Works", testId: "link-how-it-works" },
   { href: "/#partners", label: "Partners", testId: "link-partners" },
+  { href: "/site-scout", label: "Site Scout", testId: "link-site-scout" },
   { href: "/der-network", label: "DER Network", testId: "link-der-network" },
   { href: "/faq", label: "FAQ", testId: "link-faq" },
 ] as const;
