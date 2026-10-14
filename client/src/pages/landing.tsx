@@ -38,6 +38,11 @@ export default function LandingPage() {
         </div>
       </section>
 
+      <section className="site-scout-promo" aria-label="Site Scout">
+        <div><span className="label">Before you choose a location</span><h2>Still comparing data-center sites?</h2><p>Screen your MW requirement, opening target, and power-availability unknowns before you commit.</p></div>
+        <Link href="/site-scout" className="btn btn-outline" data-testid="link-landing-site-scout">Try Free Site Scout →</Link>
+      </section>
+
       <section id="solution" className="problem">
         <div className="section-header"><span className="label section-num">§ I</span><h2 className="section-title">Physical power first. Optimization second.</h2></div>
         <p className="problem-intro">EcoXchange does not start with a technology or a generic VPP. We start with the site's actual duty: MW, date, duration, response, redundancy, fuel or recharge constraints, and exit path.</p>
