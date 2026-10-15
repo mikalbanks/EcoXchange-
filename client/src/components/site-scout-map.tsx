@@ -130,6 +130,7 @@ export default function SiteScoutMap({ location, onLocationChange, onPointChange
   useEffect(() => {
     let active = true;
     let map: any;
+    let watchdog: ReturnType<typeof setTimeout> | undefined;
     const abort = new AbortController();
     fetchRef.current = abort;
     setMapReady(false);
@@ -153,6 +154,12 @@ export default function SiteScoutMap({ location, onLocationChange, onPointChange
           attributionControl: true,
         });
         mapRef.current = map;
+        watchdog = setTimeout(() => {
+          if (active && !map?.loaded()) {
+            setMapError("The basemap did not finish loading. Try again or continue with the written screening form.");
+            setMapStatus("Map basemap unavailable");
+          }
+        }, 15000);
         map.addControl(new maplibregl.NavigationControl({ showCompass: false }), "top-right");
         map.on("error", (event: any) => {
           console.warn("[Site Scout] map source error:", event.error || event);
@@ -164,6 +171,7 @@ export default function SiteScoutMap({ location, onLocationChange, onPointChange
 
         map.on("load", () => {
           if (!active) return;
+          if (watchdog) clearTimeout(watchdog);
           try {
             map.addSource("scout-hifld-lines", {
               type: "vector",
@@ -259,6 +267,7 @@ export default function SiteScoutMap({ location, onLocationChange, onPointChange
     return () => {
       active = false;
       abort.abort();
+      if (watchdog) clearTimeout(watchdog);
       markerRef.current?.remove();
       markerRef.current = null;
       if (map) map.remove();
