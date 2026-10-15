@@ -19,7 +19,7 @@ export function HomePage() {
           <p className="power-hero-summary">EcoXchange coordinates distributed energy resources and deployment partners to help qualified sites move toward power sooner when grid queues or upgrades delay growth.</p>
           <div className="power-hero-actions">
             <ButtonLink href="/assessment" onClick={() => trackEvent("assessment_cta", { source: "hero" })}>Explore your power path</ButtonLink>
-            <a className="text-link" href="/platform">See how it works<ArrowRight aria-hidden="true" /></a>
+            <a className="text-link" href="/site-scout">Explore the grid map<ArrowRight aria-hidden="true" /></a>
           </div>
         </div>
         <figure className="power-path-visual">
@@ -27,6 +27,13 @@ export function HomePage() {
           <figcaption className="sr-only">Conceptual pathways, not an energization commitment.</figcaption>
           <div className="power-path-mobile"><p><strong>Grid path</strong><span>Queue and upgrades can delay full site power.</span></p><p><strong>DER path</strong><span>Storage and onsite generation may enable an earlier phase, subject to site fit and approvals.</span></p></div>
         </figure>
+      </div>
+    </section>
+
+    <section className="site-scout-home-band" aria-label="Interactive Site Scout grid map">
+      <div className="container site-scout-home-content">
+        <div><p className="eyebrow">New · Site Scout</p><h2>Explore grid infrastructure before choosing a site.</h2><p>Open our interactive U.S. transmission and substation atlas. Pin a potential data-center location, then continue into EcoXchange's existing power-path assessment.</p></div>
+        <ButtonLink href="/site-scout">Open interactive map</ButtonLink>
       </div>
     </section>
 

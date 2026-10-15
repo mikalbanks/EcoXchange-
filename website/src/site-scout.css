@@ -1,0 +1,58 @@
+/* Site Scout belongs to the current mineral-white / Geist site, not legacy client/. */
+.site-scout-page{background:#f5f8f4}
+.site-scout-heading{padding-block:76px 43px}
+.site-scout-heading h1{font-size:clamp(42px,5.1vw,72px);line-height:1.04;max-width:820px}
+.site-scout-heading h1 span{color:var(--green)}
+.site-scout-heading .lead{margin-top:22px;max-width:800px}
+.site-scout-qualification{margin-top:18px;font-size:14px;color:var(--muted)}
+.site-scout-qualification strong{color:var(--forest)}
+.site-scout-workspace{border:1px solid var(--line);background:#fff;overflow:hidden;margin-bottom:70px}
+.site-scout-toolbar{padding:24px;display:flex;align-items:end;gap:26px;justify-content:space-between}
+.site-scout-search{flex:1;max-width:630px}
+.site-scout-search label,.site-scout-fields label{display:block;margin-bottom:10px;color:var(--forest);font-weight:600;font-size:14px}
+.site-scout-search-row{display:flex;gap:9px;align-items:stretch}
+.site-scout-search-row input,.site-scout-fields input{min-width:0;border:1px solid #cbd9cf;background:white;border-radius:4px;color:var(--forest);padding:13px 15px;min-height:52px;outline-offset:1px}
+.site-scout-search-row input{flex:1;width:100%}
+.site-scout-search-row .button{white-space:nowrap}
+.site-scout-toggles{display:flex;flex-wrap:wrap;gap:16px;padding-bottom:14px}
+.site-scout-toggles label{display:flex;align-items:center;gap:9px;color:var(--forest);font-weight:550;font-size:14px;white-space:nowrap;cursor:pointer}
+.site-scout-toggles input{width:19px;height:19px;accent-color:var(--green)}
+.site-scout-map-wrap{position:relative;background:#dce7df}
+.site-scout-map{width:100%;height:min(60vw,585px);min-height:380px}
+.site-scout-map-loading{position:absolute;inset:0;z-index:2;background:#eef3efee;display:flex;align-items:center;justify-content:center;flex-direction:column;gap:16px;text-align:center;color:var(--forest);padding:20px}
+.site-scout-statusbar{display:flex;align-items:center;justify-content:space-between;gap:14px;padding:14px 24px;background:#edf4ee;font-size:13px;line-height:1.55;color:var(--forest)}
+.site-scout-statusbar strong{font-family:var(--mono);font-size:12px}
+.site-scout-feedback{background:#f1f8ef;padding:10px 24px;font-size:13px;color:var(--forest)}
+.site-scout-credits{padding:17px 24px 21px;color:#4f6757;font-size:12px;line-height:1.7}
+.site-scout-credits a{color:var(--green);text-decoration:underline;text-underline-offset:3px}
+.site-scout-popup{color:#173c2c;font-family:Inter,Arial,sans-serif;font-size:13px;line-height:1.5}
+.site-scout-popup>strong{display:block;font-size:14px;margin-bottom:8px}
+.site-scout-popup p{font-size:12px;margin:3px 0}
+.site-scout-popup small{display:block;font-size:11px;line-height:1.5;margin-top:9px;color:#496458}
+.site-scout-next{background:#e9f2eb;padding-block:72px}
+.site-scout-next-grid{display:grid;grid-template-columns:1fr minmax(0,1fr);gap:80px;align-items:start}
+.site-scout-next-grid h2{font-size:clamp(33px,3.5vw,47px);max-width:570px}
+.site-scout-next-grid p:not(.eyebrow){color:var(--muted);margin-top:18px;max-width:590px}
+.site-scout-fields{background:#fff;border:1px solid #ccdace;padding:28px}
+.site-scout-fields>input{width:100%;margin-bottom:24px}
+.site-scout-field-grid{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+.site-scout-field-grid input{width:100%;height:52px}
+.site-scout-fields label span{font-weight:400;color:var(--muted);font-size:12px}
+.site-scout-continue{margin-top:25px;width:100%}
+.site-scout-fields small{display:block;color:var(--muted);font-size:12px;line-height:1.5;margin-top:16px}
+.site-scout-map .maplibregl-popup-content{border-radius:6px}
+.site-scout-map .maplibregl-ctrl-group{box-shadow:0 2px 12px #0b2c1a24}
+@media(max-width:1040px){.site-scout-toolbar{flex-direction:column;align-items:stretch;gap:15px}.site-scout-search{max-width:none}.site-scout-toggles{padding-bottom:0}.site-scout-next-grid{gap:32px}}
+@media(max-width:800px){.site-scout-heading{padding-block:58px 28px}.site-scout-workspace{margin-bottom:50px}.site-scout-next-grid{grid-template-columns:1fr;gap:28px}.site-scout-next{padding-block:50px}.site-scout-map{height:440px}}
+@media(max-width:600px){.site-scout-heading{padding-block:42px 23px}.site-scout-heading h1{font-size:43px}.site-scout-heading .lead{font-size:16px}.site-scout-toolbar{padding:18px 14px}.site-scout-search-row{flex-direction:column}.site-scout-search-row .button{width:100%;min-height:46px}.site-scout-toggles{gap:14px}.site-scout-toggles label{font-size:13px}.site-scout-map{height:365px;min-height:365px}.site-scout-statusbar{align-items:flex-start;flex-direction:column;padding:12px 14px}.site-scout-credits{padding:14px;font-size:11px}.site-scout-fields{padding:21px 18px}.site-scout-field-grid{grid-template-columns:1fr;gap:12px}.site-scout-next-grid h2{font-size:35px}}
+
+/* Keep the additional Site Scout nav item readable alongside the main CTA. */
+@media(min-width:1051px){.desktop-nav{gap:clamp(12px,1.35vw,20px)}}
+.site-scout-home-band{background:#eaf2ec;border-block:1px solid #d4e4d8;padding-block:30px}
+.site-scout-home-content{display:flex;align-items:center;justify-content:space-between;gap:40px}
+.site-scout-home-content>div{max-width:830px}
+.site-scout-home-content .eyebrow{margin-bottom:8px}
+.site-scout-home-content h2{font-size:clamp(23px,2.5vw,33px)}
+.site-scout-home-content p:not(.eyebrow){color:var(--muted);margin-top:9px;font-size:15px;line-height:1.6}
+.site-scout-home-content>.button{white-space:nowrap;flex-shrink:0}
+@media(max-width:800px){.site-scout-home-content{align-items:flex-start;flex-direction:column;gap:20px}}

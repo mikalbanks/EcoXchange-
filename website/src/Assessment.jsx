@@ -3,6 +3,23 @@ import { ArrowRight, Check, CheckCircle, ShieldCheck } from "./icons";
 import { ButtonLink, trackEvent } from "./ui";
 
 const initialForm = { firstName: "", lastName: "", email: "", company: "", title: "", location: "", projectStage: "", plannedMw: "", securedMw: "", energization: "", powerArrival: "", utilityStatus: "", gapHours: "", reliability: "", flexibleLoad: "", resources: "", constraint: "" };
+// Site Scout hands off only non-contact site context. Existing Turnstile + HubSpot
+// assessment submission stays the sole intake path on the current website.
+const SCOUT_HANDOFF_KEY = "ecoxchange-site-scout-v1";
+function initialFormWithScoutContext() {
+  const form = { ...initialForm };
+  try {
+    const raw = sessionStorage.getItem(SCOUT_HANDOFF_KEY);
+    if (!raw) return form;
+    sessionStorage.removeItem(SCOUT_HANDOFF_KEY);
+    const handoff = JSON.parse(raw);
+    if (!Number.isFinite(handoff?.savedAt) || Date.now() - handoff.savedAt > 24 * 60 * 60 * 1000 || handoff.savedAt > Date.now()) return form;
+    if (typeof handoff.location === "string") form.location = handoff.location.trim().slice(0, 180);
+    if (typeof handoff.plannedMw === "string" && /^\\d+(\\.\\d+)?$/.test(handoff.plannedMw) && Number(handoff.plannedMw) > 0 && Number(handoff.plannedMw) <= 10000) form.plannedMw = handoff.plannedMw;
+    if (typeof handoff.energization === "string" && /^\\d{4}-(0[1-9]|1[0-2])$/.test(handoff.energization)) form.energization = handoff.energization;
+  } catch { /* Preserve the assessment even when storage is unavailable. */ }
+  return form;
+}
 const turnstileSiteKey = import.meta.env.VITE_TURNSTILE_SITE_KEY || "0x4AAAAAAB8KnRYXW3_8kHfO";
 const contactRequired = { firstName: "Enter your first name.", lastName: "Enter your last name.", email: "Enter your work email.", company: "Enter your company." };
 const siteRequired = { location: "Enter the site location.", projectStage: "Select the project stage.", constraint: "Describe the primary power constraint." };
@@ -36,7 +53,7 @@ function HumanVerification({ onToken, resetKey }) {
   return sitekey ? <div className="verification"><p>Complete the verification to submit.</p><div ref={container} /></div> : null;
 }
 export function AssessmentPage() {
-  const [step, setStep] = useState(1), [form, setForm] = useState(initialForm), [errors, setErrors] = useState({});
+  const [step, setStep] = useState(1), [form, setForm] = useState(initialFormWithScoutContext), [errors, setErrors] = useState({});
   const [status, setStatus] = useState("idle"), [error, setError] = useState(""), [token, setToken] = useState("");
   const [meetingUrl, setMeetingUrl] = useState("");
   const [verificationReset, setVerificationReset] = useState(0);
