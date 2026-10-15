@@ -2,10 +2,11 @@ import { useEffect, useRef, useState } from "react";
 import { ArrowRight, ArrowUpRight, BatteryCharging, Buildings, CheckCircle, Database, Gauge, Lightning, List, ShieldCheck, X, Plus, Minus } from "./icons";
 import { pageMeta, legacyRoutes, pageContent, insightItems, faqs } from "./content";
 import { AssessmentPage } from "./Assessment";
+import { SiteScoutPage } from "./SiteScout";
 import { HomePage as PowerHomePage } from "./HomePage";
 import { ButtonLink, trackEvent } from "./ui";
 
-const navItems = [["Data Centers", "/data-centers"], ["Platform", "/platform"], ["90-Day Pilot", "/pilot"], ["DER Partners", "/partners"], ["About", "/about"]];
+const navItems = [["Data Centers", "/data-centers"], ["Site Scout", "/site-scout"], ["Platform", "/platform"], ["90-Day Pilot", "/pilot"], ["DER Partners", "/partners"], ["About", "/about"]];
 const assets = "/assets/";
 const route = () => window.location.pathname.replace(/\/$/, "").replace(/^\/preview\.html$/, "") || "/";
 
@@ -93,7 +94,7 @@ export function App() {
     structured.textContent = JSON.stringify({ "@context": "https://schema.org", "@graph": graph }); document.head.appendChild(structured); return () => structured.remove();
   }, [path]);
   let page;
-  if (path === "/") page = <PowerHomePage />; else if (pageContent[path]) page = <StandardPage content={pageContent[path]} path={path} />; else if (path === "/insights") page = <InsightsPage />; else if (path === "/case-studies") page = <CaseStudiesPage />; else if (path === "/about") page = <AboutPage />; else if (path === "/faq") page = <FAQPage />; else if (path === "/assessment") page = <AssessmentPage />; else if (path === "/contact") page = <ContactPage />; else if (legalCopy[path]) page = <LegalPage content={legalCopy[path]} />; else page = <NotFound />;
+  if (path === "/") page = <PowerHomePage />; else if (pageContent[path]) page = <StandardPage content={pageContent[path]} path={path} />; else if (path === "/insights") page = <InsightsPage />; else if (path === "/case-studies") page = <CaseStudiesPage />; else if (path === "/about") page = <AboutPage />; else if (path === "/faq") page = <FAQPage />; else if (path === "/assessment") page = <AssessmentPage />; else if (path === "/site-scout") page = <SiteScoutPage />; else if (path === "/contact") page = <ContactPage />; else if (legalCopy[path]) page = <LegalPage content={legalCopy[path]} />; else page = <NotFound />;
   return <><a className="skip-link" href="#main-content">Skip to content</a><Header path={path} /><main id="main-content" tabIndex={-1}>{page}</main><Footer /><ConsentBanner /></>;
 }
 
