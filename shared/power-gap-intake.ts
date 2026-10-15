@@ -62,6 +62,8 @@ const optionalMw = z.preprocess(
 );
 
 export const powerGapIntakeRequestSchema = z.object({
+  // Explicit allowlist; never trust arbitrary public source labels.
+  origin: z.enum(["SITE_SCOUT"]).optional(),
   contactName: z.string().trim().min(2).max(120),
   workEmail: z.string().trim().email().max(320).transform((value) => value.toLowerCase()),
   company: z.string().trim().min(2).max(160),

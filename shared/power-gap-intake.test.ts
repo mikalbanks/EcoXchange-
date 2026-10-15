@@ -62,6 +62,16 @@ describe("powerGapIntakeRequestSchema", () => {
     expect(result.success).toBe(false);
   });
 
+  it("allows site-scout origin while preserving the existing power-gap request", () => {
+    const result = powerGapIntakeRequestSchema.safeParse({ ...validIntake, origin: "SITE_SCOUT" });
+    expect(result.success).toBe(true);
+    if (result.success) expect(result.data.origin).toBe("SITE_SCOUT");
+  });
+
+  it("rejects arbitrary public origin labels", () => {
+    expect(powerGapIntakeRequestSchema.safeParse({ ...validIntake, origin: "admin" }).success).toBe(false);
+  });
+
   it("rejects a missing target timing", () => {
     const result = powerGapIntakeRequestSchema.safeParse({
       ...validIntake,

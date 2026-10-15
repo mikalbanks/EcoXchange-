@@ -7,6 +7,7 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import LandingPage from "@/pages/landing";
 import DerNetworkPage from "@/pages/der-network";
 import PowerGapPage from "@/pages/power-gap";
+import SiteScoutPage from "@/pages/site-scout";
 import PrivacyPolicy from "@/pages/privacy";
 import FaqPage from "@/pages/faq";
 import NotFound from "@/pages/not-found";
@@ -30,6 +31,7 @@ function Router() {
   return <Switch>
     <Route path="/" component={LandingPage} />
     <Route path="/power-gap" component={PowerGapPage} />
+    <Route path="/site-scout" component={SiteScoutPage} />
     <Route path="/der-network" component={DerNetworkPage} />
     <Route path="/faq" component={FaqPage} />
     <Route path="/privacy" component={PrivacyPolicy} />
