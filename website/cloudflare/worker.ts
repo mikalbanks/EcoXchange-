@@ -17,7 +17,7 @@ const LEGACY_REDIRECTS: Record<string, string> = {
   "/power-flexibility": "/data-centers",
 };
 
-const PUBLIC_ROUTES = new Set(["/", "/data-centers", "/partners", "/platform", "/financeability", "/pilot", "/case-studies", "/insights", "/about", "/faq", "/assessment", "/contact", "/privacy", "/terms", "/accessibility"]);
+const PUBLIC_ROUTES = new Set(["/", "/data-centers", "/partners", "/platform", "/financeability", "/pilot", "/case-studies", "/insights", "/about", "/faq", "/assessment", "/site-scout", "/contact", "/privacy", "/terms", "/accessibility"]);
 
 type Assessment = {
   firstName: string;
@@ -222,7 +222,7 @@ export default {
     headers.set("X-Content-Type-Options", "nosniff");
     headers.set("Referrer-Policy", "strict-origin-when-cross-origin");
     headers.set("Permissions-Policy", "camera=(), microphone=(), geolocation=()");
-    headers.set("Content-Security-Policy", "default-src 'self'; img-src 'self' data:; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; script-src 'self' https://challenges.cloudflare.com; frame-src https://challenges.cloudflare.com; connect-src 'self' https://challenges.cloudflare.com; base-uri 'self'; form-action 'self'");
+    headers.set("Content-Security-Policy", "default-src 'self'; img-src 'self' data: blob: https://tiles.openfreemap.org; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://cdn.jsdelivr.net; font-src 'self' https://fonts.gstatic.com; script-src 'self' https://challenges.cloudflare.com https://cdn.jsdelivr.net; worker-src 'self' blob:; frame-src https://challenges.cloudflare.com; connect-src 'self' https://challenges.cloudflare.com https://tiles.openfreemap.org https://raw.githubusercontent.com https://nominatim.openstreetmap.org; base-uri 'self'; form-action 'self'");
     return new Response(response.body, { status: isUnknownRoute ? 404 : response.status, statusText: isUnknownRoute ? "Not Found" : response.statusText, headers });
   },
 } satisfies ExportedHandler<Env>;
