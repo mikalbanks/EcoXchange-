@@ -3,6 +3,7 @@ import { Link } from "wouter";
 import { apiRequest } from "@/lib/queryClient";
 import { PUBLIC_NAV_LINKS, REQUEST_ACCESS } from "@/lib/nav";
 import { screenSite } from "@/lib/site-scout";
+import SiteScoutMap from "@/components/site-scout-map";
 import "./landing.css";
 import "./site-scout.css";
 
@@ -11,6 +12,7 @@ const MARKETS = ["ERCOT", "PJM", "MISO", "CAISO", "NYISO", "ISO-NE", "SPP"];
 export default function SiteScoutPage() {
   const [location, setLocation] = useState("");
   const [siteName, setSiteName] = useState("");
+  const [sitePoint, setSitePoint] = useState<{ lng: number; lat: number } | null>(null);
   const [requiredMw, setRequiredMw] = useState("");
   const [targetDate, setTargetDate] = useState("");
   const [siteStatus, setSiteStatus] = useState("EXPLORING");
@@ -58,6 +60,7 @@ export default function SiteScoutPage() {
       "SITE SCOUT: early-stage data-center siting inquiry.",
       "Site stage: " + (siteStatus === "CONTROLLED" ? "site controlled (visitor reported)" : "exploring site"),
       "Location: " + location,
+      "Visitor-selected map coordinates: " + (sitePoint ? `${sitePoint.lat.toFixed(5)}, ${sitePoint.lng.toFixed(5)} (not independently validated)` : "not selected"),
       "Market: " + (isoRto || "not sure"),
       "Supplied firm MW: " + (isSupplyDocumented && parsedSupply !== null ? parsedSupply + " (visitor reports documented; not independently reviewed)" : "UNKNOWN / NOT CONFIRMED"),
       "Site-screen confidence: preliminary, visitor supplied; no grid capacity determination.",
@@ -121,10 +124,11 @@ export default function SiteScoutPage() {
       <section className="scout-workspace" aria-labelledby="scout-title">
         <div className="section-header"><span className="label section-num">§ Site selection</span><h2 id="scout-title" className="section-title">Start with what you know.</h2></div>
         <p className="scout-intro">A utility letter is not required to start. Unknowns remain unknown; we never infer available MW from a nearby transmission line.</p>
+        <SiteScoutMap location={location} onLocationChange={setLocation} onPointChange={setSitePoint} />
         <div className="scout-layout">
           <form className="network-form scout-form" onSubmit={runScreen}>
             <label className="scout-span">Candidate location <span className="scout-hint">City/state, county, or address</span>
-              <input name="location" value={location} onChange={(e) => setLocation(e.target.value)} maxLength={180} minLength={2} placeholder="e.g. Newark, NJ or planned campus address" required />
+              <input name="location" value={location} onChange={(e) => { setLocation(e.target.value); setSitePoint(null); }} maxLength={180} minLength={2} placeholder="e.g. Newark, NJ or planned campus address" required />
             </label>
             <label>Project / site name <span className="scout-hint">Optional</span>
               <input value={siteName} onChange={(e) => setSiteName(e.target.value)} maxLength={180} placeholder="Working title is fine" />
