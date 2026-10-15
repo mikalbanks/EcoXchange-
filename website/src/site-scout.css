@@ -45,3 +45,14 @@
 @media(max-width:1040px){.site-scout-toolbar{flex-direction:column;align-items:stretch;gap:15px}.site-scout-search{max-width:none}.site-scout-toggles{padding-bottom:0}.site-scout-next-grid{gap:32px}}
 @media(max-width:800px){.site-scout-heading{padding-block:58px 28px}.site-scout-workspace{margin-bottom:50px}.site-scout-next-grid{grid-template-columns:1fr;gap:28px}.site-scout-next{padding-block:50px}.site-scout-map{height:440px}}
 @media(max-width:600px){.site-scout-heading{padding-block:42px 23px}.site-scout-heading h1{font-size:43px}.site-scout-heading .lead{font-size:16px}.site-scout-toolbar{padding:18px 14px}.site-scout-search-row{flex-direction:column}.site-scout-search-row .button{width:100%;min-height:46px}.site-scout-toggles{gap:14px}.site-scout-toggles label{font-size:13px}.site-scout-map{height:365px;min-height:365px}.site-scout-statusbar{align-items:flex-start;flex-direction:column;padding:12px 14px}.site-scout-credits{padding:14px;font-size:11px}.site-scout-fields{padding:21px 18px}.site-scout-field-grid{grid-template-columns:1fr;gap:12px}.site-scout-next-grid h2{font-size:35px}}
+
+/* Keep the additional Site Scout nav item readable alongside the main CTA. */
+@media(min-width:1051px){.desktop-nav{gap:clamp(12px,1.35vw,20px)}}
+.site-scout-home-band{background:#eaf2ec;border-block:1px solid #d4e4d8;padding-block:30px}
+.site-scout-home-content{display:flex;align-items:center;justify-content:space-between;gap:40px}
+.site-scout-home-content>div{max-width:830px}
+.site-scout-home-content .eyebrow{margin-bottom:8px}
+.site-scout-home-content h2{font-size:clamp(23px,2.5vw,33px)}
+.site-scout-home-content p:not(.eyebrow){color:var(--muted);margin-top:9px;font-size:15px;line-height:1.6}
+.site-scout-home-content>.button{white-space:nowrap;flex-shrink:0}
+@media(max-width:800px){.site-scout-home-content{align-items:flex-start;flex-direction:column;gap:20px}}
