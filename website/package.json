@@ -4,14 +4,14 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "prebuild": "npm run test:sites",
     "dev": "vite",
     "build": "vite build && node scripts/prepare-sites-build.mjs",
     "preview": "vite preview",
     "test:sites": "node --test tests/*.test.mjs",
     "cf:types": "wrangler types",
     "cf:dev": "wrangler dev",
-    "cf:deploy": "npm run build && wrangler deploy"
+    "cf:deploy": "npm run build && wrangler deploy",
+    "postbuild": "npm run test:sites"
   },
   "dependencies": {
     "@phosphor-icons/react": "2.1.10",
