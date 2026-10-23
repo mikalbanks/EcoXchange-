@@ -507,29 +507,59 @@ export function SiteScoutPage() {
         </div>}
       </div>
       <div className="site-scout-statusbar"><span role="status">{status}</span>{sitePoint && <strong>Candidate pin: {coordinates(sitePoint)}</strong>}</div>
+
       <section className="site-scout-context" aria-labelledby="site-scout-context-title">
+        <div className="site-scout-purpose" role="group" aria-label="Site screening purpose">
+          <button type="button" className={"site-scout-purpose-button " + (focus === "data_center" ? "active" : "")} aria-pressed={focus === "data_center"} onClick={() => setFocus("data_center")}>
+            <strong>Data center</strong><span>Assess demand-side power constraints</span>
+          </button>
+          <button type="button" className={"site-scout-purpose-button " + (focus === "renewable" ? "active" : "")} aria-pressed={focus === "renewable"} onClick={() => setFocus("renewable")}>
+            <strong>Renewable energy &amp; storage</strong><span>Explore supply-side development opportunities</span>
+          </button>
+        </div>
+        {focus === "renewable" && <fieldset className="site-scout-technology">
+          <legend>Technology to evaluate</legend>
+          {["solar", "wind", "storage"].map(technology =>
+            <label key={technology}>
+              <input type="radio" name="site-scout-technology" value={technology} checked={renewableTechnology === technology} onChange={() => setRenewableTechnology(technology)} />
+              <span>{TRACKS[technology].label}</span>
+            </label>
+          )}
+        </fieldset>}
         <div className="site-scout-context-heading">
           <div>
-            <p className="eyebrow">Location evidence · powered by Mireye</p>
-            <h2 id="site-scout-context-title">Screen the ground before the power plan.</h2>
-            <p>Pin a prospective site to request sourced public data on grid proximity, terrain, water exposure and connectivity. No property-ownership records are shown here.</p>
+            <p className="eyebrow">{focus === "data_center" ? "Demand-side diligence" : "Supply-side diligence"} · Mireye data</p>
+            <h2 id="site-scout-context-title">{screen.heading}</h2>
+            <p>{screen.description}</p>
           </div>
-          <button className="button button--primary" type="button" disabled={!sitePoint || geoLoading} onClick={fetchSiteContext}>{geoLoading ? "Checking site…" : "Enrich selected location"}</button>
+          <button className="button button--primary" type="button" disabled={!sitePoint || geoLoading} onClick={fetchSiteContext}>{geoLoading ? "Checking site…" : "Analyze selected location"}</button>
         </div>
+        {!sitePoint && <p className="site-scout-context-instruction">Search for an address or select a map pin above to unlock the {screen.label.toLowerCase()} screen.</p>}
         {geoError && <p className="site-scout-context-error" role="status">{geoError}</p>}
-        {geoContext && sitePoint && geoContext.point?.lat === sitePoint.lat && geoContext.point?.lng === sitePoint.lng && <>
-          <div className="site-scout-context-grid">
-            {CONTEXT_FIELDS.map(([key, label]) => {
-              const evidence = geoContext.fields?.[key];
-              const usableLink = typeof evidence?.source_url === "string" && /^https:\/\//.test(evidence.source_url);
-              return <article className="site-scout-context-fact" key={key}>
-                <span>{label}</span>
-                <strong>{displayContextValue(evidence)}</strong>
-                <small>{evidence?.source ? (usableLink ? <a href={evidence.source_url} target="_blank" rel="noopener noreferrer">Source: {evidence.source} ↗</a> : `Source: ${evidence.source}`) : "No verified source returned"}</small>
-              </article>;
-            })}
+        {geoContext && geoContext.track === track && sitePoint &&
+         geoContext.point?.lat === sitePoint.lat && geoContext.point?.lng === sitePoint.lng && <>
+          {screen.groups.map(([title, fields]) => <div key={title} className="site-scout-context-group">
+            <h3>{title}</h3>
+            <div className="site-scout-context-grid">
+              {fields.map(([key, label]) => {
+                const evidence = geoContext.fields?.[key];
+                const usableLink = typeof evidence?.source_url === "string" && /^https:\/\//.test(evidence.source_url);
+                return <article className="site-scout-context-fact" key={key}>
+                  <span>{label}</span>
+                  <strong>{displayContextValue(evidence)}</strong>
+                  <small>{evidence?.source ? (usableLink ? <a href={evidence.source_url} target="_blank" rel="noopener noreferrer">Source: {evidence.source} ↗</a> : "Source: " + evidence.source) : "Source not returned"}</small>
+                  {evidence?.confidence && <small>Confidence: {evidence.confidence}</small>}
+                  {evidence?.dataset_vintage && <small>Dataset: {evidence.dataset_vintage}</small>}
+                </article>;
+              })}
+            </div>
+          </div>)}
+          <p className="site-scout-context-note">{geoContext.partialFailures ? geoContext.partialFailures + " source request(s) failed. " : ""}
+            Observations are for the selected point, not automatically the entire parcel. Queue MW is generation activity, not spare data-center load capacity. Modeled wind, solar and storage indicators are not engineering feasibility or financial guarantees. Power delivery, land use and development rights need independent verification.</p>
+          <div className="site-scout-context-handoff">
+            <span>How EcoXchange uses this research</span>
+            <p>{focus === "data_center" ? "Turn a promising location into a power-gap assessment, then obtain formal utility MW, timing and commercial feasibility." : "Turn promising local generation or storage into a development-partner conversation tied to a verifiable data-center power requirement."}</p>
           </div>
-          <p className="site-scout-context-note">{geoContext.partialFailures ? `${geoContext.partialFailures} data source(s) were unavailable. ` : ""}Field-level evidence can be outdated or incomplete. Data is sampled at a coordinate, not automatically across the whole parcel. Line proximity and voltage do not demonstrate spare MW, a service agreement, buildability, available gas, fiber capacity or energization timing.</p>
         </>}
       </section>
       {feedback && <p className="site-scout-feedback" role="status">{feedback}</p>}
