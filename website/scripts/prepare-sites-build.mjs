@@ -21,7 +21,7 @@ copyFileSync(hosting, path.join(dist, ".openai", "hosting.json"));
 // Static hosts need an entry document at each public URL for direct visits and refreshes.
 const publicRoutes = [
   "data-centers", "partners", "platform", "financeability", "pilot", "case-studies",
-  "insights", "about", "faq", "assessment", "contact", "privacy",
+  "insights", "about", "faq", "assessment", "site-scout", "contact", "privacy",
   "terms", "accessibility",
 ];
 for (const route of publicRoutes) {
