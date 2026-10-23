@@ -15,27 +15,114 @@ export const SCOUT_HANDOFF_KEY = "ecoxchange-site-scout-v1";
 
 // Public coordinate-only evidence. Never display licensed parcel owners,
 // boundaries, APNs, zoning or licensed vendor data on this public screen.
-const CONTEXT_FIELDS = [
-  ["nearest_transmission_line_distance_m", "Mapped transmission distance"],
-  ["nearest_transmission_line_voltage_kv", "Mapped line voltage"],
-  ["nearest_substation_distance_m", "Mapped substation distance"],
-  ["electric_utility_service_territory", "Reported utility territory"],
-  ["within_floodplain_polygon", "Floodplain intersection"],
-  ["intersects_wetland", "Wetland intersection"],
-  ["slope_degrees", "Terrain slope"],
-  ["elevation", "Elevation"],
-  ["fiber_broadband_available", "Mapped fiber broadband"],
-  ["nearest_major_road_distance_m", "Major road distance"],
-];
 
+const TRACKS = {
+  data_center: {
+    label: "Data center",
+    heading: "Know the constraints before you commit.",
+    description: "Transmission, utilities, gas, fiber, cooling and site risk — sourced screening indicators, never a claim of available power.",
+    groups: [
+      ["Power access signals", [
+        ["nearest_transmission_line_distance_m", "Recorded transmission distance"],
+        ["nearest_transmission_line_voltage_kv", "Recorded line voltage"],
+        ["nearest_substation_distance_m", "Nearest mapped substation"],
+        ["nearest_substation_max_voltage_kv", "Substation voltage class"],
+        ["electric_utility_service_territory", "Reported serving utility"],
+        ["iso_rto", "Electricity market"],
+        ["interconnection_queue_active_capacity_county_mw", "County generation queue activity"],
+        ["nearest_gas_pipeline_distance_m", "Gas pipeline distance"],
+      ]],
+      ["Infrastructure & development", [
+        ["fiber_broadband_available", "Fiber broadband mapped"],
+        ["fiber_provider_count", "Reported fiber providers"],
+        ["design_wet_bulb_temperature_0_4pct_degc", "Cooling design wet bulb"],
+        ["free_cooling_hours_per_year_15c", "Modeled free-cooling hours"],
+        ["within_water_service_area", "Mapped water service area"],
+        ["within_floodplain_polygon", "Floodplain intersection"],
+        ["grading_difficulty_class", "Preliminary grading difficulty"],
+        ["in_air_quality_nonattainment", "Air quality nonattainment"],
+      ]],
+    ],
+  },
+  solar: {
+    label: "Solar generation",
+    heading: "Understand solar production and land constraints.",
+    description: "Resource quality, grading and grid proximity for potential solar supply supporting constrained facilities.",
+    groups: [
+      ["Solar resource", [
+        ["ghi_annual_kwh_m2_day", "Average daily solar irradiance"],
+        ["pv_capacity_factor_pct", "Modeled PV capacity factor"],
+        ["pv_specific_yield_kwh_per_kw", "Modeled annual PV yield"],
+        ["slope_degrees", "Terrain slope"],
+        ["aspect_cardinal", "Slope aspect"],
+      ]],
+      ["Grid & land diligence", [
+        ["nearest_transmission_line_distance_m", "Recorded transmission distance"],
+        ["nearest_utility_solar_facility_distance_m", "Nearby utility-scale solar"],
+        ["grading_difficulty_class", "Preliminary grading difficulty"],
+        ["prime_farmland_classification", "Farmland classification"],
+        ["within_floodplain_polygon", "Floodplain intersection"],
+        ["intersects_wetland", "Wetland intersection"],
+        ["surface_management_agency", "Land management agency"],
+      ]],
+    ],
+  },
+  wind: {
+    label: "Wind generation",
+    heading: "Understand wind resource and development barriers.",
+    description: "Wind resource models, potential interconnect distances and major land-use constraints.",
+    groups: [
+      ["Wind resource", [
+        ["mean_wind_speed_100m_ms", "Modeled wind at 100m"],
+        ["wind_capacity_factor_pct", "Modeled wind capacity factor"],
+        ["wind_least_cost_interconnect_distance_m", "Modeled interconnect distance"],
+        ["nearest_wind_project_capacity_mw", "Nearby wind project size"],
+        ["nearest_transmission_line_distance_m", "Recorded transmission distance"],
+      ]],
+      ["Development constraints", [
+        ["special_use_airspace_type", "Special-use airspace"],
+        ["nearest_airport_distance_m", "Airport distance"],
+        ["slope_degrees", "Terrain slope"],
+        ["prime_farmland_classification", "Farmland classification"],
+        ["within_floodplain_polygon", "Floodplain intersection"],
+        ["intersects_wetland", "Wetland intersection"],
+      ]],
+    ],
+  },
+  storage: {
+    label: "Battery storage",
+    heading: "Screen sites for dispatchable storage.",
+    description: "Power infrastructure, terrain and environmental diligence for battery energy storage opportunities.",
+    groups: [
+      ["Infrastructure context", [
+        ["nearest_transmission_line_distance_m", "Recorded transmission distance"],
+        ["nearest_substation_distance_m", "Nearest mapped substation"],
+        ["nearest_substation_max_voltage_kv", "Substation voltage class"],
+        ["electric_utility_service_territory", "Reported serving utility"],
+        ["iso_rto", "Electricity market"],
+        ["interconnection_queue_active_capacity_county_mw", "County generation queue activity"],
+        ["nearest_power_plant_distance_m", "Power plant distance"],
+      ]],
+      ["Land & economics indicators", [
+        ["grading_difficulty_class", "Preliminary grading difficulty"],
+        ["soil_hydrologic_group", "Soil hydrologic group"],
+        ["within_floodplain_polygon", "Floodplain intersection"],
+        ["intersects_wetland", "Wetland intersection"],
+        ["avg_retail_electricity_price_industrial_usd_per_kwh", "Area industrial retail tariff proxy"],
+      ]],
+    ],
+  },
+};
 function displayContextValue(record) {
-  if (!record || record.value == null) return "Not available";
+  if (!record) return "Not reported";
+  if (record.status === "failed") return "Source unavailable";
+  if (record.status === "absent" || record.value == null) return "Not reported";
   const value = record.value;
   const human = typeof value === "boolean" ? (value ? "Yes" : "No")
     : typeof value === "number" ? Number(value.toFixed(2)).toLocaleString()
     : typeof value === "string" ? value
     : "Not available";
-  return record.unit && typeof value === "number" ? `${human} ${record.unit}` : human;
+  return record.unit && typeof value === "number" ? human + " " + record.unit : human;
 }
 
 let modulesPromise;
@@ -145,6 +232,10 @@ export function SiteScoutPage() {
   const [plannedMw, setPlannedMw] = useState("");
   const [rampMonth, setRampMonth] = useState("");
   const [feedback, setFeedback] = useState("");
+  const [focus, setFocus] = useState("data_center");
+  const [renewableTechnology, setRenewableTechnology] = useState("solar");
+  const track = focus === "data_center" ? "data_center" : renewableTechnology;
+  const screen = TRACKS[track];
   const [geoContext, setGeoContext] = useState(null);
   const [geoLoading, setGeoLoading] = useState(false);
   const [geoError, setGeoError] = useState("");
@@ -156,7 +247,7 @@ export function SiteScoutPage() {
     setGeoError("");
     setGeoLoading(false);
     return () => geoRequest.current?.abort();
-  }, [sitePoint?.lat, sitePoint?.lng]);
+  }, [sitePoint?.lat, sitePoint?.lng, track]);
 
   useEffect(() => {
     let mounted = true;
@@ -353,7 +444,7 @@ export function SiteScoutPage() {
       const response = await fetch("/api/site-scout/context", {
         method: "POST",
         headers: { "content-type": "application/json" },
-        body: JSON.stringify(sitePoint),
+        body: JSON.stringify({ ...sitePoint, track }),
         signal: controller.signal,
       });
       const result = await response.json().catch(() => null);
@@ -389,8 +480,8 @@ export function SiteScoutPage() {
   return <div className="site-scout-page">
     <section className="site-scout-heading container">
       <p className="eyebrow">Site Scout · power-first site intelligence</p>
-      <h1>Find a site.<br /><span>Think power first.</span></h1>
-      <p className="lead">Explore mapped transmission lines and substations, select a candidate location, and bring its power requirements into an EcoXchange site assessment. No account required.</p>
+      <h1>Find a site.<br /><span>Screen energy first.</span></h1>
+      <p className="lead">Explore transmission infrastructure, select a location, and screen either data-center development or renewable power supply with cited geospatial data. No account required.</p>
       <p className="site-scout-qualification">Early-stage screening only. Infrastructure shown does <strong>not</strong> confirm available capacity, service rights, or energization timing.</p>
     </section>
 
