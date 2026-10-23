@@ -33,8 +33,8 @@ const reply = (data: unknown, status = 200) => new Response(JSON.stringify(data)
 function coordinates(value: Record<string, unknown>): { lat: number; lng: number } | null {
   const lat = value.lat, lng = value.lng;
   if (typeof lat !== "number" || typeof lng !== "number" || !Number.isFinite(lat) || !Number.isFinite(lng)) return null;
-  // Includes the contiguous states, AK, HI and US territories; Mireye itself
-  // validates the finer country/territory coverage.
+  // Coarse western-longitude guard only; Mireye validates exact coverage.
+  // Western Aleutian positive longitudes can be added with a future map update.
   if (lat < 18 || lat > 72 || lng < -180 || lng > -65) return null;
   return { lat, lng };
 }
@@ -109,7 +109,7 @@ export async function handleMireyeSiteScout(
       // Fetch is free public coordinate data; no customer-facing use of licensed
       // parcel records, owner fields, boundaries, zoning or vendor lead files.
       const response = await providerCall("fetch", { ...point, fields: [...PUBLIC_FIELDS] }, env);
-      if (response instanceof Response && response.headers.get("content-type")?.includes("application/json") && response.headers.get("cache-control") === "no-store") return response;
+      if (!response.ok) return response;
       const data = await response.json() as { fields?: Record<string, unknown>; partial_failures?: unknown[]; fetched_at?: string };
       const fields: Record<string, unknown> = {};
       for (const key of PUBLIC_FIELDS) if (data.fields && Object.prototype.hasOwnProperty.call(data.fields, key)) fields[key] = data.fields[key];
@@ -140,7 +140,7 @@ export async function handleMireyeSiteScout(
       const response = await providerCall("search", {
         filters, fields: ["owner", "zoning"], limit, max_cost_usd: "0.20",
       }, env, true, idempotencyKey);
-      if (response.headers.get("cache-control") === "no-store") return response;
+      if (!response.ok) return response;
       const data = await response.json();
       return reply({ data, internalOnly: true });
     }
@@ -152,7 +152,7 @@ export async function handleMireyeSiteScout(
         fields: ["owner", "zoning", "slope_degrees", "within_floodplain_polygon", "nearest_transmission_line_distance_m", "electric_utility_service_territory"],
         max_cost_usd: "0.02",
       }, env, true, idempotencyKey);
-      if (response.headers.get("cache-control") === "no-store") return response;
+      if (!response.ok) return response;
       const data = await response.json();
       return reply({ data, internalOnly: true });
     }
