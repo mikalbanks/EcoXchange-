@@ -72,3 +72,20 @@ Mireye is a vendor and competitor-adjacent data source, **not EcoXchange's diffe
 ## Commercial test
 
 Site Scout is a lead-capture instrument, not an independent parcel-API business. Assess conversion from researched land -> identified MW/date constraint -> qualified decision-maker -> paid power access study or origination mandate. If no high-intent conversations appear within 30 days, stop feature additions and redirect attention to direct sales.
+
+## Update: four screening screens (2026-10-22)
+
+The current PR now offers a **Data center** demand-side screen plus a **Renewable energy & storage** supply-side screen with **Solar**, **Wind**, and **Battery storage** selectors. Earlier mention of "ten" public fields refers to the initial version: the current endpoint uses separate server-side allowlists of 16/12/11/12 public fields respectively. The frontend groups sourced facts and displays confidence and dataset vintage.
+
+| Screen | Evidence | Conversion |
+| --- | --- | --- |
+| Data center | Utility and ISO, nearby mapped lines and substations, county generation queue activity, gas, fiber, cooling, water and land hazards | `/assessment` |
+| Solar | GHI, modeled PV resource/output, grid proximity, slope, farmland and environmental risks | `/partners` |
+| Wind | 100m modeled wind, wind capacity factor, interconnect-distance model, grid proximity, airspace and hazards | `/partners` |
+| Battery storage | Grid assets, substation voltage, utility and ISO, queue activity, environmental and grading constraints | `/partners` |
+
+**API authentication correction:** The Mireye HTTP REST API documents `Authorization: Bearer <token>`, not `X-API-Key`. This PR uses Bearer in its server-side adapter. Reference: https://docs.mireye.ai/api-reference/fetch .
+
+The preset bundles named `data_center_siting`, `solar_siting`, `wind_siting`, and `storage_siting` contain many more fields; we intentionally select smaller subsets for faster public screens and limit scope to public coordinate facts. Generated models and distance-to-line observations never establish MW deliverability, utility service approvals, project economics, or land development rights.
+
+**Desktop MCP is not website authentication.** An MCP connection already installed on the user's computer cannot automatically supply a Cloudflare Worker or Render-hosted site with credentials. Configure a separate server-side Mireye secret on the Cloudflare Worker; never send it to the frontend, GitHub, or chat. Production remains blocked pending the real Worker deploy, credentials, permission checks, tests and site-level rate limiting.
