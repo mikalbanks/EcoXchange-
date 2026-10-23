@@ -77,3 +77,24 @@
 @media(max-width:1100px){.site-scout-context-grid{grid-template-columns:repeat(3,minmax(0,1fr))}}
 @media(max-width:750px){.site-scout-context{padding:24px 14px}.site-scout-context-heading{align-items:stretch;flex-direction:column;gap:16px}.site-scout-context-heading .button{width:100%;white-space:normal}.site-scout-context-grid{grid-template-columns:repeat(2,minmax(0,1fr))}}
 @media(max-width:430px){.site-scout-context-grid{grid-template-columns:1fr}.site-scout-context-fact>span{min-height:unset}}
+
+/* Two-track site intelligence: demand-side data center and renewable supply. */
+.site-scout-purpose{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:26px}
+.site-scout-purpose-button{text-align:left;border:1px solid #cfded2;border-radius:4px;padding:18px 20px;background:#fff;cursor:pointer;transition:border-color .15s,background .15s;min-height:96px}
+.site-scout-purpose-button.active{background:#e0f3e5;border-color:#257a4d;box-shadow:inset 0 0 0 1px #257a4d}
+.site-scout-purpose-button strong{display:block;color:#093723;font-size:17px;font-weight:650;margin-bottom:7px}
+.site-scout-purpose-button span{display:block;color:#456653;font-size:13px;line-height:1.5}
+.site-scout-purpose-button:focus-visible{outline:3px solid #27764f}
+.site-scout-technology{display:flex;align-items:center;flex-wrap:wrap;gap:12px 18px;border:1px solid #d4dfd5;background:#fff;padding:15px;margin-bottom:25px}
+.site-scout-technology legend{font-size:12px;color:var(--forest);font-weight:650;padding:0 6px}
+.site-scout-technology label{display:inline-flex;gap:8px;align-items:center;font-size:13px;font-weight:600;cursor:pointer;color:var(--forest)}
+.site-scout-technology input{accent-color:#26744d;width:17px;height:17px}
+.site-scout-context-group{margin-top:28px}
+.site-scout-context-group h3{font-size:17px;color:var(--forest);padding-bottom:10px;border-bottom:1px solid var(--line);font-weight:650}
+.site-scout-context-group .site-scout-context-grid{margin-top:15px}
+.site-scout-context-instruction{margin-top:18px;border:1px dashed #bed5c2;padding:16px;color:#446653;background:#fff;font-size:13px}
+.site-scout-context-fact small{display:block;margin-top:5px}
+.site-scout-context-handoff{margin-top:20px;border-left:3px solid #27774a;background:#edf7ee;padding:16px 18px;color:#134730}
+.site-scout-context-handoff span{display:block;font-size:11px;letter-spacing:.08em;text-transform:uppercase;font-weight:700;margin-bottom:6px}
+.site-scout-context-handoff p{font-size:13px;line-height:1.6}
+@media(max-width:750px){.site-scout-purpose{grid-template-columns:1fr;gap:10px}.site-scout-purpose-button{min-height:unset}.site-scout-technology{gap:12px}}
