@@ -1,3 +1,4 @@
+import { handleMireyeSiteScout } from "./mireye";
 const JSON_HEADERS = { "content-type": "application/json; charset=utf-8" };
 
 interface Env {
@@ -5,6 +6,8 @@ interface Env {
   TURNSTILE_SECRET?: string;
   HUBSPOT_ACCESS_TOKEN?: string;
   HUBSPOT_MEETING_URL?: string;
+  MIREYE_API_TOKEN?: string;
+  ECOXCHANGE_SITE_SCOUT_ADMIN_TOKEN?: string;
 }
 
 const LEGACY_REDIRECTS: Record<string, string> = {
@@ -211,6 +214,11 @@ export default {
       catch (error) { console.error(error); return json({ error: "Submission could not be completed" }, 502); }
     }
     if (request.method === "POST" && url.pathname === "/api/event") return handleEvent(request);
+    if (request.method === "POST" && [
+      "/api/site-scout/context",
+      "/api/internal/site-scout/search",
+      "/api/internal/site-scout/enrich",
+    ].includes(url.pathname)) return handleMireyeSiteScout(request, env, url.pathname);
     if (url.pathname.startsWith("/api/")) return json({ error: "Not found" }, 404);
 
     const isDocumentRoute = request.method === "GET" && !url.pathname.includes(".");

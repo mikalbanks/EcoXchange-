@@ -13,6 +13,31 @@ const STYLE_URL = "https://tiles.openfreemap.org/styles/positron";
 const CREDIT = "HIFLD / DHS CISA; SeerAI / Source Cooperative (CC BY 4.0); Western Power Pool TransmissionMap (MIT)";
 export const SCOUT_HANDOFF_KEY = "ecoxchange-site-scout-v1";
 
+// Public coordinate-only evidence. Never display licensed parcel owners,
+// boundaries, APNs, zoning or licensed vendor data on this public screen.
+const CONTEXT_FIELDS = [
+  ["nearest_transmission_line_distance_m", "Mapped transmission distance"],
+  ["nearest_transmission_line_voltage_kv", "Mapped line voltage"],
+  ["nearest_substation_distance_m", "Mapped substation distance"],
+  ["electric_utility_service_territory", "Reported utility territory"],
+  ["within_floodplain_polygon", "Floodplain intersection"],
+  ["intersects_wetland", "Wetland intersection"],
+  ["slope_degrees", "Terrain slope"],
+  ["elevation", "Elevation"],
+  ["fiber_broadband_available", "Mapped fiber broadband"],
+  ["nearest_major_road_distance_m", "Major road distance"],
+];
+
+function displayContextValue(record) {
+  if (!record || record.value == null) return "Not available";
+  const value = record.value;
+  const human = typeof value === "boolean" ? (value ? "Yes" : "No")
+    : typeof value === "number" ? Number(value.toFixed(2)).toLocaleString()
+    : typeof value === "string" ? value
+    : "Not available";
+  return record.unit && typeof value === "number" ? `${human} ${record.unit}` : human;
+}
+
 let modulesPromise;
 let registeredProtocol = false;
 
@@ -120,6 +145,18 @@ export function SiteScoutPage() {
   const [plannedMw, setPlannedMw] = useState("");
   const [rampMonth, setRampMonth] = useState("");
   const [feedback, setFeedback] = useState("");
+  const [geoContext, setGeoContext] = useState(null);
+  const [geoLoading, setGeoLoading] = useState(false);
+  const [geoError, setGeoError] = useState("");
+  const geoRequest = useRef(null);
+
+  useEffect(() => {
+    geoRequest.current?.abort();
+    setGeoContext(null);
+    setGeoError("");
+    setGeoLoading(false);
+    return () => geoRequest.current?.abort();
+  }, [sitePoint?.lat, sitePoint?.lng]);
 
   useEffect(() => {
     let mounted = true;
@@ -305,6 +342,34 @@ export function SiteScoutPage() {
     }
   }
 
+  async function fetchSiteContext() {
+    if (!sitePoint || geoLoading) return;
+    geoRequest.current?.abort();
+    const controller = new AbortController();
+    geoRequest.current = controller;
+    setGeoError("");
+    setGeoLoading(true);
+    try {
+      const response = await fetch("/api/site-scout/context", {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify(sitePoint),
+        signal: controller.signal,
+      });
+      const result = await response.json().catch(() => null);
+      if (!response.ok || !result || !result.fields) {
+        throw new Error(response.status === 503 || response.status === 404
+          ? "Live site enrichment is not configured on this host yet. The map and assessment are still available."
+          : "Location enrichment is unavailable. You can still submit a site for human review.");
+      }
+      if (!controller.signal.aborted) setGeoContext(result);
+    } catch (error) {
+      if (!controller.signal.aborted) setGeoError(error instanceof Error ? error.message : "Enrichment unavailable.");
+    } finally {
+      if (!controller.signal.aborted) setGeoLoading(false);
+    }
+  }
+
   function continueToAssessment() {
     const safeLocation = location.trim().slice(0, 150);
     const mwNumber = Number(plannedMw);
@@ -351,6 +416,31 @@ export function SiteScoutPage() {
         </div>}
       </div>
       <div className="site-scout-statusbar"><span role="status">{status}</span>{sitePoint && <strong>Candidate pin: {coordinates(sitePoint)}</strong>}</div>
+      <section className="site-scout-context" aria-labelledby="site-scout-context-title">
+        <div className="site-scout-context-heading">
+          <div>
+            <p className="eyebrow">Location evidence · powered by Mireye</p>
+            <h2 id="site-scout-context-title">Screen the ground before the power plan.</h2>
+            <p>Pin a prospective site to request sourced public data on grid proximity, terrain, water exposure and connectivity. No property-ownership records are shown here.</p>
+          </div>
+          <button className="button button--primary" type="button" disabled={!sitePoint || geoLoading} onClick={fetchSiteContext}>{geoLoading ? "Checking site…" : "Enrich selected location"}</button>
+        </div>
+        {geoError && <p className="site-scout-context-error" role="status">{geoError}</p>}
+        {geoContext && sitePoint && geoContext.point?.lat === sitePoint.lat && geoContext.point?.lng === sitePoint.lng && <>
+          <div className="site-scout-context-grid">
+            {CONTEXT_FIELDS.map(([key, label]) => {
+              const evidence = geoContext.fields?.[key];
+              const usableLink = typeof evidence?.source_url === "string" && /^https:\/\//.test(evidence.source_url);
+              return <article className="site-scout-context-fact" key={key}>
+                <span>{label}</span>
+                <strong>{displayContextValue(evidence)}</strong>
+                <small>{evidence?.source ? (usableLink ? <a href={evidence.source_url} target="_blank" rel="noopener noreferrer">Source: {evidence.source} ↗</a> : `Source: ${evidence.source}`) : "No verified source returned"}</small>
+              </article>;
+            })}
+          </div>
+          <p className="site-scout-context-note">{geoContext.partialFailures ? `${geoContext.partialFailures} data source(s) were unavailable. ` : ""}Field-level evidence can be outdated or incomplete. Data is sampled at a coordinate, not automatically across the whole parcel. Line proximity and voltage do not demonstrate spare MW, a service agreement, buildability, available gas, fiber capacity or energization timing.</p>
+        </>}
+      </section>
       {feedback && <p className="site-scout-feedback" role="status">{feedback}</p>}
       <p className="site-scout-credits">Map technology: <a href="https://github.com/BenHutchinsWPP/TransmissionMap" target="_blank" rel="noopener noreferrer">Western Power Pool TransmissionMap (MIT)</a>, MapLibre and PMTiles. Infrastructure: HIFLD / DHS CISA and SeerAI / Source Cooperative (CC BY 4.0); historical records may be outdated. Basemap: OpenFreeMap / © OpenStreetMap contributors. Manual search: OpenStreetMap Nominatim. External map sources may be unavailable. Proximity to a line or substation is <strong>not</strong> a statement of usable megawatts, connection cost, queue position, service territory, or power arrival date.</p>
     </section>
