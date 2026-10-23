@@ -9,7 +9,7 @@ export const pageMeta = {
   "/insights": ["Insights — EcoXchange", "Perspectives on data-center power timelines, distributed energy resources, and deployment requirements."],
   "/about": ["About — EcoXchange", "EcoXchange coordinates DER-enabled power pathways for data-center projects."],
   "/faq": ["FAQ — EcoXchange", "Answers about DER-enabled power pathways, project fit, utility requirements, and EcoXchange's current role."],
-  "/site-scout": ["Site Scout — Map Transmission Infrastructure | EcoXchange", "Explore public U.S. electric transmission lines and substations, select a candidate data-center site, and continue to a qualified power assessment."],
+  "/site-scout": ["Site Scout — Data Center & Renewable Energy Screening | EcoXchange", "Explore sourced U.S. data-center, solar, wind and battery-storage site screening with transmission mapping and a pathway to qualified power-development conversations."],
   "/assessment": ["Explore Your Power Path — EcoXchange", "Share site details so EcoXchange can determine fit and next steps for a DER-enabled power pathway."],
   "/contact": ["Contact — EcoXchange", "Discuss a data-center power gap, distributed-energy asset, or deployment partnership."],
 };
