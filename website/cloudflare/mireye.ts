@@ -14,18 +14,71 @@ interface MireyeEnv {
   ECOXCHANGE_SITE_SCOUT_ADMIN_TOKEN?: string;
 }
 
-const PUBLIC_FIELDS = [
-  "elevation",
-  "slope_degrees",
-  "within_floodplain_polygon",
-  "intersects_wetland",
-  "nearest_transmission_line_distance_m",
-  "nearest_transmission_line_voltage_kv",
-  "nearest_substation_distance_m",
-  "electric_utility_service_territory",
-  "fiber_broadband_available",
-  "nearest_major_road_distance_m",
-] as const;
+// These are individually confirmed public coordinate field IDs from
+// https://docs.mireye.ai/api-reference/fetch (2026-10-22).
+// Deliberately small bundles, not 100+ field presets: lower latency and
+// avoids accidental licensed property enrichment on the public endpoint.
+const PUBLIC_TRACK_FIELDS: Record<string, readonly string[]> = {
+  data_center: [
+    "nearest_transmission_line_distance_m",
+    "nearest_transmission_line_voltage_kv",
+    "nearest_substation_distance_m",
+    "nearest_substation_max_voltage_kv",
+    "electric_utility_service_territory",
+    "iso_rto",
+    "interconnection_queue_active_capacity_county_mw",
+    "fiber_broadband_available",
+    "fiber_provider_count",
+    "nearest_gas_pipeline_distance_m",
+    "design_wet_bulb_temperature_0_4pct_degc",
+    "free_cooling_hours_per_year_15c",
+    "within_water_service_area",
+    "within_floodplain_polygon",
+    "grading_difficulty_class",
+    "in_air_quality_nonattainment",
+  ],
+  solar: [
+    "ghi_annual_kwh_m2_day",
+    "pv_capacity_factor_pct",
+    "pv_specific_yield_kwh_per_kw",
+    "slope_degrees",
+    "aspect_cardinal",
+    "prime_farmland_classification",
+    "grading_difficulty_class",
+    "nearest_transmission_line_distance_m",
+    "nearest_utility_solar_facility_distance_m",
+    "within_floodplain_polygon",
+    "intersects_wetland",
+    "surface_management_agency",
+  ],
+  wind: [
+    "mean_wind_speed_100m_ms",
+    "wind_capacity_factor_pct",
+    "wind_least_cost_interconnect_distance_m",
+    "nearest_transmission_line_distance_m",
+    "nearest_wind_project_capacity_mw",
+    "special_use_airspace_type",
+    "nearest_airport_distance_m",
+    "slope_degrees",
+    "prime_farmland_classification",
+    "within_floodplain_polygon",
+    "intersects_wetland",
+  ],
+  storage: [
+    "nearest_transmission_line_distance_m",
+    "nearest_substation_distance_m",
+    "nearest_substation_max_voltage_kv",
+    "electric_utility_service_territory",
+    "iso_rto",
+    "interconnection_queue_active_capacity_county_mw",
+    "grading_difficulty_class",
+    "soil_hydrologic_group",
+    "within_floodplain_polygon",
+    "intersects_wetland",
+    "nearest_power_plant_distance_m",
+    "avg_retail_electricity_price_industrial_usd_per_kwh",
+  ],
+};
 
 const jsonHeaders = { "content-type": "application/json; charset=utf-8", "cache-control": "no-store", "x-content-type-options": "nosniff" };
 const reply = (data: unknown, status = 200) => new Response(JSON.stringify(data), { status, headers: jsonHeaders });
@@ -68,7 +121,7 @@ async function providerCall(
 ) {
   const headers: Record<string, string> = {
     "content-type": "application/json",
-    "X-API-Key": env.MIREYE_API_TOKEN!,
+    "Authorization": `Bearer ${env.MIREYE_API_TOKEN!}`,
   };
   if (paid) headers["Idempotency-Key"] = idempotencyKey || crypto.randomUUID();
   // Search and Enrich can take longer than Fetch; upper bound is enforced upstream.
@@ -106,14 +159,22 @@ export async function handleMireyeSiteScout(
     if (isPublic) {
       const point = coordinates(body);
       if (!point) return reply({ error: "Choose a valid US location on the map first." }, 422);
-      // Fetch is free public coordinate data; no customer-facing use of licensed
-      // parcel records, owner fields, boundaries, zoning or vendor lead files.
-      const response = await providerCall("fetch", { ...point, fields: [...PUBLIC_FIELDS] }, env);
+      // Website-selected purpose controls the free public coordinate fields.
+      // Do not allow arbitrary caller-supplied vendor field names on this route.
+      const track = typeof body.track === "string" ? body.track : "data_center";
+      const requestedFields = Object.prototype.hasOwnProperty.call(PUBLIC_TRACK_FIELDS, track)
+        ? PUBLIC_TRACK_FIELDS[track] : null;
+      if (!requestedFields) return reply({ error: "Unsupported screening track" }, 422);
+      const response = await providerCall("fetch", { ...point, fields: [...requestedFields] }, env);
       if (!response.ok) return response;
       const data = await response.json() as { fields?: Record<string, unknown>; partial_failures?: unknown[]; fetched_at?: string };
       const fields: Record<string, unknown> = {};
-      for (const key of PUBLIC_FIELDS) if (data.fields && Object.prototype.hasOwnProperty.call(data.fields, key)) fields[key] = data.fields[key];
-      return reply({ point, fields, partialFailures: Array.isArray(data.partial_failures) ? data.partial_failures.length : 0, fetchedAt: data.fetched_at || null, provider: "Mireye" });
+      for (const key of requestedFields) {
+        // Keep absent/failed records, rather than quietly treating unknown as
+        // no flood, no wetlands or reliable grid capacity.
+        if (data.fields && Object.prototype.hasOwnProperty.call(data.fields, key)) fields[key] = data.fields[key];
+      }
+      return reply({ point, track, fields, partialFailures: Array.isArray(data.partial_failures) ? data.partial_failures.length : 0, fetchedAt: data.fetched_at || null, provider: "Mireye" });
     }
 
     // INTERNAL ONLY. Property records can be researched by EcoXchange staff
