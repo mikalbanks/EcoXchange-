@@ -570,8 +570,8 @@ export function SiteScoutPage() {
       <div className="container site-scout-next-grid">
         <div>
           <p className="eyebrow">Next · qualify the opportunity</p>
-          <h2>Turn a map location into a real power conversation.</h2>
-          <p>Tell us what the project needs and when. We'll carry your site information into the existing EcoXchange assessment, where our team evaluates technical and commercial fit. Unknown supply stays unknown.</p>
+          <h2>{focus === "data_center" ? "Turn a map location into a real power conversation." : "Turn an energy site into a development partnership."}</h2>
+          <p>{focus === "data_center" ? "Tell us what the data-center project needs and when. We’ll carry your location into our assessment and determine technical and commercial fit. Unknown utility capacity stays unknown." : "Own or develop a potential solar, wind, or storage site? Explore the energy supply partner pathway with EcoXchange. Location screening is not an interconnection or development approval."}</p>
         </div>
         <div className="site-scout-fields">
           <label htmlFor="site-scout-location">Candidate site / geography</label>
@@ -580,8 +580,8 @@ export function SiteScoutPage() {
             <div><label htmlFor="site-scout-mw">Required facility power (MW) <span>(optional)</span></label><input id="site-scout-mw" type="number" min="0.001" max="10000" step="any" inputMode="decimal" value={plannedMw} onChange={event => setPlannedMw(event.target.value)} placeholder="e.g. 25" /></div>
             <div><label htmlFor="site-scout-ramp">Target first ramp <span>(optional)</span></label><input id="site-scout-ramp" type="month" value={rampMonth} onChange={event => setRampMonth(event.target.value)} /></div>
           </div>
-          <a href="/assessment" className="button button--primary site-scout-continue" onClick={continueToAssessment}>Continue to site assessment <ArrowRight aria-hidden="true" /></a>
-          <small>Requires normal contact details and human verification on the next page. No lead is submitted by using this map.</small>
+          <a href={focus === "data_center" ? "/assessment" : "/partners"} className="button button--primary site-scout-continue" onClick={focus === "data_center" ? continueToAssessment : undefined}>{focus === "data_center" ? "Continue to power assessment" : "Explore development partnerships"} <ArrowRight aria-hidden="true" /></a>
+          <small>No lead is submitted by using this map. The next page requires normal contact information for inquiries.</small>
         </div>
       </div>
     </section>
