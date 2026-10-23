@@ -56,3 +56,24 @@
 .site-scout-home-content p:not(.eyebrow){color:var(--muted);margin-top:9px;font-size:15px;line-height:1.6}
 .site-scout-home-content>.button{white-space:nowrap;flex-shrink:0}
 @media(max-width:800px){.site-scout-home-content{align-items:flex-start;flex-direction:column;gap:20px}}
+
+/* Sourced public coordinate context. No licensed parcel details are displayed. */
+.site-scout-context{padding:30px 24px;border-top:1px solid var(--line);background:#f8faf7}
+.site-scout-context-heading{display:flex;justify-content:space-between;align-items:center;gap:24px}
+.site-scout-context-heading>div{max-width:740px}
+.site-scout-context-heading .eyebrow{margin-bottom:8px}
+.site-scout-context-heading h2{font-size:clamp(22px,2.25vw,31px)}
+.site-scout-context-heading p:not(.eyebrow){font-size:14px;color:var(--muted);line-height:1.55;margin-top:8px}
+.site-scout-context-heading .button{flex-shrink:0;text-align:center;white-space:nowrap}
+.site-scout-context-heading .button:disabled{opacity:.55;cursor:not-allowed}
+.site-scout-context-grid{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:12px;margin-top:24px}
+.site-scout-context-fact{min-width:0;padding:18px 15px;background:#fff;border:1px solid #d7e1d7}
+.site-scout-context-fact>span{display:block;color:#536b5b;font-size:12px;line-height:1.4;min-height:35px}
+.site-scout-context-fact strong{display:block;color:var(--forest);font-size:clamp(15px,1.5vw,19px);line-height:1.35;overflow-wrap:anywhere;margin:6px 0 12px}
+.site-scout-context-fact small{font-size:11px;overflow-wrap:anywhere;line-height:1.5;color:#5b7262}
+.site-scout-context-fact a{text-decoration:underline;color:var(--green);text-underline-offset:3px}
+.site-scout-context-error{margin-top:14px;background:#fff3e6;border-left:3px solid #b77b2f;padding:12px 16px;font-size:13px;line-height:1.5}
+.site-scout-context-note{margin-top:18px;color:#526d5b;font-size:12px;line-height:1.65}
+@media(max-width:1100px){.site-scout-context-grid{grid-template-columns:repeat(3,minmax(0,1fr))}}
+@media(max-width:750px){.site-scout-context{padding:24px 14px}.site-scout-context-heading{align-items:stretch;flex-direction:column;gap:16px}.site-scout-context-heading .button{width:100%;white-space:normal}.site-scout-context-grid{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media(max-width:430px){.site-scout-context-grid{grid-template-columns:1fr}.site-scout-context-fact>span{min-height:unset}}
